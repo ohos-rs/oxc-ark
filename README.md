@@ -11,7 +11,7 @@ Provide a fast and simple ArkTS/ArkUI parser/formatter tool.
 Install with cargo.
 
 ```bash
-cargo install oxk
+cargo install oxk --git https://github.com/ohos-rs/oxc-ark.git
 ```
 
 ## Usage
