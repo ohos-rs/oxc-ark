@@ -18,6 +18,7 @@ oxc_span = { git = "https://github.com/ohos-rs/oxc" }
 
 bpaf = "0.9"
 owo-colors = "4"
-globwalk = "0.9"
+globset = "0.4"
+walkdir = "2"
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"

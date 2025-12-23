@@ -96,31 +96,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "417bef24afe1460300965a25ff4a24b8b45ad011948302ec221e8a0a81eb2c79"
 
 [[package]]
-name = "crossbeam-deque"
-version = "0.8.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dd111b7b7f7d55b72c0a6ae361660ee5853c9af73f70c3c2ef6858b950e2e51"
-dependencies = [
- "crossbeam-epoch",
- "crossbeam-utils",
-]
-
-[[package]]
-name = "crossbeam-epoch"
-version = "0.9.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e"
-dependencies = [
- "crossbeam-utils",
-]
-
-[[package]]
-name = "crossbeam-utils"
-version = "0.8.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
-
-[[package]]
 name = "dragonbox_ecma"
 version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -241,39 +216,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "globwalk"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bf760ebf69878d9fd8f110c89703d90ce35095324d1f1edcb595c63945ee757"
-dependencies = [
- "bitflags",
- "ignore",
- "walkdir",
-]
-
-[[package]]
 name = "hashbrown"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
 dependencies = [
  "allocator-api2",
-]
-
-[[package]]
-name = "ignore"
-version = "0.4.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3d782a365a015e0f5c04902246139249abf769125006fbe7649e2ee88169b4a"
-dependencies = [
- "crossbeam-deque",
- "globset",
- "log",
- "memchr",
- "regex-automata",
- "same-file",
- "walkdir",
- "winapi-util",
 ]
 
 [[package]]
@@ -407,7 +355,7 @@ dependencies = [
 [[package]]
 name = "oxc_allocator"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -419,7 +367,7 @@ dependencies = [
 [[package]]
 name = "oxc_ast"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "bitflags",
  "oxc_allocator",
@@ -435,7 +383,7 @@ dependencies = [
 [[package]]
 name = "oxc_ast_macros"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "phf",
  "proc-macro2",
@@ -446,12 +394,12 @@ dependencies = [
 [[package]]
 name = "oxc_data_structures"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 
 [[package]]
 name = "oxc_diagnostics"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -461,7 +409,7 @@ dependencies = [
 [[package]]
 name = "oxc_ecmascript"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -475,12 +423,12 @@ dependencies = [
 [[package]]
 name = "oxc_estree"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 
 [[package]]
 name = "oxc_formatter"
 version = "0.19.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "cow-utils",
  "natord",
@@ -511,7 +459,7 @@ dependencies = [
 [[package]]
 name = "oxc_parser"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -533,7 +481,7 @@ dependencies = [
 [[package]]
 name = "oxc_regular_expression"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "bitflags",
  "oxc_allocator",
@@ -560,7 +508,7 @@ dependencies = [
 [[package]]
 name = "oxc_span"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -572,7 +520,7 @@ dependencies = [
 [[package]]
 name = "oxc_syntax"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#c3d65c85201575a6a9fd257def607e0b774642ce"
+source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -594,13 +542,14 @@ version = "0.1.0"
 dependencies = [
  "bpaf",
  "futures",
- "globwalk",
+ "globset",
  "owo-colors",
  "oxc_allocator",
  "oxc_formatter",
  "oxc_parser",
  "oxc_span",
  "tokio",
+ "walkdir",
 ]
 
 [[package]]
@@ -813,9 +762,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.145"
+version = "1.0.146"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "402a6f66d8c709116cf22f558eab210f5a50187f702eb4d7e5ef38d9a7f1c79c"
+checksum = "217ca874ae0207aac254aa02c957ded05585a90892cc8d87f9e5fa49669dadd8"
 dependencies = [
  "itoa",
  "memchr",

@@ -6,40 +6,39 @@ use std::{
 };
 
 use futures::future;
-use globwalk::GlobWalkerBuilder;
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use oxc_allocator::Allocator;
-use oxc_formatter::{Formatter, get_parse_options};
+use oxc_formatter::{FormatOptions, Formatter, QuoteProperties, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use tokio::sync::Semaphore;
+use walkdir::WalkDir;
 
 pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>> {
-    let pattern = args.file;
+    let patterns = args.file;
     let thread_count = args.thread;
+    let excludes = args.excludes;
 
-    if pattern.is_empty() {
+    if patterns.is_empty() {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::Other,
             "Missing file pattern",
         )));
     }
 
-    // 1) Exact file path (absolute or relative)
-    let path = Path::new(&pattern);
-    let mut files = if path.exists() && path.is_file() {
-        vec![path.to_path_buf()]
-    } else {
-        // 2) Glob pattern (supports ** and brace sets)
-        collect_matching_files(&pattern)?
-    };
+    // Collect matching files (handles both exact paths and glob patterns)
+    let exclude_matcher = build_globset(&excludes)?;
+    let mut files = collect_matching_files(&patterns)?;
 
-    // Deduplicate to ensure each file is formatted once across threads
-    files = dedup_paths(files)?;
+    // Remove files that match any exclude pattern
+    if let Some(matcher) = exclude_matcher {
+        files.retain(|path| !matcher.is_match(path.to_string_lossy().as_ref()));
+    }
 
     if files.is_empty() {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::Other,
-            format!("No files matched pattern '{pattern}'"),
+            "No files matched the provided patterns (after excludes)",
         )));
     }
 
@@ -136,50 +135,42 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
     })
 }
 
-fn collect_matching_files(pattern: &str) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
+fn collect_matching_files(patterns: &[String]) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let mut seen = HashSet::new();
     let mut files = Vec::new();
 
-    // Parse the pattern to determine root directory and glob pattern
-    let (root, glob_pattern) = parse_glob_pattern(pattern)?;
+    for pattern in patterns {
+        // Convert pattern to absolute path
+        let absolute_pattern = to_absolute_pattern(pattern)?;
 
-    // Use globwalk to find matching files
-    let walker = GlobWalkerBuilder::from_patterns(&root, &[&glob_pattern])
-        .build()
-        .map_err(|e| format!("Failed to build glob walker: {}", e))?;
+        // Build globset matcher
+        let glob = Glob::new(&absolute_pattern)
+            .map_err(|e| format!("Invalid glob pattern '{}': {}", pattern, e))?;
+        let glob_set = GlobSetBuilder::new()
+            .add(glob)
+            .build()
+            .map_err(|e| format!("Failed to build glob set: {}", e))?;
 
-    for entry in walker {
-        match entry {
-            Ok(entry) => {
-                if entry.file_type().is_file() {
-                    let path = entry.path().to_path_buf();
-                    // Normalize and deduplicate immediately
-                    // Use the original path from globwalk, as it should match the actual filesystem
-                    let normalized = match normalize_path(&path) {
-                        Ok(p) => {
-                            // Verify normalized path still exists (case sensitivity check)
-                            if p.exists() {
-                                p
-                            } else {
-                                // If normalized path doesn't exist, use original path
-                                // This handles case sensitivity issues on macOS
-                                path
-                            }
+        // Determine root directory for traversal
+        let root = determine_root(&absolute_pattern)?;
+
+        // Traverse directory tree and match files
+        for entry in WalkDir::new(&root).follow_links(false) {
+            match entry {
+                Ok(entry) if entry.file_type().is_file() => {
+                    let path = entry.path();
+                    let path_str = path.to_string_lossy();
+
+                    if glob_set.is_match(path_str.as_ref()) {
+                        let normalized = normalize_path(path)?;
+                        let key = normalized.to_string_lossy().into_owned();
+                        if seen.insert(key) {
+                            files.push(normalized);
                         }
-                        Err(_) => {
-                            // If normalization fails, use original path
-                            path
-                        }
-                    };
-                    let key = normalized.to_string_lossy().into_owned();
-                    if seen.insert(key) {
-                        files.push(normalized);
                     }
                 }
-            }
-            Err(e) => {
-                // Log but continue for permission errors, etc.
-                eprintln!("Warning: {}", e);
+                Err(e) => eprintln!("Warning: {}", e),
+                _ => {}
             }
         }
     }
@@ -187,142 +178,80 @@ fn collect_matching_files(pattern: &str) -> Result<Vec<PathBuf>, Box<dyn std::er
     Ok(files)
 }
 
-fn parse_glob_pattern(pattern: &str) -> Result<(PathBuf, String), Box<dyn std::error::Error>> {
-    // Find the first wildcard position
-    let wildcard_pos = pattern
-        .find(|c| matches!(c, '*' | '?' | '{' | '['))
-        .unwrap_or_else(|| pattern.len());
+fn build_globset(patterns: &[String]) -> Result<Option<GlobSet>, Box<dyn std::error::Error>> {
+    if patterns.is_empty() {
+        return Ok(None);
+    }
 
-    let prefix = &pattern[..wildcard_pos];
-    let glob_part = &pattern[wildcard_pos..];
+    let mut builder = GlobSetBuilder::new();
+    for pattern in patterns {
+        let absolute_pattern = to_absolute_pattern(pattern)?;
+        let glob = Glob::new(&absolute_pattern)
+            .map_err(|e| format!("Invalid glob pattern '{}': {}", pattern, e))?;
+        builder.add(glob);
+    }
 
-    if prefix.is_empty() {
-        // Pattern starts with wildcard, use current directory as root
-        Ok((std::env::current_dir()?, glob_part.to_string()))
+    Ok(Some(
+        builder
+            .build()
+            .map_err(|e| format!("Failed to build glob set: {}", e))?,
+    ))
+}
+
+fn to_absolute_pattern(pattern: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let pattern_path = Path::new(pattern);
+    Ok(if pattern_path.is_absolute() {
+        pattern.to_string()
     } else {
-        // Extract the directory part before the first wildcard
-        let prefix_path = Path::new(prefix);
+        env::current_dir()?
+            .join(pattern)
+            .to_string_lossy()
+            .into_owned()
+    })
+}
 
-        // Find the root directory (the deepest existing directory)
-        let root = if prefix_path.is_absolute() {
-            // For absolute paths, find the deepest existing directory
-            let mut current = prefix_path.to_path_buf();
+fn determine_root(absolute_pattern: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    Ok(
+        if let Some(wildcard_pos) = absolute_pattern.find(|c| matches!(c, '*' | '?' | '{' | '[')) {
+            let prefix = Path::new(&absolute_pattern[..wildcard_pos]);
+            let mut current = prefix.to_path_buf();
             while !current.exists() || !current.is_dir() {
                 if let Some(parent) = current.parent() {
                     current = parent.to_path_buf();
                 } else {
-                    // Fallback to root directory
-                    current = PathBuf::from("/");
+                    current = env::current_dir()?;
                     break;
                 }
             }
             current
         } else {
-            // For relative paths, resolve against current directory
-            let current_dir = std::env::current_dir()?;
-            let full_path = current_dir.join(prefix_path);
-            let mut current = full_path.clone();
-            while !current.exists() || !current.is_dir() {
-                if let Some(parent) = current.parent() {
-                    if parent.starts_with(&current_dir) || parent == current_dir {
-                        current = parent.to_path_buf();
-                    } else {
-                        current = current_dir.clone();
-                        break;
-                    }
-                } else {
-                    current = current_dir.clone();
-                    break;
-                }
+            let path = Path::new(&absolute_pattern);
+            if path.is_file() {
+                return Ok(path.to_path_buf());
             }
-            current
-        };
-
-        // Calculate the glob pattern relative to root
-        let glob_pattern = if prefix_path.is_absolute() {
-            // For absolute paths, calculate relative path from root
-            if root == prefix_path {
-                glob_part.to_string()
-            } else if let Ok(rel) = prefix_path.strip_prefix(&root) {
-                if rel.as_os_str().is_empty() {
-                    glob_part.to_string()
-                } else {
-                    format!("{}/{}", rel.to_string_lossy(), glob_part)
-                }
-            } else {
-                // If can't strip prefix, use the full pattern from root
-                if let Ok(rel) = prefix_path.strip_prefix("/") {
-                    format!("{}/{}", rel.to_string_lossy(), glob_part)
-                } else {
-                    format!("{}/{}", prefix_path.to_string_lossy(), glob_part)
-                }
-            }
-        } else {
-            // For relative paths
-            let current_dir = std::env::current_dir()?;
-            let full_prefix = current_dir.join(prefix_path);
-            if root == current_dir {
-                // Root is current dir, use original pattern
-                format!("{}/{}", prefix, glob_part)
-            } else if let Ok(rel) = full_prefix.strip_prefix(&root) {
-                if rel.as_os_str().is_empty() {
-                    glob_part.to_string()
-                } else {
-                    format!("{}/{}", rel.to_string_lossy(), glob_part)
-                }
-            } else {
-                // Fallback to original pattern
-                format!("{}/{}", prefix, glob_part)
-            }
-        };
-
-        Ok((root, glob_pattern))
-    }
+            path.parent()
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|| env::current_dir().unwrap())
+        },
+    )
 }
 
 fn normalize_path(path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
-    // Try to canonicalize first (resolves symlinks and makes absolute)
-    // On macOS, canonicalize may change case, so we preserve the original path if canonicalize fails
-    match path.canonicalize() {
-        Ok(p) => {
-            // Verify the canonicalized path still exists and is accessible
-            if p.exists() {
-                Ok(p)
-            } else {
-                // If canonicalized path doesn't exist, fall back to original
-                if path.is_absolute() {
-                    Ok(path.to_path_buf())
-                } else {
-                    Ok(env::current_dir()?.join(path))
-                }
-            }
-        }
-        Err(_) => {
-            // If canonicalize fails (file doesn't exist or permission error),
-            // try to make it absolute while preserving the original path
+    Ok(path
+        .canonicalize()
+        .or_else(|_| {
             if path.is_absolute() {
                 Ok(path.to_path_buf())
             } else {
-                // Make relative path absolute based on current directory
-                Ok(env::current_dir()?.join(path))
+                env::current_dir().map(|cwd| cwd.join(path))
             }
-        }
-    }
-}
-
-fn dedup_paths(paths: Vec<PathBuf>) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
-    let mut seen = HashSet::new();
-    let mut unique = Vec::new();
-
-    for path in paths {
-        let normalized = normalize_path(&path)?;
-        let key = normalized.to_string_lossy().into_owned();
-        if seen.insert(key) {
-            unique.push(normalized);
-        }
-    }
-
-    Ok(unique)
+        })
+        .map_err(|e| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Failed to normalize path: {}", e),
+            )
+        })?)
 }
 
 /// Format a single file as a tokio task
@@ -343,38 +272,14 @@ async fn format_file_task(path: PathBuf, semaphore: Arc<Semaphore>) -> Result<()
 /// Format a single file using async I/O
 /// File I/O is async, CPU-intensive parsing/formatting runs in spawn_blocking
 async fn format_file_async(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    // Try to find the actual file path, handling case sensitivity issues on macOS
+    // Verify file exists
     let actual_path = if tokio::fs::metadata(path).await.is_ok() {
-        // Path exists, use it directly
         path.to_path_buf()
     } else {
-        // Path doesn't exist, try to canonicalize it (may resolve case issues)
-        match path.canonicalize() {
-            Ok(p) => {
-                if p.exists() {
-                    p
-                } else {
-                    return Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::NotFound,
-                        format!(
-                            "File '{}' does not exist (canonicalized: '{}'). This may be a case sensitivity issue on macOS.",
-                            path.display(),
-                            p.display()
-                        ),
-                    )));
-                }
-            }
-            Err(e) => {
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    format!(
-                        "File '{}' does not exist: {}. This may be a case sensitivity issue on macOS.",
-                        path.display(),
-                        e
-                    ),
-                )));
-            }
-        }
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("File '{}' does not exist", path.display()),
+        )));
     };
 
     // Read the file using async I/O
@@ -389,12 +294,9 @@ async fn format_file_async(path: &Path) -> Result<(), Box<dyn std::error::Error>
     let source_type = SourceType::from_path(&actual_path)
         .map_err(|_| format!("Unsupported file type '{}'", actual_path.display()))?;
 
-    // Ensure source_text is not empty
+    // Skip empty files silently
     if source_text.is_empty() {
-        return Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("File '{}' is empty", path.display()),
-        )));
+        return Ok(());
     }
 
     // Run CPU-intensive parsing and formatting in a blocking task
@@ -417,7 +319,12 @@ async fn format_file_async(path: &Path) -> Result<(), Box<dyn std::error::Error>
             ));
         }
 
-        let formatter = Formatter::new(&allocator, Default::default());
+        let option = FormatOptions {
+            quote_properties: QuoteProperties::Preserve,
+            ..Default::default()
+        };
+
+        let formatter = Formatter::new(&allocator, option);
 
         // Format the program
         // Note: If this panics with "begin <= end" error, it indicates a bug in the formatter

@@ -1,7 +1,9 @@
 use bpaf::{Parser, construct, long, positional};
 
 pub fn cli_format() -> impl Parser<crate::Options> {
-    let file = positional("input").help("Input regex to select files.");
+    let file = positional("input")
+        .help("Input regex to select files.")
+        .many();
 
     let thread = long("thread")
         .short('t')
@@ -9,6 +11,16 @@ pub fn cli_format() -> impl Parser<crate::Options> {
         .help("Thread count for parallel formatting.")
         .fallback(1);
 
-    let format_parser = construct!(crate::FormatArgs { thread, file });
+    let excludes = long("exclude")
+        .argument("PATTERN")
+        .help("Exclude files or directories.")
+        .many()
+        .fallback(vec![]);
+
+    let format_parser = construct!(crate::FormatArgs {
+        thread,
+        excludes,
+        file
+    });
     construct!(crate::Options::Format(format_parser))
 }

@@ -7,8 +7,9 @@ mod format;
 
 #[derive(Debug, Clone)]
 pub(crate) struct FormatArgs {
-    file: String,
+    file: Vec<String>,
     thread: usize,
+    excludes: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
