@@ -1,0 +1,23 @@
+[package]
+name = "oxk"
+version = "0.1.0"
+edition = "2024"
+authors = ["richerfu<southsouth0929@foxmail.com>"]
+description = "A ArkTS/ArkUI tool based on oxc"
+license = "MIT"
+
+[[bin]]
+name = "oxk"
+path = "src/main.rs"
+
+[dependencies]
+oxc_formatter = { git = "https://github.com/ohos-rs/oxc" }
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc" }
+oxc_parser = { git = "https://github.com/ohos-rs/oxc" }
+oxc_span = { git = "https://github.com/ohos-rs/oxc" }
+
+bpaf = "0.9"
+owo-colors = "4"
+globwalk = "0.9"
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
