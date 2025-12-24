@@ -1,6 +1,6 @@
 # OXK(Oxc-Ark)
 
-A ArkTS/ArkUI tool based on OXC.
+An ArkTS/ArkUI tool based on OXC.
 
 ## Goal
 
