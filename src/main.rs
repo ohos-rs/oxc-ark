@@ -10,6 +10,25 @@ pub(crate) struct FormatArgs {
     file: Vec<String>,
     thread: usize,
     excludes: Vec<String>,
+    // FormatOptions fields (excluding quote_properties)
+    pub indent_style: Option<oxc_formatter::IndentStyle>,
+    pub indent_width: Option<oxc_formatter::IndentWidth>,
+    pub line_ending: Option<oxc_formatter::LineEnding>,
+    pub line_width: Option<oxc_formatter::LineWidth>,
+    pub quote_style: Option<oxc_formatter::QuoteStyle>,
+    pub jsx_quote_style: Option<oxc_formatter::QuoteStyle>,
+    pub trailing_commas: Option<oxc_formatter::TrailingCommas>,
+    pub semicolons: Option<oxc_formatter::Semicolons>,
+    pub arrow_parentheses: Option<oxc_formatter::ArrowParentheses>,
+    pub bracket_spacing: Option<oxc_formatter::BracketSpacing>,
+    pub bracket_same_line: Option<oxc_formatter::BracketSameLine>,
+    pub attribute_position: Option<oxc_formatter::AttributePosition>,
+    pub expand: Option<oxc_formatter::Expand>,
+    pub experimental_operator_position: Option<oxc_formatter::OperatorPosition>,
+    pub experimental_ternaries: Option<bool>,
+    pub embedded_language_formatting: Option<oxc_formatter::EmbeddedLanguageFormatting>,
+    #[allow(dead_code)]
+    pub experimental_sort_imports: Option<String>, // JSON string for SortImportsOptions (not yet implemented)
 }
 
 #[derive(Debug, Clone)]
