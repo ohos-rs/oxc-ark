@@ -355,7 +355,7 @@ dependencies = [
 [[package]]
 name = "oxc_allocator"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -367,7 +367,7 @@ dependencies = [
 [[package]]
 name = "oxc_ast"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "bitflags",
  "oxc_allocator",
@@ -383,7 +383,7 @@ dependencies = [
 [[package]]
 name = "oxc_ast_macros"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "phf",
  "proc-macro2",
@@ -394,12 +394,12 @@ dependencies = [
 [[package]]
 name = "oxc_data_structures"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 
 [[package]]
 name = "oxc_diagnostics"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -409,7 +409,7 @@ dependencies = [
 [[package]]
 name = "oxc_ecmascript"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -423,12 +423,12 @@ dependencies = [
 [[package]]
 name = "oxc_estree"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 
 [[package]]
 name = "oxc_formatter"
 version = "0.19.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "cow-utils",
  "natord",
@@ -459,7 +459,7 @@ dependencies = [
 [[package]]
 name = "oxc_parser"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -481,7 +481,7 @@ dependencies = [
 [[package]]
 name = "oxc_regular_expression"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "bitflags",
  "oxc_allocator",
@@ -508,7 +508,7 @@ dependencies = [
 [[package]]
 name = "oxc_span"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -520,7 +520,7 @@ dependencies = [
 [[package]]
 name = "oxc_syntax"
 version = "0.104.0"
-source = "git+https://github.com/ohos-rs/oxc#d599df3374c2530cd01584dfebdf369d4cebf509"
+source = "git+https://github.com/ohos-rs/oxc?rev=be70cb6e6baf001f84a6a880e7378477f225a1cc#be70cb6e6baf001f84a6a880e7378477f225a1cc"
 dependencies = [
  "bitflags",
  "cow-utils",
