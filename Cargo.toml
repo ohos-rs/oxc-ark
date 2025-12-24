@@ -1,6 +1,6 @@
 [package]
 name = "oxk"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 authors = ["richerfu<southsouth0929@foxmail.com>"]
 description = "An ArkTS/ArkUI tool based on oxc"
