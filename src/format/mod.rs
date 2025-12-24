@@ -308,18 +308,14 @@ async fn format_file_async(path: &Path) -> Result<(), Box<dyn std::error::Error>
             .with_options(get_parse_options())
             .parse();
 
-        // Emit parser diagnostics but keep formatting; oxc can still produce an AST
-        // even when the source has lint-like errors.
+        // If parsing fails, return error immediately
         if !ret.errors.is_empty() {
-            eprintln!("Parser reported diagnostics for {}", actual_path_clone.display());
+            let mut error_msg = format!("Parser errors in '{}':\n", actual_path_clone.display());
             for error in ret.errors {
                 let error = error.with_source_code(source_text.clone());
-                eprintln!("{error:?}");
+                error_msg.push_str(&format!("{error:?}\n"));
             }
-            eprintln!(
-                "Continuing formatting despite parser diagnostics: {}",
-                actual_path_clone.display()
-            );
+            return Err(error_msg);
         }
 
         let option = FormatOptions {

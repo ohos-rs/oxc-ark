@@ -29,5 +29,6 @@ fn main() {
     };
     if let Err(e) = run_ret {
         println!("{:?}", e.red());
+        std::process::exit(-1);
     }
 }
