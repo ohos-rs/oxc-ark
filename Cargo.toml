@@ -1,6 +1,6 @@
 [package]
 name = "oxk"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2024"
 authors = ["richerfu<southsouth0929@foxmail.com>"]
 description = "An ArkTS/ArkUI tool based on oxc"
@@ -11,10 +11,11 @@ name = "oxk"
 path = "src/main.rs"
 
 [dependencies]
-oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "be44b5d9da9dc0eea771fed432146bd4231a9d1c" }
-oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "be44b5d9da9dc0eea771fed432146bd4231a9d1c" }
-oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "be44b5d9da9dc0eea771fed432146bd4231a9d1c" }
-oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "be44b5d9da9dc0eea771fed432146bd4231a9d1c" }
+oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741e7f85e901b979ed4ca29b3f83" }
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741e7f85e901b979ed4ca29b3f83" }
+oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741e7f85e901b979ed4ca29b3f83" }
+oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741e7f85e901b979ed4ca29b3f83" }
+
 
 bpaf = "0.9"
 owo-colors = "4"
