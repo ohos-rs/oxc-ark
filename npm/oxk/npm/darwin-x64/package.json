@@ -1,14 +1,14 @@
 {
   "name": "@ohos-rs/oxk-darwin-x64",
-  "version": "1.1.1",
+  "version": "0.0.1",
   "cpu": [
     "x64"
   ],
-  "main": "package-template.darwin-x64.node",
+  "main": "oxk.darwin-x64.node",
   "files": [
-    "package-template.darwin-x64.node"
+    "oxk.darwin-x64.node"
   ],
-  "description": "Template project for writing node package with napi-rs",
+  "description": "An ArkTS/ArkUI tool based on oxc",
   "keywords": [
     "napi-rs",
     "NAPI",
@@ -26,7 +26,7 @@
     "access": "public"
   },
   "repository": {
-    "url": "git+ssh://git@github.com/napi-rs/package-template-pnpm.git",
+    "url": "git+git@github.com:ohos-rs/oxc-ark.git",
     "type": "git"
   },
   "os": [
