@@ -70,15 +70,15 @@ function requireNative() {
   } else if (process.platform === 'android') {
     if (process.arch === 'arm64') {
       try {
-        return require('./package-template.android-arm64.node')
+        return require('./oxk.android-arm64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-android-arm64')
         const bindingPackageVersion = require('@ohos-rs/oxk-android-arm64/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -86,15 +86,15 @@ function requireNative() {
       }
     } else if (process.arch === 'arm') {
       try {
-        return require('./package-template.android-arm-eabi.node')
+        return require('./oxk.android-arm-eabi.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-android-arm-eabi')
         const bindingPackageVersion = require('@ohos-rs/oxk-android-arm-eabi/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -107,15 +107,15 @@ function requireNative() {
     if (process.arch === 'x64') {
       if (process.config?.variables?.shlib_suffix === 'dll.a' || process.config?.variables?.node_target_type === 'shared_library') {
         try {
-        return require('./package-template.win32-x64-gnu.node')
+        return require('./oxk.win32-x64-gnu.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-win32-x64-gnu')
         const bindingPackageVersion = require('@ohos-rs/oxk-win32-x64-gnu/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -123,15 +123,15 @@ function requireNative() {
       }
       } else {
         try {
-        return require('./package-template.win32-x64-msvc.node')
+        return require('./oxk.win32-x64-msvc.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-win32-x64-msvc')
         const bindingPackageVersion = require('@ohos-rs/oxk-win32-x64-msvc/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -140,15 +140,15 @@ function requireNative() {
       }
     } else if (process.arch === 'ia32') {
       try {
-        return require('./package-template.win32-ia32-msvc.node')
+        return require('./oxk.win32-ia32-msvc.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-win32-ia32-msvc')
         const bindingPackageVersion = require('@ohos-rs/oxk-win32-ia32-msvc/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -156,15 +156,15 @@ function requireNative() {
       }
     } else if (process.arch === 'arm64') {
       try {
-        return require('./package-template.win32-arm64-msvc.node')
+        return require('./oxk.win32-arm64-msvc.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-win32-arm64-msvc')
         const bindingPackageVersion = require('@ohos-rs/oxk-win32-arm64-msvc/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -175,15 +175,15 @@ function requireNative() {
     }
   } else if (process.platform === 'darwin') {
     try {
-      return require('./package-template.darwin-universal.node')
+      return require('./oxk.darwin-universal.node')
     } catch (e) {
       loadErrors.push(e)
     }
     try {
       const binding = require('@ohos-rs/oxk-darwin-universal')
       const bindingPackageVersion = require('@ohos-rs/oxk-darwin-universal/package.json').version
-      if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-        throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+      if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
       }
       return binding
     } catch (e) {
@@ -191,15 +191,15 @@ function requireNative() {
     }
     if (process.arch === 'x64') {
       try {
-        return require('./package-template.darwin-x64.node')
+        return require('./oxk.darwin-x64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-darwin-x64')
         const bindingPackageVersion = require('@ohos-rs/oxk-darwin-x64/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -207,15 +207,15 @@ function requireNative() {
       }
     } else if (process.arch === 'arm64') {
       try {
-        return require('./package-template.darwin-arm64.node')
+        return require('./oxk.darwin-arm64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-darwin-arm64')
         const bindingPackageVersion = require('@ohos-rs/oxk-darwin-arm64/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -227,15 +227,15 @@ function requireNative() {
   } else if (process.platform === 'freebsd') {
     if (process.arch === 'x64') {
       try {
-        return require('./package-template.freebsd-x64.node')
+        return require('./oxk.freebsd-x64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-freebsd-x64')
         const bindingPackageVersion = require('@ohos-rs/oxk-freebsd-x64/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -243,15 +243,15 @@ function requireNative() {
       }
     } else if (process.arch === 'arm64') {
       try {
-        return require('./package-template.freebsd-arm64.node')
+        return require('./oxk.freebsd-arm64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-freebsd-arm64')
         const bindingPackageVersion = require('@ohos-rs/oxk-freebsd-arm64/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -264,15 +264,15 @@ function requireNative() {
     if (process.arch === 'x64') {
       if (isMusl()) {
         try {
-          return require('./package-template.linux-x64-musl.node')
+          return require('./oxk.linux-x64-musl.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-x64-musl')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-x64-musl/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -280,15 +280,15 @@ function requireNative() {
         }
       } else {
         try {
-          return require('./package-template.linux-x64-gnu.node')
+          return require('./oxk.linux-x64-gnu.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-x64-gnu')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-x64-gnu/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -298,15 +298,15 @@ function requireNative() {
     } else if (process.arch === 'arm64') {
       if (isMusl()) {
         try {
-          return require('./package-template.linux-arm64-musl.node')
+          return require('./oxk.linux-arm64-musl.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-arm64-musl')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-arm64-musl/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -314,15 +314,15 @@ function requireNative() {
         }
       } else {
         try {
-          return require('./package-template.linux-arm64-gnu.node')
+          return require('./oxk.linux-arm64-gnu.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-arm64-gnu')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-arm64-gnu/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -332,15 +332,15 @@ function requireNative() {
     } else if (process.arch === 'arm') {
       if (isMusl()) {
         try {
-          return require('./package-template.linux-arm-musleabihf.node')
+          return require('./oxk.linux-arm-musleabihf.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-arm-musleabihf')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-arm-musleabihf/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -348,15 +348,15 @@ function requireNative() {
         }
       } else {
         try {
-          return require('./package-template.linux-arm-gnueabihf.node')
+          return require('./oxk.linux-arm-gnueabihf.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-arm-gnueabihf')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-arm-gnueabihf/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -366,15 +366,15 @@ function requireNative() {
     } else if (process.arch === 'loong64') {
       if (isMusl()) {
         try {
-          return require('./package-template.linux-loong64-musl.node')
+          return require('./oxk.linux-loong64-musl.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-loong64-musl')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-loong64-musl/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -382,15 +382,15 @@ function requireNative() {
         }
       } else {
         try {
-          return require('./package-template.linux-loong64-gnu.node')
+          return require('./oxk.linux-loong64-gnu.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-loong64-gnu')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-loong64-gnu/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -400,15 +400,15 @@ function requireNative() {
     } else if (process.arch === 'riscv64') {
       if (isMusl()) {
         try {
-          return require('./package-template.linux-riscv64-musl.node')
+          return require('./oxk.linux-riscv64-musl.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-riscv64-musl')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-riscv64-musl/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -416,15 +416,15 @@ function requireNative() {
         }
       } else {
         try {
-          return require('./package-template.linux-riscv64-gnu.node')
+          return require('./oxk.linux-riscv64-gnu.node')
         } catch (e) {
           loadErrors.push(e)
         }
         try {
           const binding = require('@ohos-rs/oxk-linux-riscv64-gnu')
           const bindingPackageVersion = require('@ohos-rs/oxk-linux-riscv64-gnu/package.json').version
-          if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-            throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+          if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+            throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
         } catch (e) {
@@ -433,15 +433,15 @@ function requireNative() {
       }
     } else if (process.arch === 'ppc64') {
       try {
-        return require('./package-template.linux-ppc64-gnu.node')
+        return require('./oxk.linux-ppc64-gnu.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-linux-ppc64-gnu')
         const bindingPackageVersion = require('@ohos-rs/oxk-linux-ppc64-gnu/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -449,15 +449,15 @@ function requireNative() {
       }
     } else if (process.arch === 's390x') {
       try {
-        return require('./package-template.linux-s390x-gnu.node')
+        return require('./oxk.linux-s390x-gnu.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-linux-s390x-gnu')
         const bindingPackageVersion = require('@ohos-rs/oxk-linux-s390x-gnu/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -469,15 +469,15 @@ function requireNative() {
   } else if (process.platform === 'openharmony') {
     if (process.arch === 'arm64') {
       try {
-        return require('./package-template.openharmony-arm64.node')
+        return require('./oxk.openharmony-arm64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-openharmony-arm64')
         const bindingPackageVersion = require('@ohos-rs/oxk-openharmony-arm64/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -485,15 +485,15 @@ function requireNative() {
       }
     } else if (process.arch === 'x64') {
       try {
-        return require('./package-template.openharmony-x64.node')
+        return require('./oxk.openharmony-x64.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-openharmony-x64')
         const bindingPackageVersion = require('@ohos-rs/oxk-openharmony-x64/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -501,15 +501,15 @@ function requireNative() {
       }
     } else if (process.arch === 'arm') {
       try {
-        return require('./package-template.openharmony-arm.node')
+        return require('./oxk.openharmony-arm.node')
       } catch (e) {
         loadErrors.push(e)
       }
       try {
         const binding = require('@ohos-rs/oxk-openharmony-arm')
         const bindingPackageVersion = require('@ohos-rs/oxk-openharmony-arm/package.json').version
-        if (bindingPackageVersion !== '1.1.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
-          throw new Error(`Native binding package version mismatch, expected 1.1.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
+        if (bindingPackageVersion !== '0.0.1' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          throw new Error(`Native binding package version mismatch, expected 0.0.1 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
       } catch (e) {
@@ -529,7 +529,7 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
   let wasiBinding = null
   let wasiBindingError = null
   try {
-    wasiBinding = require('./package-template.wasi.cjs')
+    wasiBinding = require('./oxk.wasi.cjs')
     nativeBinding = wasiBinding
   } catch (err) {
     if (process.env.NAPI_RS_FORCE_WASI) {
