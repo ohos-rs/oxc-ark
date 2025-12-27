@@ -339,6 +339,23 @@ jobs:
           options: -v ${{ steps.docker.outputs.PNPM_STORE_PATH }}:${{ steps.docker.outputs.PNPM_STORE_PATH }} -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
           run: |
             set -e
+            # Install required dependencies for Rust installation
+            if command -v apk >/dev/null 2>&1; then
+              # Alpine Linux
+              apk add --no-cache curl build-base
+            elif command -v apt-get >/dev/null 2>&1; then
+              # Debian/Ubuntu
+              apt-get update && apt-get install -y curl build-essential
+            fi
+            # Install Rust toolchain if not available
+            if ! command -v cargo >/dev/null 2>&1; then
+              curl https://sh.rustup.rs -sSf --output rustup.sh
+              sh rustup.sh -y --profile minimal --default-toolchain stable
+              source "$HOME/.cargo/env"
+            fi
+            # Verify Rust is available
+            rustc --version
+            cargo --version
             # Enable corepack if available, otherwise install pnpm
             if command -v corepack >/dev/null 2>&1; then
               corepack enable || true
