@@ -402,7 +402,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:
-          path: artifacts
+          path: npm/oxk/artifacts
       - name: create npm dirs
         run: cd npm/oxk && pnpm napi create-npm-dirs
       - name: Move artifacts

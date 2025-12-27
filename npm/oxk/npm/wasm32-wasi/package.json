@@ -25,15 +25,15 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
   "repository": {
     "url": "git+git@github.com:ohos-rs/oxc-ark.git",
     "type": "git"
   },
-  "browser": "package-template.wasi-browser.js",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "browser": "oxk.wasi-browser.js",
   "dependencies": {
     "@napi-rs/wasm-runtime": "^1.1.0"
   }
