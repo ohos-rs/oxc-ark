@@ -168,7 +168,9 @@ fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFo
                 match status {
                     Ok(promise) => match promise.await {
                         Ok(languages) => Ok(languages),
-                        Err(err) => Err(format!("JS initExternalFormatter promise rejected: {err}")),
+                        Err(err) => {
+                            Err(format!("JS initExternalFormatter promise rejected: {err}"))
+                        }
                     },
                     Err(err) => Err(format!(
                         "Failed to call JS initExternalFormatter callback: {err}"
