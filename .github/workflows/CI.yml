@@ -337,7 +337,20 @@ jobs:
         with:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: -v ${{ steps.docker.outputs.PNPM_STORE_PATH }}:${{ steps.docker.outputs.PNPM_STORE_PATH }} -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
-          run: npm run test
+          run: |
+            set -e
+            # Enable corepack if available, otherwise install pnpm
+            if command -v corepack >/dev/null 2>&1; then
+              corepack enable || true
+            fi
+            # Install pnpm if not available
+            if ! command -v pnpm >/dev/null 2>&1; then
+              npm install -g pnpm@latest
+            fi
+            # Verify pnpm is available and in PATH
+            which pnpm || (echo "pnpm not found in PATH" && exit 1)
+            pnpm --version
+            pnpm test
   test-wasi:
     name: Test WASI target
     needs:
