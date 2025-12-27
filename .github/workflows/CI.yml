@@ -102,6 +102,10 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v6
+      - name: Enable long paths on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: git config --global core.longpaths true
       - name: setup pnpm
         uses: pnpm/action-setup@v4
       - name: Setup node
@@ -240,6 +244,10 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v6
+      - name: Enable long paths on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: git config --global core.longpaths true
       - name: setup pnpm
         uses: pnpm/action-setup@v4
       - name: Setup node
