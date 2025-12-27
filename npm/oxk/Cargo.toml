@@ -1,22 +1,20 @@
 [package]
-authors = ["LongYinan <lynweklm@gmail.com>"]
+authors = ["ohos-rs"]
 edition = "2021"
-name = "napi-package-template"
+name = "oxk-napi"
 version = "0.1.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "NAPI bindings for oxk formatter"
+license.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = "3.0.0"
-napi-derive = "3.0.0"
+napi = { workspace = true }
+napi-derive = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+format = { path = "../../crates/format", features = ["napi"] }
 
 [build-dependencies]
-napi-build = "2"
-
-[profile.release]
-lto = true
-codegen-units = 1
-strip = "symbols"
+napi-build = { workspace = true }

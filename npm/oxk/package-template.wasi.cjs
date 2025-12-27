@@ -39,9 +39,9 @@ if (__nodeFs.existsSync(__wasmDebugFilePath)) {
   __wasmFilePath = __wasmDebugFilePath
 } else if (!__nodeFs.existsSync(__wasmFilePath)) {
   try {
-    __wasmFilePath = __nodePath.resolve('@napi-rs/package-template-pnpm-wasm32-wasi')
+    __wasmFilePath = __nodePath.resolve('@ohos-rs/oxk-wasm32-wasi')
   } catch {
-    throw new Error('Cannot find package-template.wasm32-wasi.wasm file, and @napi-rs/package-template-pnpm-wasm32-wasi package is not installed.')
+    throw new Error('Cannot find package-template.wasm32-wasi.wasm file, and @ohos-rs/oxk-wasm32-wasi package is not installed.')
   }
 }
 
@@ -108,4 +108,4 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
-module.exports.plus100 = __napiModule.exports.plus100
+module.exports.format = __napiModule.exports.format

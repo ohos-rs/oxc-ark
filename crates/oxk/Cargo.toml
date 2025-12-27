@@ -1,6 +1,25 @@
 [package]
 name = "oxk"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "oxk"
+path = "src/main.rs"
 
 [dependencies]
+format = { path = "../format" }
+oxc_formatter = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_span = { workspace = true }
+bpaf = { workspace = true }
+owo-colors = { workspace = true }
+globset = { workspace = true }
+walkdir = { workspace = true }
+tokio = { workspace = true }
+futures = { workspace = true }
+serde_json = { workspace = true }

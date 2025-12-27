@@ -1,6 +1,6 @@
 {
   "name": "@ohos-rs/oxk",
-  "version": "1.1.1",
+  "version": "0.0.1",
   "description": "Template project for writing node package with napi-rs",
   "main": "index.js",
   "types": "index.d.ts",
@@ -69,7 +69,6 @@
     "@napi-rs/cli": "^3.2.0",
     "@napi-rs/wasm-runtime": "^1.0.4",
     "@oxc-node/core": "^0.0.35",
-    "@taplo/cli": "^0.7.0",
     "@tybys/wasm-util": "^0.10.0",
     "ava": "^6.4.1",
     "chalk": "^5.6.2",
@@ -78,22 +77,13 @@
     "lint-staged": "^16.1.6",
     "npm-run-all2": "^8.0.4",
     "oxlint": "^1.14.0",
-    "prettier": "^3.6.2",
     "tinybench": "^6.0.0",
     "typescript": "^5.9.2"
   },
-  "lint-staged": {
-    "*.@(js|ts|tsx)": [
-      "oxlint --fix"
-    ],
-    "*.@(js|ts|tsx|yml|yaml|md|json)": [
-      "prettier --write"
-    ],
-    "*.toml": [
-      "taplo format"
-    ]
-  },
   "ava": {
+    "files": [
+      "__test__/**/*.spec.ts"
+    ],
     "extensions": {
       "ts": "module"
     },
@@ -106,13 +96,5 @@
       "--import",
       "@oxc-node/core/register"
     ]
-  },
-  "prettier": {
-    "printWidth": 120,
-    "semi": false,
-    "trailingComma": "all",
-    "singleQuote": true,
-    "arrowParens": "always"
-  },
-  "packageManager": "pnpm@10.26.2"
+  }
 }

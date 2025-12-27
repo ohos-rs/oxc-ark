@@ -1,0 +1,222 @@
+#[cfg(feature = "napi")]
+use std::sync::Arc;
+
+#[cfg(feature = "napi")]
+use napi::{
+    Status,
+    bindgen_prelude::{FnArgs, Promise, block_on},
+    threadsafe_function::ThreadsafeFunction,
+};
+#[cfg(feature = "napi")]
+use serde_json::Value;
+
+/// Type alias for the init external formatter callback function signature.
+/// Takes num_threads as argument and returns plugin languages.
+#[cfg(feature = "napi")]
+pub type JsInitExternalFormatterCb = ThreadsafeFunction<
+    // Input arguments
+    FnArgs<(u32,)>, // (num_threads,)
+    // Return type (what JS function returns)
+    Promise<Vec<String>>,
+    // Arguments (repeated)
+    FnArgs<(u32,)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// Type alias for the callback function signature.
+/// Takes (options, tag_name, code) as separate arguments and returns formatted code.
+#[cfg(feature = "napi")]
+pub type JsFormatEmbeddedCb = ThreadsafeFunction<
+    // Input arguments
+    FnArgs<(Value, String, String)>, // (options, tag_name, code)
+    // Return type (what JS function returns)
+    Promise<String>,
+    // Arguments (repeated)
+    FnArgs<(Value, String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// Type alias for the callback function signature.
+/// Takes (options, parser_name, file_name, code) as separate arguments and returns formatted code.
+#[cfg(feature = "napi")]
+pub type JsFormatFileCb = ThreadsafeFunction<
+    // Input arguments
+    FnArgs<(Value, String, String, String)>, // (options, parser_name, file_name, code)
+    // Return type (what JS function returns)
+    Promise<String>,
+    // Arguments (repeated)
+    FnArgs<(Value, String, String, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// Callback function type for formatting embedded code with config.
+/// Takes (options, tag_name, code) and returns formatted code or an error.
+#[cfg(feature = "napi")]
+type FormatEmbeddedWithConfigCallback =
+    Arc<dyn Fn(&Value, &str, &str) -> Result<String, String> + Send + Sync>;
+
+/// Callback function type for formatting files with config.
+/// Takes (options, parser_name, file_name, code) and returns formatted code or an error.
+#[cfg(feature = "napi")]
+type FormatFileWithConfigCallback =
+    Arc<dyn Fn(&Value, &str, &str, &str) -> Result<String, String> + Send + Sync>;
+
+/// Callback function type for init external formatter.
+/// Takes num_threads and returns plugin languages.
+#[cfg(feature = "napi")]
+type InitExternalFormatterCallback =
+    Arc<dyn Fn(usize) -> Result<Vec<String>, String> + Send + Sync>;
+
+/// External formatter that wraps a JS callback.
+#[cfg(feature = "napi")]
+#[derive(Clone)]
+pub struct ExternalFormatter {
+    pub init: InitExternalFormatterCallback,
+    pub format_embedded: FormatEmbeddedWithConfigCallback,
+    pub format_file: FormatFileWithConfigCallback,
+}
+
+#[cfg(feature = "napi")]
+impl std::fmt::Debug for ExternalFormatter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ExternalFormatter")
+            .field("init", &"<callback>")
+            .field("format_embedded", &"<callback>")
+            .field("format_file", &"<callback>")
+            .finish()
+    }
+}
+
+#[cfg(feature = "napi")]
+impl ExternalFormatter {
+    /// Create an [`ExternalFormatter`] from JS callbacks.
+    pub fn new(
+        init_cb: JsInitExternalFormatterCb,
+        format_embedded_cb: JsFormatEmbeddedCb,
+        format_file_cb: JsFormatFileCb,
+    ) -> Self {
+        let rust_init = wrap_init_external_formatter(init_cb);
+        let rust_format_embedded = wrap_format_embedded(format_embedded_cb);
+        let rust_format_file = wrap_format_file(format_file_cb);
+        Self {
+            init: rust_init,
+            format_embedded: rust_format_embedded,
+            format_file: rust_format_file,
+        }
+    }
+
+    /// Initialize external formatter using the JS callback.
+    pub fn init(&self, num_threads: usize) -> Result<Vec<String>, String> {
+        (self.init)(num_threads)
+    }
+
+    /// Convert this external formatter to the oxc_formatter::EmbeddedFormatter type.
+    /// The options is captured in the closure and passed to JS on each call.
+    pub fn to_embedded_formatter(&self, options: Value) -> oxc_formatter::EmbeddedFormatter {
+        let format_embedded = Arc::clone(&self.format_embedded);
+        let callback =
+            Arc::new(move |tag_name: &str, code: &str| (format_embedded)(&options, tag_name, code));
+        oxc_formatter::EmbeddedFormatter::new(callback)
+    }
+
+    /// Format non-js file using the JS callback.
+    pub fn format_file(
+        &self,
+        options: &Value,
+        parser_name: &str,
+        file_name: &str,
+        code: &str,
+    ) -> Result<String, String> {
+        (self.format_file)(options, parser_name, file_name, code)
+    }
+}
+
+// ---
+
+// NOTE: These methods are all wrapped by `block_on` to run the async JS calls in a blocking manner.
+
+/// Wrap JS `initExternalFormatter` callback as a normal Rust function.
+#[cfg(feature = "napi")]
+fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFormatterCallback {
+    Arc::new(move |num_threads: usize| {
+        block_on(async {
+            #[expect(clippy::cast_possible_truncation)]
+            let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
+            match status {
+                Ok(promise) => match promise.await {
+                    Ok(languages) => Ok(languages),
+                    Err(err) => Err(format!("JS initExternalFormatter promise rejected: {err}")),
+                },
+                Err(err) => Err(format!(
+                    "Failed to call JS initExternalFormatter callback: {err}"
+                )),
+            }
+        })
+    })
+}
+
+/// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
+#[cfg(feature = "napi")]
+fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallback {
+    Arc::new(move |options: &Value, tag_name: &str, code: &str| {
+        block_on(async {
+            let status = cb
+                .call_async(FnArgs::from((
+                    options.clone(),
+                    tag_name.to_string(),
+                    code.to_string(),
+                )))
+                .await;
+            match status {
+                Ok(promise) => match promise.await {
+                    Ok(formatted_code) => Ok(formatted_code),
+                    Err(err) => Err(format!(
+                        "JS formatter promise rejected for tag '{tag_name}': {err}"
+                    )),
+                },
+                Err(err) => Err(format!(
+                    "Failed to call JS formatting callback for tag '{tag_name}': {err}"
+                )),
+            }
+        })
+    })
+}
+
+/// Wrap JS `formatFile` callback as a normal Rust function.
+#[cfg(feature = "napi")]
+fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
+    Arc::new(
+        move |options: &Value, parser_name: &str, file_name: &str, code: &str| {
+            block_on(async {
+                let status = cb
+                    .call_async(FnArgs::from((
+                        options.clone(),
+                        parser_name.to_string(),
+                        file_name.to_string(),
+                        code.to_string(),
+                    )))
+                    .await;
+                match status {
+                    Ok(promise) => match promise.await {
+                        Ok(formatted_code) => Ok(formatted_code),
+                        Err(err) => Err(format!(
+                            "JS formatFile promise rejected for file: '{file_name}', parser: '{parser_name}': {err}"
+                        )),
+                    },
+                    Err(err) => Err(format!(
+                        "Failed to call JS formatFile callback for file: '{file_name}', parser: '{parser_name}': {err}"
+                    )),
+                }
+            })
+        },
+    )
+}

@@ -1,14 +1,18 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+mod config;
+mod format;
+mod support;
+mod utils;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[cfg(feature = "napi")]
+mod external_formatter;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use config::{
+    ConfigResolver, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
+};
+pub use format::{FormatResult, SourceFormatter};
+pub use support::FormatFileStrategy;
+
+#[cfg(feature = "napi")]
+pub use external_formatter::{
+    ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
+};
