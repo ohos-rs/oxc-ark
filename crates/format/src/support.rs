@@ -154,20 +154,20 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     if YAML_FILENAMES.contains(file_name) {
         return Some("yaml");
     }
-    if let Some(ext) = extension {
-        if YAML_EXTENSIONS.contains(ext) {
-            return Some("yaml");
-        }
+    if let Some(ext) = extension
+        && YAML_EXTENSIONS.contains(ext)
+    {
+        return Some("yaml");
     }
 
     // Markdown and variants
     if MARKDOWN_FILENAMES.contains(file_name) {
         return Some("markdown");
     }
-    if let Some(ext) = extension {
-        if MARKDOWN_EXTENSIONS.contains(ext) {
-            return Some("markdown");
-        }
+    if let Some(ext) = extension
+        && MARKDOWN_EXTENSIONS.contains(ext)
+    {
+        return Some("markdown");
     }
     if extension == Some("mdx") {
         return Some("mdx");
@@ -178,10 +178,10 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     if file_name.ends_with(".component.html") {
         return Some("angular");
     }
-    if let Some(ext) = extension {
-        if HTML_EXTENSIONS.contains(ext) {
-            return Some("html");
-        }
+    if let Some(ext) = extension
+        && HTML_EXTENSIONS.contains(ext)
+    {
+        return Some("html");
     }
     if extension == Some("vue") {
         return Some("vue");
@@ -191,10 +191,10 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     }
 
     // CSS and variants
-    if let Some(ext) = extension {
-        if CSS_EXTENSIONS.contains(ext) {
-            return Some("css");
-        }
+    if let Some(ext) = extension
+        && CSS_EXTENSIONS.contains(ext)
+    {
+        return Some("css");
     }
     if extension == Some("less") {
         return Some("less");

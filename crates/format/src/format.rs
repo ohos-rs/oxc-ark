@@ -148,7 +148,11 @@ impl SourceFormatter {
             .parse();
         if !ret.errors.is_empty() {
             // Return the first error for simplicity
-            return Err(ret.errors.into_iter().next().unwrap());
+            return Err(ret
+                .errors
+                .into_iter()
+                .next()
+                .expect("errors.is_empty() was checked above"));
         }
 
         #[cfg(feature = "napi")]
@@ -247,9 +251,9 @@ impl SourceFormatter {
             }
             #[cfg(not(feature = "sort-package-json"))]
             {
-                return Err(OxcDiagnostic::error(format!(
-                    "sort-package-json feature is required to sort package.json files"
-                )));
+                return Err(OxcDiagnostic::error(
+                    "sort-package-json feature is required to sort package.json files".to_string(),
+                ));
             }
         } else {
             Cow::Borrowed(source_text)

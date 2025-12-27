@@ -45,14 +45,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: ESLint
+      - name: Lint
         run: pnpm lint
 
-      - name: Cargo fmt
-        run: cargo fmt -- --check
+      - name: Cargo fmt check
+        run: pnpm format:check:rust
 
       - name: Clippy
-        run: cargo clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
   build:
     strategy:
@@ -61,43 +61,43 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
-            build: pnpm build --target x86_64-apple-darwin
+            build: cd npm/oxk && pnpm build --target x86_64-apple-darwin
           - host: windows-latest
-            build: pnpm build --target x86_64-pc-windows-msvc
+            build: cd npm/oxk && pnpm build --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
           - host: windows-latest
-            build: pnpm build --target i686-pc-windows-msvc
+            build: cd npm/oxk && pnpm build --target i686-pc-windows-msvc
             target: i686-pc-windows-msvc
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            build: pnpm build --target x86_64-unknown-linux-gnu --use-napi-cross
+            build: cd npm/oxk && pnpm build --target x86_64-unknown-linux-gnu --use-napi-cross
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            build: pnpm build --target x86_64-unknown-linux-musl -x
+            build: cd npm/oxk && pnpm build --target x86_64-unknown-linux-musl -x
           - host: macos-latest
             target: aarch64-apple-darwin
-            build: pnpm build --target aarch64-apple-darwin
+            build: cd npm/oxk && pnpm build --target aarch64-apple-darwin
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            build: pnpm build --target aarch64-unknown-linux-gnu --use-napi-cross
+            build: cd npm/oxk && pnpm build --target aarch64-unknown-linux-gnu --use-napi-cross
           - host: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            build: pnpm build --target armv7-unknown-linux-gnueabihf --use-napi-cross
+            build: cd npm/oxk && pnpm build --target armv7-unknown-linux-gnueabihf --use-napi-cross
           - host: ubuntu-latest
             target: aarch64-linux-android
-            build: pnpm build --target aarch64-linux-android
+            build: cd npm/oxk && pnpm build --target aarch64-linux-android
           - host: ubuntu-latest
             target: armv7-linux-androideabi
-            build: pnpm build --target armv7-linux-androideabi
+            build: cd npm/oxk && pnpm build --target armv7-linux-androideabi
           - host: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            build: pnpm build --target aarch64-unknown-linux-musl -x
+            build: cd npm/oxk && pnpm build --target aarch64-unknown-linux-musl -x
           - host: windows-latest
             target: aarch64-pc-windows-msvc
-            build: pnpm build --target aarch64-pc-windows-msvc
+            build: cd npm/oxk && pnpm build --target aarch64-pc-windows-msvc
           - host: ubuntu-latest
             target: wasm32-wasip1-threads
-            build: pnpm build --target wasm32-wasip1-threads
+            build: cd npm/oxk && pnpm build --target wasm32-wasip1-threads
     name: stable - ${{ matrix.settings.target }} - node@20
     runs-on: ${{ matrix.settings.host }}
     steps:
@@ -124,6 +124,7 @@ jobs:
             ~/.napi-rs
             .cargo-cache
             target/
+            npm/oxk/target/
           key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
       - uses: mlugg/setup-zig@v2
         if: ${{ contains(matrix.settings.target, 'musl') }}
@@ -157,7 +158,7 @@ jobs:
         if: matrix.settings.target != 'wasm32-wasip1-threads'
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: '*.node'
+          path: npm/oxk/*.node
           if-no-files-found: error
 
       - name: Upload artifact
@@ -165,7 +166,7 @@ jobs:
         if: matrix.settings.target == 'wasm32-wasip1-threads'
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: '*.wasm'
+          path: npm/oxk/*.wasm
           if-no-files-found: error
   build-freebsd:
     runs-on: ubuntu-latest
@@ -204,14 +205,17 @@ jobs:
             env
             freebsd-version
             pnpm install
+            cd npm/oxk
             pnpm build
+            cd ../..
             rm -rf node_modules
             rm -rf target
+            rm -rf npm/oxk/target
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: bindings-freebsd
-          path: ${{ env.APP_NAME }}.*.node
+          path: npm/oxk/${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   test-macOS-windows-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
@@ -250,9 +254,9 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: .
+          path: npm/oxk
       - name: List packages
-        run: ls -R .
+        run: ls -R npm/oxk
         shell: bash
       - name: Test bindings
         run: pnpm test
@@ -309,9 +313,9 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: bindings-${{ matrix.target }}
-          path: .
+          path: npm/oxk
       - name: List packages
-        run: ls -R .
+        run: ls -R npm/oxk
         shell: bash
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -325,7 +329,7 @@ jobs:
         with:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: -v ${{ steps.docker.outputs.PNPM_STORE_PATH }}:${{ steps.docker.outputs.PNPM_STORE_PATH }} -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
-          run: npm run test
+          run: pnpm test
   test-wasi:
     name: Test WASI target
     needs:
@@ -346,9 +350,9 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: bindings-wasm32-wasip1-threads
-          path: .
+          path: npm/oxk
       - name: List packages
-        run: ls -R .
+        run: ls -R npm/oxk
         shell: bash
       - name: Test bindings
         run: pnpm test
@@ -379,14 +383,15 @@ jobs:
         with:
           path: artifacts
       - name: create npm dirs
-        run: pnpm napi create-npm-dirs
+        run: cd npm/oxk && pnpm napi create-npm-dirs
       - name: Move artifacts
-        run: pnpm artifacts
+        run: cd npm/oxk && pnpm artifacts
       - name: List packages
-        run: ls -R ./npm
+        run: ls -R npm/oxk/npm
         shell: bash
       - name: Publish
         run: |
+          cd npm/oxk
           npm config set provenance true
           if git log -1 --pretty=%B | grep "^v\?[0-9]\+\.[0-9]\+\.[0-9]\+$";
           then

@@ -20,10 +20,7 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
     let format_options = args.clone();
 
     if patterns.is_empty() {
-        return Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Missing file pattern",
-        )));
+        return Err(Box::new(std::io::Error::other("Missing file pattern")));
     }
 
     // Collect matching files (handles both exact paths and glob patterns)
@@ -36,8 +33,7 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
     }
 
     if files.is_empty() {
-        return Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        return Err(Box::new(std::io::Error::other(
             "No files matched the provided patterns (after excludes)",
         )));
     }
@@ -48,10 +44,10 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
         .enable_all()
         .build()
         .map_err(|e| {
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Failed to create tokio runtime: {}", e),
-            )) as Box<dyn std::error::Error>
+            Box::new(std::io::Error::other(format!(
+                "Failed to create tokio runtime: {}",
+                e
+            ))) as Box<dyn std::error::Error>
         })?;
 
     // Execute async code in the runtime
@@ -133,10 +129,7 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
             } else {
                 err
             };
-            return Err(
-                Box::new(std::io::Error::new(std::io::ErrorKind::Other, error_msg))
-                    as Box<dyn std::error::Error>,
-            );
+            return Err(Box::new(std::io::Error::other(error_msg)) as Box<dyn std::error::Error>);
         }
 
         Ok(())
@@ -220,7 +213,7 @@ fn to_absolute_pattern(pattern: &str) -> Result<String, Box<dyn std::error::Erro
 
 fn determine_root(absolute_pattern: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
     Ok(
-        if let Some(wildcard_pos) = absolute_pattern.find(|c| matches!(c, '*' | '?' | '{' | '[')) {
+        if let Some(wildcard_pos) = absolute_pattern.find(['*', '?', '{', '[']) {
             let prefix = Path::new(&absolute_pattern[..wildcard_pos]);
             let mut current = prefix.to_path_buf();
             while !current.exists() || !current.is_dir() {
@@ -239,7 +232,7 @@ fn determine_root(absolute_pattern: &str) -> Result<PathBuf, Box<dyn std::error:
             }
             path.parent()
                 .map(|p| p.to_path_buf())
-                .unwrap_or_else(|| env::current_dir().unwrap())
+                .unwrap_or_else(|| env::current_dir().expect("Failed to get current directory"))
         },
     )
 }
@@ -254,12 +247,7 @@ fn normalize_path(path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
                 env::current_dir().map(|cwd| cwd.join(path))
             }
         })
-        .map_err(|e| {
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Failed to normalize path: {}", e),
-            )
-        })?)
+        .map_err(|e| std::io::Error::other(format!("Failed to normalize path: {}", e)))?)
 }
 
 /// Format a single file as a tokio task
@@ -409,9 +397,7 @@ async fn format_file_async(
     })
     .await
     .map_err(|e| format!("Task join error: {}", e))?
-    .map_err(|e| {
-        Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)) as Box<dyn std::error::Error>
-    })?;
+    .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error>)?;
 
     // Write back to the actual path using async I/O
     tokio::fs::write(&actual_path, formatted_code)
@@ -476,7 +462,7 @@ struct MyComponent {
 
         let result = format_code("test.ets", source);
         assert!(result.is_ok(), "ArkTS file should format successfully");
-        let formatted = result.unwrap();
+        let formatted = result.expect("Format should succeed in test");
         assert!(!formatted.is_empty(), "Formatted code should not be empty");
         // Verify the formatted code contains key ArkTS elements
         assert!(
