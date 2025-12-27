@@ -24,7 +24,7 @@
     "browser.js"
   ],
   "napi": {
-    "binaryName": "@ohos-rs/oxk",
+    "binaryName": "oxk",
     "targets": [
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",

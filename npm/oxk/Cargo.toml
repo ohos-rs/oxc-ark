@@ -1,7 +1,7 @@
 [package]
 authors = ["ohos-rs"]
 edition = "2021"
-name = "oxk"
+name = "oxk-napi"
 version = "0.1.0"
 description = "NAPI bindings for oxk formatter"
 license.workspace = true
