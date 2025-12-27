@@ -1,12 +1,12 @@
 {
   "name": "@ohos-rs/oxk",
   "version": "0.0.1",
-  "description": "Template project for writing node package with napi-rs",
+  "description": "An ArkTS/ArkUI tool based on oxc",
   "main": "index.js",
   "types": "index.d.ts",
   "browser": "browser.js",
   "repository": {
-    "url": "git+ssh://git@github.com/napi-rs/package-template-pnpm.git",
+    "url": "git+git@github.com:ohos-rs/oxc-ark.git",
     "type": "git"
   },
   "license": "MIT",
@@ -24,7 +24,7 @@
     "browser.js"
   ],
   "napi": {
-    "binaryName": "package-template",
+    "binaryName": "@ohos-rs/oxk",
     "targets": [
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",

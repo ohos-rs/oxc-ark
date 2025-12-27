@@ -71,7 +71,7 @@ pub async fn format(
     let init_result = tokio::task::block_in_place(|| ext_fmt.init(num_of_threads));
     #[cfg(target_family = "wasm")]
     let init_result = ext_fmt.init(num_of_threads);
-    
+
     match init_result {
       Ok(_) => {}
       Err(err) => {
@@ -116,10 +116,11 @@ pub async fn format(
 
   // Format the file
   #[cfg(not(target_family = "wasm"))]
-  let format_result = tokio::task::block_in_place(|| formatter.format(&strategy, &source_text, resolved_options));
+  let format_result =
+    tokio::task::block_in_place(|| formatter.format(&strategy, &source_text, resolved_options));
   #[cfg(target_family = "wasm")]
   let format_result = formatter.format(&strategy, &source_text, resolved_options);
-  
+
   match format_result {
     CoreFormatResult::Success { code, .. } => FormatResult {
       code,
