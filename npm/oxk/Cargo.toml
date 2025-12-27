@@ -13,12 +13,20 @@ crate-type = ["cdylib"]
 napi = { workspace = true }
 napi-derive = { workspace = true }
 serde_json = { workspace = true }
-tokio = { workspace = true }
 format = { path = "../../crates/format", features = ["napi"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio = { workspace = true }
 
 # WASM target only supports specific Tokio features
 [target.'cfg(target_family = "wasm")'.dependencies]
-tokio = { version = "1", features = ["sync", "macros", "io-util", "rt", "time"] }
+tokio = { version = "1", features = [
+  "sync",
+  "macros",
+  "io-util",
+  "rt",
+  "time",
+] }
 
 [build-dependencies]
 napi-build = { workspace = true }
