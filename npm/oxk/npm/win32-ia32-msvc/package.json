@@ -1,0 +1,35 @@
+{
+  "name": "@ohos-rs/oxk-win32-ia32-msvc",
+  "version": "0.0.1",
+  "cpu": [
+    "ia32"
+  ],
+  "main": "oxk.win32-ia32-msvc.node",
+  "files": [
+    "oxk.win32-ia32-msvc.node"
+  ],
+  "description": "An ArkTS/ArkUI tool based on oxc",
+  "keywords": [
+    "napi-rs",
+    "NAPI",
+    "N-API",
+    "Rust",
+    "node-addon",
+    "node-addon-api"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": {
+    "url": "git+git@github.com:ohos-rs/oxc-ark.git",
+    "type": "git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "os": [
+    "win32"
+  ]
+}

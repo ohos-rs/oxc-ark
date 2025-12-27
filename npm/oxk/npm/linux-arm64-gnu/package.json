@@ -1,0 +1,38 @@
+{
+  "name": "@ohos-rs/oxk-linux-arm64-gnu",
+  "version": "0.0.1",
+  "cpu": [
+    "arm64"
+  ],
+  "main": "oxk.linux-arm64-gnu.node",
+  "files": [
+    "oxk.linux-arm64-gnu.node"
+  ],
+  "description": "An ArkTS/ArkUI tool based on oxc",
+  "keywords": [
+    "napi-rs",
+    "NAPI",
+    "N-API",
+    "Rust",
+    "node-addon",
+    "node-addon-api"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": {
+    "url": "git+git@github.com:ohos-rs/oxc-ark.git",
+    "type": "git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "os": [
+    "linux"
+  ],
+  "libc": [
+    "glibc"
+  ]
+}

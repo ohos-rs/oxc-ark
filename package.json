@@ -1,0 +1,62 @@
+{
+  "name": "oxc-ark",
+  "version": "1.0.0",
+  "description": "An ArkTS/ArkUI tool based on oxc",
+  "private": true,
+  "packageManager": "pnpm@10.26.2",
+  "scripts": {
+    "test": "pnpm run test:rust && pnpm run test:npm",
+    "test:rust": "cargo test --workspace --lib --bins",
+    "test:rust:oxk": "cargo test -p oxk",
+    "test:rust:format": "cargo test -p format --lib",
+    "test:npm": "pnpm --filter @ohos-rs/oxk test",
+    "test:all": "pnpm run test:rust && pnpm run test:npm",
+    "build": "pnpm run build:rust && pnpm run build:npm",
+    "build:rust": "cargo build --workspace",
+    "build:npm": "pnpm --filter @ohos-rs/oxk build:debug",
+    "build:release": "cargo build --workspace --release && pnpm --filter @ohos-rs/oxk build",
+    "check": "cargo check --workspace && pnpm --filter @ohos-rs/oxk build:debug",
+    "format": "run-p format:rust format:prettier format:toml",
+    "format:rust": "cargo fmt --all",
+    "format:prettier": "pnpm --filter @ohos-rs/oxk format:prettier",
+    "format:toml": "pnpm --filter @ohos-rs/oxk format:toml",
+    "format:check": "run-p format:check:rust format:check:prettier format:check:toml",
+    "format:check:rust": "cargo fmt --all -- --check",
+    "format:check:prettier": "pnpm --filter @ohos-rs/oxk exec -- prettier . --check",
+    "format:check:toml": "pnpm --filter @ohos-rs/oxk exec -- taplo format --check",
+    "fmt": "pnpm run format",
+    "lint": "cargo clippy --workspace -- -D warnings && pnpm --filter @ohos-rs/oxk lint",
+    "lint:fix": "pnpm --filter @ohos-rs/oxk lint --fix"
+  },
+  "keywords": [
+    "arkts",
+    "arkui",
+    "formatter",
+    "oxc"
+  ],
+  "author": "richerfu<southsouth0929@foxmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.6.2",
+    "@taplo/cli": "^0.7.0"
+  },
+  "lint-staged": {
+    "*.@(js|ts|tsx)": [
+      "oxlint --fix"
+    ],
+    "*.@(js|ts|tsx|yml|yaml|md|json)": [
+      "prettier --write"
+    ],
+    "*.toml": [
+      "taplo format"
+    ]
+  },
+  "prettier": {
+    "printWidth": 120,
+    "semi": false,
+    "trailingComma": "all",
+    "singleQuote": true,
+    "arrowParens": "always"
+  }
+}
