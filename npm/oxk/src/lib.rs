@@ -67,7 +67,12 @@ pub async fn format(
 
   // Initialize external formatter if provided
   if let Some(ref ext_fmt) = external_formatter {
-    match tokio::task::block_in_place(|| ext_fmt.init(num_of_threads)) {
+    #[cfg(not(target_family = "wasm"))]
+    let init_result = tokio::task::block_in_place(|| ext_fmt.init(num_of_threads));
+    #[cfg(target_family = "wasm")]
+    let init_result = ext_fmt.init(num_of_threads);
+    
+    match init_result {
       Ok(_) => {}
       Err(err) => {
         return FormatResult {
@@ -110,8 +115,12 @@ pub async fn format(
   let formatter = SourceFormatter::new(num_of_threads).with_external_formatter(external_formatter);
 
   // Format the file
-  match tokio::task::block_in_place(|| formatter.format(&strategy, &source_text, resolved_options))
-  {
+  #[cfg(not(target_family = "wasm"))]
+  let format_result = tokio::task::block_in_place(|| formatter.format(&strategy, &source_text, resolved_options));
+  #[cfg(target_family = "wasm")]
+  let format_result = formatter.format(&strategy, &source_text, resolved_options);
+  
+  match format_result {
     CoreFormatResult::Success { code, .. } => FormatResult {
       code,
       errors: vec![],
