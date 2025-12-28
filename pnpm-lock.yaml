@@ -19,6 +19,10 @@ importers:
         version: 3.7.4
 
   npm/oxk:
+    dependencies:
+      prettier:
+        specifier: ^3.7.4
+        version: 3.7.4
     devDependencies:
       '@emnapi/core':
         specifier: ^1.5.0

@@ -26,6 +26,7 @@ tokio = { version = "1", features = ["full"] }
 phf = { version = "0.11", features = ["macros"] }
 simdutf8 = "0.1"
 json-strip-comments = "3.0"
+json-five = "0.2"
 oxc-toml = "0.14"
 bpaf = "0.9"
 owo-colors = "4"

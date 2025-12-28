@@ -20,6 +20,6 @@ bpaf = { workspace = true }
 owo-colors = { workspace = true }
 globset = { workspace = true }
 walkdir = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 futures = { workspace = true }
 serde_json = { workspace = true }

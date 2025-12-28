@@ -5,6 +5,7 @@ use phf::phf_set;
 use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
 
+#[derive(Debug)]
 pub enum FormatFileStrategy {
     OxcFormatter {
         path: PathBuf,
@@ -12,6 +13,11 @@ pub enum FormatFileStrategy {
     },
     /// TOML files formatted by oxc_toml (Pure Rust).
     OxfmtToml { path: PathBuf },
+    /// JSON/JSON5/JSONC files formatted by Rust formatter (Pure Rust).
+    OxfmtJson {
+        path: PathBuf,
+        json_type: JsonType,
+    },
     ExternalFormatter {
         path: PathBuf,
         #[cfg_attr(not(feature = "napi"), expect(dead_code))]
@@ -23,6 +29,17 @@ pub enum FormatFileStrategy {
         #[cfg_attr(not(feature = "napi"), expect(dead_code))]
         parser_name: &'static str,
     },
+}
+
+/// JSON file type for formatting
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum JsonType {
+    /// Standard JSON
+    Json,
+    /// JSON5 (supports comments, trailing commas, etc.)
+    Json5,
+    /// JSONC (JSON with comments)
+    Jsonc,
 }
 
 impl TryFrom<PathBuf> for FormatFileStrategy {
@@ -49,6 +66,12 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
             return Ok(Self::OxfmtToml { path });
         }
 
+        // Then JSON/JSON5/JSONC files (before external formatter)
+        let extension = path.extension().and_then(|ext| ext.to_str());
+        if let Some(json_type) = get_json_type(file_name, extension) {
+            return Ok(Self::OxfmtJson { path, json_type });
+        }
+
         // Then external formatter files
         // `package.json` is special: sorted then formatted
         if file_name == "package.json" {
@@ -58,7 +81,6 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
             });
         }
 
-        let extension = path.extension().and_then(|ext| ext.to_str());
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
             return Ok(Self::ExternalFormatter { path, parser_name });
         }
@@ -70,13 +92,17 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 impl FormatFileStrategy {
     #[cfg(not(feature = "napi"))]
     pub fn can_format_without_external(&self) -> bool {
-        matches!(self, Self::OxcFormatter { .. } | Self::OxfmtToml { .. })
+        matches!(
+            self,
+            Self::OxcFormatter { .. } | Self::OxfmtToml { .. } | Self::OxfmtJson { .. }
+        )
     }
 
     pub fn path(&self) -> &Path {
         match self {
             Self::OxcFormatter { path, .. }
             | Self::OxfmtToml { path }
+            | Self::OxfmtJson { path, .. }
             | Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
@@ -124,6 +150,43 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
     "Pipfile",
     "Cargo.toml.orig",
 };
+
+// ---
+
+/// Returns JSON type for JSON/JSON5/JSONC files.
+/// Returns `None` if this is not a JSON file, or if it should be handled by external formatter (e.g., package.json).
+fn get_json_type(file_name: &str, extension: Option<&str>) -> Option<JsonType> {
+    // Skip package.json - it's handled separately by ExternalFormatterPackageJson
+    if file_name == "package.json" {
+        return None;
+    }
+
+    // Check JSON5 files first (by extension)
+    if extension == Some("json5") {
+        return Some(JsonType::Json5);
+    }
+
+    // Check JSONC files (by extension)
+    if let Some(ext) = extension {
+        if JSONC_EXTENSIONS.contains(ext) {
+            return Some(JsonType::Jsonc);
+        }
+    }
+
+    // Check standard JSON files (by extension)
+    if let Some(ext) = extension {
+        if JSON_EXTENSIONS.contains(ext) {
+            return Some(JsonType::Json);
+        }
+    }
+
+    // Check JSON filenames
+    if JSON_FILENAMES.contains(file_name) {
+        return Some(JsonType::Json);
+    }
+
+    None
+}
 
 // ---
 

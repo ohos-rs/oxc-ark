@@ -21,8 +21,22 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "browser.js"
+    "browser.js",
+    "libs",
+    "format.js",
+    "format.d.ts",
+    "index-wrapper.ts"
   ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./format": {
+      "types": "./format.d.ts",
+      "default": "./format.js"
+    }
+  },
   "napi": {
     "binaryName": "oxk",
     "targets": [
@@ -62,6 +76,9 @@
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
     "version": "napi version"
+  },
+  "dependencies": {
+    "prettier": "^3.7.4"
   },
   "devDependencies": {
     "@emnapi/core": "^1.5.0",
