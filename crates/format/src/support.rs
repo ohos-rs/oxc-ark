@@ -164,17 +164,17 @@ fn get_json_type(file_name: &str, extension: Option<&str>) -> Option<JsonType> {
     }
 
     // Check JSONC files (by extension)
-    if let Some(ext) = extension {
-        if JSONC_EXTENSIONS.contains(ext) {
-            return Some(JsonType::Jsonc);
-        }
+    if let Some(ext) = extension
+        && JSONC_EXTENSIONS.contains(ext)
+    {
+        return Some(JsonType::Jsonc);
     }
 
     // Check standard JSON files (by extension)
-    if let Some(ext) = extension {
-        if JSON_EXTENSIONS.contains(ext) {
-            return Some(JsonType::Json);
-        }
+    if let Some(ext) = extension
+        && JSON_EXTENSIONS.contains(ext)
+    {
+        return Some(JsonType::Json);
     }
 
     // Check JSON filenames
