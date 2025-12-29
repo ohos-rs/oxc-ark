@@ -7,7 +7,8 @@ mod utils;
 mod external_formatter;
 
 pub use config::{
-    ConfigResolver, JsonFormatterOptions, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
+    ConfigResolver, JsonFormatterOptions, ResolvedOptions, resolve_editorconfig_path,
+    resolve_oxfmtrc_path,
 };
 pub use format::{FormatResult, SourceFormatter};
 pub use support::{FormatFileStrategy, JsonType};

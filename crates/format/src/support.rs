@@ -14,10 +14,7 @@ pub enum FormatFileStrategy {
     /// TOML files formatted by oxc_toml (Pure Rust).
     OxfmtToml { path: PathBuf },
     /// JSON/JSON5/JSONC files formatted by Rust formatter (Pure Rust).
-    OxfmtJson {
-        path: PathBuf,
-        json_type: JsonType,
-    },
+    OxfmtJson { path: PathBuf, json_type: JsonType },
     ExternalFormatter {
         path: PathBuf,
         #[cfg_attr(not(feature = "napi"), expect(dead_code))]

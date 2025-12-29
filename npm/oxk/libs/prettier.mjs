@@ -1,5 +1,5 @@
 // Lazy load Prettier
-let prettierCache;
+let prettierCache
 
 /**
  * TODO: Plugins support
@@ -10,24 +10,24 @@ let prettierCache;
  * @returns {Promise<string[]>} Array of loaded plugin's `languages` info
  */
 export async function resolvePlugins() {
-  return [];
+  return []
 }
 
 // ---
 
 const TAG_TO_PARSER = {
   // CSS
-  css: "css",
-  styled: "css",
+  css: 'css',
+  styled: 'css',
   // GraphQL
-  gql: "graphql",
-  graphql: "graphql",
+  gql: 'graphql',
+  graphql: 'graphql',
   // HTML
-  html: "html",
+  html: 'html',
   // Markdown
-  md: "markdown",
-  markdown: "markdown",
-};
+  md: 'markdown',
+  markdown: 'markdown',
+}
 
 /**
  * Format xxx-in-js code snippets
@@ -40,21 +40,21 @@ const TAG_TO_PARSER = {
  */
 export async function formatEmbeddedCode({ code, tagName, options }) {
   // TODO: This should be resolved in Rust side
-  const parserName = TAG_TO_PARSER[tagName];
+  const parserName = TAG_TO_PARSER[tagName]
 
   // Unknown tag, return original code
-  if (!parserName) return code;
+  if (!parserName) return code
 
   if (!prettierCache) {
-    prettierCache = await import("prettier");
+    prettierCache = await import('prettier')
   }
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.parser = parserName;
+  options.parser = parserName
   return prettierCache
     .format(code, options)
     .then((formatted) => formatted.trimEnd())
-    .catch(() => code);
+    .catch(() => code)
 }
 
 /**
@@ -69,14 +69,13 @@ export async function formatEmbeddedCode({ code, tagName, options }) {
  */
 export async function formatFile({ code, parserName, fileName, options }) {
   if (!prettierCache) {
-    prettierCache = await import("prettier");
+    prettierCache = await import('prettier')
   }
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   // We specify `parser` to skip parser inference for performance
-  options.parser = parserName;
+  options.parser = parserName
   // But some plugins rely on `filepath`, so we set it too
-  options.filepath = fileName;
-  return prettierCache.format(code, options);
+  options.filepath = fileName
+  return prettierCache.format(code, options)
 }
-

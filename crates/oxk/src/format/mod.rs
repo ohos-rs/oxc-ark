@@ -307,54 +307,57 @@ async fn format_file_async(
         FormatFileStrategy::OxfmtToml { .. } | FormatFileStrategy::OxfmtJson { .. } => {
             // Build JSON config from command line arguments
             let mut config_value = Value::Object(serde_json::Map::new());
-        if let Some(v) = format_args.indent_style {
-            config_value["indentStyle"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.indent_width {
-            config_value["indentWidth"] = Value::Number(v.value().into());
-        }
-        if let Some(v) = format_args.line_ending {
-            config_value["lineEnding"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.line_width {
-            config_value["lineWidth"] = Value::Number(v.value().into());
-        }
-        if let Some(v) = format_args.quote_style {
-            config_value["quoteStyle"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.jsx_quote_style {
-            config_value["jsxQuoteStyle"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.trailing_commas {
-            config_value["trailingCommas"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.semicolons {
-            config_value["semicolons"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.arrow_parentheses {
-            config_value["arrowParentheses"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.bracket_spacing {
-            config_value["bracketSpacing"] = Value::Bool(v.value());
-        }
-        if let Some(v) = format_args.bracket_same_line {
-            config_value["bracketSameLine"] = Value::Bool(v.value());
-        }
-        if let Some(v) = format_args.attribute_position {
-            config_value["attributePosition"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.expand {
-            config_value["expand"] = Value::String(format!("{}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.experimental_operator_position {
-            config_value["experimentalOperatorPosition"] = Value::String(format!("{}", v).to_lowercase());
-        }
-        if let Some(v) = format_args.experimental_ternaries {
-            config_value["experimentalTernaries"] = Value::Bool(v);
-        }
-        if let Some(v) = format_args.embedded_language_formatting {
-            config_value["embeddedLanguageFormatting"] = Value::String(format!("{:?}", v).to_lowercase());
-        }
+            if let Some(v) = format_args.indent_style {
+                config_value["indentStyle"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.indent_width {
+                config_value["indentWidth"] = Value::Number(v.value().into());
+            }
+            if let Some(v) = format_args.line_ending {
+                config_value["lineEnding"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.line_width {
+                config_value["lineWidth"] = Value::Number(v.value().into());
+            }
+            if let Some(v) = format_args.quote_style {
+                config_value["quoteStyle"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.jsx_quote_style {
+                config_value["jsxQuoteStyle"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.trailing_commas {
+                config_value["trailingCommas"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.semicolons {
+                config_value["semicolons"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.arrow_parentheses {
+                config_value["arrowParentheses"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.bracket_spacing {
+                config_value["bracketSpacing"] = Value::Bool(v.value());
+            }
+            if let Some(v) = format_args.bracket_same_line {
+                config_value["bracketSameLine"] = Value::Bool(v.value());
+            }
+            if let Some(v) = format_args.attribute_position {
+                config_value["attributePosition"] =
+                    Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.expand {
+                config_value["expand"] = Value::String(format!("{}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.experimental_operator_position {
+                config_value["experimentalOperatorPosition"] =
+                    Value::String(format!("{}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.experimental_ternaries {
+                config_value["experimentalTernaries"] = Value::Bool(v);
+            }
+            if let Some(v) = format_args.embedded_language_formatting {
+                config_value["embeddedLanguageFormatting"] =
+                    Value::String(format!("{:?}", v).to_lowercase());
+            }
 
             // Use ConfigResolver to resolve options for TOML files
             let mut config_resolver = ConfigResolver::from_value(config_value);
@@ -366,54 +369,54 @@ async fn format_file_async(
         FormatFileStrategy::OxcFormatter { .. } => {
             // For JS/TS files, build FormatOptions directly
             let mut option = FormatOptions::default();
-        if let Some(v) = format_args.indent_style {
-            option.indent_style = v;
-        }
-        if let Some(v) = format_args.indent_width {
-            option.indent_width = v;
-        }
-        if let Some(v) = format_args.line_ending {
-            option.line_ending = v;
-        }
-        if let Some(v) = format_args.line_width {
-            option.line_width = v;
-        }
-        if let Some(v) = format_args.quote_style {
-            option.quote_style = v;
-        }
-        if let Some(v) = format_args.jsx_quote_style {
-            option.jsx_quote_style = v;
-        }
-        if let Some(v) = format_args.trailing_commas {
-            option.trailing_commas = v;
-        }
-        if let Some(v) = format_args.semicolons {
-            option.semicolons = v;
-        }
-        if let Some(v) = format_args.arrow_parentheses {
-            option.arrow_parentheses = v;
-        }
-        if let Some(v) = format_args.bracket_spacing {
-            option.bracket_spacing = v;
-        }
-        if let Some(v) = format_args.bracket_same_line {
-            option.bracket_same_line = v;
-        }
-        if let Some(v) = format_args.attribute_position {
-            option.attribute_position = v;
-        }
-        if let Some(v) = format_args.expand {
-            option.expand = v;
-        }
-        if let Some(v) = format_args.experimental_operator_position {
-            option.experimental_operator_position = v;
-        }
-        if let Some(v) = format_args.experimental_ternaries {
-            option.experimental_ternaries = v;
-        }
-        if let Some(v) = format_args.embedded_language_formatting {
-            option.embedded_language_formatting = v;
-        }
+            if let Some(v) = format_args.indent_style {
+                option.indent_style = v;
+            }
+            if let Some(v) = format_args.indent_width {
+                option.indent_width = v;
+            }
+            if let Some(v) = format_args.line_ending {
+                option.line_ending = v;
+            }
+            if let Some(v) = format_args.line_width {
+                option.line_width = v;
+            }
+            if let Some(v) = format_args.quote_style {
+                option.quote_style = v;
+            }
+            if let Some(v) = format_args.jsx_quote_style {
+                option.jsx_quote_style = v;
+            }
+            if let Some(v) = format_args.trailing_commas {
+                option.trailing_commas = v;
+            }
+            if let Some(v) = format_args.semicolons {
+                option.semicolons = v;
+            }
+            if let Some(v) = format_args.arrow_parentheses {
+                option.arrow_parentheses = v;
+            }
+            if let Some(v) = format_args.bracket_spacing {
+                option.bracket_spacing = v;
+            }
+            if let Some(v) = format_args.bracket_same_line {
+                option.bracket_same_line = v;
+            }
+            if let Some(v) = format_args.attribute_position {
+                option.attribute_position = v;
+            }
+            if let Some(v) = format_args.expand {
+                option.expand = v;
+            }
+            if let Some(v) = format_args.experimental_operator_position {
+                option.experimental_operator_position = v;
+            }
+            if let Some(v) = format_args.experimental_ternaries {
+                option.experimental_ternaries = v;
+            }
+            if let Some(v) = format_args.embedded_language_formatting {
+                option.embedded_language_formatting = v;
+            }
 
             ResolvedOptions::OxcFormatter {
                 format_options: option,
@@ -421,7 +424,8 @@ async fn format_file_async(
                 insert_final_newline: true,
             }
         }
-            FormatFileStrategy::ExternalFormatter { parser_name, .. } | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. } => {
+        FormatFileStrategy::ExternalFormatter { parser_name, .. }
+        | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. } => {
             // ExternalFormatter files (like yaml, markdown) require napi feature for formatting
             // oxk CLI doesn't have napi feature, so we give a clear error message
             return Err(format!(
@@ -446,10 +450,12 @@ async fn format_file_async(
         FormatFileStrategy::OxfmtToml { path } => {
             FormatFileStrategy::OxfmtToml { path: path.clone() }
         }
-        FormatFileStrategy::OxfmtJson { path, json_type } => {
-            FormatFileStrategy::OxfmtJson { path: path.clone(), json_type: *json_type }
-        }
-        FormatFileStrategy::ExternalFormatter { .. } | FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
+        FormatFileStrategy::OxfmtJson { path, json_type } => FormatFileStrategy::OxfmtJson {
+            path: path.clone(),
+            json_type: *json_type,
+        },
+        FormatFileStrategy::ExternalFormatter { .. }
+        | FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
             // This should never happen as we check earlier in resolved_options match
             unreachable!("ExternalFormatter should be rejected earlier")
         }
@@ -599,10 +605,17 @@ struct Index {
         match strategy {
             Ok(FormatFileStrategy::OxfmtJson { json_type, .. }) => {
                 use format::JsonType;
-                assert_eq!(json_type, JsonType::Json5, "JSON5 files should use Json5 type");
+                assert_eq!(
+                    json_type,
+                    JsonType::Json5,
+                    "JSON5 files should use Json5 type"
+                );
             }
             Ok(other) => {
-                panic!("JSON5 files should be recognized as OxfmtJson, got: {:?}", format!("{:?}", other));
+                panic!(
+                    "JSON5 files should be recognized as OxfmtJson, got: {:?}",
+                    format!("{:?}", other)
+                );
             }
             Err(_) => {
                 panic!("JSON5 files should be recognized");
@@ -627,8 +640,8 @@ struct Index {
 
         // Test that JSON5 files can be formatted using Rust formatter
         let path = PathBuf::from("package.json5");
-        let strategy = FormatFileStrategy::try_from(path.clone())
-            .expect("JSON5 file should be recognized");
+        let strategy =
+            FormatFileStrategy::try_from(path.clone()).expect("JSON5 file should be recognized");
 
         // Verify it's OxfmtJson
         match &strategy {
@@ -660,7 +673,10 @@ struct Index {
                 assert!(code.contains("test"), "Should contain 'test'");
             }
             format::FormatResult::Error(diagnostics) => {
-                panic!("JSON5 formatting should succeed, got errors: {:?}", diagnostics);
+                panic!(
+                    "JSON5 formatting should succeed, got errors: {:?}",
+                    diagnostics
+                );
             }
         }
     }
@@ -670,8 +686,8 @@ struct Index {
         let json_content = r#"{"name":"test","version":"1.0.0","description":"Test package"}"#;
 
         let path = PathBuf::from("test.json");
-        let strategy = FormatFileStrategy::try_from(path.clone())
-            .expect("JSON file should be recognized");
+        let strategy =
+            FormatFileStrategy::try_from(path.clone()).expect("JSON file should be recognized");
 
         // Verify it's OxfmtJson
         match &strategy {
@@ -701,7 +717,10 @@ struct Index {
                 assert!(code.contains("name"), "Should contain 'name'");
             }
             format::FormatResult::Error(diagnostics) => {
-                panic!("JSON formatting should succeed, got errors: {:?}", diagnostics);
+                panic!(
+                    "JSON formatting should succeed, got errors: {:?}",
+                    diagnostics
+                );
             }
         }
     }
@@ -717,8 +736,8 @@ struct Index {
 }"#;
 
         let path = PathBuf::from("test.jsonc");
-        let strategy = FormatFileStrategy::try_from(path.clone())
-            .expect("JSONC file should be recognized");
+        let strategy =
+            FormatFileStrategy::try_from(path.clone()).expect("JSONC file should be recognized");
 
         // Verify it's OxfmtJson
         match &strategy {
@@ -746,12 +765,21 @@ struct Index {
             format::FormatResult::Success { code, .. } => {
                 assert!(!code.is_empty(), "Formatted JSONC should not be empty");
                 // Comments should be stripped
-                assert!(!code.contains("//"), "Comments should be stripped from JSONC");
-                assert!(!code.contains("/*"), "Comments should be stripped from JSONC");
+                assert!(
+                    !code.contains("//"),
+                    "Comments should be stripped from JSONC"
+                );
+                assert!(
+                    !code.contains("/*"),
+                    "Comments should be stripped from JSONC"
+                );
                 assert!(code.contains("name"), "Should contain 'name'");
             }
             format::FormatResult::Error(diagnostics) => {
-                panic!("JSONC formatting should succeed, got errors: {:?}", diagnostics);
+                panic!(
+                    "JSONC formatting should succeed, got errors: {:?}",
+                    diagnostics
+                );
             }
         }
     }

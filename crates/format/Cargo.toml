@@ -17,7 +17,7 @@ serde_json = { workspace = true }
 phf = { workspace = true }
 simdutf8 = { workspace = true }
 json-strip-comments = { workspace = true }
-json-five = { workspace = true }
+json5format = { workspace = true }
 
 [dependencies.sort-package-json]
 version = "0.0"

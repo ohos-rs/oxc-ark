@@ -9,9 +9,9 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 use serde_json::Value;
 
-use super::{FormatFileStrategy, ResolvedOptions};
 use super::config::JsonFormatterOptions;
 use super::support::JsonType;
+use super::{FormatFileStrategy, ResolvedOptions};
 
 #[cfg(all(feature = "napi", feature = "sort-package-json"))]
 use sort_package_json;
@@ -226,14 +226,12 @@ impl SourceFormatter {
 /// Format standard JSON file.
 fn format_json(source_text: &str, options: &JsonFormatterOptions) -> Result<String, OxcDiagnostic> {
     // Parse JSON
-    let value: serde_json::Value = serde_json::from_str(source_text).map_err(|err| {
-        OxcDiagnostic::error(format!("Failed to parse JSON: {err}"))
-    })?;
+    let value: serde_json::Value = serde_json::from_str(source_text)
+        .map_err(|err| OxcDiagnostic::error(format!("Failed to parse JSON: {err}")))?;
 
     // Format with serde_json
-    let formatted = serde_json::to_string_pretty(&value).map_err(|err| {
-        OxcDiagnostic::error(format!("Failed to format JSON: {err}"))
-    })?;
+    let formatted = serde_json::to_string_pretty(&value)
+        .map_err(|err| OxcDiagnostic::error(format!("Failed to format JSON: {err}")))?;
 
     // Replace indentation and line endings
     let formatted = if options.use_tabs {
@@ -249,38 +247,54 @@ fn format_json(source_text: &str, options: &JsonFormatterOptions) -> Result<Stri
 }
 
 /// Format JSON5 file (supports comments, trailing commas, etc.).
-fn format_json5(source_text: &str, options: &JsonFormatterOptions) -> Result<String, OxcDiagnostic> {
-    use json_five::{from_str, to_string_formatted, FormatConfiguration, TrailingComma};
+/// Uses json5format to preserve comments and format JSON5 files.
+fn format_json5(
+    source_text: &str,
+    options: &JsonFormatterOptions,
+) -> Result<String, OxcDiagnostic> {
+    use json5format::{FormatOptions, Json5Format, ParsedDocument};
 
-    // Parse JSON5
-    let value: serde_json::Value = from_str(source_text).map_err(|err| {
-        OxcDiagnostic::error(format!("Failed to parse JSON5: {err}"))
-    })?;
+    // Parse the JSON5 document (preserves comments)
+    let parsed = ParsedDocument::from_str(source_text, None)
+        .map_err(|err| OxcDiagnostic::error(format!("Failed to parse JSON5: {err}")))?;
 
-    // Format with json_five
-    let trailing_comma = if options.trailing_commas {
-        TrailingComma::ALL
+    // Create format options
+    let mut format_options = FormatOptions::default();
+    // Note: json5format uses indent_by as usize (number of spaces), tabs are not directly supported
+    // We'll use spaces and then replace with tabs if needed
+    let indent_by = if options.use_tabs {
+        1 // Will be replaced with tabs later
     } else {
-        TrailingComma::NONE
+        options.indent_width
     };
+    format_options.indent_by = indent_by;
+    format_options.trailing_commas = options.trailing_commas;
 
-    let config = FormatConfiguration::with_indent(
-        if options.use_tabs { 1 } else { options.indent_width },
-        trailing_comma,
-    );
+    // Create formatter with options
+    let formatter = Json5Format::with_options(format_options)
+        .map_err(|err| OxcDiagnostic::error(format!("Failed to create JSON5 formatter: {err}")))?;
 
-    let formatted = to_string_formatted(&value, config).map_err(|err| {
-        OxcDiagnostic::error(format!("Failed to format JSON5: {err}"))
-    })?;
+    // Format the JSON5 (preserves comments)
+    let mut formatted = formatter
+        .to_string(&parsed)
+        .map_err(|err| OxcDiagnostic::error(format!("Failed to format JSON5: {err}")))?;
+
+    // Replace spaces with tabs if needed
+    if options.use_tabs {
+        formatted = replace_indent(&formatted, indent_by, "\t");
+    }
 
     // Replace line endings
-    let formatted = formatted.replace('\n', &options.line_ending);
+    formatted = formatted.replace('\n', &options.line_ending);
 
     Ok(formatted)
 }
 
 /// Format JSONC file (JSON with comments).
-fn format_jsonc(source_text: &str, options: &JsonFormatterOptions) -> Result<String, OxcDiagnostic> {
+fn format_jsonc(
+    source_text: &str,
+    options: &JsonFormatterOptions,
+) -> Result<String, OxcDiagnostic> {
     // First, strip comments to get valid JSON
     let mut json_text = source_text.to_string();
     json_strip_comments::strip(&mut json_text).map_err(|err| {
@@ -301,17 +315,21 @@ fn replace_indent(text: &str, original_width: usize, new_indent: &str) -> String
             result.push('\n');
         }
 
-        // Count leading spaces
-        let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
-        if leading_spaces > 0 {
+        // Count leading spaces (using bytes for safe indexing)
+        let leading_spaces_byte_count = line.bytes().take_while(|&b| b == b' ').count();
+
+        if leading_spaces_byte_count > 0
+            && leading_spaces_byte_count <= line.len()
+            && original_width > 0
+        {
             // Calculate number of indent levels
-            let indent_levels = leading_spaces / original_width;
+            let indent_levels = leading_spaces_byte_count / original_width;
             // Replace with new indent
             for _ in 0..indent_levels {
                 result.push_str(new_indent);
             }
-            // Add remaining content
-            result.push_str(&line[leading_spaces..]);
+            // Add remaining content (safe because we checked bounds)
+            result.push_str(&line[leading_spaces_byte_count..]);
         } else {
             result.push_str(line);
         }
@@ -394,8 +412,6 @@ impl SourceFormatter {
 mod tests {
     use super::*;
     use crate::config::JsonFormatterOptions;
-    use crate::support::JsonType;
-
     #[test]
     fn test_format_json5_basic() {
         let source = r#"{
@@ -446,9 +462,17 @@ mod tests {
         };
 
         let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 with comments should format successfully");
+        assert!(
+            result.is_ok(),
+            "JSON5 with comments should format successfully"
+        );
         let formatted = result.unwrap();
         assert!(!formatted.is_empty(), "Formatted JSON5 should not be empty");
+        // Verify comments are preserved
+        assert!(
+            formatted.contains("//") || formatted.contains("/*"),
+            "Comments should be preserved in formatted JSON5"
+        );
     }
 
     #[test]
@@ -470,7 +494,10 @@ mod tests {
         };
 
         let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 with trailing commas should format successfully");
+        assert!(
+            result.is_ok(),
+            "JSON5 with trailing commas should format successfully"
+        );
     }
 
     #[test]
@@ -490,9 +517,8 @@ mod tests {
         let result = format_json5(source, &options);
         assert!(result.is_ok(), "JSON5 with tabs should format successfully");
         let formatted = result.unwrap();
-        // Note: json-five library uses spaces for indentation, but we pass indent_width=1 for tabs
-        // The library may still use spaces, so we just verify the formatting succeeds
-        // The actual tab replacement would need to be done in a post-processing step
+        // Note: json5format uses spaces for indentation, tabs are applied via post-processing
+        // in the format_json5 function
         assert!(!formatted.is_empty(), "Formatted JSON5 should not be empty");
     }
 
@@ -580,8 +606,14 @@ mod tests {
         let formatted = result.unwrap();
         assert!(!formatted.is_empty(), "Formatted JSONC should not be empty");
         // Comments should be stripped, so formatted JSON should not contain comment markers
-        assert!(!formatted.contains("//"), "Comments should be stripped from JSONC");
-        assert!(!formatted.contains("/*"), "Comments should be stripped from JSONC");
+        assert!(
+            !formatted.contains("//"),
+            "Comments should be stripped from JSONC"
+        );
+        assert!(
+            !formatted.contains("/*"),
+            "Comments should be stripped from JSONC"
+        );
     }
 
     #[test]
@@ -616,5 +648,51 @@ mod tests {
 }"#;
         let result = SourceFormatter::format_by_json(jsonc_source, JsonType::Jsonc, options);
         assert!(result.is_ok(), "format_by_json with Jsonc should succeed");
+    }
+
+    #[test]
+    fn test_format_json5_with_license_comment() {
+        // Test case from user report - JSON5 with license comment block
+        let source = r#"/*
+* Copyright (C) 2023 Huawei Device Co., Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+{
+  "license": "ISC",
+  "types": "",
+  "devDependencies": {},
+  "name": "@ohos/video-component",
+  "description": "a npm package which contains arkUI2.0 page",
+  "main": "index.ets",
+  "repository": {},
+  "version": "1.0.5",
+  "dependencies": {}
+}"#;
+
+        let options = JsonFormatterOptions {
+            indent_width: 2,
+            use_tabs: false,
+            line_ending: "\n".to_string(),
+            trailing_commas: false,
+        };
+
+        let result = format_json5(source, &options);
+        assert!(
+            result.is_ok(),
+            "JSON5 with license comment should format successfully"
+        );
+        let formatted = result.unwrap();
+        assert!(!formatted.is_empty(), "Formatted JSON5 should not be empty");
     }
 }
