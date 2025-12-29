@@ -5,6 +5,9 @@
   "main": "index.js",
   "types": "index.d.ts",
   "browser": "browser.js",
+  "bin": {
+    "oxk": "./bin/oxk.js"
+  },
   "repository": {
     "url": "git+git@github.com:ohos-rs/oxc-ark.git",
     "type": "git"
@@ -22,10 +25,9 @@
     "index.d.ts",
     "index.js",
     "browser.js",
-    "libs",
     "format.js",
     "format.d.ts",
-    "index-wrapper.ts"
+    "bin"
   ],
   "exports": {
     ".": {
@@ -78,6 +80,7 @@
     "version": "napi version"
   },
   "dependencies": {
+    "glob": "^11.0.0",
     "prettier": "^3.7.4"
   },
   "devDependencies": {
