@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use format::{FormatFileStrategy, ResolvedOptions, SourceFormatter};
+use format::{ConfigResolver, FormatFileStrategy, ResolvedOptions, SourceFormatter};
 use futures::future;
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use oxc_formatter::FormatOptions;
@@ -299,13 +299,76 @@ async fn format_file_async(
     let strategy = FormatFileStrategy::try_from(actual_path.clone())
         .map_err(|_| format!("Unsupported file type '{}'", actual_path.display()))?;
 
-    // Only support JS/TS files for now (can be extended later)
-    let format_options = match &strategy {
-        FormatFileStrategy::OxcFormatter { .. } => {
-            // Build FormatOptions from command line arguments
-            let mut option = FormatOptions::default();
+    // Build config from command line arguments
+    // For TOML and JSON files, we need to use ConfigResolver
+    // For JS/TS files, we can build FormatOptions directly
+    // For ExternalFormatter files (like yaml, markdown), we need to check if napi feature is available
+    let resolved_options = match &strategy {
+        FormatFileStrategy::OxfmtToml { .. } | FormatFileStrategy::OxfmtJson { .. } => {
+            // Build JSON config from command line arguments
+            let mut config_value = Value::Object(serde_json::Map::new());
+            if let Some(v) = format_args.indent_style {
+                config_value["indentStyle"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.indent_width {
+                config_value["indentWidth"] = Value::Number(v.value().into());
+            }
+            if let Some(v) = format_args.line_ending {
+                config_value["lineEnding"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.line_width {
+                config_value["lineWidth"] = Value::Number(v.value().into());
+            }
+            if let Some(v) = format_args.quote_style {
+                config_value["quoteStyle"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.jsx_quote_style {
+                config_value["jsxQuoteStyle"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.trailing_commas {
+                config_value["trailingCommas"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.semicolons {
+                config_value["semicolons"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.arrow_parentheses {
+                config_value["arrowParentheses"] = Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.bracket_spacing {
+                config_value["bracketSpacing"] = Value::Bool(v.value());
+            }
+            if let Some(v) = format_args.bracket_same_line {
+                config_value["bracketSameLine"] = Value::Bool(v.value());
+            }
+            if let Some(v) = format_args.attribute_position {
+                config_value["attributePosition"] =
+                    Value::String(format!("{:?}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.expand {
+                config_value["expand"] = Value::String(format!("{}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.experimental_operator_position {
+                config_value["experimentalOperatorPosition"] =
+                    Value::String(format!("{}", v).to_lowercase());
+            }
+            if let Some(v) = format_args.experimental_ternaries {
+                config_value["experimentalTernaries"] = Value::Bool(v);
+            }
+            if let Some(v) = format_args.embedded_language_formatting {
+                config_value["embeddedLanguageFormatting"] =
+                    Value::String(format!("{:?}", v).to_lowercase());
+            }
 
-            // Apply command line options if provided
+            // Use ConfigResolver to resolve options for TOML files
+            let mut config_resolver = ConfigResolver::from_value(config_value);
+            if let Err(err) = config_resolver.build_and_validate() {
+                return Err(format!("Failed to parse configuration: {}", err).into());
+            }
+            config_resolver.resolve(&strategy)
+        }
+        FormatFileStrategy::OxcFormatter { .. } => {
+            // For JS/TS files, build FormatOptions directly
+            let mut option = FormatOptions::default();
             if let Some(v) = format_args.indent_style {
                 option.indent_style = v;
             }
@@ -355,28 +418,54 @@ async fn format_file_async(
                 option.embedded_language_formatting = v;
             }
 
-            option
+            ResolvedOptions::OxcFormatter {
+                format_options: option,
+                external_options: Value::Object(serde_json::Map::new()),
+                insert_final_newline: true,
+            }
         }
-        _ => {
-            return Err(format!("File type not yet supported: {}", actual_path.display()).into());
+        FormatFileStrategy::ExternalFormatter { parser_name, .. }
+        | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. } => {
+            // ExternalFormatter files (like yaml, markdown) require napi feature for formatting
+            // oxk CLI doesn't have napi feature, so we give a clear error message
+            return Err(format!(
+                "File type '{}' (parser: {}) requires external formatter support (e.g., Prettier). \
+                oxk CLI only supports JavaScript/TypeScript, TOML, and JSON/JSON5/JSONC files. \
+                For other file types, please use npm/oxk with external formatter callbacks or use a different formatter.",
+                actual_path.display(),
+                parser_name
+            ).into());
         }
     };
 
     // Run CPU-intensive parsing and formatting in a blocking task
     let actual_path_clone = actual_path.clone();
+    let strategy_clone = match &strategy {
+        FormatFileStrategy::OxcFormatter { path, source_type } => {
+            FormatFileStrategy::OxcFormatter {
+                path: path.clone(),
+                source_type: *source_type,
+            }
+        }
+        FormatFileStrategy::OxfmtToml { path } => {
+            FormatFileStrategy::OxfmtToml { path: path.clone() }
+        }
+        FormatFileStrategy::OxfmtJson { path, json_type } => FormatFileStrategy::OxfmtJson {
+            path: path.clone(),
+            json_type: *json_type,
+        },
+        FormatFileStrategy::ExternalFormatter { .. }
+        | FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
+            // This should never happen as we check earlier in resolved_options match
+            unreachable!("ExternalFormatter should be rejected earlier")
+        }
+    };
     let formatted_code = tokio::task::spawn_blocking(move || {
         // Create formatter
         let formatter = SourceFormatter::new(1);
 
-        // Create resolved options
-        let resolved_options = ResolvedOptions::OxcFormatter {
-            format_options,
-            external_options: Value::Object(serde_json::Map::new()),
-            insert_final_newline: true,
-        };
-
         // Format the file
-        match formatter.format(&strategy, &source_text, resolved_options) {
+        match formatter.format(&strategy_clone, &source_text, resolved_options) {
             format::FormatResult::Success { code, .. } => {
                 // Check for parse errors by comparing with original
                 // If there were parse errors, the formatter would have returned an error
@@ -509,30 +598,34 @@ struct Index {
 
     #[test]
     fn test_format_json5_file_strategy() {
-        // Test that JSON5 files are recognized (even if formatting requires external formatter)
+        // Test that JSON5 files are recognized as OxfmtJson
         let path = PathBuf::from("test.json5");
         let strategy = FormatFileStrategy::try_from(path);
 
-        // JSON5 files should be recognized as ExternalFormatter
-        // In tests without napi, this will fail, but we can at least verify the strategy
         match strategy {
-            Ok(FormatFileStrategy::ExternalFormatter { parser_name, .. }) => {
-                assert_eq!(parser_name, "json5", "JSON5 files should use json5 parser");
+            Ok(FormatFileStrategy::OxfmtJson { json_type, .. }) => {
+                use format::JsonType;
+                assert_eq!(
+                    json_type,
+                    JsonType::Json5,
+                    "JSON5 files should use Json5 type"
+                );
             }
-            Ok(_) => {
-                // If napi feature is not enabled, it might not be recognized
-                // This is expected behavior
+            Ok(other) => {
+                panic!(
+                    "JSON5 files should be recognized as OxfmtJson, got: {:?}",
+                    format!("{:?}", other)
+                );
             }
             Err(_) => {
-                // Without napi feature, JSON5 might not be supported
-                // This is acceptable for the test
+                panic!("JSON5 files should be recognized");
             }
         }
     }
 
     #[test]
     fn test_format_json5_content() {
-        let _json5_content = r#"{
+        let json5_content = r#"{
   // This is a JSON5 file
   name: 'test',
   version: '1.0.0',
@@ -545,15 +638,149 @@ struct Index {
   }
 }"#;
 
-        // Note: JSON5 formatting requires external formatter (Prettier) via napi
-        // This test verifies the file type is recognized
+        // Test that JSON5 files can be formatted using Rust formatter
         let path = PathBuf::from("package.json5");
-        let strategy_result = FormatFileStrategy::try_from(path);
+        let strategy =
+            FormatFileStrategy::try_from(path.clone()).expect("JSON5 file should be recognized");
 
-        // The strategy should be recognized (even if formatting needs external formatter)
-        assert!(
-            strategy_result.is_ok() || strategy_result.is_err(),
-            "JSON5 file strategy should be determinable"
-        );
+        // Verify it's OxfmtJson
+        match &strategy {
+            FormatFileStrategy::OxfmtJson { json_type, .. } => {
+                use format::JsonType;
+                assert_eq!(*json_type, JsonType::Json5);
+            }
+            _ => panic!("JSON5 file should be recognized as OxfmtJson"),
+        }
+
+        // Test actual formatting
+        let formatter = SourceFormatter::new(1);
+        let resolved_options = ResolvedOptions::OxfmtJson {
+            json_options: format::JsonFormatterOptions {
+                indent_width: 2,
+                use_tabs: false,
+                line_ending: "\n".to_string(),
+                trailing_commas: false,
+            },
+            json_type: format::JsonType::Json5,
+            insert_final_newline: true,
+        };
+
+        match formatter.format(&strategy, json5_content, resolved_options) {
+            format::FormatResult::Success { code, .. } => {
+                assert!(!code.is_empty(), "Formatted JSON5 should not be empty");
+                // Verify the formatted code contains key elements
+                assert!(code.contains("name"), "Should contain 'name'");
+                assert!(code.contains("test"), "Should contain 'test'");
+            }
+            format::FormatResult::Error(diagnostics) => {
+                panic!(
+                    "JSON5 formatting should succeed, got errors: {:?}",
+                    diagnostics
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_format_json_file() {
+        let json_content = r#"{"name":"test","version":"1.0.0","description":"Test package"}"#;
+
+        let path = PathBuf::from("test.json");
+        let strategy =
+            FormatFileStrategy::try_from(path.clone()).expect("JSON file should be recognized");
+
+        // Verify it's OxfmtJson
+        match &strategy {
+            FormatFileStrategy::OxfmtJson { json_type, .. } => {
+                use format::JsonType;
+                assert_eq!(*json_type, JsonType::Json);
+            }
+            _ => panic!("JSON file should be recognized as OxfmtJson"),
+        }
+
+        // Test actual formatting
+        let formatter = SourceFormatter::new(1);
+        let resolved_options = ResolvedOptions::OxfmtJson {
+            json_options: format::JsonFormatterOptions {
+                indent_width: 2,
+                use_tabs: false,
+                line_ending: "\n".to_string(),
+                trailing_commas: false,
+            },
+            json_type: format::JsonType::Json,
+            insert_final_newline: true,
+        };
+
+        match formatter.format(&strategy, json_content, resolved_options) {
+            format::FormatResult::Success { code, .. } => {
+                assert!(!code.is_empty(), "Formatted JSON should not be empty");
+                assert!(code.contains("name"), "Should contain 'name'");
+            }
+            format::FormatResult::Error(diagnostics) => {
+                panic!(
+                    "JSON formatting should succeed, got errors: {:?}",
+                    diagnostics
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_format_jsonc_file() {
+        let jsonc_content = r#"{
+  // This is a comment
+  "name": "test",
+  "version": "1.0.0",
+  /* Another comment */
+  "description": "Test package"
+}"#;
+
+        let path = PathBuf::from("test.jsonc");
+        let strategy =
+            FormatFileStrategy::try_from(path.clone()).expect("JSONC file should be recognized");
+
+        // Verify it's OxfmtJson
+        match &strategy {
+            FormatFileStrategy::OxfmtJson { json_type, .. } => {
+                use format::JsonType;
+                assert_eq!(*json_type, JsonType::Jsonc);
+            }
+            _ => panic!("JSONC file should be recognized as OxfmtJson"),
+        }
+
+        // Test actual formatting
+        let formatter = SourceFormatter::new(1);
+        let resolved_options = ResolvedOptions::OxfmtJson {
+            json_options: format::JsonFormatterOptions {
+                indent_width: 2,
+                use_tabs: false,
+                line_ending: "\n".to_string(),
+                trailing_commas: false,
+            },
+            json_type: format::JsonType::Jsonc,
+            insert_final_newline: true,
+        };
+
+        match formatter.format(&strategy, jsonc_content, resolved_options) {
+            format::FormatResult::Success { code, .. } => {
+                assert!(!code.is_empty(), "Formatted JSONC should not be empty");
+                // Comments should be stripped
+                assert!(
+                    !code.contains("//"),
+                    "Comments should be stripped from JSONC"
+                );
+                assert!(
+                    !code.contains("/*"),
+                    "Comments should be stripped from JSONC"
+                );
+                assert!(code.contains("name"), "Should contain 'name'");
+            }
+            format::FormatResult::Error(diagnostics) => {
+                panic!(
+                    "JSONC formatting should succeed, got errors: {:?}",
+                    diagnostics
+                );
+            }
+        }
     }
 }

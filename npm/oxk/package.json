@@ -5,6 +5,9 @@
   "main": "index.js",
   "types": "index.d.ts",
   "browser": "browser.js",
+  "bin": {
+    "oxk": "./bin/oxk.js"
+  },
   "repository": {
     "url": "git+git@github.com:ohos-rs/oxc-ark.git",
     "type": "git"
@@ -21,8 +24,21 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "browser.js"
+    "browser.js",
+    "format.js",
+    "format.d.ts",
+    "bin"
   ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./format": {
+      "types": "./format.d.ts",
+      "default": "./format.js"
+    }
+  },
   "napi": {
     "binaryName": "oxk",
     "targets": [
@@ -62,6 +78,10 @@
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
     "version": "napi version"
+  },
+  "dependencies": {
+    "glob": "^11.0.0",
+    "prettier": "^3.7.4"
   },
   "devDependencies": {
     "@emnapi/core": "^1.5.0",

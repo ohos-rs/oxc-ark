@@ -9,6 +9,7 @@ use oxc_formatter::{
 };
 
 use super::FormatFileStrategy;
+use super::support::JsonType;
 
 /// Resolve config file path from cwd and optional explicit path.
 pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
@@ -56,6 +57,12 @@ pub enum ResolvedOptions {
     /// For TOML files.
     OxfmtToml {
         toml_options: TomlFormatterOptions,
+        insert_final_newline: bool,
+    },
+    /// For JSON/JSON5/JSONC files.
+    OxfmtJson {
+        json_options: JsonFormatterOptions,
+        json_type: JsonType,
         insert_final_newline: bool,
     },
     /// For non-JS files formatted by external formatter (Prettier).
@@ -171,6 +178,11 @@ impl ConfigResolver {
                 toml_options: build_toml_options(&format_options),
                 insert_final_newline,
             },
+            FormatFileStrategy::OxfmtJson { json_type, .. } => ResolvedOptions::OxfmtJson {
+                json_options: build_json_options(&format_options),
+                json_type: *json_type,
+                insert_final_newline,
+            },
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { .. } => ResolvedOptions::ExternalFormatter {
                 external_options,
@@ -209,5 +221,28 @@ fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
         // Align with `oxc_formatter` and Prettier default
         trailing_newline: true,
         ..Default::default()
+    }
+}
+
+/// JSON formatter options
+#[derive(Clone, Debug)]
+pub struct JsonFormatterOptions {
+    pub indent_width: usize,
+    pub use_tabs: bool,
+    pub line_ending: String,
+    pub trailing_commas: bool,
+}
+
+/// Build JSON formatter options from FormatOptions.
+fn build_json_options(format_options: &FormatOptions) -> JsonFormatterOptions {
+    JsonFormatterOptions {
+        indent_width: format_options.indent_width.value() as usize,
+        use_tabs: format_options.indent_style.is_tab(),
+        line_ending: if format_options.line_ending.is_carriage_return_line_feed() {
+            "\r\n".to_string()
+        } else {
+            "\n".to_string()
+        },
+        trailing_commas: !format_options.trailing_commas.is_none(),
     }
 }

@@ -1,5 +1,5 @@
 import test from 'ava'
-import { format } from '../index.js'
+import { format } from '../format.js'
 
 test('format ArkTS (.ets) file', async (t) => {
   const source = `@Component
@@ -104,47 +104,14 @@ test('format JSON5 file', async (t) => {
   }
 }`
 
-  // JSON5 requires external formatter callbacks
-  // For testing, we'll provide mock callbacks
-  const initExternalFormatter = async (numThreads: number): Promise<string[]> => {
-    return ['json5']
-  }
+  // Now with Prettier integration, JSON5 files should be formatted automatically
+  const result = await format('test.json5', json5Source, undefined)
 
-  const formatEmbedded = async (options: Record<string, any>, tagName: string, code: string): Promise<string> => {
-    return code
-  }
-
-  const formatFile = async (
-    options: Record<string, any>,
-    parserName: string,
-    fileName: string,
-    code: string,
-  ): Promise<string> => {
-    // Mock JSON5 formatting - in real scenario, this would call Prettier
-    if (parserName === 'json5') {
-      // Simple formatting: ensure proper indentation
-      return JSON.stringify(JSON.parse(code.replace(/'/g, '"')), null, 2)
-    }
-    return code
-  }
-
-  const result = await format('test.json5', json5Source, undefined, initExternalFormatter, formatEmbedded, formatFile)
-
-  // Note: Without proper Prettier integration, this might fail
-  // But we can at least verify the file type is recognized
   t.truthy(result, 'Should return a result')
-
-  // If external formatter is not properly set up, we might get an error
-  // This is expected behavior
-  if (result.errors.length > 0) {
-    // Check if it's an "external formatter required" error
-    const hasExternalFormatterError = result.errors.some(
-      (err: string) => err.includes('External formatter') || err.includes('external'),
-    )
-    t.true(hasExternalFormatterError || result.code === json5Source, 'Should either format or return appropriate error')
-  } else {
-    t.truthy(result.code, 'Should return formatted code')
-  }
+  t.is(result.errors.length, 0, 'Should not have errors')
+  t.truthy(result.code, 'Should return formatted code')
+  // Prettier should format the JSON5 file
+  t.true(result.code.includes('name') || result.code.includes('test'), 'Should contain formatted content')
 })
 
 test('format JSON5 with comments', async (t) => {
@@ -156,32 +123,14 @@ test('format JSON5 with comments', async (t) => {
   version: '1.0.0'
 }`
 
-  const initExternalFormatter = async (numThreads: number): Promise<string[]> => {
-    return ['json5']
-  }
-
-  const formatEmbedded = async (options: Record<string, any>, tagName: string, code: string): Promise<string> => {
-    return code
-  }
-
-  const formatFile = async (
-    options: Record<string, any>,
-    parserName: string,
-    fileName: string,
-    code: string,
-  ): Promise<string> => {
-    if (parserName === 'json5') {
-      // Mock formatter - preserve structure
-      return code
-    }
-    return code
-  }
-
-  const result = await format('config.json5', json5Source, undefined, initExternalFormatter, formatEmbedded, formatFile)
+  // Now with Prettier integration, JSON5 files with comments should be formatted automatically
+  const result = await format('config.json5', json5Source, undefined)
 
   t.truthy(result, 'Should return a result')
-  // JSON5 formatting requires external formatter, so we check for either success or appropriate error
-  t.true(result.errors.length === 0 || result.code === json5Source, 'Should handle JSON5 file')
+  t.is(result.errors.length, 0, 'Should not have errors')
+  t.truthy(result.code, 'Should return formatted code')
+  // Prettier should preserve comments in JSON5
+  t.true(result.code.includes('//') || result.code.includes('/*'), 'Should preserve comments')
 })
 
 test('format regular TypeScript file', async (t) => {
