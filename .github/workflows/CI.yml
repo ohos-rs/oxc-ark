@@ -420,7 +420,7 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
             npm publish --access public
           # Match pre-release version (e.g., "1.0.0-beta.0" or "v0.0.1-beta.0") - publish to next
-          elif echo "$COMMIT_MSG" | grep -qE "^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)+$"; then
+          elif echo "$COMMIT_MSG" | grep -qE "^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)$"; then
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
             npm publish --tag next --access public
           else
