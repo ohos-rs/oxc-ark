@@ -411,27 +411,13 @@ jobs:
         run: ls -R npm/oxk/npm
         shell: bash
       - name: Publish
+        if: "startsWith(github.event.head_commit.message, 'chore(release): publish')"
         run: |
           cd npm/oxk
           npm config set provenance true
-          # Get first line of commit message and trim whitespace
-          COMMIT_MSG=$(git log -1 --pretty=%B | head -n1 | xargs)
-          echo "Commit message (first line): '$COMMIT_MSG'"
-          # Match exact version (e.g., "1.0.0" or "v1.0.0") - publish to latest
-          if echo "$COMMIT_MSG" | grep -qE "^v?[0-9]+\.[0-9]+\.[0-9]+$"; then
-            echo "Detected stable version, publishing to latest"
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-            npm publish --access public
-          # Match pre-release version (e.g., "1.0.0-beta.0" or "v0.0.1-beta.0") - publish to next
-          elif echo "$COMMIT_MSG" | grep -qE "^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)+$"; then
-            echo "Detected pre-release version, publishing to next"
-            echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-            npm publish --tag next --access public
-          else
-            echo "Not a release, skipping publish"
-            echo "Commit message does not match version pattern"
-            echo "Expected format: '1.0.0' or 'v1.0.0' or '1.0.0-beta.0' or 'v0.0.1-beta.0'"
-          fi
+          echo "Detected stable version, publishing to latest"
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          npm publish --access public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
