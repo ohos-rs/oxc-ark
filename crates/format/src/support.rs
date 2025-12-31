@@ -173,10 +173,10 @@ fn should_ignore_json_file(file_name: &str, extension: Option<&str>) -> bool {
     }
 
     // Check if extension is in ignore list
-    if let Some(ext) = extension {
-        if IGNORE_JSON_EXTENSIONS.contains(ext) {
-            return true;
-        }
+    if let Some(ext) = extension
+        && IGNORE_JSON_EXTENSIONS.contains(ext)
+    {
+        return true;
     }
 
     false

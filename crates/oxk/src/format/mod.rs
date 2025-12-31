@@ -385,8 +385,10 @@ async fn format_file_async(
         }
         FormatFileStrategy::OxcFormatter { .. } => {
             // For JS/TS files, build FormatOptions directly
-            let mut option = FormatOptions::default();
-            option.quote_properties = oxc_formatter::QuoteProperties::Consistent;
+            let mut option = FormatOptions {
+                quote_properties: oxc_formatter::QuoteProperties::Consistent,
+                ..Default::default()
+            };
 
             if let Some(v) = format_args.indent_style {
                 option.indent_style = v;
