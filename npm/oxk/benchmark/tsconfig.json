@@ -5,10 +5,6 @@
     "moduleResolution": "NodeNext",
     "outDir": "lib"
   },
-  "include": [
-    "."
-  ],
-  "exclude": [
-    "lib"
-  ]
+  "include": ["."],
+  "exclude": ["lib"]
 }

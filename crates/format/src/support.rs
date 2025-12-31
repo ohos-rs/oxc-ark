@@ -63,6 +63,10 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 
         // Then JSON/JSON5/JSONC files (before external formatter)
         let extension = path.extension().and_then(|ext| ext.to_str());
+        // Check if JSON/JSON5/JSONC file should be ignored
+        if should_ignore_json_file(file_name, extension) {
+            return Err(());
+        }
         if let Some(json_type) = get_json_type(file_name, extension) {
             return Ok(Self::OxfmtJson { path, json_type });
         }
@@ -125,6 +129,19 @@ static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     "uv.lock",
 };
 
+/// JSON/JSON5/JSONC filenames that should be ignored (not formatted).
+static IGNORE_JSON_FILENAMES: phf::Set<&'static str> = phf_set! {
+    // Add specific JSON filenames to ignore here
+    // Example: "tsconfig.json", ".vscode/settings.json", etc.
+    "oh-package-lock.json5"
+};
+
+/// JSON/JSON5/JSONC file extensions that should be ignored (not formatted).
+static IGNORE_JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    // Add specific JSON extensions to ignore here
+    // Example: "lock", "min.json", etc.
+};
+
 // ---
 
 /// Returns `true` if this is a TOML file.
@@ -147,6 +164,44 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
 };
 
 // ---
+
+/// Returns `true` if this JSON/JSON5/JSONC file should be ignored (not formatted).
+fn should_ignore_json_file(file_name: &str, extension: Option<&str>) -> bool {
+    // Check if filename is in ignore list
+    if IGNORE_JSON_FILENAMES.contains(file_name) {
+        return true;
+    }
+
+    // Check if extension is in ignore list
+    if let Some(ext) = extension {
+        if IGNORE_JSON_EXTENSIONS.contains(ext) {
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Returns `true` if this file should be ignored (not formatted).
+/// This includes files in EXCLUDE_FILENAMES and JSON files in ignore lists.
+pub fn should_ignore_file(path: &Path) -> bool {
+    let Some(file_name) = path.file_name().and_then(|f| f.to_str()) else {
+        return false;
+    };
+
+    // Check excluded files like lock files
+    if EXCLUDE_FILENAMES.contains(file_name) {
+        return true;
+    }
+
+    // Check if JSON/JSON5/JSONC file should be ignored
+    let extension = path.extension().and_then(|ext| ext.to_str());
+    if should_ignore_json_file(file_name, extension) {
+        return true;
+    }
+
+    false
+}
 
 /// Returns JSON type for JSON/JSON5/JSONC files.
 /// Returns `None` if this is not a JSON file, or if it should be handled by external formatter (e.g., package.json).

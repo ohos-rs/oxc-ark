@@ -5,7 +5,9 @@ use std::{
     sync::Arc,
 };
 
-use format::{ConfigResolver, FormatFileStrategy, ResolvedOptions, SourceFormatter};
+use format::{
+    ConfigResolver, FormatFileStrategy, ResolvedOptions, SourceFormatter, should_ignore_file,
+};
 use futures::future;
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use oxc_formatter::FormatOptions;
@@ -292,6 +294,11 @@ async fn format_file_async(
 
     // Skip empty files silently
     if source_text.is_empty() {
+        return Ok(());
+    }
+
+    // Skip ignored files silently (e.g., lock files, ignored JSON files)
+    if should_ignore_file(&actual_path) {
         return Ok(());
     }
 
