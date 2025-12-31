@@ -231,6 +231,7 @@ pub struct JsonFormatterOptions {
     pub use_tabs: bool,
     pub line_ending: String,
     pub trailing_commas: bool,
+    pub quote_properties: json5format::QuoteProperties,
 }
 
 /// Build JSON formatter options from FormatOptions.
@@ -243,6 +244,11 @@ fn build_json_options(format_options: &FormatOptions) -> JsonFormatterOptions {
         } else {
             "\n".to_string()
         },
-        trailing_commas: !format_options.trailing_commas.is_none(),
+        trailing_commas: format_options.trailing_commas.is_none(),
+        quote_properties: match format_options.quote_properties {
+            oxc_formatter::QuoteProperties::AsNeeded => json5format::QuoteProperties::AsNeeded,
+            oxc_formatter::QuoteProperties::Preserve => json5format::QuoteProperties::Preserve,
+            oxc_formatter::QuoteProperties::Consistent => json5format::QuoteProperties::Consistent,
+        },
     }
 }

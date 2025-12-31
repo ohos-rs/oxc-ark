@@ -11,7 +11,7 @@ pub use config::{
     resolve_oxfmtrc_path,
 };
 pub use format::{FormatResult, SourceFormatter};
-pub use support::{FormatFileStrategy, JsonType};
+pub use support::{FormatFileStrategy, JsonType, should_ignore_file};
 
 #[cfg(feature = "napi")]
 pub use external_formatter::{

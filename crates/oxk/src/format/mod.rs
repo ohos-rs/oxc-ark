@@ -5,7 +5,9 @@ use std::{
     sync::Arc,
 };
 
-use format::{ConfigResolver, FormatFileStrategy, ResolvedOptions, SourceFormatter};
+use format::{
+    ConfigResolver, FormatFileStrategy, ResolvedOptions, SourceFormatter, should_ignore_file,
+};
 use futures::future;
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use oxc_formatter::FormatOptions;
@@ -295,6 +297,11 @@ async fn format_file_async(
         return Ok(());
     }
 
+    // Skip ignored files silently (e.g., lock files, ignored JSON files)
+    if should_ignore_file(&actual_path) {
+        return Ok(());
+    }
+
     // Determine format strategy from file path
     let strategy = FormatFileStrategy::try_from(actual_path.clone())
         .map_err(|_| format!("Unsupported file type '{}'", actual_path.display()))?;
@@ -307,6 +314,8 @@ async fn format_file_async(
         FormatFileStrategy::OxfmtToml { .. } | FormatFileStrategy::OxfmtJson { .. } => {
             // Build JSON config from command line arguments
             let mut config_value = Value::Object(serde_json::Map::new());
+            config_value["trailingCommas"] = Value::String("none".to_string());
+
             if let Some(v) = format_args.indent_style {
                 config_value["indentStyle"] = Value::String(format!("{:?}", v).to_lowercase());
             }
@@ -359,16 +368,28 @@ async fn format_file_async(
                     Value::String(format!("{:?}", v).to_lowercase());
             }
 
-            // Use ConfigResolver to resolve options for TOML files
+            // Use ConfigResolver to resolve options for TOML/JSON files
             let mut config_resolver = ConfigResolver::from_value(config_value);
             if let Err(err) = config_resolver.build_and_validate() {
                 return Err(format!("Failed to parse configuration: {}", err).into());
             }
-            config_resolver.resolve(&strategy)
+            let mut resolved_options = config_resolver.resolve(&strategy);
+
+            // Fix quote_properties: Oxfmtrc's deserialization may not properly handle quoteProperties,
+            // so we manually override it to Consistent for JSON/JSON5/JSONC files
+            if let ResolvedOptions::OxfmtJson { json_options, .. } = &mut resolved_options {
+                json_options.quote_properties = json5format::QuoteProperties::Consistent;
+            }
+
+            resolved_options
         }
         FormatFileStrategy::OxcFormatter { .. } => {
             // For JS/TS files, build FormatOptions directly
-            let mut option = FormatOptions::default();
+            let mut option = FormatOptions {
+                quote_properties: oxc_formatter::QuoteProperties::Consistent,
+                ..Default::default()
+            };
+
             if let Some(v) = format_args.indent_style {
                 option.indent_style = v;
             }
@@ -660,6 +681,7 @@ struct Index {
                 use_tabs: false,
                 line_ending: "\n".to_string(),
                 trailing_commas: false,
+                quote_properties: json5format::QuoteProperties::Consistent,
             },
             json_type: format::JsonType::Json5,
             insert_final_newline: true,
@@ -706,6 +728,7 @@ struct Index {
                 use_tabs: false,
                 line_ending: "\n".to_string(),
                 trailing_commas: false,
+                quote_properties: json5format::QuoteProperties::Consistent,
             },
             json_type: format::JsonType::Json,
             insert_final_newline: true,
@@ -756,6 +779,7 @@ struct Index {
                 use_tabs: false,
                 line_ending: "\n".to_string(),
                 trailing_commas: false,
+                quote_properties: json5format::QuoteProperties::Consistent,
             },
             json_type: format::JsonType::Jsonc,
             insert_final_newline: true,

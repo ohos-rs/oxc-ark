@@ -328,8 +328,7 @@ dependencies = [
 [[package]]
 name = "json5format"
 version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2894a72f82fa9f20e628bf4329cd0fb8e9fd5e87cc35944665a42b25bae9902"
+source = "git+https://github.com/ohos-rs/json5format?rev=a4a9a55cc1b8b78631f4c3da251d3a5f0c8a387e#a4a9a55cc1b8b78631f4c3da251d3a5f0c8a387e"
 dependencies = [
  "lazy_static",
  "regex",
@@ -737,6 +736,7 @@ dependencies = [
  "format",
  "futures",
  "globset",
+ "json5format",
  "owo-colors",
  "oxc_allocator",
  "oxc_formatter",

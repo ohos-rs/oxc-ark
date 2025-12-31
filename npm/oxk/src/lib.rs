@@ -5,8 +5,9 @@ use serde_json::Value;
 use std::path::PathBuf;
 
 use format::{
-  ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
-  JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, SourceFormatter,
+  should_ignore_file, ConfigResolver, ExternalFormatter, FormatFileStrategy,
+  FormatResult as CoreFormatResult, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
+  SourceFormatter,
 };
 
 #[napi(object)]
@@ -91,6 +92,14 @@ pub async fn format(
         };
       }
     }
+  }
+
+  // Skip ignored files silently (e.g., lock files, ignored JSON files)
+  if should_ignore_file(PathBuf::from(&filename).as_path()) {
+    return FormatResult {
+      code: source_text,
+      errors: vec![],
+    };
   }
 
   // Determine format strategy from file path

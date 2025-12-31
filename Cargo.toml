@@ -1,9 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-    "crates/*",
-    "npm/oxk",
-]
+members = ["crates/*", "npm/oxk"]
 
 [workspace.package]
 version = "0.2.0"
@@ -13,6 +10,9 @@ license = "MIT"
 description = "An ArkTS/ArkUI tool based on oxc"
 
 [workspace.dependencies]
+# inner dependencies
+format = { path = "crates/format" }
+
 # Oxc dependencies
 oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741e7f85e901b979ed4ca29b3f83" }
 oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741e7f85e901b979ed4ca29b3f83" }
@@ -20,13 +20,15 @@ oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741
 oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741e7f85e901b979ed4ca29b3f83" }
 oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "a32873413c45741e7f85e901b979ed4ca29b3f83" }
 
+# Json5format dependencies
+json5format = { git = "https://github.com/ohos-rs/json5format", rev = "a4a9a55cc1b8b78631f4c3da251d3a5f0c8a387e" }
+
 # Common dependencies
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 phf = { version = "0.11", features = ["macros"] }
 simdutf8 = "0.1"
 json-strip-comments = "3.0"
-json5format = "0.2"
 oxc-toml = "0.14"
 bpaf = "0.9"
 owo-colors = "4"
