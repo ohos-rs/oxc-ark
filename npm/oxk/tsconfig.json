@@ -9,6 +9,12 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["."],
-  "exclude": ["node_modules", "benchmark", "__test__"]
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "node_modules",
+    "benchmark",
+    "__test__"
+  ]
 }

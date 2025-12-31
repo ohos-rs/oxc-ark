@@ -269,6 +269,7 @@ fn format_json5(
     };
     format_options.indent_by = indent_by;
     format_options.trailing_commas = options.trailing_commas;
+    format_options.quote_properties = options.quote_properties;
 
     // Create formatter with options
     let formatter = Json5Format::with_options(format_options)
@@ -432,6 +433,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\n".to_string(),
             trailing_commas: true,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_json5(source, &options);
@@ -459,6 +461,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\n".to_string(),
             trailing_commas: false,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_json5(source, &options);
@@ -491,6 +494,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\n".to_string(),
             trailing_commas: true,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_json5(source, &options);
@@ -512,6 +516,7 @@ mod tests {
             use_tabs: true,
             line_ending: "\n".to_string(),
             trailing_commas: false,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_json5(source, &options);
@@ -534,6 +539,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\r\n".to_string(),
             trailing_commas: false,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_json5(source, &options);
@@ -559,6 +565,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\n".to_string(),
             trailing_commas: false,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_json5(source, &options);
@@ -574,6 +581,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\n".to_string(),
             trailing_commas: false,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_json(source, &options);
@@ -599,6 +607,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\n".to_string(),
             trailing_commas: false,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_jsonc(source, &options);
@@ -630,6 +639,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\n".to_string(),
             trailing_commas: false,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         // Test JSON5
@@ -685,6 +695,7 @@ mod tests {
             use_tabs: false,
             line_ending: "\n".to_string(),
             trailing_commas: false,
+            quote_properties: json5format::QuoteProperties::Consistent,
         };
 
         let result = format_json5(source, &options);

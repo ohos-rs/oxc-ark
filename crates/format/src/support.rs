@@ -17,13 +17,11 @@ pub enum FormatFileStrategy {
     OxfmtJson { path: PathBuf, json_type: JsonType },
     ExternalFormatter {
         path: PathBuf,
-        #[cfg_attr(not(feature = "napi"), expect(dead_code))]
         parser_name: &'static str,
     },
     /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
     ExternalFormatterPackageJson {
         path: PathBuf,
-        #[cfg_attr(not(feature = "napi"), expect(dead_code))]
         parser_name: &'static str,
     },
 }

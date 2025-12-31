@@ -11,7 +11,7 @@ name = "oxk"
 path = "src/main.rs"
 
 [dependencies]
-format = { path = "../format" }
+format = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_parser = { workspace = true }
@@ -23,3 +23,4 @@ walkdir = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 futures = { workspace = true }
 serde_json = { workspace = true }
+json5format = { workspace = true }
