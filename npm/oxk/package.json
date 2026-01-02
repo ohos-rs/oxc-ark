@@ -1,6 +1,6 @@
 {
   "name": "@ohos-rs/oxk",
-  "version": "0.0.1-beta.0",
+  "version": "0.0.1",
   "description": "An ArkTS/ArkUI tool based on oxc",
   "main": "index.js",
   "types": "index.d.ts",
@@ -19,7 +19,11 @@
     "N-API",
     "Rust",
     "node-addon",
-    "node-addon-api"
+    "node-addon-api",
+    "ArkTS",
+    "ArkUI",
+    "formatter",
+    "oxc"
   ],
   "files": [
     "index.d.ts",
