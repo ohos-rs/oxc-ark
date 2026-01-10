@@ -20,7 +20,8 @@ oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "79563d5b88f7fb6996
 oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "79563d5b88f7fb699639b6eb5e8b3037d84669e6" }
 
 # Json5format dependencies
-json5format = { git = "https://github.com/ohos-rs/json5format", rev = "a4a9a55cc1b8b78631f4c3da251d3a5f0c8a387e" }
+json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18181ead25022cf12df7af1bd68b6fb74" }
+
 
 # Common dependencies
 serde_json = "1.0"

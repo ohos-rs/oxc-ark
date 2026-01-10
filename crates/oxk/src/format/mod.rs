@@ -378,7 +378,7 @@ async fn format_file_async(
             // Fix quote_properties: Oxfmtrc's deserialization may not properly handle quoteProperties,
             // so we manually override it to Consistent for JSON/JSON5/JSONC files
             if let ResolvedOptions::OxfmtJson { json_options, .. } = &mut resolved_options {
-                json_options.quote_properties = json5format::QuoteProperties::Consistent;
+                json_options.quote_properties = json5format::QuoteProperties::Always;
             }
 
             resolved_options

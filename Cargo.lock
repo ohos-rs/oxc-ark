@@ -328,7 +328,7 @@ dependencies = [
 [[package]]
 name = "json5format"
 version = "0.2.6"
-source = "git+https://github.com/ohos-rs/json5format?rev=a4a9a55cc1b8b78631f4c3da251d3a5f0c8a387e#a4a9a55cc1b8b78631f4c3da251d3a5f0c8a387e"
+source = "git+https://github.com/ohos-rs/json5format?rev=26e00bd18181ead25022cf12df7af1bd68b6fb74#26e00bd18181ead25022cf12df7af1bd68b6fb74"
 dependencies = [
  "lazy_static",
  "regex",
