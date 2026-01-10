@@ -727,12 +727,21 @@ mod tests {
         let result = format_json5(source, &options);
         assert!(result.is_ok(), "JSON5 formatting should succeed");
         let formatted = result.unwrap();
-        
+
         // With Consistent, if source has quotes, it should keep quotes
-        println!("Formatted with Consistent (source has quotes):\n{}", formatted);
+        println!(
+            "Formatted with Consistent (source has quotes):\n{}",
+            formatted
+        );
         // Check that quotes are preserved
-        assert!(formatted.contains("\"name\""), "Should preserve quotes when source has quotes");
-        assert!(formatted.contains("\"version\""), "Should preserve quotes when source has quotes");
+        assert!(
+            formatted.contains("\"name\""),
+            "Should preserve quotes when source has quotes"
+        );
+        assert!(
+            formatted.contains("\"version\""),
+            "Should preserve quotes when source has quotes"
+        );
     }
 
     #[test]
@@ -755,14 +764,26 @@ mod tests {
         let result = format_json5(source, &options);
         assert!(result.is_ok(), "JSON5 formatting should succeed");
         let formatted = result.unwrap();
-        
+
         // With Consistent, if source has no quotes, it should keep no quotes
-        println!("Formatted with Consistent (source has no quotes):\n{}", formatted);
+        println!(
+            "Formatted with Consistent (source has no quotes):\n{}",
+            formatted
+        );
         // Check that no quotes are added
-        assert!(formatted.contains("name:"), "Should preserve no quotes when source has no quotes");
-        assert!(formatted.contains("version:"), "Should preserve no quotes when source has no quotes");
+        assert!(
+            formatted.contains("name:"),
+            "Should preserve no quotes when source has no quotes"
+        );
+        assert!(
+            formatted.contains("version:"),
+            "Should preserve no quotes when source has no quotes"
+        );
         // Should not have quoted keys
-        assert!(!formatted.contains("\"name\":"), "Should not add quotes when source has no quotes");
+        assert!(
+            !formatted.contains("\"name\":"),
+            "Should not add quotes when source has no quotes"
+        );
     }
 
     #[test]
@@ -785,7 +806,7 @@ mod tests {
         let result = format_json5(source, &options);
         assert!(result.is_ok(), "JSON5 formatting should succeed");
         let formatted = result.unwrap();
-        
+
         println!("Formatted with Consistent (mixed quotes):\n{}", formatted);
         // Consistent should make all keys have the same quote style
         // It typically uses the majority style or the first style
@@ -811,10 +832,16 @@ mod tests {
         let result = format_json5(source, &options);
         assert!(result.is_ok(), "JSON5 formatting should succeed");
         let formatted = result.unwrap();
-        
+
         println!("Formatted with Preserve:\n{}", formatted);
         // Preserve should keep the original quote style for each key
-        assert!(formatted.contains("\"name\""), "Preserve should keep quoted keys");
-        assert!(formatted.contains("version:"), "Preserve should keep unquoted keys");
+        assert!(
+            formatted.contains("\"name\""),
+            "Preserve should keep quoted keys"
+        );
+        assert!(
+            formatted.contains("version:"),
+            "Preserve should keep unquoted keys"
+        );
     }
 }
