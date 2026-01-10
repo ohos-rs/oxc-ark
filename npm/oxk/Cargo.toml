@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 napi = { workspace = true }
 napi-derive = { workspace = true }
 serde_json = { workspace = true }
-format = { path = "../../crates/format", features = ["napi"] }
+format = { workspace = true, features = ["napi"] }
 json5format = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
