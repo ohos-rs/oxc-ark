@@ -752,6 +752,7 @@ name = "oxk-napi"
 version = "0.1.0"
 dependencies = [
  "format",
+ "json5format",
  "napi",
  "napi-build",
  "napi-derive",
