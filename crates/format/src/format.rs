@@ -66,7 +66,7 @@ impl SourceFormatter {
                     source_text,
                     path,
                     *source_type,
-                    format_options,
+                    *format_options,
                     external_options,
                 ),
                 insert_final_newline,
@@ -173,11 +173,10 @@ impl SourceFormatter {
             let is_embed_off = format_options.embedded_language_formatting.is_off();
             if is_embed_off {
                 None
-            } else if let Some(ext) = self.external_formatter.as_ref() {
-                Some(ext.to_external_callbacks(path, &format_options, external_options))
             } else {
-                // napi built but no external formatter (e.g. oxk CLI without Prettier) -> no embedded formatting
-                None
+                self.external_formatter
+                    .as_ref()
+                    .map(|ext| ext.to_external_callbacks(path, &format_options, external_options))
             }
         };
 
