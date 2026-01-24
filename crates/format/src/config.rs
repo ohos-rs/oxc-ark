@@ -4,20 +4,16 @@ use oxc_formatter::FormatOptions;
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 
-use crate::oxfmtrc::{populate_prettier_config, OxfmtOptions, Oxfmtrc};
+use crate::oxfmtrc::{OxfmtOptions, Oxfmtrc, populate_prettier_config};
 
 use super::FormatFileStrategy;
 use super::support::JsonType;
 
 /// Resolve config file path from cwd and optional explicit path.
 pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
-    // If `--config` is explicitly specified, use that path
+    // If `--config` is explicitly specified, use that path (aligned with oxfmt)
     if let Some(config_path) = config_path {
-        return Some(if config_path.is_absolute() {
-            config_path.to_path_buf()
-        } else {
-            cwd.join(config_path)
-        });
+        return Some(super::utils::normalize_relative_path(cwd, config_path));
     }
 
     // If `--config` is not specified, search the nearest config file from cwd upwards

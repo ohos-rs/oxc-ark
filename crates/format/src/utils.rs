@@ -1,4 +1,21 @@
-use std::{fs, io, path::Path};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
+
+/// Normalize a relative path by stripping `./` prefix and joining with `cwd`.
+/// This ensures consistent path format and avoids issues with relative paths.
+/// Aligned with oxfmt's `utils::normalize_relative_path`.
+pub fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        return path.to_path_buf();
+    }
+    if let Ok(stripped) = path.strip_prefix("./") {
+        cwd.join(stripped)
+    } else {
+        cwd.join(path)
+    }
+}
 
 pub fn read_to_string(path: &Path) -> io::Result<String> {
     // `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string` uses internally

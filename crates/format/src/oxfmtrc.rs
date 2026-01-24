@@ -5,9 +5,9 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, EmbeddedLanguageFormatting,
-    Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties,
-    QuoteStyle, Semicolons, TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
+    EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -124,8 +124,11 @@ impl FormatConfig {
         let mut format_options = FormatOptions::default();
 
         if let Some(use_tabs) = self.use_tabs {
-            format_options.indent_style =
-                if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
+            format_options.indent_style = if use_tabs {
+                IndentStyle::Tab
+            } else {
+                IndentStyle::Space
+            };
         }
         if let Some(width) = self.tab_width {
             format_options.indent_width =
@@ -143,12 +146,18 @@ impl FormatConfig {
                 LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
         }
         if let Some(single_quote) = self.single_quote {
-            format_options.quote_style =
-                if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+            format_options.quote_style = if single_quote {
+                QuoteStyle::Single
+            } else {
+                QuoteStyle::Double
+            };
         }
         if let Some(jsx_single_quote) = self.jsx_single_quote {
-            format_options.jsx_quote_style =
-                if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+            format_options.jsx_quote_style = if jsx_single_quote {
+                QuoteStyle::Single
+            } else {
+                QuoteStyle::Double
+            };
         }
         if let Some(props) = self.quote_props {
             format_options.quote_properties = match props {
@@ -165,8 +174,11 @@ impl FormatConfig {
             };
         }
         if let Some(semi) = self.semi {
-            format_options.semicolons =
-                if semi { Semicolons::Always } else { Semicolons::AsNeeded };
+            format_options.semicolons = if semi {
+                Semicolons::Always
+            } else {
+                Semicolons::AsNeeded
+            };
         }
         if let Some(parens) = self.arrow_parens {
             format_options.arrow_parentheses = match parens {
@@ -237,7 +249,10 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
     let Some(obj) = config.as_object_mut() else {
         return;
     };
-    obj.insert("printWidth".to_string(), Value::from(options.line_width.value()));
+    obj.insert(
+        "printWidth".to_string(),
+        Value::from(options.line_width.value()),
+    );
     obj.insert(
         "useTabs".to_string(),
         Value::from(match options.indent_style {
@@ -245,7 +260,10 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
             IndentStyle::Space => false,
         }),
     );
-    obj.insert("tabWidth".to_string(), Value::from(options.indent_width.value()));
+    obj.insert(
+        "tabWidth".to_string(),
+        Value::from(options.indent_width.value()),
+    );
     obj.insert(
         "endOfLine".to_string(),
         Value::from(match options.line_ending {

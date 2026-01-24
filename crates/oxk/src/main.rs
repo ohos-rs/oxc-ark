@@ -7,6 +7,7 @@ mod format;
 
 #[derive(Debug, Clone)]
 pub(crate) struct FormatArgs {
+    pub config: Option<std::path::PathBuf>,
     file: Vec<String>,
     thread: usize,
     excludes: Vec<String>,
