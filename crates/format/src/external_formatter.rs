@@ -1,4 +1,6 @@
 #[cfg(feature = "napi")]
+use std::path::Path;
+#[cfg(feature = "napi")]
 use std::sync::Arc;
 
 #[cfg(feature = "napi")]
@@ -119,13 +121,25 @@ impl ExternalFormatter {
         (self.init)(num_threads)
     }
 
-    /// Convert this external formatter to the oxc_formatter::EmbeddedFormatter type.
-    /// The options is captured in the closure and passed to JS on each call.
-    pub fn to_embedded_formatter(&self, options: Value) -> oxc_formatter::EmbeddedFormatter {
+    /// Convert this external formatter to oxc_formatter::ExternalCallbacks.
+    /// Path, format_options and options are captured for embedded formatting.
+    pub fn to_external_callbacks(
+        &self,
+        _path: &Path,
+        _format_options: &oxc_formatter::FormatOptions,
+        options: Value,
+    ) -> oxc_formatter::ExternalCallbacks {
         let format_embedded = Arc::clone(&self.format_embedded);
-        let callback =
-            Arc::new(move |tag_name: &str, code: &str| (format_embedded)(&options, tag_name, code));
-        oxc_formatter::EmbeddedFormatter::new(callback)
+        let embedded_cb: oxc_formatter::EmbeddedFormatterCallback =
+            Arc::new(move |language: &str, code: &str| {
+                let Some(parser_name) = language_to_prettier_parser(language) else {
+                    return Err(format!("Unsupported language: {language}"));
+                };
+                (format_embedded)(&options, parser_name, code)
+            });
+        oxc_formatter::ExternalCallbacks::new()
+            .with_embedded_formatter(Some(embedded_cb))
+            .with_tailwind(None)
     }
 
     /// Format non-js file using the JS callback.
@@ -141,6 +155,19 @@ impl ExternalFormatter {
 }
 
 // ---
+
+/// Map oxc_formatter embedded language tags to Prettier parser names.
+fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
+    match language {
+        "tagged-css" | "styled-jsx" => Some("css"),
+        "tagged-graphql" => Some("graphql"),
+        "tagged-html" => Some("html"),
+        "tagged-markdown" => Some("markdown"),
+        "angular-template" => Some("angular"),
+        "angular-styles" => Some("scss"),
+        _ => None,
+    }
+}
 
 // NOTE: These methods are all wrapped by `block_on` to run the async JS calls in a blocking manner.
 // In wasm environment, we can't use block_on if we're already in an async context.

@@ -1,12 +1,10 @@
 use std::path::{Path, PathBuf};
 
+use oxc_formatter::FormatOptions;
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 
-use oxc_formatter::{
-    FormatOptions,
-    oxfmtrc::{OxfmtOptions, Oxfmtrc},
-};
+use crate::oxfmtrc::{populate_prettier_config, OxfmtOptions, Oxfmtrc};
 
 use super::FormatFileStrategy;
 use super::support::JsonType;
@@ -85,7 +83,7 @@ pub struct ConfigResolver {
     /// User's raw config as JSON value.
     raw_config: Value,
     /// Cached parsed options after validation.
-    cached_options: Option<(FormatOptions, OxfmtOptions, Value)>,
+    cached_options: Option<(OxfmtOptions, Value)>,
 }
 
 impl ConfigResolver {
@@ -142,26 +140,24 @@ impl ConfigResolver {
         let oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
             .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
 
-        // If not specified, default options are resolved here
-        let (format_options, oxfmt_options) = oxfmtrc
-            .into_options()
+        let oxfmt_options = oxfmtrc
+            .format_config
+            .into_oxfmt_options()
             .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
 
-        // Apply our resolved defaults to Prettier options too
+        let ignore_patterns = oxfmtrc.ignore_patterns.clone().unwrap_or_default();
+
         let mut external_options = self.raw_config.clone();
-        Oxfmtrc::populate_prettier_config(&format_options, &mut external_options);
+        populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
 
-        let ignore_patterns_clone = oxfmt_options.ignore_patterns.clone();
+        self.cached_options = Some((oxfmt_options, external_options));
 
-        // NOTE: Save cache for fast path
-        self.cached_options = Some((format_options, oxfmt_options, external_options));
-
-        Ok(ignore_patterns_clone)
+        Ok(ignore_patterns)
     }
 
     /// Resolve format options for a specific file.
     pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
-        let (format_options, oxfmt_options, external_options) = self
+        let (oxfmt_options, external_options) = self
             .cached_options
             .clone()
             .expect("`build_and_validate()` must be called before `resolve()`");
@@ -170,16 +166,16 @@ impl ConfigResolver {
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
-                format_options,
+                format_options: oxfmt_options.format_options,
                 external_options,
                 insert_final_newline,
             },
             FormatFileStrategy::OxfmtToml { .. } => ResolvedOptions::OxfmtToml {
-                toml_options: build_toml_options(&format_options),
+                toml_options: oxfmt_options.toml_options,
                 insert_final_newline,
             },
             FormatFileStrategy::OxfmtJson { json_type, .. } => ResolvedOptions::OxfmtJson {
-                json_options: build_json_options(&format_options),
+                json_options: build_json_options(&oxfmt_options.format_options),
                 json_type: *json_type,
                 insert_final_newline,
             },
@@ -205,24 +201,6 @@ impl ConfigResolver {
 }
 
 // ---
-
-/// Build `toml` formatter options.
-/// The same as `prettier-plugin-toml`.
-fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
-    TomlFormatterOptions {
-        column_width: format_options.line_width.value() as usize,
-        indent_string: if format_options.indent_style.is_tab() {
-            "\t".to_string()
-        } else {
-            " ".repeat(format_options.indent_width.value() as usize)
-        },
-        array_trailing_comma: !format_options.trailing_commas.is_none(),
-        crlf: format_options.line_ending.is_carriage_return_line_feed(),
-        // Align with `oxc_formatter` and Prettier default
-        trailing_newline: true,
-        ..Default::default()
-    }
-}
 
 /// JSON formatter options
 #[derive(Clone, Debug)]
