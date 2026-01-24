@@ -6,11 +6,11 @@ use std::{
 };
 
 use format::{
-    ConfigResolver, FormatFileStrategy, ResolvedOptions, SourceFormatter, should_ignore_file,
+    ConfigResolver, FormatFileStrategy, SourceFormatter, resolve_editorconfig_path,
+    resolve_oxfmtrc_path, should_ignore_file,
 };
 use futures::future;
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use oxc_formatter::FormatOptions;
 use serde_json::Value;
 use tokio::sync::Semaphore;
 use walkdir::WalkDir;
@@ -19,20 +19,59 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
     let patterns = args.file.clone();
     let thread_count = args.thread;
     let excludes = args.excludes.clone();
-    let format_options = args.clone();
 
     if patterns.is_empty() {
         return Err(Box::new(std::io::Error::other("Missing file pattern")));
     }
 
+    let cwd = env::current_dir().map_err(|e| {
+        Box::new(std::io::Error::other(format!(
+            "Failed to get current directory: {}",
+            e
+        ))) as Box<dyn std::error::Error>
+    })?;
+
+    // Resolve config (aligned with oxfmt): prefer .oxfmtrc when present, else CLI as Oxfmtrc-like Value
+    let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, args.config.as_deref());
+    let editorconfig_path = resolve_editorconfig_path(&cwd);
+
+    let mut config_resolver = if oxfmtrc_path.is_some() {
+        ConfigResolver::from_config_paths(
+            &cwd,
+            oxfmtrc_path.as_deref(),
+            editorconfig_path.as_deref(),
+        )
+        .map_err(|e| {
+            Box::new(std::io::Error::other(format!(
+                "Failed to load configuration: {}",
+                e
+            ))) as Box<dyn std::error::Error>
+        })?
+    } else {
+        ConfigResolver::from_value(build_value_from_format_args(&args))
+    };
+
+    let ignore_patterns = config_resolver.build_and_validate().map_err(|e| {
+        Box::new(std::io::Error::other(format!(
+            "Failed to parse configuration: {}",
+            e
+        ))) as Box<dyn std::error::Error>
+    })?;
+
+    // Merge config ignore_patterns with CLI excludes (aligned with oxfmt's ignore handling)
+    let mut all_excludes = excludes;
+    all_excludes.extend(ignore_patterns);
+
     // Collect matching files (handles both exact paths and glob patterns)
-    let exclude_matcher = build_globset(&excludes)?;
+    let exclude_matcher = build_globset(&all_excludes)?;
     let mut files = collect_matching_files(&patterns)?;
 
     // Remove files that match any exclude pattern
     if let Some(matcher) = exclude_matcher {
         files.retain(|path| !matcher.is_match(path.to_string_lossy().as_ref()));
     }
+
+    let config_resolver = Arc::new(config_resolver);
 
     if files.is_empty() {
         return Err(Box::new(std::io::Error::other(
@@ -63,12 +102,12 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
         for path in files {
             let semaphore = semaphore.clone();
             let path = path.clone();
-            let format_options = format_options.clone();
+            let config_resolver = Arc::clone(&config_resolver);
 
             // Spawn format_file as a tokio task
             let handle =
                 tokio::spawn(
-                    async move { format_file_task(path, semaphore, format_options).await },
+                    async move { format_file_task(path, semaphore, config_resolver).await },
                 );
             handles.push(handle);
         }
@@ -136,6 +175,74 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
 
         Ok(())
     })
+}
+
+/// Build an Oxfmtrc-like JSON Value from CLI FormatArgs (used when no .oxfmtrc is found).
+/// Aligned with oxfmt's FormatConfig / Oxfmtrc camelCase keys.
+fn build_value_from_format_args(args: &crate::FormatArgs) -> Value {
+    let mut m = serde_json::Map::new();
+    if let Some(v) = &args.indent_style {
+        m.insert("useTabs".into(), Value::Bool(v.is_tab()));
+    }
+    if let Some(v) = &args.indent_width {
+        m.insert("tabWidth".into(), Value::from(v.value()));
+    }
+    if let Some(v) = &args.line_ending {
+        m.insert(
+            "endOfLine".into(),
+            Value::String(format!("{:?}", v).to_lowercase()),
+        );
+    }
+    if let Some(v) = &args.line_width {
+        m.insert("printWidth".into(), Value::from(v.value()));
+    }
+    if let Some(v) = &args.quote_style {
+        m.insert("singleQuote".into(), Value::Bool(!v.is_double()));
+    }
+    if let Some(v) = &args.jsx_quote_style {
+        m.insert("jsxSingleQuote".into(), Value::Bool(!v.is_double()));
+    }
+    if let Some(v) = &args.trailing_commas {
+        m.insert(
+            "trailingComma".into(),
+            Value::String(format!("{:?}", v).to_lowercase()),
+        );
+    }
+    if let Some(v) = &args.semicolons {
+        m.insert("semi".into(), Value::Bool(v.is_always()));
+    }
+    if let Some(v) = &args.arrow_parentheses {
+        m.insert(
+            "arrowParens".into(),
+            Value::String(if v.is_always() { "always" } else { "avoid" }.to_string()),
+        );
+    }
+    if let Some(v) = &args.bracket_spacing {
+        m.insert("bracketSpacing".into(), Value::Bool(v.value()));
+    }
+    if let Some(v) = &args.bracket_same_line {
+        m.insert("bracketSameLine".into(), Value::Bool(v.value()));
+    }
+    if let Some(v) = &args.attribute_position {
+        m.insert(
+            "singleAttributePerLine".into(),
+            Value::Bool(matches!(v, oxc_formatter::AttributePosition::Multiline)),
+        );
+    }
+    if let Some(v) = &args.expand {
+        let s = match v {
+            oxc_formatter::Expand::Auto => "preserve",
+            _ => "collapse",
+        };
+        m.insert("objectWrap".into(), Value::String(s.to_string()));
+    }
+    if let Some(v) = &args.embedded_language_formatting {
+        m.insert(
+            "embeddedLanguageFormatting".into(),
+            Value::String(format!("{:?}", v).to_lowercase()),
+        );
+    }
+    Value::Object(m)
 }
 
 fn collect_matching_files(patterns: &[String]) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
@@ -256,7 +363,7 @@ fn normalize_path(path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
 async fn format_file_task(
     path: PathBuf,
     semaphore: Arc<Semaphore>,
-    format_args: crate::FormatArgs,
+    config_resolver: Arc<ConfigResolver>,
 ) -> Result<(), String> {
     // Acquire permit to limit concurrency
     let _permit = semaphore
@@ -265,15 +372,15 @@ async fn format_file_task(
         .map_err(|e| format!("Semaphore error: {}", e))?;
 
     // Use async file I/O for better performance in concurrent scenarios
-    format_file_async(&path, format_args)
+    format_file_async(&path, config_resolver)
         .await
         .map_err(|err| format!("{}: {err}", path.display()))
 }
 
-/// Format a single file using async I/O
+/// Format a single file using async I/O (config resolution aligned with oxfmt)
 async fn format_file_async(
     path: &Path,
-    format_args: crate::FormatArgs,
+    config_resolver: Arc<ConfigResolver>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Verify file exists
     let actual_path = if tokio::fs::metadata(path).await.is_ok() {
@@ -306,158 +413,22 @@ async fn format_file_async(
     let strategy = FormatFileStrategy::try_from(actual_path.clone())
         .map_err(|_| format!("Unsupported file type '{}'", actual_path.display()))?;
 
-    // Build config from command line arguments
-    // For TOML and JSON files, we need to use ConfigResolver
-    // For JS/TS files, we can build FormatOptions directly
-    // For ExternalFormatter files (like yaml, markdown), we need to check if napi feature is available
-    let resolved_options = match &strategy {
-        FormatFileStrategy::OxfmtToml { .. } | FormatFileStrategy::OxfmtJson { .. } => {
-            // Build JSON config from command line arguments
-            let mut config_value = Value::Object(serde_json::Map::new());
-            config_value["trailingCommas"] = Value::String("none".to_string());
+    // Reject ExternalFormatter: oxk CLI has no napi/Prettier (aligned with oxfmt's Mode::Cli behavior)
+    if let FormatFileStrategy::ExternalFormatter { parser_name, .. }
+    | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. } = &strategy
+    {
+        return Err(format!(
+            "File type '{}' (parser: {}) requires external formatter support (e.g., Prettier). \
+            oxk CLI only supports JavaScript/TypeScript, TOML, and JSON/JSON5/JSONC files. \
+            For other file types, please use npm/oxk with external formatter callbacks or use a different formatter.",
+            actual_path.display(),
+            parser_name
+        )
+        .into());
+    }
 
-            if let Some(v) = format_args.indent_style {
-                config_value["indentStyle"] = Value::String(format!("{:?}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.indent_width {
-                config_value["indentWidth"] = Value::Number(v.value().into());
-            }
-            if let Some(v) = format_args.line_ending {
-                config_value["lineEnding"] = Value::String(format!("{:?}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.line_width {
-                config_value["lineWidth"] = Value::Number(v.value().into());
-            }
-            if let Some(v) = format_args.quote_style {
-                config_value["quoteStyle"] = Value::String(format!("{:?}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.jsx_quote_style {
-                config_value["jsxQuoteStyle"] = Value::String(format!("{:?}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.trailing_commas {
-                config_value["trailingCommas"] = Value::String(format!("{:?}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.semicolons {
-                config_value["semicolons"] = Value::String(format!("{:?}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.arrow_parentheses {
-                config_value["arrowParentheses"] = Value::String(format!("{:?}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.bracket_spacing {
-                config_value["bracketSpacing"] = Value::Bool(v.value());
-            }
-            if let Some(v) = format_args.bracket_same_line {
-                config_value["bracketSameLine"] = Value::Bool(v.value());
-            }
-            if let Some(v) = format_args.attribute_position {
-                config_value["attributePosition"] =
-                    Value::String(format!("{:?}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.expand {
-                config_value["expand"] = Value::String(format!("{}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.experimental_operator_position {
-                config_value["experimentalOperatorPosition"] =
-                    Value::String(format!("{}", v).to_lowercase());
-            }
-            if let Some(v) = format_args.experimental_ternaries {
-                config_value["experimentalTernaries"] = Value::Bool(v);
-            }
-            if let Some(v) = format_args.embedded_language_formatting {
-                config_value["embeddedLanguageFormatting"] =
-                    Value::String(format!("{:?}", v).to_lowercase());
-            }
-
-            // Use ConfigResolver to resolve options for TOML/JSON files
-            let mut config_resolver = ConfigResolver::from_value(config_value);
-            if let Err(err) = config_resolver.build_and_validate() {
-                return Err(format!("Failed to parse configuration: {}", err).into());
-            }
-            let mut resolved_options = config_resolver.resolve(&strategy);
-
-            // Fix quote_properties: Oxfmtrc's deserialization may not properly handle quoteProperties,
-            // so we manually override it to Consistent for JSON/JSON5/JSONC files
-            if let ResolvedOptions::OxfmtJson { json_options, .. } = &mut resolved_options {
-                json_options.quote_properties = json5format::QuoteProperties::Always;
-            }
-
-            resolved_options
-        }
-        FormatFileStrategy::OxcFormatter { .. } => {
-            // For JS/TS files, build FormatOptions directly
-            let mut option = FormatOptions {
-                quote_properties: oxc_formatter::QuoteProperties::Consistent,
-                ..Default::default()
-            };
-
-            if let Some(v) = format_args.indent_style {
-                option.indent_style = v;
-            }
-            if let Some(v) = format_args.indent_width {
-                option.indent_width = v;
-            }
-            if let Some(v) = format_args.line_ending {
-                option.line_ending = v;
-            }
-            if let Some(v) = format_args.line_width {
-                option.line_width = v;
-            }
-            if let Some(v) = format_args.quote_style {
-                option.quote_style = v;
-            }
-            if let Some(v) = format_args.jsx_quote_style {
-                option.jsx_quote_style = v;
-            }
-            if let Some(v) = format_args.trailing_commas {
-                option.trailing_commas = v;
-            }
-            if let Some(v) = format_args.semicolons {
-                option.semicolons = v;
-            }
-            if let Some(v) = format_args.arrow_parentheses {
-                option.arrow_parentheses = v;
-            }
-            if let Some(v) = format_args.bracket_spacing {
-                option.bracket_spacing = v;
-            }
-            if let Some(v) = format_args.bracket_same_line {
-                option.bracket_same_line = v;
-            }
-            if let Some(v) = format_args.attribute_position {
-                option.attribute_position = v;
-            }
-            if let Some(v) = format_args.expand {
-                option.expand = v;
-            }
-            if let Some(v) = format_args.experimental_operator_position {
-                option.experimental_operator_position = v;
-            }
-            if let Some(v) = format_args.experimental_ternaries {
-                option.experimental_ternaries = v;
-            }
-            if let Some(v) = format_args.embedded_language_formatting {
-                option.embedded_language_formatting = v;
-            }
-
-            ResolvedOptions::OxcFormatter {
-                format_options: option,
-                external_options: Value::Object(serde_json::Map::new()),
-                insert_final_newline: true,
-            }
-        }
-        FormatFileStrategy::ExternalFormatter { parser_name, .. }
-        | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. } => {
-            // ExternalFormatter files (like yaml, markdown) require napi feature for formatting
-            // oxk CLI doesn't have napi feature, so we give a clear error message
-            return Err(format!(
-                "File type '{}' (parser: {}) requires external formatter support (e.g., Prettier). \
-                oxk CLI only supports JavaScript/TypeScript, TOML, and JSON/JSON5/JSONC files. \
-                For other file types, please use npm/oxk with external formatter callbacks or use a different formatter.",
-                actual_path.display(),
-                parser_name
-            ).into());
-        }
-    };
+    // Resolve options from ConfigResolver (aligned with oxfmt: .oxfmtrc / overrides / editorconfig)
+    let resolved_options = config_resolver.resolve(&strategy);
 
     // Run CPU-intensive parsing and formatting in a blocking task
     let actual_path_clone = actual_path.clone();
@@ -533,7 +504,7 @@ mod tests {
 
         let formatter = SourceFormatter::new(1);
         let resolved_options = ResolvedOptions::OxcFormatter {
-            format_options,
+            format_options: Box::new(format_options),
             external_options: Value::Object(serde_json::Map::new()),
             insert_final_newline: true,
         };

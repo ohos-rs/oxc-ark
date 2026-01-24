@@ -7,6 +7,7 @@ mod format;
 
 #[derive(Debug, Clone)]
 pub(crate) struct FormatArgs {
+    pub config: Option<std::path::PathBuf>,
     file: Vec<String>,
     thread: usize,
     excludes: Vec<String>,
@@ -24,7 +25,10 @@ pub(crate) struct FormatArgs {
     pub bracket_same_line: Option<oxc_formatter::BracketSameLine>,
     pub attribute_position: Option<oxc_formatter::AttributePosition>,
     pub expand: Option<oxc_formatter::Expand>,
+    #[allow(dead_code)]
+    // reserved for CLI/oxfmt compatibility; oxfmtrc rejects these in into_oxfmt_options
     pub experimental_operator_position: Option<oxc_formatter::OperatorPosition>,
+    #[allow(dead_code)]
     pub experimental_ternaries: Option<bool>,
     pub embedded_language_formatting: Option<oxc_formatter::EmbeddedLanguageFormatting>,
     #[allow(dead_code)]

@@ -1,7 +1,13 @@
 use bpaf::{Parser, construct, long, positional};
-use std::str::FromStr;
+use std::{path::PathBuf, str::FromStr};
 
 pub fn cli_format() -> impl Parser<crate::Options> {
+    let config = long("config")
+        .argument::<String>("PATH")
+        .help("Path to .oxfmtrc config file (default: search upward for .oxfmtrc.json / .oxfmtrc.jsonc)")
+        .parse(|s| Ok::<PathBuf, String>(PathBuf::from(s)))
+        .optional();
+
     let file = positional("input")
         .help("Input regex to select files.")
         .many();
@@ -121,6 +127,7 @@ pub fn cli_format() -> impl Parser<crate::Options> {
         .optional();
 
     let format_parser = construct!(crate::FormatArgs {
+        config,
         thread,
         excludes,
         indent_style,

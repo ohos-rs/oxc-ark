@@ -1,5 +1,6 @@
 mod config;
 mod format;
+mod oxfmtrc;
 mod support;
 mod utils;
 

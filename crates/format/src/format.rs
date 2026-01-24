@@ -66,7 +66,7 @@ impl SourceFormatter {
                     source_text,
                     path,
                     *source_type,
-                    format_options,
+                    *format_options,
                     external_options,
                 ),
                 insert_final_newline,
@@ -169,28 +169,26 @@ impl SourceFormatter {
         }
 
         #[cfg(feature = "napi")]
-        let is_embed_off = format_options.embedded_language_formatting.is_off();
-
-        let base_formatter = Formatter::new(&allocator, format_options);
-
-        #[cfg(feature = "napi")]
-        let formatted = {
+        let external_callbacks = {
+            let is_embed_off = format_options.embedded_language_formatting.is_off();
             if is_embed_off {
-                base_formatter.format(&ret.program)
+                None
             } else {
-                let embedded_formatter = self
-                    .external_formatter
+                self.external_formatter
                     .as_ref()
-                    .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter(external_options);
-                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
+                    .map(|ext| ext.to_external_callbacks(path, &format_options, external_options))
             }
         };
+
         #[cfg(not(feature = "napi"))]
-        let formatted = {
+        let external_callbacks = {
             let _ = external_options;
-            base_formatter.format(&ret.program)
+            None
         };
+
+        let base_formatter = Formatter::new(&allocator, format_options);
+        let formatted =
+            base_formatter.format_with_external_callbacks(&ret.program, external_callbacks);
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
