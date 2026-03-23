@@ -13,11 +13,11 @@ description = "An ArkTS/ArkUI tool based on oxc"
 format = { path = "crates/format" }
 
 # Oxc dependencies
-oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "9aac569624ba3ddc198372aebf6afdbfa0fad0ec" }
-oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "9aac569624ba3ddc198372aebf6afdbfa0fad0ec" }
-oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "9aac569624ba3ddc198372aebf6afdbfa0fad0ec" }
-oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "9aac569624ba3ddc198372aebf6afdbfa0fad0ec" }
-oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "9aac569624ba3ddc198372aebf6afdbfa0fad0ec" }
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "406223a398f3f5e6d4b64948ef0aed056d1fc6bb" }
+oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "406223a398f3f5e6d4b64948ef0aed056d1fc6bb" }
+oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "406223a398f3f5e6d4b64948ef0aed056d1fc6bb" }
+oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "406223a398f3f5e6d4b64948ef0aed056d1fc6bb" }
+oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "406223a398f3f5e6d4b64948ef0aed056d1fc6bb" }
 
 # Json5format dependencies
 json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18181ead25022cf12df7af1bd68b6fb74" }

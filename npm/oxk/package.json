@@ -80,7 +80,7 @@
     "format:rs": "cargo fmt",
     "lint": "oxlint",
     "prepublishOnly": "napi prepublish -t npm",
-    "test": "ava",
+    "test": "pnpm run build:debug && ava",
     "version": "napi version"
   },
   "dependencies": {

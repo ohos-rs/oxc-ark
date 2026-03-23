@@ -122,6 +122,8 @@ impl FormatConfig {
         }
 
         let mut format_options = FormatOptions::default();
+        // Diverges from oxfmt: preserve explicitly quoted object properties by default.
+        format_options.quote_properties = QuoteProperties::Preserve;
 
         if let Some(use_tabs) = self.use_tabs {
             format_options.indent_style = if use_tabs {
@@ -272,6 +274,14 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
             LineEnding::Cr => "cr",
         }),
     );
+    obj.insert(
+        "quoteProps".to_string(),
+        Value::from(match options.quote_properties {
+            QuoteProperties::AsNeeded => "as-needed",
+            QuoteProperties::Consistent => "consistent",
+            QuoteProperties::Preserve => "preserve",
+        }),
+    );
     obj.remove("overrides");
     obj.remove("ignorePatterns");
     obj.remove("insertFinalNewline");
@@ -293,5 +303,34 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
                 obj.insert(dst.to_string(), v.clone());
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_quote_props_are_preserved() {
+        let options = FormatConfig::default()
+            .into_oxfmt_options()
+            .expect("default format config should be valid");
+
+        assert_eq!(
+            options.format_options.quote_properties,
+            QuoteProperties::Preserve
+        );
+    }
+
+    #[test]
+    fn prettier_config_uses_preserve_quote_props_by_default() {
+        let options = FormatConfig::default()
+            .into_oxfmt_options()
+            .expect("default format config should be valid");
+        let mut config = Value::Object(serde_json::Map::new());
+
+        populate_prettier_config(&options.format_options, &mut config);
+
+        assert_eq!(config["quoteProps"], Value::String("preserve".to_string()));
     }
 }

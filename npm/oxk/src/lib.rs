@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use format::{
   should_ignore_file, ConfigResolver, ExternalFormatter, FormatFileStrategy,
   FormatResult as CoreFormatResult, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
-  ResolvedOptions, SourceFormatter,
+  SourceFormatter,
 };
 
 #[napi(object)]
@@ -128,13 +128,7 @@ pub async fn format(
     }
   }
 
-  let mut resolved_options = config_resolver.resolve(&strategy);
-
-  // Fix quote_properties: Oxfmtrc's deserialization may not properly handle quoteProperties,
-  // so we manually override it to Always for JSON/JSON5/JSONC files
-  if let ResolvedOptions::OxfmtJson { json_options, .. } = &mut resolved_options {
-    json_options.quote_properties = json5format::QuoteProperties::Always;
-  }
+  let resolved_options = config_resolver.resolve(&strategy);
 
   // Create formatter
   let formatter = SourceFormatter::new(num_of_threads).with_external_formatter(external_formatter);

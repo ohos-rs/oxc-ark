@@ -133,6 +133,29 @@ test('format JSON5 with comments', async (t) => {
   t.true(result.code.includes('//') || result.code.includes('/*'), 'Should preserve comments')
 })
 
+test('preserve quoted object properties by default for TypeScript', async (t) => {
+  const source = `const value={"quoted":1,plain:2}`
+
+  const result = await format('quoted.ts', source, undefined)
+
+  t.is(result.errors.length, 0, 'Should not have errors')
+  t.true(result.code.includes('"quoted": 1'), 'Should preserve explicit quotes')
+  t.true(result.code.includes('plain: 2'), 'Should keep unquoted properties unchanged')
+})
+
+test('preserve JSON5 property quotes by default', async (t) => {
+  const source = `{
+  "quoted": 'value',
+  plain: 'other'
+}`
+
+  const result = await format('quoted.json5', source, undefined)
+
+  t.is(result.errors.length, 0, 'Should not have errors')
+  t.true(result.code.includes('"quoted": \'value\''), 'Should preserve explicit JSON5 quotes')
+  t.true(result.code.includes("plain: 'other'"), 'Should keep unquoted JSON5 properties unchanged')
+})
+
 test('format regular TypeScript file', async (t) => {
   const source = `const x=1;const y=2;`
 
