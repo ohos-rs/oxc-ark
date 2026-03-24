@@ -267,7 +267,7 @@ jobs:
         run: ls -R npm/oxk
         shell: bash
       - name: Test bindings
-        run: pnpm test
+        run: pnpm --filter @ohos-rs/oxk test
   test-linux-binding:
     name: Test ${{ matrix.target }} - node@${{ matrix.node }}
     needs:
@@ -350,7 +350,7 @@ jobs:
             # Verify pnpm is available and in PATH
             which pnpm || (echo "pnpm not found in PATH" && exit 1)
             pnpm --version
-            pnpm test:npm
+            pnpm --filter @ohos-rs/oxk test
   test-wasi:
     name: Test WASI target
     needs:
@@ -376,7 +376,7 @@ jobs:
         run: ls -R npm/oxk
         shell: bash
       - name: Test bindings
-        run: pnpm test
+        run: pnpm --filter @ohos-rs/oxk test
         env:
           NAPI_RS_FORCE_WASI: 1
   publish:

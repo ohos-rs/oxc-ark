@@ -121,9 +121,11 @@ impl FormatConfig {
             return Err("Unsupported option: `experimentalTernaries`".to_string());
         }
 
-        let mut format_options = FormatOptions::default();
-        // Diverges from oxfmt: preserve explicitly quoted object properties by default.
-        format_options.quote_properties = QuoteProperties::Preserve;
+        let mut format_options = FormatOptions {
+            // Diverges from oxfmt: preserve explicitly quoted object properties by default.
+            quote_properties: QuoteProperties::Preserve,
+            ..FormatOptions::default()
+        };
 
         if let Some(use_tabs) = self.use_tabs {
             format_options.indent_style = if use_tabs {

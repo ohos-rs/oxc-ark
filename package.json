@@ -9,7 +9,7 @@
     "test:rust": "cargo test --workspace --lib --bins",
     "test:rust:oxk": "cargo test -p oxk",
     "test:rust:format": "cargo test -p format --lib",
-    "test:npm": "pnpm --filter @ohos-rs/oxk test",
+    "test:npm": "pnpm --filter @ohos-rs/oxk run test:build",
     "test:all": "pnpm run test:rust && pnpm run test:npm",
     "build": "pnpm run build:rust && pnpm run build:npm",
     "build:rust": "cargo build --workspace",
