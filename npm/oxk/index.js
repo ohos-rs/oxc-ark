@@ -571,5 +571,8 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
+const nativeFormat = nativeBinding.format
+const format = (...args) => Promise.resolve(nativeFormat(...args))
+
 module.exports = nativeBinding
-module.exports.format = nativeBinding.format
+module.exports.format = format

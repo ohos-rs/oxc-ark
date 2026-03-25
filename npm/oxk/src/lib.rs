@@ -18,26 +18,12 @@ pub struct FormatResult {
   pub errors: Vec<String>,
 }
 
-/// Format a file with the given options.
-///
-/// This function supports multiple file types:
-/// - JavaScript/TypeScript files (via oxc_formatter)
-/// - TOML files (via oxc_toml)
-/// - Other files (via external formatter callbacks when napi feature is enabled)
-#[napi]
-pub async fn format(
+fn format_impl(
   filename: String,
   source_text: String,
   options: Option<Value>,
-  #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
   init_external_formatter_cb: Option<JsInitExternalFormatterCb>,
-  #[napi(
-    ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
-  )]
   format_embedded_cb: Option<JsFormatEmbeddedCb>,
-  #[napi(
-    ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
-  )]
   format_file_cb: Option<JsFormatFileCb>,
 ) -> FormatResult {
   let num_of_threads = 1;
@@ -153,4 +139,64 @@ pub async fn format(
       }
     }
   }
+}
+
+/// Format a file with the given options.
+///
+/// This function supports multiple file types:
+/// - JavaScript/TypeScript files (via oxc_formatter)
+/// - TOML files (via oxc_toml)
+/// - Other files (via external formatter callbacks when napi feature is enabled)
+#[cfg(not(target_family = "wasm"))]
+#[napi]
+pub async fn format(
+  filename: String,
+  source_text: String,
+  options: Option<Value>,
+  #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+  init_external_formatter_cb: Option<JsInitExternalFormatterCb>,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+  )]
+  format_embedded_cb: Option<JsFormatEmbeddedCb>,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+  )]
+  format_file_cb: Option<JsFormatFileCb>,
+) -> FormatResult {
+  format_impl(
+    filename,
+    source_text,
+    options,
+    init_external_formatter_cb,
+    format_embedded_cb,
+    format_file_cb,
+  )
+}
+
+#[cfg(target_family = "wasm")]
+#[napi]
+pub fn format(
+  filename: String,
+  source_text: String,
+  options: Option<Value>,
+  #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+  init_external_formatter_cb: Option<JsInitExternalFormatterCb>,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+  )]
+  format_embedded_cb: Option<JsFormatEmbeddedCb>,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+  )]
+  format_file_cb: Option<JsFormatFileCb>,
+) -> FormatResult {
+  format_impl(
+    filename,
+    source_text,
+    options,
+    init_external_formatter_cb,
+    format_embedded_cb,
+    format_file_cb,
+  )
 }

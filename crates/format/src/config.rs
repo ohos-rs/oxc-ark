@@ -281,8 +281,11 @@ mod tests {
 
         fs::create_dir_all(&nested_dir).expect("nested dir should be created");
         fs::write(&json_path, r#"{"singleQuote": true}"#).expect(".json config should be written");
-        fs::write(&jsonc_path, "{\n  // comment\n  \"singleQuote\": false\n}\n")
-            .expect(".jsonc config should be written");
+        fs::write(
+            &jsonc_path,
+            "{\n  // comment\n  \"singleQuote\": false\n}\n",
+        )
+        .expect(".jsonc config should be written");
 
         let resolved = resolve_oxfmtrc_path(&nested_dir, None);
 
