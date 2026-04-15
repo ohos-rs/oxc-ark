@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use format::{
   should_ignore_file, ConfigResolver, ExternalFormatter, FormatFileStrategy,
   FormatResult as CoreFormatResult, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
-  ResolvedOptions, SourceFormatter,
+  SourceFormatter,
 };
 
 #[napi(object)]
@@ -18,26 +18,12 @@ pub struct FormatResult {
   pub errors: Vec<String>,
 }
 
-/// Format a file with the given options.
-///
-/// This function supports multiple file types:
-/// - JavaScript/TypeScript files (via oxc_formatter)
-/// - TOML files (via oxc_toml)
-/// - Other files (via external formatter callbacks when napi feature is enabled)
-#[napi]
-pub async fn format(
+fn format_impl(
   filename: String,
   source_text: String,
   options: Option<Value>,
-  #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
   init_external_formatter_cb: Option<JsInitExternalFormatterCb>,
-  #[napi(
-    ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
-  )]
   format_embedded_cb: Option<JsFormatEmbeddedCb>,
-  #[napi(
-    ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
-  )]
   format_file_cb: Option<JsFormatFileCb>,
 ) -> FormatResult {
   let num_of_threads = 1;
@@ -128,13 +114,7 @@ pub async fn format(
     }
   }
 
-  let mut resolved_options = config_resolver.resolve(&strategy);
-
-  // Fix quote_properties: Oxfmtrc's deserialization may not properly handle quoteProperties,
-  // so we manually override it to Always for JSON/JSON5/JSONC files
-  if let ResolvedOptions::OxfmtJson { json_options, .. } = &mut resolved_options {
-    json_options.quote_properties = json5format::QuoteProperties::Always;
-  }
+  let resolved_options = config_resolver.resolve(&strategy);
 
   // Create formatter
   let formatter = SourceFormatter::new(num_of_threads).with_external_formatter(external_formatter);
@@ -159,4 +139,64 @@ pub async fn format(
       }
     }
   }
+}
+
+/// Format a file with the given options.
+///
+/// This function supports multiple file types:
+/// - JavaScript/TypeScript files (via oxc_formatter)
+/// - TOML files (via oxc_toml)
+/// - Other files (via external formatter callbacks when napi feature is enabled)
+#[cfg(not(target_family = "wasm"))]
+#[napi]
+pub async fn format(
+  filename: String,
+  source_text: String,
+  options: Option<Value>,
+  #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+  init_external_formatter_cb: Option<JsInitExternalFormatterCb>,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+  )]
+  format_embedded_cb: Option<JsFormatEmbeddedCb>,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+  )]
+  format_file_cb: Option<JsFormatFileCb>,
+) -> FormatResult {
+  format_impl(
+    filename,
+    source_text,
+    options,
+    init_external_formatter_cb,
+    format_embedded_cb,
+    format_file_cb,
+  )
+}
+
+#[cfg(target_family = "wasm")]
+#[napi]
+pub fn format(
+  filename: String,
+  source_text: String,
+  options: Option<Value>,
+  #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+  init_external_formatter_cb: Option<JsInitExternalFormatterCb>,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+  )]
+  format_embedded_cb: Option<JsFormatEmbeddedCb>,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+  )]
+  format_file_cb: Option<JsFormatFileCb>,
+) -> FormatResult {
+  format_impl(
+    filename,
+    source_text,
+    options,
+    init_external_formatter_cb,
+    format_embedded_cb,
+    format_file_cb,
+  )
 }

@@ -226,3 +226,102 @@ fn build_json_options(format_options: &FormatOptions) -> JsonFormatterOptions {
         },
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        process,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    use oxc_formatter::{QuoteProperties, QuoteStyle};
+
+    use super::{ConfigResolver, resolve_oxfmtrc_path};
+
+    static NEXT_TEST_DIR_ID: AtomicU64 = AtomicU64::new(0);
+
+    struct TestDir {
+        path: PathBuf,
+    }
+
+    impl TestDir {
+        fn new(prefix: &str) -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "oxc-ark-config-{prefix}-{}-{}",
+                process::id(),
+                NEXT_TEST_DIR_ID.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir_all(&path).expect("test temp dir should be created");
+            Self { path }
+        }
+
+        fn path(&self) -> &Path {
+            &self.path
+        }
+
+        fn join(&self, child: &str) -> PathBuf {
+            self.path.join(child)
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
+    }
+
+    #[test]
+    fn resolve_oxfmtrc_path_prefers_json_over_jsonc() {
+        let dir = TestDir::new("prefer-json");
+        let nested_dir = dir.join("nested");
+        let json_path = dir.join(".oxfmtrc.json");
+        let jsonc_path = dir.join(".oxfmtrc.jsonc");
+
+        fs::create_dir_all(&nested_dir).expect("nested dir should be created");
+        fs::write(&json_path, r#"{"singleQuote": true}"#).expect(".json config should be written");
+        fs::write(
+            &jsonc_path,
+            "{\n  // comment\n  \"singleQuote\": false\n}\n",
+        )
+        .expect(".jsonc config should be written");
+
+        let resolved = resolve_oxfmtrc_path(&nested_dir, None);
+
+        assert_eq!(resolved, Some(json_path));
+    }
+
+    #[test]
+    fn from_config_paths_parses_jsonc_with_comments() {
+        let dir = TestDir::new("parse-jsonc");
+        let config_path = dir.join(".oxfmtrc.jsonc");
+
+        fs::write(
+            &config_path,
+            r#"{
+  // JSONC config should be accepted
+  "singleQuote": true,
+  "ignorePatterns": ["dist/**"]
+}"#,
+        )
+        .expect(".jsonc config should be written");
+
+        let mut resolver = ConfigResolver::from_config_paths(dir.path(), Some(&config_path), None)
+            .expect("jsonc config should load");
+        let ignore_patterns = resolver
+            .build_and_validate()
+            .expect("jsonc config should validate");
+        let (oxfmt_options, _) = resolver
+            .cached_options
+            .as_ref()
+            .expect("validated config should be cached");
+
+        assert_eq!(ignore_patterns, vec!["dist/**".to_string()]);
+        assert_eq!(oxfmt_options.format_options.quote_style, QuoteStyle::Single);
+        assert_eq!(
+            oxfmt_options.format_options.quote_properties,
+            QuoteProperties::Preserve
+        );
+    }
+}
