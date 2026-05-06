@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 
 use phf::phf_set;
 
-use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
 
 #[derive(Debug)]
@@ -42,7 +41,7 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
         // Check JS/TS files first
-        if let Some(source_type) = get_supported_source_type(&path) {
+        if let Some(source_type) = get_oxc_formatter_source_type(&path) {
             return Ok(Self::OxcFormatter { path, source_type });
         }
 
@@ -107,6 +106,63 @@ impl FormatFileStrategy {
         }
     }
 }
+
+fn get_oxc_formatter_source_type(path: &Path) -> Option<SourceType> {
+    // Standard extensions, also supported by `oxc_span::VALID_EXTENSIONS`.
+    // Use `path` directly for `.d.ts` detection.
+    if let Ok(source_type) = SourceType::from_path(path) {
+        return Some(source_type);
+    }
+
+    if let Some(file_name) = path.file_name()
+        && SPECIAL_JS_FILENAMES.contains(file_name.to_str()?)
+    {
+        return Some(SourceType::default());
+    }
+
+    let extension = path.extension()?.to_string_lossy();
+    if ADDITIONAL_JS_EXTENSIONS.contains(extension.as_ref()) {
+        return Some(SourceType::default());
+    }
+
+    if extension == "frag" {
+        let stem = path.file_stem()?.to_str()?;
+        #[expect(clippy::case_sensitive_file_extension_comparisons)]
+        return (stem.ends_with(".start") || stem.ends_with(".end"))
+            .then_some(SourceType::default());
+    }
+
+    None
+}
+
+static ADDITIONAL_JS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "_js",
+    "bones",
+    "es",
+    "es6",
+    "gs",
+    "jake",
+    "javascript",
+    "jsb",
+    "jscad",
+    "jsfl",
+    "jslib",
+    "jsm",
+    "jspre",
+    "jss",
+    "njs",
+    "pac",
+    "sjs",
+    "ssjs",
+    "xsjs",
+    "xsjslib",
+};
+
+static SPECIAL_JS_FILENAMES: phf::Set<&'static str> = phf_set! {
+    "Jakefile",
+    "start.frag",
+    "end.frag",
+};
 
 static EXCLUDE_FILENAMES: phf::Set<&'static str> = phf_set! {
     // JSON, YAML lock files
@@ -459,3 +515,107 @@ static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "yaml",
     "yaml-tmlanguage",
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn strategy_for(path: &str) -> FormatFileStrategy {
+        FormatFileStrategy::try_from(PathBuf::from(path)).expect(path)
+    }
+
+    #[test]
+    fn oxc_formatter_strategy_matches_upstream_supported_paths() {
+        for path in [
+            "index.js",
+            "index.jsx",
+            "index.ts",
+            "index.tsx",
+            "types.d.ts",
+            "page.ets",
+            "Jakefile",
+            "module.es6",
+            "template.start.frag",
+            "template.end.frag",
+        ] {
+            assert!(
+                matches!(strategy_for(path), FormatFileStrategy::OxcFormatter { .. }),
+                "{path} should be formatted by oxc_formatter",
+            );
+        }
+    }
+
+    #[test]
+    fn non_upstream_frag_file_is_not_treated_as_javascript() {
+        assert!(FormatFileStrategy::try_from(PathBuf::from("shader.frag")).is_err());
+    }
+
+    #[test]
+    fn pure_rust_json_and_toml_strategies_are_preserved() {
+        assert!(matches!(
+            strategy_for("config.toml"),
+            FormatFileStrategy::OxfmtToml { .. }
+        ));
+        assert!(matches!(
+            strategy_for("data.json"),
+            FormatFileStrategy::OxfmtJson {
+                json_type: JsonType::Json,
+                ..
+            }
+        ));
+        assert!(matches!(
+            strategy_for("data.jsonc"),
+            FormatFileStrategy::OxfmtJson {
+                json_type: JsonType::Jsonc,
+                ..
+            }
+        ));
+        assert!(matches!(
+            strategy_for("data.json5"),
+            FormatFileStrategy::OxfmtJson {
+                json_type: JsonType::Json5,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn external_formatter_strategies_are_preserved() {
+        assert!(matches!(
+            strategy_for("package.json"),
+            FormatFileStrategy::ExternalFormatterPackageJson {
+                parser_name: "json-stringify",
+                ..
+            }
+        ));
+        assert!(matches!(
+            strategy_for("README.md"),
+            FormatFileStrategy::ExternalFormatter {
+                parser_name: "markdown",
+                ..
+            }
+        ));
+        assert!(matches!(
+            strategy_for("component.vue"),
+            FormatFileStrategy::ExternalFormatter {
+                parser_name: "vue",
+                ..
+            }
+        ));
+        assert!(matches!(
+            strategy_for("schema.graphql"),
+            FormatFileStrategy::ExternalFormatter {
+                parser_name: "graphql",
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn ignored_files_are_not_formatted() {
+        assert!(FormatFileStrategy::try_from(PathBuf::from("pnpm-lock.yaml")).is_err());
+        assert!(FormatFileStrategy::try_from(PathBuf::from("oh-package-lock.json5")).is_err());
+        assert!(should_ignore_file(Path::new("pnpm-lock.yaml")));
+        assert!(should_ignore_file(Path::new("oh-package-lock.json5")));
+    }
+}
