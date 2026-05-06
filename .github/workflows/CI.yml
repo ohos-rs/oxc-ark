@@ -382,6 +382,9 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     needs:
       - lint
       - build-freebsd
@@ -414,10 +417,6 @@ jobs:
         if: "startsWith(github.event.head_commit.message, 'chore(release): publish')"
         run: |
           cd npm/oxk
-          npm config set provenance true
-          echo "Detected stable version, publishing to latest"
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          npm publish --access public
+          npm publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
