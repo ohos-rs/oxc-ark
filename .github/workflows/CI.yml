@@ -419,5 +419,8 @@ jobs:
         run: |
           npm --version
           cd npm/oxk
+          NPM_TAG=$(node -p "const version = require('./package.json').version; const match = version.match(/^[^-]+-([0-9A-Za-z]+)(?:[.-].*)?$/); match ? match[1] : 'latest'")
+          echo "Publishing with npm dist-tag: ${NPM_TAG}"
+          export npm_config_tag="${NPM_TAG}"
           pnpm napi pre-publish --no-gh-release -t npm
-          npm publish --ignore-scripts --provenance --access public
+          npm publish --ignore-scripts --provenance --access public --tag "${NPM_TAG}"
