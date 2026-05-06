@@ -399,6 +399,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          registry-url: https://registry.npmjs.org/
           cache: pnpm
       - name: Install dependencies
         run: pnpm install
@@ -416,7 +417,8 @@ jobs:
       - name: Publish
         if: "startsWith(github.event.head_commit.message, 'chore(release): publish')"
         run: |
+          npm install -g npm@^11.5.1
+          npm --version
           cd npm/oxk
-          npm publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          pnpm napi pre-publish --no-gh-release -t npm
+          npm publish --ignore-scripts --provenance --access public
