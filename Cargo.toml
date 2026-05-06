@@ -14,10 +14,18 @@ format = { path = "crates/format" }
 
 # Oxc dependencies
 oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
+oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614", features = [
+  "serialize",
+] }
+oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614", features = [
+  "serialize",
+] }
 oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
+oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
+oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 
 # Json5format dependencies
 json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18181ead25022cf12df7af1bd68b6fb74" }
@@ -35,6 +43,7 @@ owo-colors = "4"
 globset = "0.4"
 walkdir = "2"
 futures = "0.3"
+rustc-hash = "2"
 
 # NAPI dependencies
 napi = { version = "3.0", features = ["async", "serde-json"] }

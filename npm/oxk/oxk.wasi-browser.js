@@ -56,4 +56,10 @@ const {
   },
 })
 export default __napiModule.exports
+export const ExportExportNameKind = __napiModule.exports.ExportExportNameKind
+export const ExportImportNameKind = __napiModule.exports.ExportImportNameKind
+export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 export const format = __napiModule.exports.format
+export const ImportNameKind = __napiModule.exports.ImportNameKind
+export const parse = __napiModule.exports.parse
+export const Severity = __napiModule.exports.Severity
