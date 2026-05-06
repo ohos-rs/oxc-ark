@@ -9,7 +9,7 @@
     "oxk": "./bin/oxk.js"
   },
   "repository": {
-    "url": "git+git@github.com:ohos-rs/oxc-ark.git",
+    "url": "git+https://github.com/ohos-rs/oxc-ark.git",
     "type": "git"
   },
   "license": "MIT",
