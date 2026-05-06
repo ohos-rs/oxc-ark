@@ -9,7 +9,9 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": [],
+  "include": [
+    "npm/oxk/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "target",

@@ -1,5 +1,7 @@
 #![deny(clippy::all)]
 
+mod parse;
+
 use napi_derive::napi;
 use serde_json::Value;
 use std::path::PathBuf;

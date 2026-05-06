@@ -572,4 +572,10 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
+module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
+module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
+module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
 module.exports.format = nativeBinding.format
+module.exports.ImportNameKind = nativeBinding.ImportNameKind
+module.exports.parse = nativeBinding.parse
+module.exports.Severity = nativeBinding.Severity
