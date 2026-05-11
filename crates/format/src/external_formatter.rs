@@ -1,4 +1,6 @@
 #[cfg(feature = "napi")]
+use std::future::Future;
+#[cfg(feature = "napi")]
 use std::path::Path;
 #[cfg(feature = "napi")]
 use std::sync::Arc;
@@ -77,6 +79,25 @@ type FormatFileWithConfigCallback =
 #[cfg(feature = "napi")]
 type InitExternalFormatterCallback =
     Arc<dyn Fn(usize) -> Result<Vec<String>, String> + Send + Sync>;
+
+#[cfg(feature = "napi")]
+fn block_on_js_callback<F, T>(future: F) -> Result<T, String>
+where
+    F: Future<Output = Result<T, String>> + Send + 'static,
+    T: Send + 'static,
+{
+    #[cfg(target_family = "wasm")]
+    {
+        std::thread::spawn(move || block_on(future))
+            .join()
+            .map_err(|_| "JS callback thread panicked".to_string())?
+    }
+
+    #[cfg(not(target_family = "wasm"))]
+    {
+        block_on(future)
+    }
+}
 
 /// External formatter that wraps a JS callback.
 #[cfg(feature = "napi")]
@@ -169,124 +190,92 @@ fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
     }
 }
 
-// NOTE: These methods are all wrapped by `block_on` to run the async JS calls in a blocking manner.
-// In wasm environment, we can't use block_on if we're already in an async context.
-// For wasm, we need to use a different approach - we'll use Handle::spawn or handle it differently.
+// These wrappers expose async JS callbacks to the synchronous formatter core.
+// WASI exports run inside the napi runtime, so the blocking wait happens on a
+// separate thread there to avoid starting the same runtime recursively.
 
 /// Wrap JS `initExternalFormatter` callback as a normal Rust function.
 #[cfg(feature = "napi")]
 fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFormatterCallback {
+    let cb = Arc::new(cb);
     Arc::new(move |num_threads: usize| {
-        // In wasm, if we're already in an async context, block_on will fail with
-        // "Cannot start a runtime from within a runtime" error.
-        // For now, we'll return an empty list as a workaround.
-        // TODO: Make this async-aware in wasm to properly support external formatters.
-        #[cfg(target_family = "wasm")]
-        {
-            // Return empty list as a workaround for nested runtime issue in wasm
-            // This allows the formatter to continue working, but without external formatting
-            Ok(vec![])
-        }
-        #[cfg(not(target_family = "wasm"))]
-        {
-            block_on(async {
-                #[expect(clippy::cast_possible_truncation)]
-                let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
-                match status {
-                    Ok(promise) => match promise.await {
-                        Ok(languages) => Ok(languages),
-                        Err(err) => {
-                            Err(format!("JS initExternalFormatter promise rejected: {err}"))
-                        }
-                    },
-                    Err(err) => Err(format!(
-                        "Failed to call JS initExternalFormatter callback: {err}"
-                    )),
-                }
-            })
-        }
+        let cb = Arc::clone(&cb);
+        block_on_js_callback(async move {
+            #[expect(clippy::cast_possible_truncation)]
+            let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
+            match status {
+                Ok(promise) => match promise.await {
+                    Ok(languages) => Ok(languages),
+                    Err(err) => Err(format!("JS initExternalFormatter promise rejected: {err}")),
+                },
+                Err(err) => Err(format!(
+                    "Failed to call JS initExternalFormatter callback: {err}"
+                )),
+            }
+        })
     })
 }
 
 /// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
 #[cfg(feature = "napi")]
 fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallback {
+    let cb = Arc::new(cb);
     Arc::new(move |options: &Value, tag_name: &str, code: &str| {
-        // In wasm, if we're already in an async context, block_on will fail with
-        // "Cannot start a runtime from within a runtime" error.
-        // For now, we'll return the original code as a workaround.
-        // TODO: Make this async-aware in wasm to properly support external formatters.
-        #[cfg(target_family = "wasm")]
-        {
-            // Return original code as a workaround for nested runtime issue in wasm
-            // This allows the formatter to continue working, but without external formatting
-            Ok(code.to_string())
-        }
-        #[cfg(not(target_family = "wasm"))]
-        {
-            block_on(async {
-                let status = cb
-                    .call_async(FnArgs::from((
-                        options.clone(),
-                        tag_name.to_string(),
-                        code.to_string(),
-                    )))
-                    .await;
-                match status {
-                    Ok(promise) => match promise.await {
-                        Ok(formatted_code) => Ok(formatted_code),
-                        Err(err) => Err(format!(
-                            "JS formatter promise rejected for tag '{tag_name}': {err}"
-                        )),
-                    },
+        let cb = Arc::clone(&cb);
+        let options = options.clone();
+        let tag_name = tag_name.to_string();
+        let code = code.to_string();
+        block_on_js_callback(async move {
+            let status = cb
+                .call_async(FnArgs::from((options, tag_name.clone(), code)))
+                .await;
+            match status {
+                Ok(promise) => match promise.await {
+                    Ok(formatted_code) => Ok(formatted_code),
                     Err(err) => Err(format!(
-                        "Failed to call JS formatting callback for tag '{tag_name}': {err}"
+                        "JS formatter promise rejected for tag '{tag_name}': {err}"
                     )),
-                }
-            })
-        }
+                },
+                Err(err) => Err(format!(
+                    "Failed to call JS formatting callback for tag '{tag_name}': {err}"
+                )),
+            }
+        })
     })
 }
 
 /// Wrap JS `formatFile` callback as a normal Rust function.
 #[cfg(feature = "napi")]
 fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
+    let cb = Arc::new(cb);
     Arc::new(
         move |options: &Value, parser_name: &str, file_name: &str, code: &str| {
-            // In wasm, if we're already in an async context, block_on will fail with
-            // "Cannot start a runtime from within a runtime" error.
-            // For now, we'll return the original code as a workaround.
-            // TODO: Make this async-aware in wasm to properly support external formatters.
-            #[cfg(target_family = "wasm")]
-            {
-                // Return original code as a workaround for nested runtime issue in wasm
-                // This allows the formatter to continue working, but without external formatting
-                Ok(code.to_string())
-            }
-            #[cfg(not(target_family = "wasm"))]
-            {
-                block_on(async {
-                    let status = cb
-                        .call_async(FnArgs::from((
-                            options.clone(),
-                            parser_name.to_string(),
-                            file_name.to_string(),
-                            code.to_string(),
-                        )))
-                        .await;
-                    match status {
-                        Ok(promise) => match promise.await {
-                            Ok(formatted_code) => Ok(formatted_code),
-                            Err(err) => Err(format!(
-                                "JS formatFile promise rejected for file: '{file_name}', parser: '{parser_name}': {err}"
-                            )),
-                        },
+            let cb = Arc::clone(&cb);
+            let options = options.clone();
+            let parser_name = parser_name.to_string();
+            let file_name = file_name.to_string();
+            let code = code.to_string();
+            block_on_js_callback(async move {
+                let status = cb
+                    .call_async(FnArgs::from((
+                        options,
+                        parser_name.clone(),
+                        file_name.clone(),
+                        code,
+                    )))
+                    .await;
+                match status {
+                    Ok(promise) => match promise.await {
+                        Ok(formatted_code) => Ok(formatted_code),
                         Err(err) => Err(format!(
-                            "Failed to call JS formatFile callback for file: '{file_name}', parser: '{parser_name}': {err}"
+                            "JS formatFile promise rejected for file: '{file_name}', parser: '{parser_name}': {err}"
                         )),
-                    }
-                })
-            }
+                    },
+                    Err(err) => Err(format!(
+                        "Failed to call JS formatFile callback for file: '{file_name}', parser: '{parser_name}': {err}"
+                    )),
+                }
+            })
         },
     )
 }
