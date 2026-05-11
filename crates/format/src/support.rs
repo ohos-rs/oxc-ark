@@ -88,7 +88,6 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 }
 
 impl FormatFileStrategy {
-    #[cfg(not(feature = "napi"))]
     pub fn can_format_without_external(&self) -> bool {
         matches!(
             self,

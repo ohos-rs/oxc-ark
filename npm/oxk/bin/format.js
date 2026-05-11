@@ -2,7 +2,7 @@ const { existsSync, readFileSync, writeFileSync } = require('node:fs')
 const path = require('node:path')
 const { glob } = require('glob')
 
-const { format } = require('../index.js')
+const { format } = require('../format.js')
 
 const CONFIG_FILES = ['.oxfmtrc.json', '.oxfmtrc.jsonc']
 const RECOVERABLE_ERROR_PATTERNS = [

@@ -59,18 +59,8 @@ fn format_impl(
     #[cfg(not(target_family = "wasm"))]
     let init_result = tokio::task::block_in_place(|| ext_fmt.init(num_of_threads));
     #[cfg(target_family = "wasm")]
-    {
-      // In wasm, we're already in an async context, so we can't use block_on.
-      // The ext_fmt.init() uses block_on internally, which will fail in wasm with
-      // "Cannot start a runtime from within a runtime" error.
-      // The solution is to skip initialization in wasm, as it's not critical
-      // for basic formatting operations. The formatter will still work without it.
-      // The init() call is mainly used to get the list of supported languages,
-      // which is not required for the formatter to work.
-      // TODO: Make init async-aware in wasm to properly support external formatters.
-    }
+    let init_result = ext_fmt.init(num_of_threads);
 
-    #[cfg(not(target_family = "wasm"))]
     match init_result {
       Ok(_) => {}
       Err(err) => {
@@ -98,22 +88,15 @@ fn format_impl(
     };
   };
 
-  // Check if external formatter is needed but not provided
-  // For non-JS/TS/TOML files, external formatter is required
-  match &strategy {
-    FormatFileStrategy::OxcFormatter { .. } | FormatFileStrategy::OxfmtToml { .. } => {
-      // These can be formatted without external formatter
-    }
-    _ => {
-      if external_formatter.is_none() {
-        return FormatResult {
-          code: source_text,
-          errors: vec![format!(
-            "External formatter is required for file type: {filename}"
-          )],
-        };
-      }
-    }
+  // Check if external formatter is needed but not provided.
+  // JS/TS, TOML, and JSON/JSON5/JSONC are handled by native Rust formatters.
+  if !strategy.can_format_without_external() && external_formatter.is_none() {
+    return FormatResult {
+      code: source_text,
+      errors: vec![format!(
+        "External formatter is required for file type: {filename}"
+      )],
+    };
   }
 
   let resolved_options = config_resolver.resolve(&strategy);
@@ -148,6 +131,7 @@ fn format_impl(
 /// This function supports multiple file types:
 /// - JavaScript/TypeScript files (via oxc_formatter)
 /// - TOML files (via oxc_toml)
+/// - JSON/JSON5/JSONC files (via native Rust formatters)
 /// - Other files (via external formatter callbacks when napi feature is enabled)
 #[cfg(not(target_family = "wasm"))]
 #[napi]
@@ -178,7 +162,7 @@ pub async fn format(
 
 #[cfg(target_family = "wasm")]
 #[napi]
-pub fn format(
+pub async fn format(
   filename: String,
   source_text: String,
   options: Option<Value>,

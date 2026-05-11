@@ -85,8 +85,8 @@
     "version": "napi version"
   },
   "dependencies": {
-    "glob": "^11.0.0",
-    "prettier": "^3.7.4"
+    "glob": "^11.1.0",
+    "prettier": "^3.8.3"
   },
   "devDependencies": {
     "@emnapi/core": "^1.5.0",
