@@ -78,6 +78,7 @@ export declare const enum ExportLocalNameKind {
  * This function supports multiple file types:
  * - JavaScript/TypeScript files (via oxc_formatter)
  * - TOML files (via oxc_toml)
+ * - JSON/JSON5/JSONC files (via native Rust formatters)
  * - Other files (via external formatter callbacks when napi feature is enabled)
  */
 export declare function format(filename: string, sourceText: string, options?: any | undefined | null, initExternalFormatterCb?: (numThreads: number) => Promise<string[]>, formatEmbeddedCb?: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb?: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<FormatResult>

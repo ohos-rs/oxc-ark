@@ -21,11 +21,11 @@ importers:
   npm/oxk:
     dependencies:
       glob:
-        specifier: ^11.0.0
+        specifier: ^11.1.0
         version: 11.1.0
       prettier:
-        specifier: ^3.7.4
-        version: 3.7.4
+        specifier: ^3.8.3
+        version: 3.8.3
     devDependencies:
       '@emnapi/core':
         specifier: ^1.5.0
@@ -1246,6 +1246,7 @@ packages:
   glob@11.1.0:
     resolution: {integrity: sha512-vuNwKSaKiqm7g0THUBu2x7ckSs3XJLXE+2ssL7/MfTGPLLcrJQ/4Uq1CjPTtO5cCIiRxqvN6Twy1qOwhL0Xjcw==}
     engines: {node: 20 || >=22}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   globalthis@1.0.4:
@@ -1742,6 +1743,11 @@ packages:
 
   prettier@3.7.4:
     resolution: {integrity: sha512-v6UNi1+3hSlVvv8fSaoUbggEM5VErKmmpGA7Pl3HF8V6uKY7rvClBOJlH6yNwQtfTueNkGVpOv/mtWL9L4bgRA==}
+    engines: {node: '>=14'}
+    hasBin: true
+
+  prettier@3.8.3:
+    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -3691,6 +3697,8 @@ snapshots:
   possible-typed-array-names@1.1.0: {}
 
   prettier@3.7.4: {}
+
+  prettier@3.8.3: {}
 
   pretty-ms@9.3.0:
     dependencies:

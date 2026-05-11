@@ -98,22 +98,15 @@ fn format_impl(
     };
   };
 
-  // Check if external formatter is needed but not provided
-  // For non-JS/TS/TOML files, external formatter is required
-  match &strategy {
-    FormatFileStrategy::OxcFormatter { .. } | FormatFileStrategy::OxfmtToml { .. } => {
-      // These can be formatted without external formatter
-    }
-    _ => {
-      if external_formatter.is_none() {
-        return FormatResult {
-          code: source_text,
-          errors: vec![format!(
-            "External formatter is required for file type: {filename}"
-          )],
-        };
-      }
-    }
+  // Check if external formatter is needed but not provided.
+  // JS/TS, TOML, and JSON/JSON5/JSONC are handled by native Rust formatters.
+  if !strategy.can_format_without_external() && external_formatter.is_none() {
+    return FormatResult {
+      code: source_text,
+      errors: vec![format!(
+        "External formatter is required for file type: {filename}"
+      )],
+    };
   }
 
   let resolved_options = config_resolver.resolve(&strategy);
@@ -148,6 +141,7 @@ fn format_impl(
 /// This function supports multiple file types:
 /// - JavaScript/TypeScript files (via oxc_formatter)
 /// - TOML files (via oxc_toml)
+/// - JSON/JSON5/JSONC files (via native Rust formatters)
 /// - Other files (via external formatter callbacks when napi feature is enabled)
 #[cfg(not(target_family = "wasm"))]
 #[napi]

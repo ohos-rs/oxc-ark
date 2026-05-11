@@ -1,5 +1,5 @@
 import test from 'ava'
-import { format } from '../format.js'
+import { format, formatRaw } from '../format.js'
 
 test('format ArkTS (.ets) file', async (t) => {
   const source = `@Component
@@ -104,13 +104,12 @@ test('format JSON5 file', async (t) => {
   }
 }`
 
-  // Now with Prettier integration, JSON5 files should be formatted automatically
+  // JSON5 files are formatted by the native Rust formatter.
   const result = await format('test.json5', json5Source, undefined)
 
   t.truthy(result, 'Should return a result')
   t.is(result.errors.length, 0, 'Should not have errors')
   t.truthy(result.code, 'Should return formatted code')
-  // Prettier should format the JSON5 file
   t.true(result.code.includes('name') || result.code.includes('test'), 'Should contain formatted content')
 })
 
@@ -123,14 +122,29 @@ test('format JSON5 with comments', async (t) => {
   version: '1.0.0'
 }`
 
-  // Now with Prettier integration, JSON5 files with comments should be formatted automatically
+  // JSON5 files are formatted by the native Rust formatter.
   const result = await format('config.json5', json5Source, undefined)
 
   t.truthy(result, 'Should return a result')
   t.is(result.errors.length, 0, 'Should not have errors')
   t.truthy(result.code, 'Should return formatted code')
-  // Prettier should preserve comments in JSON5
   t.true(result.code.includes('//') || result.code.includes('/*'), 'Should preserve comments')
+})
+
+test('format raw JSON5 without external formatter callbacks', async (t) => {
+  const source = `{
+  // keep this comment
+  name: 'native-json5'
+}`
+
+  const result = await formatRaw('raw.json5', source, undefined)
+
+  t.is(result.errors.length, 0, 'JSON5 should not require external formatter callbacks')
+  t.false(
+    result.errors.some((err: string) => err.includes('External formatter is required')),
+    'Should not fall back to the external formatter requirement',
+  )
+  t.true(result.code.includes('native-json5'), 'Should return formatted JSON5 content')
 })
 
 test('preserve quoted object properties by default for TypeScript', async (t) => {

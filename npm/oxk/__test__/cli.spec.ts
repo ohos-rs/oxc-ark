@@ -74,6 +74,41 @@ test('npm cli loads nearest .oxfmtrc.jsonc', (t) => {
   })
 })
 
+test('npm cli formats external files with bundled Prettier callbacks', (t) => {
+  withTempDir((dir) => {
+    const filePath = join(dir, 'config.yaml')
+    writeFileSync(filePath, 'name: test\nitems:\n- one\n- two\n', 'utf8')
+
+    const result = spawnSync(process.execPath, [cliPath, 'format', 'config.yaml'], {
+      cwd: dir,
+      encoding: 'utf8',
+    })
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+
+    const formatted = readFileSync(filePath, 'utf8')
+    t.true(formatted.includes('items:\n  - one\n  - two'), 'Should format YAML via Prettier')
+  })
+})
+
+test('npm cli formats JSON5 through native formatter', (t) => {
+  withTempDir((dir) => {
+    const filePath = join(dir, 'config.json5')
+    writeFileSync(filePath, "{\n// keep comment\nname:'native-json5'\n}\n", 'utf8')
+
+    const result = spawnSync(process.execPath, [cliPath, 'format', 'config.json5'], {
+      cwd: dir,
+      encoding: 'utf8',
+    })
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+
+    const formatted = readFileSync(filePath, 'utf8')
+    t.true(formatted.includes('// keep comment'), 'Should preserve JSON5 comments')
+    t.true(formatted.includes("name: 'native-json5'"), 'Should format JSON5 content')
+  })
+})
+
 test('npm cli prefers .oxfmtrc.json over .oxfmtrc.jsonc', (t) => {
   withTempDir((dir) => {
     writeFileSync(join(dir, '.oxfmtrc.json'), JSON.stringify({ singleQuote: true }), 'utf8')
