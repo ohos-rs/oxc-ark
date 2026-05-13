@@ -157,6 +157,10 @@ jobs:
       - name: Build
         run: ${{ matrix.settings.build }}
         shell: bash
+      - name: Test WASI binding
+        if: matrix.settings.target == 'wasm32-wasip1-threads'
+        run: cd npm/oxk && pnpm run test:wasi
+        shell: bash
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         if: matrix.settings.target != 'wasm32-wasip1-threads'
@@ -376,9 +380,7 @@ jobs:
         run: ls -R npm/oxk
         shell: bash
       - name: Test bindings
-        run: pnpm --filter @ohos-rs/oxk test
-        env:
-          NAPI_RS_FORCE_WASI: 1
+        run: pnpm --filter @ohos-rs/oxk run test:wasi
   publish:
     name: Publish
     runs-on: ubuntu-latest

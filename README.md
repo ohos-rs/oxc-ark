@@ -65,6 +65,8 @@ ArkTS rules only run for `.ets` files. The other extensions are not supported.
 ```bash
 pnpm --filter @ohos-rs/oxk run build:debug
 pnpm --filter @ohos-rs/oxk test
+pnpm --filter @ohos-rs/oxk run build --target wasm32-wasip1-threads
+pnpm --filter @ohos-rs/oxk run test:wasi
 
 cargo check -p lint -p oxk
 cargo check -p oxk-napi

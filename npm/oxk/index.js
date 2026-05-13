@@ -572,7 +572,6 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
-module.exports.Severity = nativeBinding.Severity
 module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
 module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
@@ -582,8 +581,3 @@ module.exports.lint = nativeBinding.lint
 module.exports.lintWithPlugins = nativeBinding.lintWithPlugins
 module.exports.parse = nativeBinding.parse
 module.exports.Severity = nativeBinding.Severity
-module.exports.applyFixes = nativeBinding.applyFixes
-module.exports.getBufferOffset = nativeBinding.getBufferOffset
-module.exports.lint = nativeBinding.lint
-module.exports.parseRawSync = nativeBinding.parseRawSync
-module.exports.rawTransferSupported = nativeBinding.rawTransferSupported

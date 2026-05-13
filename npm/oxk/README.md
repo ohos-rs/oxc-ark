@@ -105,6 +105,20 @@ const oxk = require('@ohos-rs/oxk')
 For linting from JavaScript, prefer `@ohos-rs/oxk/lint`; it wires the oxlint JS
 runtime callbacks for plugins and JavaScript config files.
 
+## WASI
+
+Build the WASI artifact locally:
+
+```bash
+pnpm build --target wasm32-wasip1-threads
+pnpm run test:wasi
+```
+
+`test:wasi` forces `NAPI_RS_FORCE_WASI=1` and verifies the generated WASI
+binding can load and execute `parse` and `format`. Linting is intentionally not
+available from the WASI build because the oxlint runner and JavaScript plugin
+runtime are native-only; use the native npm package or cargo CLI for linting.
+
 ## Local Development
 
 Build the local NAPI binary before running npm CLI tests:
@@ -112,6 +126,8 @@ Build the local NAPI binary before running npm CLI tests:
 ```bash
 pnpm --filter @ohos-rs/oxk run build:debug
 pnpm --filter @ohos-rs/oxk test
+pnpm --filter @ohos-rs/oxk run build --target wasm32-wasip1-threads
+pnpm --filter @ohos-rs/oxk run test:wasi
 ```
 
 Update the bundled oxlint JavaScript runtime after changing the upstream source

@@ -56,7 +56,6 @@ const {
   },
 })
 export default __napiModule.exports
-export const Severity = __napiModule.exports.Severity
 export const ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 export const ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
@@ -66,8 +65,3 @@ export const lint = __napiModule.exports.lint
 export const lintWithPlugins = __napiModule.exports.lintWithPlugins
 export const parse = __napiModule.exports.parse
 export const Severity = __napiModule.exports.Severity
-export const applyFixes = __napiModule.exports.applyFixes
-export const getBufferOffset = __napiModule.exports.getBufferOffset
-export const lint = __napiModule.exports.lint
-export const parseRawSync = __napiModule.exports.parseRawSync
-export const rawTransferSupported = __napiModule.exports.rawTransferSupported
