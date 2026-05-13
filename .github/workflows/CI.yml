@@ -45,6 +45,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build npm binding
+        run: pnpm --filter @ohos-rs/oxk run build:debug:binding
+
+      - name: Test npm CLI
+        run: pnpm --filter @ohos-rs/oxk run test:cli
+
       - name: Lint
         run: pnpm lint
 
@@ -271,7 +277,7 @@ jobs:
         run: ls -R npm/oxk
         shell: bash
       - name: Test bindings
-        run: pnpm --filter @ohos-rs/oxk test
+        run: pnpm --filter @ohos-rs/oxk run test:binding
   test-linux-binding:
     name: Test ${{ matrix.target }} - node@${{ matrix.node }}
     needs:
@@ -354,7 +360,7 @@ jobs:
             # Verify pnpm is available and in PATH
             which pnpm || (echo "pnpm not found in PATH" && exit 1)
             pnpm --version
-            pnpm --filter @ohos-rs/oxk test
+            pnpm --filter @ohos-rs/oxk run test:binding
   test-wasi:
     name: Test WASI target
     needs:

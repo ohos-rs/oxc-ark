@@ -81,6 +81,7 @@
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release --no-dts-cache",
     "build:debug": "napi build --platform --no-dts-cache",
+    "build:debug:binding": "node scripts/build-binding-only.cjs",
     "build:oxlint-runtime": "node scripts/build-oxlint-runtime.mjs",
     "format": "run-p format:prettier format:rs format:toml",
     "format:prettier": "prettier . -w",
@@ -89,6 +90,8 @@
     "lint": "oxlint",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
+    "test:binding": "ava __test__/index.spec.ts __test__/format.spec.ts",
+    "test:cli": "ava __test__/cli.spec.ts",
     "test:wasi": "node scripts/smoke-wasi.cjs",
     "test:build": "pnpm run build:debug && pnpm run test",
     "version": "napi version"
