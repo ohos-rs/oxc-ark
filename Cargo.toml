@@ -11,6 +11,7 @@ description = "An ArkTS/ArkUI tool based on oxc"
 [workspace.dependencies]
 # inner dependencies
 format = { path = "crates/format" }
+lint = { path = "crates/lint" }
 
 # Oxc dependencies
 oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
@@ -22,10 +23,12 @@ oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8
 ] }
 oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
+oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
+oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614", default-features = false }
 
 # Json5format dependencies
 json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18181ead25022cf12df7af1bd68b6fb74" }
@@ -33,6 +36,7 @@ json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18
 
 # Common dependencies
 serde_json = "1.0"
+serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 phf = { version = "0.11", features = ["macros"] }
 simdutf8 = "0.1"

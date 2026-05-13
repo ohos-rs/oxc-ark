@@ -1,0 +1,1666 @@
+use std::{
+    fs,
+    path::Path,
+    sync::{Arc, Mutex},
+};
+
+use oxc_allocator::Allocator;
+use oxc_ast::ast::*;
+use oxc_ast_visit::{
+    Visit,
+    utf8_to_utf16::{Utf8ToUtf16, Utf8ToUtf16Converter},
+    walk,
+};
+use oxc_linter::{
+    ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+    ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+    LintFileResult, LoadPluginResult,
+};
+use oxc_parser::Parser;
+use oxc_span::{GetSpan, SourceType, Span};
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+
+pub const ARKTS_PLUGIN_NAME: &str = "arkts";
+
+#[derive(Clone)]
+pub struct ExternalLinterCallbacks {
+    pub load_plugin: ExternalLinterLoadPluginCb,
+    pub setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
+    pub lint_file: ExternalLinterLintFileCb,
+    pub create_workspace: ExternalLinterCreateWorkspaceCb,
+    pub destroy_workspace: ExternalLinterDestroyWorkspaceCb,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ArktsCheck {
+    IdentifiersAsPropNames,
+    NoSymbol,
+    NoPrivateIdentifiers,
+    NoVar,
+    NoAnyUnknown,
+    NoCallSignatures,
+    NoCtorSignaturesType,
+    NoMultipleStaticBlocks,
+    NoIndexedSignatures,
+    NoIntersectionTypes,
+    NoTypingWithThis,
+    NoConditionalTypes,
+    NoCtorPropDecls,
+    NoCtorSignaturesIface,
+    NoAliasesByIndex,
+    NoPropsByIndex,
+    NoFuncExpressions,
+    NoClassLiterals,
+    AsCasts,
+    NoJsx,
+    NoDelete,
+    NoTypeQuery,
+    NoIn,
+    NoDestructAssignment,
+    NoCommaOutsideLoops,
+    NoDestructDecls,
+    NoForIn,
+    NoMappedTypes,
+    NoWith,
+    LimitedThrow,
+    NoImplicitReturnTypes,
+    NoDestructParams,
+    NoNestedFuncs,
+    NoStandaloneThis,
+    NoGenerators,
+    NoIs,
+    NoSpread,
+    NoCtorSignaturesFuncs,
+    NoRequire,
+    NoExportAssignment,
+    NoAmbientDecls,
+    NoModuleWildcards,
+    NoUmd,
+    NoNewTarget,
+    NoDefiniteAssignment,
+    NoPrototypeAssignment,
+    NoGlobalThis,
+    NoUtilityTypes,
+    NoFuncApplyCall,
+    NoFuncBind,
+    NoAsConst,
+    NoImportAssertions,
+    LimitedStdlib,
+    StrictTypingRequired,
+    NoMisplacedImports,
+    Noop,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct ArktsRule {
+    name: &'static str,
+    code: Option<&'static str>,
+    message: &'static str,
+    check: ArktsCheck,
+}
+
+static ARKTS_RULES: &[ArktsRule] = &[
+    rule(
+        "identifiers-as-prop-names",
+        "10605001",
+        "ArkTS requires object property names to be valid identifiers.",
+        ArktsCheck::IdentifiersAsPropNames,
+    ),
+    rule(
+        "no-symbol",
+        "10605002",
+        "ArkTS does not support Symbol() or the symbol type.",
+        ArktsCheck::NoSymbol,
+    ),
+    rule(
+        "no-private-identifiers",
+        "10605003",
+        "ArkTS does not support private identifiers starting with #. Use the private keyword instead.",
+        ArktsCheck::NoPrivateIdentifiers,
+    ),
+    rule(
+        "unique-names",
+        "10605004",
+        "ArkTS requires unique names for types, namespaces, and values.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-var",
+        "10605005",
+        "ArkTS does not support var. Use let or const instead.",
+        ArktsCheck::NoVar,
+    ),
+    rule(
+        "no-any-unknown",
+        "10605008",
+        "ArkTS does not support any or unknown. Specify an explicit type.",
+        ArktsCheck::NoAnyUnknown,
+    ),
+    rule(
+        "no-call-signatures",
+        "10605014",
+        "ArkTS does not support call signatures in object types.",
+        ArktsCheck::NoCallSignatures,
+    ),
+    rule(
+        "no-ctor-signatures-type",
+        "10605015",
+        "ArkTS does not support constructor signatures in object types.",
+        ArktsCheck::NoCtorSignaturesType,
+    ),
+    rule(
+        "no-multiple-static-blocks",
+        "10605016",
+        "ArkTS supports only one static block per class.",
+        ArktsCheck::NoMultipleStaticBlocks,
+    ),
+    rule(
+        "no-indexed-signatures",
+        "10605017",
+        "ArkTS does not support index signatures.",
+        ArktsCheck::NoIndexedSignatures,
+    ),
+    rule(
+        "no-intersection-types",
+        "10605019",
+        "ArkTS does not support intersection types. Use inheritance instead.",
+        ArktsCheck::NoIntersectionTypes,
+    ),
+    rule(
+        "no-typing-with-this",
+        "10605021",
+        "ArkTS does not support this in type positions.",
+        ArktsCheck::NoTypingWithThis,
+    ),
+    rule(
+        "no-conditional-types",
+        "10605022",
+        "ArkTS does not support conditional types or infer types.",
+        ArktsCheck::NoConditionalTypes,
+    ),
+    rule(
+        "no-ctor-prop-decls",
+        "10605025",
+        "ArkTS does not support declaring properties in constructor parameters.",
+        ArktsCheck::NoCtorPropDecls,
+    ),
+    rule(
+        "no-ctor-signatures-iface",
+        "10605027",
+        "ArkTS does not support constructor signatures in interfaces.",
+        ArktsCheck::NoCtorSignaturesIface,
+    ),
+    rule(
+        "no-aliases-by-index",
+        "10605028",
+        "ArkTS does not support indexed access types.",
+        ArktsCheck::NoAliasesByIndex,
+    ),
+    rule(
+        "no-props-by-index",
+        "10605029",
+        "ArkTS does not support property access by non-numeric indexes.",
+        ArktsCheck::NoPropsByIndex,
+    ),
+    rule(
+        "no-structural-typing",
+        "10605030",
+        "ArkTS does not support structural typing.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-inferred-generic-params",
+        "10605034",
+        "ArkTS limits type inference for generic function calls.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-untyped-obj-literals",
+        "10605038",
+        "ArkTS requires object literals to have inferrable or explicit types.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-obj-literals-as-types",
+        "10605040",
+        "ArkTS does not support object literal types.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-noninferrable-arr-literals",
+        "10605043",
+        "ArkTS requires array literal element types to be inferrable.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-func-expressions",
+        "10605046",
+        "ArkTS does not support function expressions. Use arrow functions instead.",
+        ArktsCheck::NoFuncExpressions,
+    ),
+    rule(
+        "no-class-literals",
+        "10605050",
+        "ArkTS does not support class expressions.",
+        ArktsCheck::NoClassLiterals,
+    ),
+    rule(
+        "implements-only-iface",
+        "10605051",
+        "ArkTS classes may implement interfaces only.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-method-reassignment",
+        "10605052",
+        "ArkTS does not support method reassignment.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "as-casts",
+        "10605053",
+        "ArkTS supports as casts only.",
+        ArktsCheck::AsCasts,
+    ),
+    rule(
+        "no-jsx",
+        "10605054",
+        "ArkTS does not support JSX.",
+        ArktsCheck::NoJsx,
+    ),
+    rule(
+        "no-polymorphic-unops",
+        "10605055",
+        "ArkTS restricts unary operator semantics.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-delete",
+        "10605059",
+        "ArkTS does not support the delete operator.",
+        ArktsCheck::NoDelete,
+    ),
+    rule(
+        "no-type-query",
+        "10605060",
+        "ArkTS does not support typeof in type positions.",
+        ArktsCheck::NoTypeQuery,
+    ),
+    rule(
+        "instanceof-ref-types",
+        "10605065",
+        "ArkTS restricts instanceof to reference types.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-in",
+        "10605066",
+        "ArkTS does not support the in operator.",
+        ArktsCheck::NoIn,
+    ),
+    rule(
+        "no-destruct-assignment",
+        "10605069",
+        "ArkTS does not support destructuring assignment.",
+        ArktsCheck::NoDestructAssignment,
+    ),
+    rule(
+        "no-comma-outside-loops",
+        "10605071",
+        "ArkTS restricts comma expressions outside loops.",
+        ArktsCheck::NoCommaOutsideLoops,
+    ),
+    rule(
+        "no-destruct-decls",
+        "10605074",
+        "ArkTS does not support destructuring declarations.",
+        ArktsCheck::NoDestructDecls,
+    ),
+    rule(
+        "no-types-in-catch",
+        "10605079",
+        "ArkTS does not support type annotations in catch clauses.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-for-in",
+        "10605080",
+        "ArkTS does not support for-in statements.",
+        ArktsCheck::NoForIn,
+    ),
+    rule(
+        "no-mapped-types",
+        "10605083",
+        "ArkTS does not support mapped types.",
+        ArktsCheck::NoMappedTypes,
+    ),
+    rule(
+        "no-with",
+        "10605084",
+        "ArkTS does not support with statements.",
+        ArktsCheck::NoWith,
+    ),
+    rule(
+        "limited-throw",
+        "10605087",
+        "ArkTS restricts thrown values to Error-derived objects.",
+        ArktsCheck::LimitedThrow,
+    ),
+    rule(
+        "no-implicit-return-types",
+        "10605090",
+        "ArkTS requires explicit return types for functions and methods.",
+        ArktsCheck::NoImplicitReturnTypes,
+    ),
+    rule(
+        "no-destruct-params",
+        "10605091",
+        "ArkTS does not support destructuring parameters.",
+        ArktsCheck::NoDestructParams,
+    ),
+    rule(
+        "no-nested-funcs",
+        "10605092",
+        "ArkTS does not support nested function declarations.",
+        ArktsCheck::NoNestedFuncs,
+    ),
+    rule(
+        "no-standalone-this",
+        "10605093",
+        "ArkTS does not support standalone this.",
+        ArktsCheck::NoStandaloneThis,
+    ),
+    rule(
+        "no-generators",
+        "10605094",
+        "ArkTS does not support generator functions.",
+        ArktsCheck::NoGenerators,
+    ),
+    rule(
+        "no-is",
+        "10605096",
+        "ArkTS does not support is type predicates.",
+        ArktsCheck::NoIs,
+    ),
+    rule(
+        "no-spread",
+        "10605099",
+        "ArkTS restricts spread syntax.",
+        ArktsCheck::NoSpread,
+    ),
+    rule(
+        "no-extend-same-prop",
+        "106050102",
+        "ArkTS interfaces cannot extend interfaces with duplicate properties.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-decl-merging",
+        "10605103",
+        "ArkTS does not support declaration merging.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "extends-only-class",
+        "10605104",
+        "ArkTS classes can extend classes only.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-ctor-signatures-funcs",
+        "10605106",
+        "ArkTS does not support constructor function types.",
+        ArktsCheck::NoCtorSignaturesFuncs,
+    ),
+    rule(
+        "no-enum-mixed-types",
+        "10605111",
+        "ArkTS enum members must be initialized with same-type compile-time expressions.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-enum-merging",
+        "10605113",
+        "ArkTS does not support enum declaration merging.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-ns-as-obj",
+        "10605114",
+        "ArkTS does not support using namespaces as objects.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-ns-statements",
+        "10605116",
+        "ArkTS does not support non-declaration statements in namespaces.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-require",
+        "10605121",
+        "ArkTS does not support require or import assignment.",
+        ArktsCheck::NoRequire,
+    ),
+    rule(
+        "no-export-assignment",
+        "10605126",
+        "ArkTS does not support export = syntax.",
+        ArktsCheck::NoExportAssignment,
+    ),
+    rule(
+        "no-ambient-decls",
+        "10605128",
+        "ArkTS does not support ambient module declarations.",
+        ArktsCheck::NoAmbientDecls,
+    ),
+    rule(
+        "no-module-wildcards",
+        "10605129",
+        "ArkTS does not support wildcards in module names.",
+        ArktsCheck::NoModuleWildcards,
+    ),
+    rule(
+        "no-umd",
+        "10605130",
+        "ArkTS does not support UMD declarations.",
+        ArktsCheck::NoUmd,
+    ),
+    rule(
+        "no-new-target",
+        "10605132",
+        "ArkTS does not support new.target.",
+        ArktsCheck::NoNewTarget,
+    ),
+    rule(
+        "no-definite-assignment",
+        "10605134",
+        "ArkTS does not support definite assignment assertions.",
+        ArktsCheck::NoDefiniteAssignment,
+    ),
+    rule(
+        "no-prototype-assignment",
+        "10605136",
+        "ArkTS does not support prototype assignment.",
+        ArktsCheck::NoPrototypeAssignment,
+    ),
+    rule(
+        "no-globalthis",
+        "10605137",
+        "ArkTS does not support globalThis.",
+        ArktsCheck::NoGlobalThis,
+    ),
+    rule(
+        "no-utility-types",
+        "10605138",
+        "ArkTS supports only Partial, Required, Readonly, and Record utility types.",
+        ArktsCheck::NoUtilityTypes,
+    ),
+    rule(
+        "no-func-props",
+        "10605139",
+        "ArkTS does not support declaring properties on functions.",
+        ArktsCheck::Noop,
+    ),
+    rule(
+        "no-func-apply-call",
+        "10605152",
+        "ArkTS does not support Function.apply or Function.call.",
+        ArktsCheck::NoFuncApplyCall,
+    ),
+    rule(
+        "no-func-bind",
+        "10605140",
+        "ArkTS does not support Function.bind.",
+        ArktsCheck::NoFuncBind,
+    ),
+    rule(
+        "no-as-const",
+        "10605142",
+        "ArkTS does not support as const assertions.",
+        ArktsCheck::NoAsConst,
+    ),
+    rule(
+        "no-import-assertions",
+        "10605143",
+        "ArkTS does not support import assertions.",
+        ArktsCheck::NoImportAssertions,
+    ),
+    rule(
+        "limited-stdlib",
+        "10605144",
+        "ArkTS restricts dynamic standard library APIs.",
+        ArktsCheck::LimitedStdlib,
+    ),
+    rule(
+        "strict-typing-required",
+        "10605146",
+        "ArkTS does not allow disabling type checking with @ts-ignore or @ts-nocheck.",
+        ArktsCheck::StrictTypingRequired,
+    ),
+    rule(
+        "no-ts-deps",
+        "10605147",
+        "TypeScript and JavaScript files cannot import ETS source files.",
+        ArktsCheck::Noop,
+    ),
+    rule_without_code(
+        "no-classes-as-obj",
+        "ArkTS does not support using classes as objects.",
+        ArktsCheck::Noop,
+    ),
+    rule_without_code(
+        "no-misplaced-imports",
+        "ArkTS requires import declarations to appear before other statements.",
+        ArktsCheck::NoMisplacedImports,
+    ),
+    rule_without_code(
+        "limited-esobj",
+        "ArkTS restricts ESObject usage.",
+        ArktsCheck::Noop,
+    ),
+];
+
+const fn rule(
+    name: &'static str,
+    code: &'static str,
+    message: &'static str,
+    check: ArktsCheck,
+) -> ArktsRule {
+    ArktsRule {
+        name,
+        code: Some(code),
+        message,
+        check,
+    }
+}
+
+const fn rule_without_code(
+    name: &'static str,
+    message: &'static str,
+    check: ArktsCheck,
+) -> ArktsRule {
+    ArktsRule {
+        name,
+        code: None,
+        message,
+        check,
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+enum BackendRule {
+    Arkts(usize),
+    Delegate(u32),
+}
+
+#[derive(Debug, Default)]
+struct ExternalState {
+    rules: Vec<BackendRule>,
+}
+
+pub fn create_external_linter(delegate: Option<ExternalLinterCallbacks>) -> ExternalLinter {
+    let state = Arc::new(Mutex::new(ExternalState::default()));
+
+    ExternalLinter::new(
+        load_plugin_callback(Arc::clone(&state), delegate.clone()),
+        setup_rule_configs_callback(delegate.clone()),
+        lint_file_callback(Arc::clone(&state), delegate.clone()),
+        create_workspace_callback(delegate.clone()),
+        destroy_workspace_callback(delegate),
+    )
+}
+
+fn load_plugin_callback(
+    state: Arc<Mutex<ExternalState>>,
+    delegate: Option<ExternalLinterCallbacks>,
+) -> ExternalLinterLoadPluginCb {
+    Arc::new(Box::new(
+        move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
+            if plugin_name.as_deref() == Some(ARKTS_PLUGIN_NAME) {
+                let mut state = state.lock().map_err(|err| err.to_string())?;
+                let offset = state.rules.len();
+                state
+                    .rules
+                    .extend((0..ARKTS_RULES.len()).map(BackendRule::Arkts));
+                return Ok(LoadPluginResult {
+                    name: ARKTS_PLUGIN_NAME.to_string(),
+                    offset,
+                    rule_names: ARKTS_RULES
+                        .iter()
+                        .map(|rule| rule.name.to_string())
+                        .collect(),
+                });
+            }
+
+            let Some(delegate) = &delegate else {
+                return Err(
+                    "JavaScript plugins are not available in the cargo lint runner.".to_string(),
+                );
+            };
+
+            let mut result = (delegate.load_plugin)(
+                plugin_url,
+                plugin_name,
+                plugin_name_is_alias,
+                workspace_uri,
+            )?;
+            let mut state = state.lock().map_err(|err| err.to_string())?;
+            let offset = state.rules.len();
+            let delegate_offset = u32::try_from(result.offset)
+                .map_err(|_| "JS plugin rule offset does not fit in u32.".to_string())?;
+            state.rules.extend(
+                (0..result.rule_names.len())
+                    .map(|index| BackendRule::Delegate(delegate_offset + index as u32)),
+            );
+            result.offset = offset;
+            Ok(result)
+        },
+    ))
+}
+
+fn setup_rule_configs_callback(
+    delegate: Option<ExternalLinterCallbacks>,
+) -> ExternalLinterSetupRuleConfigsCb {
+    Arc::new(Box::new(move |options_json| {
+        if let Some(delegate) = &delegate {
+            (delegate.setup_rule_configs)(options_json)
+        } else {
+            Ok(())
+        }
+    }))
+}
+
+fn create_workspace_callback(
+    delegate: Option<ExternalLinterCallbacks>,
+) -> ExternalLinterCreateWorkspaceCb {
+    Arc::new(Box::new(move |workspace_uri| {
+        if let Some(delegate) = &delegate {
+            (delegate.create_workspace)(workspace_uri)
+        } else {
+            Ok(())
+        }
+    }))
+}
+
+fn destroy_workspace_callback(
+    delegate: Option<ExternalLinterCallbacks>,
+) -> ExternalLinterDestroyWorkspaceCb {
+    Arc::new(Box::new(move |workspace_uri| {
+        if let Some(delegate) = &delegate {
+            (delegate.destroy_workspace)(workspace_uri)
+        } else {
+            Ok(())
+        }
+    }))
+}
+
+fn lint_file_callback(
+    state: Arc<Mutex<ExternalState>>,
+    delegate: Option<ExternalLinterCallbacks>,
+) -> ExternalLinterLintFileCb {
+    Arc::new(Box::new(
+        move |file_path,
+              rule_ids,
+              options_ids,
+              settings_json,
+              globals_json,
+              workspace_uri,
+              allocator| {
+            let (arkts_rules, delegate_rules, delegate_options, delegate_rule_indices) = {
+                let state = state.lock().map_err(|err| err.to_string())?;
+                split_rules(&state, &rule_ids, &options_ids)?
+            };
+
+            let mut diagnostics = Vec::new();
+            if !arkts_rules.is_empty() && is_arkts_file(Path::new(&file_path)) {
+                diagnostics.extend(run_arkts_rules(&file_path, allocator, &arkts_rules)?);
+            }
+
+            if !delegate_rules.is_empty() {
+                let Some(delegate) = &delegate else {
+                    return Err(
+                        "JavaScript plugins are not available in this lint runner.".to_string()
+                    );
+                };
+
+                let mut delegate_diagnostics = (delegate.lint_file)(
+                    file_path,
+                    delegate_rules,
+                    delegate_options,
+                    settings_json,
+                    globals_json,
+                    workspace_uri,
+                    allocator,
+                )?;
+
+                for diagnostic in &mut delegate_diagnostics {
+                    let mapped = delegate_rule_indices
+                        .get(diagnostic.rule_index as usize)
+                        .copied()
+                        .ok_or_else(|| {
+                            format!(
+                                "JS plugin returned invalid rule index {}.",
+                                diagnostic.rule_index
+                            )
+                        })?;
+                    diagnostic.rule_index = mapped;
+                }
+                diagnostics.extend(delegate_diagnostics);
+            }
+
+            Ok(diagnostics)
+        },
+    ))
+}
+
+type SplitRules = (Vec<ActiveArktsRule>, Vec<u32>, Vec<u32>, Vec<u32>);
+
+fn split_rules(
+    state: &ExternalState,
+    rule_ids: &[u32],
+    options_ids: &[u32],
+) -> Result<SplitRules, String> {
+    let mut arkts_rules = Vec::new();
+    let mut delegate_rules = Vec::new();
+    let mut delegate_options = Vec::new();
+    let mut delegate_rule_indices = Vec::new();
+
+    for (active_index, rule_id) in rule_ids.iter().enumerate() {
+        let backend = state
+            .rules
+            .get(*rule_id as usize)
+            .copied()
+            .ok_or_else(|| format!("Unknown external rule id {rule_id}."))?;
+        match backend {
+            BackendRule::Arkts(rule_index) => {
+                arkts_rules.push(ActiveArktsRule {
+                    active_index: active_index as u32,
+                    rule: &ARKTS_RULES[rule_index],
+                });
+            }
+            BackendRule::Delegate(delegate_rule_id) => {
+                delegate_rules.push(delegate_rule_id);
+                delegate_options.push(options_ids.get(active_index).copied().unwrap_or(0));
+                delegate_rule_indices.push(active_index as u32);
+            }
+        }
+    }
+
+    Ok((
+        arkts_rules,
+        delegate_rules,
+        delegate_options,
+        delegate_rule_indices,
+    ))
+}
+
+#[derive(Clone, Copy)]
+struct ActiveArktsRule {
+    active_index: u32,
+    rule: &'static ArktsRule,
+}
+
+fn run_arkts_rules(
+    file_path: &str,
+    allocator: &Allocator,
+    active_rules: &[ActiveArktsRule],
+) -> Result<Vec<LintFileResult>, String> {
+    let source_text = fs::read_to_string(file_path)
+        .map_err(|err| format!("Failed to read ArkTS source file `{file_path}`: {err}"))?;
+    let source_type = source_type_for_arkts_path(file_path);
+    let parser_return = Parser::new(allocator, &source_text, source_type).parse();
+    let span_table = Utf8ToUtf16::new(&source_text);
+
+    let mut visitor = ArktsVisitor {
+        active: ActiveArktsRules::from_active(active_rules),
+        diagnostics: Vec::new(),
+        span_converter: span_table.converter(),
+        function_depth: 0,
+    };
+    visitor.visit_program(&parser_return.program);
+    Ok(visitor.diagnostics)
+}
+
+fn source_type_for_arkts_path(file_path: &str) -> SourceType {
+    match Path::new(file_path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+    {
+        Some("ets") => SourceType::ets(),
+        _ => SourceType::from_path(file_path).unwrap_or_else(|_| SourceType::ts()),
+    }
+}
+
+fn is_arkts_file(path: &Path) -> bool {
+    matches!(path.extension().and_then(|ext| ext.to_str()), Some("ets"))
+}
+
+#[derive(Default)]
+struct ActiveArktsRules {
+    identifiers_as_prop_names: Option<ActiveArktsRule>,
+    no_symbol: Option<ActiveArktsRule>,
+    no_private_identifiers: Option<ActiveArktsRule>,
+    no_var: Option<ActiveArktsRule>,
+    no_any_unknown: Option<ActiveArktsRule>,
+    no_call_signatures: Option<ActiveArktsRule>,
+    no_ctor_signatures_type: Option<ActiveArktsRule>,
+    no_multiple_static_blocks: Option<ActiveArktsRule>,
+    no_indexed_signatures: Option<ActiveArktsRule>,
+    no_intersection_types: Option<ActiveArktsRule>,
+    no_typing_with_this: Option<ActiveArktsRule>,
+    no_conditional_types: Option<ActiveArktsRule>,
+    no_ctor_prop_decls: Option<ActiveArktsRule>,
+    no_ctor_signatures_iface: Option<ActiveArktsRule>,
+    no_aliases_by_index: Option<ActiveArktsRule>,
+    no_props_by_index: Option<ActiveArktsRule>,
+    no_func_expressions: Option<ActiveArktsRule>,
+    no_class_literals: Option<ActiveArktsRule>,
+    as_casts: Option<ActiveArktsRule>,
+    no_jsx: Option<ActiveArktsRule>,
+    no_delete: Option<ActiveArktsRule>,
+    no_type_query: Option<ActiveArktsRule>,
+    no_in: Option<ActiveArktsRule>,
+    no_destruct_assignment: Option<ActiveArktsRule>,
+    no_comma_outside_loops: Option<ActiveArktsRule>,
+    no_destruct_decls: Option<ActiveArktsRule>,
+    no_for_in: Option<ActiveArktsRule>,
+    no_mapped_types: Option<ActiveArktsRule>,
+    no_with: Option<ActiveArktsRule>,
+    limited_throw: Option<ActiveArktsRule>,
+    no_implicit_return_types: Option<ActiveArktsRule>,
+    no_destruct_params: Option<ActiveArktsRule>,
+    no_nested_funcs: Option<ActiveArktsRule>,
+    no_standalone_this: Option<ActiveArktsRule>,
+    no_generators: Option<ActiveArktsRule>,
+    no_is: Option<ActiveArktsRule>,
+    no_spread: Option<ActiveArktsRule>,
+    no_ctor_signatures_funcs: Option<ActiveArktsRule>,
+    no_require: Option<ActiveArktsRule>,
+    no_export_assignment: Option<ActiveArktsRule>,
+    no_ambient_decls: Option<ActiveArktsRule>,
+    no_module_wildcards: Option<ActiveArktsRule>,
+    no_umd: Option<ActiveArktsRule>,
+    no_new_target: Option<ActiveArktsRule>,
+    no_definite_assignment: Option<ActiveArktsRule>,
+    no_prototype_assignment: Option<ActiveArktsRule>,
+    no_globalthis: Option<ActiveArktsRule>,
+    no_utility_types: Option<ActiveArktsRule>,
+    no_func_apply_call: Option<ActiveArktsRule>,
+    no_func_bind: Option<ActiveArktsRule>,
+    no_as_const: Option<ActiveArktsRule>,
+    no_import_assertions: Option<ActiveArktsRule>,
+    limited_stdlib: Option<ActiveArktsRule>,
+    strict_typing_required: Option<ActiveArktsRule>,
+    no_misplaced_imports: Option<ActiveArktsRule>,
+}
+
+impl ActiveArktsRules {
+    fn from_active(active_rules: &[ActiveArktsRule]) -> Self {
+        let mut active = Self::default();
+        for rule in active_rules {
+            match rule.rule.check {
+                ArktsCheck::IdentifiersAsPropNames => {
+                    active.identifiers_as_prop_names = Some(*rule)
+                }
+                ArktsCheck::NoSymbol => active.no_symbol = Some(*rule),
+                ArktsCheck::NoPrivateIdentifiers => active.no_private_identifiers = Some(*rule),
+                ArktsCheck::NoVar => active.no_var = Some(*rule),
+                ArktsCheck::NoAnyUnknown => active.no_any_unknown = Some(*rule),
+                ArktsCheck::NoCallSignatures => active.no_call_signatures = Some(*rule),
+                ArktsCheck::NoCtorSignaturesType => active.no_ctor_signatures_type = Some(*rule),
+                ArktsCheck::NoMultipleStaticBlocks => {
+                    active.no_multiple_static_blocks = Some(*rule)
+                }
+                ArktsCheck::NoIndexedSignatures => active.no_indexed_signatures = Some(*rule),
+                ArktsCheck::NoIntersectionTypes => active.no_intersection_types = Some(*rule),
+                ArktsCheck::NoTypingWithThis => active.no_typing_with_this = Some(*rule),
+                ArktsCheck::NoConditionalTypes => active.no_conditional_types = Some(*rule),
+                ArktsCheck::NoCtorPropDecls => active.no_ctor_prop_decls = Some(*rule),
+                ArktsCheck::NoCtorSignaturesIface => active.no_ctor_signatures_iface = Some(*rule),
+                ArktsCheck::NoAliasesByIndex => active.no_aliases_by_index = Some(*rule),
+                ArktsCheck::NoPropsByIndex => active.no_props_by_index = Some(*rule),
+                ArktsCheck::NoFuncExpressions => active.no_func_expressions = Some(*rule),
+                ArktsCheck::NoClassLiterals => active.no_class_literals = Some(*rule),
+                ArktsCheck::AsCasts => active.as_casts = Some(*rule),
+                ArktsCheck::NoJsx => active.no_jsx = Some(*rule),
+                ArktsCheck::NoDelete => active.no_delete = Some(*rule),
+                ArktsCheck::NoTypeQuery => active.no_type_query = Some(*rule),
+                ArktsCheck::NoIn => active.no_in = Some(*rule),
+                ArktsCheck::NoDestructAssignment => active.no_destruct_assignment = Some(*rule),
+                ArktsCheck::NoCommaOutsideLoops => active.no_comma_outside_loops = Some(*rule),
+                ArktsCheck::NoDestructDecls => active.no_destruct_decls = Some(*rule),
+                ArktsCheck::NoForIn => active.no_for_in = Some(*rule),
+                ArktsCheck::NoMappedTypes => active.no_mapped_types = Some(*rule),
+                ArktsCheck::NoWith => active.no_with = Some(*rule),
+                ArktsCheck::LimitedThrow => active.limited_throw = Some(*rule),
+                ArktsCheck::NoImplicitReturnTypes => active.no_implicit_return_types = Some(*rule),
+                ArktsCheck::NoDestructParams => active.no_destruct_params = Some(*rule),
+                ArktsCheck::NoNestedFuncs => active.no_nested_funcs = Some(*rule),
+                ArktsCheck::NoStandaloneThis => active.no_standalone_this = Some(*rule),
+                ArktsCheck::NoGenerators => active.no_generators = Some(*rule),
+                ArktsCheck::NoIs => active.no_is = Some(*rule),
+                ArktsCheck::NoSpread => active.no_spread = Some(*rule),
+                ArktsCheck::NoCtorSignaturesFuncs => active.no_ctor_signatures_funcs = Some(*rule),
+                ArktsCheck::NoRequire => active.no_require = Some(*rule),
+                ArktsCheck::NoExportAssignment => active.no_export_assignment = Some(*rule),
+                ArktsCheck::NoAmbientDecls => active.no_ambient_decls = Some(*rule),
+                ArktsCheck::NoModuleWildcards => active.no_module_wildcards = Some(*rule),
+                ArktsCheck::NoUmd => active.no_umd = Some(*rule),
+                ArktsCheck::NoNewTarget => active.no_new_target = Some(*rule),
+                ArktsCheck::NoDefiniteAssignment => active.no_definite_assignment = Some(*rule),
+                ArktsCheck::NoPrototypeAssignment => active.no_prototype_assignment = Some(*rule),
+                ArktsCheck::NoGlobalThis => active.no_globalthis = Some(*rule),
+                ArktsCheck::NoUtilityTypes => active.no_utility_types = Some(*rule),
+                ArktsCheck::NoFuncApplyCall => active.no_func_apply_call = Some(*rule),
+                ArktsCheck::NoFuncBind => active.no_func_bind = Some(*rule),
+                ArktsCheck::NoAsConst => active.no_as_const = Some(*rule),
+                ArktsCheck::NoImportAssertions => active.no_import_assertions = Some(*rule),
+                ArktsCheck::LimitedStdlib => active.limited_stdlib = Some(*rule),
+                ArktsCheck::StrictTypingRequired => active.strict_typing_required = Some(*rule),
+                ArktsCheck::NoMisplacedImports => active.no_misplaced_imports = Some(*rule),
+                ArktsCheck::Noop => {}
+            }
+        }
+        active
+    }
+}
+
+struct ArktsVisitor<'c> {
+    active: ActiveArktsRules,
+    diagnostics: Vec<LintFileResult>,
+    span_converter: Option<Utf8ToUtf16Converter<'c>>,
+    function_depth: usize,
+}
+
+impl ArktsVisitor<'_> {
+    fn report(&mut self, active: ActiveArktsRule, span: Span) {
+        let mut span = span;
+        if let Some(converter) = &mut self.span_converter {
+            converter.convert_span(&mut span);
+        }
+
+        let message = if let Some(code) = active.rule.code {
+            format!(
+                "{} ({}: {code})",
+                active.rule.message,
+                active.rule.doc_name()
+            )
+        } else {
+            format!("{} ({})", active.rule.message, active.rule.doc_name())
+        };
+
+        self.diagnostics.push(LintFileResult {
+            rule_index: active.active_index,
+            message,
+            start: span.start,
+            end: span.end,
+            fixes: None,
+            suggestions: None,
+        });
+    }
+}
+
+impl ArktsRule {
+    fn doc_name(&self) -> String {
+        format!("arkts-{}", self.name)
+    }
+}
+
+impl<'a> Visit<'a> for ArktsVisitor<'_> {
+    fn visit_program(&mut self, it: &Program<'a>) {
+        if let Some(active) = self.active.strict_typing_required
+            && (it.source_text.contains("@ts-ignore") || it.source_text.contains("@ts-nocheck"))
+        {
+            self.report(active, Span::new(0, 0));
+        }
+
+        if let Some(active) = self.active.no_misplaced_imports {
+            let mut seen_non_import = false;
+            for statement in &it.body {
+                let is_import = matches!(
+                    statement,
+                    Statement::ImportDeclaration(_) | Statement::LazyImportDeclaration(_)
+                );
+                if is_import && seen_non_import {
+                    self.report(active, statement.span());
+                } else if !is_import {
+                    seen_non_import = true;
+                }
+            }
+        }
+
+        walk::walk_program(self, it);
+    }
+
+    fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
+        if it.kind == VariableDeclarationKind::Var
+            && let Some(active) = self.active.no_var
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_variable_declaration(self, it);
+    }
+
+    fn visit_variable_declarator(&mut self, it: &VariableDeclarator<'a>) {
+        if it.definite
+            && let Some(active) = self.active.no_definite_assignment
+        {
+            self.report(active, it.span);
+        }
+        if matches!(
+            it.id,
+            BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+        ) && let Some(active) = self.active.no_destruct_decls
+        {
+            self.report(active, it.id.span());
+        }
+        walk::walk_variable_declarator(self, it);
+    }
+
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        if it.name == "globalThis"
+            && let Some(active) = self.active.no_globalthis
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_identifier_reference(self, it);
+    }
+
+    fn visit_private_identifier(&mut self, it: &PrivateIdentifier<'a>) {
+        if let Some(active) = self.active.no_private_identifiers {
+            self.report(active, it.span);
+        }
+        walk::walk_private_identifier(self, it);
+    }
+
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        if is_identifier(&it.callee, "Symbol")
+            && let Some(active) = self.active.no_symbol
+        {
+            self.report(active, it.callee.span());
+        }
+        if is_identifier(&it.callee, "require")
+            && let Some(active) = self.active.no_require
+        {
+            self.report(active, it.span);
+        }
+        if let Some(property_name) = static_member_property(&it.callee) {
+            if matches!(property_name, "apply" | "call")
+                && let Some(active) = self.active.no_func_apply_call
+            {
+                self.report(active, it.callee.span());
+            }
+            if property_name == "bind"
+                && let Some(active) = self.active.no_func_bind
+            {
+                self.report(active, it.callee.span());
+            }
+            if is_limited_stdlib_call(&it.callee, property_name)
+                && let Some(active) = self.active.limited_stdlib
+            {
+                self.report(active, it.callee.span());
+            }
+        }
+        walk::walk_call_expression(self, it);
+    }
+
+    fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
+        if is_identifier(&it.callee, "Symbol")
+            && let Some(active) = self.active.no_symbol
+        {
+            self.report(active, it.callee.span());
+        }
+        walk::walk_new_expression(self, it);
+    }
+
+    fn visit_expression(&mut self, it: &Expression<'a>) {
+        match it {
+            Expression::FunctionExpression(function) => {
+                if let Some(active) = self.active.no_func_expressions {
+                    self.report(active, function.span);
+                }
+            }
+            Expression::ClassExpression(class) => {
+                if let Some(active) = self.active.no_class_literals {
+                    self.report(active, class.span);
+                }
+            }
+            Expression::TSAsExpression(expr) => {
+                if let Some(active) = self.active.no_as_const
+                    && is_const_type_reference(&expr.type_annotation)
+                {
+                    self.report(active, expr.type_annotation.span());
+                }
+            }
+            Expression::TSTypeAssertion(assertion) => {
+                if let Some(active) = self.active.as_casts {
+                    self.report(active, assertion.span);
+                }
+            }
+            _ => {}
+        }
+        walk::walk_expression(self, it);
+    }
+
+    fn visit_unary_expression(&mut self, it: &UnaryExpression<'a>) {
+        if it.operator == UnaryOperator::Delete
+            && let Some(active) = self.active.no_delete
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_unary_expression(self, it);
+    }
+
+    fn visit_binary_expression(&mut self, it: &BinaryExpression<'a>) {
+        if it.operator == BinaryOperator::In
+            && let Some(active) = self.active.no_in
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_binary_expression(self, it);
+    }
+
+    fn visit_private_in_expression(&mut self, it: &PrivateInExpression<'a>) {
+        if let Some(active) = self.active.no_in {
+            self.report(active, it.span);
+        }
+        walk::walk_private_in_expression(self, it);
+    }
+
+    fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
+        if matches!(
+            it.left,
+            AssignmentTarget::ArrayAssignmentTarget(_)
+                | AssignmentTarget::ObjectAssignmentTarget(_)
+        ) && let Some(active) = self.active.no_destruct_assignment
+        {
+            self.report(active, it.left.span());
+        }
+        if is_prototype_assignment_target(&it.left)
+            && let Some(active) = self.active.no_prototype_assignment
+        {
+            self.report(active, it.left.span());
+        }
+        walk::walk_assignment_expression(self, it);
+    }
+
+    fn visit_for_in_statement(&mut self, it: &ForInStatement<'a>) {
+        if let Some(active) = self.active.no_for_in {
+            self.report(active, it.span);
+        }
+        walk::walk_for_in_statement(self, it);
+    }
+
+    fn visit_with_statement(&mut self, it: &WithStatement<'a>) {
+        if let Some(active) = self.active.no_with {
+            self.report(active, it.span);
+        }
+        walk::walk_with_statement(self, it);
+    }
+
+    fn visit_throw_statement(&mut self, it: &ThrowStatement<'a>) {
+        if let Some(active) = self.active.limited_throw
+            && !is_new_error_expression(&it.argument)
+        {
+            self.report(active, it.argument.span());
+        }
+        walk::walk_throw_statement(self, it);
+    }
+
+    fn visit_function(&mut self, it: &Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
+        if it.generator
+            && let Some(active) = self.active.no_generators
+        {
+            self.report(active, it.span);
+        }
+        if self.function_depth > 0
+            && it.r#type == FunctionType::FunctionDeclaration
+            && let Some(active) = self.active.no_nested_funcs
+        {
+            self.report(active, it.span);
+        }
+        if it.return_type.is_none()
+            && it.body.is_some()
+            && !matches!(it.r#type, FunctionType::TSDeclareFunction)
+            && let Some(active) = self.active.no_implicit_return_types
+        {
+            self.report(active, it.span);
+        }
+
+        self.function_depth += 1;
+        walk::walk_function(self, it, flags);
+        self.function_depth -= 1;
+    }
+
+    fn visit_this_expression(&mut self, it: &ThisExpression) {
+        if self.function_depth == 0
+            && let Some(active) = self.active.no_standalone_this
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_this_expression(self, it);
+    }
+
+    fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
+        if matches!(
+            it.pattern,
+            BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+        ) && let Some(active) = self.active.no_destruct_params
+        {
+            self.report(active, it.pattern.span());
+        }
+        if it.accessibility.is_some()
+            && let Some(active) = self.active.no_ctor_prop_decls
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_formal_parameter(self, it);
+    }
+
+    fn visit_class_body(&mut self, it: &ClassBody<'a>) {
+        if let Some(active) = self.active.no_multiple_static_blocks {
+            let mut seen_static_block = false;
+            for element in &it.body {
+                if let ClassElement::StaticBlock(block) = element {
+                    if seen_static_block {
+                        self.report(active, block.span);
+                    }
+                    seen_static_block = true;
+                }
+            }
+        }
+        walk::walk_class_body(self, it);
+    }
+
+    fn visit_property_definition(&mut self, it: &PropertyDefinition<'a>) {
+        if it.definite
+            && let Some(active) = self.active.no_definite_assignment
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_property_definition(self, it);
+    }
+
+    fn visit_import_declaration(&mut self, it: &ImportDeclaration<'a>) {
+        if it.with_clause.is_some()
+            && let Some(active) = self.active.no_import_assertions
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_import_declaration(self, it);
+    }
+
+    fn visit_export_named_declaration(&mut self, it: &ExportNamedDeclaration<'a>) {
+        if it.with_clause.is_some()
+            && let Some(active) = self.active.no_import_assertions
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_export_named_declaration(self, it);
+    }
+
+    fn visit_export_all_declaration(&mut self, it: &ExportAllDeclaration<'a>) {
+        if it.with_clause.is_some()
+            && let Some(active) = self.active.no_import_assertions
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_export_all_declaration(self, it);
+    }
+
+    fn visit_jsx_element(&mut self, it: &JSXElement<'a>) {
+        if let Some(active) = self.active.no_jsx {
+            self.report(active, it.span);
+        }
+        walk::walk_jsx_element(self, it);
+    }
+
+    fn visit_jsx_fragment(&mut self, it: &JSXFragment<'a>) {
+        if let Some(active) = self.active.no_jsx {
+            self.report(active, it.span);
+        }
+        walk::walk_jsx_fragment(self, it);
+    }
+
+    fn visit_ts_any_keyword(&mut self, it: &TSAnyKeyword) {
+        if let Some(active) = self.active.no_any_unknown {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_any_keyword(self, it);
+    }
+
+    fn visit_ts_unknown_keyword(&mut self, it: &TSUnknownKeyword) {
+        if let Some(active) = self.active.no_any_unknown {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_unknown_keyword(self, it);
+    }
+
+    fn visit_ts_symbol_keyword(&mut self, it: &TSSymbolKeyword) {
+        if let Some(active) = self.active.no_symbol {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_symbol_keyword(self, it);
+    }
+
+    fn visit_ts_call_signature_declaration(&mut self, it: &TSCallSignatureDeclaration<'a>) {
+        if let Some(active) = self.active.no_call_signatures {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_call_signature_declaration(self, it);
+    }
+
+    fn visit_ts_construct_signature_declaration(
+        &mut self,
+        it: &TSConstructSignatureDeclaration<'a>,
+    ) {
+        if let Some(active) = self
+            .active
+            .no_ctor_signatures_iface
+            .or(self.active.no_ctor_signatures_type)
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_construct_signature_declaration(self, it);
+    }
+
+    fn visit_ts_index_signature(&mut self, it: &TSIndexSignature<'a>) {
+        if let Some(active) = self.active.no_indexed_signatures {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_index_signature(self, it);
+    }
+
+    fn visit_ts_intersection_type(&mut self, it: &TSIntersectionType<'a>) {
+        if let Some(active) = self.active.no_intersection_types {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_intersection_type(self, it);
+    }
+
+    fn visit_ts_this_type(&mut self, it: &TSThisType) {
+        if let Some(active) = self.active.no_typing_with_this {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_this_type(self, it);
+    }
+
+    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
+        if let Some(active) = self.active.no_conditional_types {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_conditional_type(self, it);
+    }
+
+    fn visit_ts_infer_type(&mut self, it: &TSInferType<'a>) {
+        if let Some(active) = self.active.no_conditional_types {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_infer_type(self, it);
+    }
+
+    fn visit_ts_indexed_access_type(&mut self, it: &TSIndexedAccessType<'a>) {
+        if let Some(active) = self.active.no_aliases_by_index {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_indexed_access_type(self, it);
+    }
+
+    fn visit_ts_type_query(&mut self, it: &TSTypeQuery<'a>) {
+        if let Some(active) = self.active.no_type_query {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_type_query(self, it);
+    }
+
+    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
+        if let Some(active) = self.active.no_mapped_types {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_mapped_type(self, it);
+    }
+
+    fn visit_ts_constructor_type(&mut self, it: &TSConstructorType<'a>) {
+        if let Some(active) = self.active.no_ctor_signatures_funcs {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_constructor_type(self, it);
+    }
+
+    fn visit_ts_type_predicate(&mut self, it: &TSTypePredicate<'a>) {
+        if let Some(active) = self.active.no_is {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_type_predicate(self, it);
+    }
+
+    fn visit_ts_type_reference(&mut self, it: &TSTypeReference<'a>) {
+        if let Some(active) = self.active.no_utility_types
+            && let Some(name) = simple_type_name(&it.type_name)
+            && is_unsupported_utility_type(name)
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_type_reference(self, it);
+    }
+
+    fn visit_ts_as_expression(&mut self, it: &TSAsExpression<'a>) {
+        if let Some(active) = self.active.no_as_const
+            && is_const_type_reference(&it.type_annotation)
+        {
+            self.report(active, it.type_annotation.span());
+        }
+        walk::walk_ts_as_expression(self, it);
+    }
+
+    fn visit_ts_import_equals_declaration(&mut self, it: &TSImportEqualsDeclaration<'a>) {
+        if let Some(active) = self.active.no_require {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_import_equals_declaration(self, it);
+    }
+
+    fn visit_ts_export_assignment(&mut self, it: &TSExportAssignment<'a>) {
+        if let Some(active) = self.active.no_export_assignment {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_export_assignment(self, it);
+    }
+
+    fn visit_ts_namespace_export_declaration(&mut self, it: &TSNamespaceExportDeclaration<'a>) {
+        if let Some(active) = self.active.no_umd {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_namespace_export_declaration(self, it);
+    }
+
+    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
+        if it.declare
+            && let Some(active) = self.active.no_ambient_decls
+        {
+            self.report(active, it.span);
+        }
+        if let TSModuleDeclarationName::StringLiteral(lit) = &it.id
+            && lit.value.contains('*')
+            && let Some(active) = self.active.no_module_wildcards
+        {
+            self.report(active, lit.span);
+        }
+        walk::walk_ts_module_declaration(self, it);
+    }
+
+    fn visit_spread_element(&mut self, it: &SpreadElement<'a>) {
+        if let Some(active) = self.active.no_spread {
+            self.report(active, it.span);
+        }
+        walk::walk_spread_element(self, it);
+    }
+
+    fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
+        if let Some(active) = self.active.identifiers_as_prop_names
+            && !it.computed
+            && matches!(
+                it.key,
+                PropertyKey::StringLiteral(_) | PropertyKey::NumericLiteral(_)
+            )
+        {
+            self.report(active, it.key.span());
+        }
+        walk::walk_object_property(self, it);
+    }
+
+    fn visit_computed_member_expression(&mut self, it: &ComputedMemberExpression<'a>) {
+        if let Some(active) = self.active.no_props_by_index
+            && !matches!(it.expression, Expression::NumericLiteral(_))
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_computed_member_expression(self, it);
+    }
+
+    fn visit_sequence_expression(&mut self, it: &SequenceExpression<'a>) {
+        if let Some(active) = self.active.no_comma_outside_loops {
+            self.report(active, it.span);
+        }
+        walk::walk_sequence_expression(self, it);
+    }
+
+    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
+        if it.meta.name == "new"
+            && it.property.name == "target"
+            && let Some(active) = self.active.no_new_target
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_meta_property(self, it);
+    }
+}
+
+fn is_identifier(expression: &Expression<'_>, name: &str) -> bool {
+    matches!(expression, Expression::Identifier(identifier) if identifier.name == name)
+}
+
+fn static_member_property<'a>(expression: &'a Expression<'a>) -> Option<&'a str> {
+    match expression {
+        Expression::StaticMemberExpression(member) => Some(member.property.name.as_str()),
+        _ => None,
+    }
+}
+
+fn is_limited_stdlib_call(callee: &Expression<'_>, property_name: &str) -> bool {
+    let Expression::StaticMemberExpression(member) = callee else {
+        return false;
+    };
+    let Expression::Identifier(object) = &member.object else {
+        return false;
+    };
+
+    match object.name.as_str() {
+        "Object" => matches!(
+            property_name,
+            "__defineGetter__"
+                | "__defineSetter__"
+                | "__lookupGetter__"
+                | "__lookupSetter__"
+                | "assign"
+                | "create"
+                | "defineProperties"
+                | "defineProperty"
+                | "freeze"
+                | "fromEntries"
+                | "getOwnPropertyDescriptor"
+                | "getOwnPropertyDescriptors"
+                | "getOwnPropertySymbols"
+                | "getPrototypeOf"
+                | "hasOwnProperty"
+                | "is"
+                | "isExtensible"
+                | "isFrozen"
+                | "isPrototypeOf"
+                | "isSealed"
+                | "preventExtensions"
+                | "propertyIsEnumerable"
+                | "seal"
+                | "setPrototypeOf"
+        ),
+        "Reflect" => matches!(
+            property_name,
+            "apply"
+                | "construct"
+                | "defineProperty"
+                | "deleteProperty"
+                | "getOwnPropertyDescriptor"
+                | "getPrototypeOf"
+                | "isExtensible"
+                | "preventExtensions"
+                | "setPrototypeOf"
+        ),
+        _ => false,
+    }
+}
+
+fn is_prototype_assignment_target(target: &AssignmentTarget<'_>) -> bool {
+    matches!(
+        target,
+        AssignmentTarget::StaticMemberExpression(member) if member.property.name == "prototype"
+    )
+}
+
+fn is_new_error_expression(expression: &Expression<'_>) -> bool {
+    match expression {
+        Expression::NewExpression(new_expr) => matches!(
+            &new_expr.callee,
+            Expression::Identifier(identifier) if identifier.name == "Error"
+        ),
+        _ => false,
+    }
+}
+
+fn is_const_type_reference(ty: &TSType<'_>) -> bool {
+    matches!(ty, TSType::TSTypeReference(reference) if simple_type_name(&reference.type_name) == Some("const"))
+}
+
+fn simple_type_name<'a>(type_name: &'a TSTypeName<'a>) -> Option<&'a str> {
+    match type_name {
+        TSTypeName::IdentifierReference(identifier) => Some(identifier.name.as_str()),
+        _ => None,
+    }
+}
+
+fn is_unsupported_utility_type(name: &str) -> bool {
+    matches!(
+        name,
+        "Pick"
+            | "Omit"
+            | "Exclude"
+            | "Extract"
+            | "NonNullable"
+            | "Parameters"
+            | "ConstructorParameters"
+            | "ReturnType"
+            | "InstanceType"
+            | "ThisParameterType"
+            | "OmitThisParameter"
+            | "ThisType"
+            | "Awaited"
+            | "Uppercase"
+            | "Lowercase"
+            | "Capitalize"
+            | "Uncapitalize"
+    )
+}
+
+pub fn arkts_plugin_config_entry(plugin_path: &Path) -> serde_json::Value {
+    serde_json::json!({
+        "name": ARKTS_PLUGIN_NAME,
+        "specifier": plugin_path.to_string_lossy(),
+    })
+}
+
+pub fn write_placeholder_plugin(path: &Path) -> std::io::Result<()> {
+    fs::write(
+        path,
+        "module.exports = { meta: { name: 'arkts' }, rules: {} };\n",
+    )
+}

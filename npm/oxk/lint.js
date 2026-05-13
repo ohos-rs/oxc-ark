@@ -1,0 +1,301 @@
+const { mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs')
+const { tmpdir } = require('node:os')
+const { basename, join, resolve } = require('node:path')
+const { lintWithPlugins } = require('./index.js')
+
+const ARKTS_PLUGIN_NAME = 'arkts'
+const ARKTS_PLUGIN_SOURCE = "module.exports = { meta: { name: 'arkts' }, rules: {} };\n"
+
+let pluginRuntime = null
+let jsConfigRuntime = null
+
+function getPluginRuntime() {
+  if (!pluginRuntime) pluginRuntime = require('./oxlint-runtime/plugins.cjs')
+  return pluginRuntime
+}
+
+function getJsConfigRuntime() {
+  if (!jsConfigRuntime) jsConfigRuntime = require('./oxlint-runtime/js_config.cjs')
+  return jsConfigRuntime
+}
+
+function getErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function stripJsonComments(source) {
+  let output = ''
+  let inString = false
+  let quote = ''
+  let escaped = false
+
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]
+    const next = source[index + 1]
+
+    if (inString) {
+      output += char
+      if (escaped) {
+        escaped = false
+      } else if (char === '\\') {
+        escaped = true
+      } else if (char === quote) {
+        inString = false
+      }
+      continue
+    }
+
+    if (char === '"' || char === "'") {
+      inString = true
+      quote = char
+      output += char
+      continue
+    }
+
+    if (char === '/' && next === '/') {
+      while (index < source.length && source[index] !== '\n') {
+        output += ' '
+        index += 1
+      }
+      if (index < source.length) output += '\n'
+      continue
+    }
+
+    if (char === '/' && next === '*') {
+      output += '  '
+      index += 2
+      while (index < source.length) {
+        if (source[index] === '*' && source[index + 1] === '/') {
+          output += '  '
+          index += 1
+          break
+        }
+        output += source[index] === '\n' ? '\n' : ' '
+        index += 1
+      }
+      continue
+    }
+
+    output += char
+  }
+
+  return output
+}
+
+function findConfigPath(args, cwd) {
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index]
+    if (token === '--config' || token === '-c') {
+      const value = args[index + 1]
+      return value ? resolve(cwd, value) : null
+    }
+    if (token.startsWith('--config=')) {
+      return resolve(cwd, token.slice('--config='.length))
+    }
+  }
+
+  for (const name of ['.oxlintrc.json', '.oxlintrc.jsonc', 'oxlint.config.ts']) {
+    const candidate = join(cwd, name)
+    try {
+      readFileSync(candidate)
+      return candidate
+    } catch {}
+  }
+
+  return null
+}
+
+function isJsonConfig(configPath) {
+  return configPath.endsWith('.json') || configPath.endsWith('.jsonc')
+}
+
+async function loadJsConfig(configPath) {
+  const runtime = getJsConfigRuntime()
+  const load = process.env.VP_VERSION ? runtime.loadVitePlusConfigs : runtime.loadJsConfigs
+  const response = JSON.parse(await load([configPath]))
+
+  if (Array.isArray(response.Success)) {
+    const [result] = response.Success
+    if (!result || result.config == null) {
+      throw new Error('Configuration file must have a default export that is an object.')
+    }
+    return result.config
+  }
+
+  if (Array.isArray(response.Failures)) {
+    const first = response.Failures[0]
+    throw new Error(first ? `${first.path}: ${first.error}` : 'Failed to load JavaScript configuration.')
+  }
+
+  throw new Error(response.Error ?? 'Failed to load JavaScript configuration.')
+}
+
+async function loadConfig(configPath) {
+  if (isJsonConfig(configPath)) {
+    return JSON.parse(stripJsonComments(readFileSync(configPath, 'utf8')))
+  }
+
+  return loadJsConfig(configPath)
+}
+
+function hasArktsPluginConfig(config) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) return false
+  if (
+    Array.isArray(config.plugins) &&
+    config.plugins.some((plugin) => plugin === ARKTS_PLUGIN_NAME)
+  ) {
+    return true
+  }
+  return Array.isArray(config.overrides) && config.overrides.some(hasArktsPluginConfig)
+}
+
+function isArktsJsPluginEntry(entry) {
+  if (entry === ARKTS_PLUGIN_NAME) return true
+  return (
+    entry &&
+    typeof entry === 'object' &&
+    (entry.name === ARKTS_PLUGIN_NAME || entry.specifier === ARKTS_PLUGIN_NAME)
+  )
+}
+
+function ensureArktsJsPlugin(config, pluginPath) {
+  const entry = { name: ARKTS_PLUGIN_NAME, specifier: pluginPath }
+  if (Array.isArray(config.jsPlugins)) {
+    if (!config.jsPlugins.some(isArktsJsPluginEntry)) config.jsPlugins.push(entry)
+  } else {
+    config.jsPlugins = [entry]
+  }
+}
+
+function rewriteArktsPluginConfig(config, pluginPath) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) return false
+
+  let changed = false
+  if (Array.isArray(config.plugins)) {
+    const plugins = config.plugins.filter((plugin) => plugin !== ARKTS_PLUGIN_NAME)
+    if (plugins.length !== config.plugins.length) {
+      config.plugins = plugins
+      ensureArktsJsPlugin(config, pluginPath)
+      changed = true
+    }
+  }
+
+  if (Array.isArray(config.overrides)) {
+    for (const overrideConfig of config.overrides) {
+      changed = rewriteArktsPluginConfig(overrideConfig, pluginPath) || changed
+    }
+  }
+
+  return changed
+}
+
+async function prepareLintConfig(args) {
+  const cwd = process.cwd()
+  const configPath = findConfigPath(args, cwd)
+  if (!configPath) return { args, cleanup: () => {} }
+
+  let config
+  try {
+    config = await loadConfig(configPath)
+  } catch (error) {
+    throw new Error(`Failed to load oxlint configuration ${configPath}: ${getErrorMessage(error)}`)
+  }
+
+  let shouldRewrite = !isJsonConfig(configPath)
+  let tempDir = null
+  const ensureTempDir = () => {
+    if (!tempDir) tempDir = mkdtempSync(join(tmpdir(), 'oxk-lint-config-'))
+    return tempDir
+  }
+
+  if (hasArktsPluginConfig(config)) {
+    const pluginPath = join(ensureTempDir(), 'arkts-plugin.js')
+    writeFileSync(pluginPath, ARKTS_PLUGIN_SOURCE, 'utf8')
+    shouldRewrite = rewriteArktsPluginConfig(config, pluginPath) || shouldRewrite
+  }
+
+  if (!shouldRewrite) {
+    return { args, cleanup: () => {} }
+  }
+
+  tempDir = ensureTempDir()
+  const tempConfigPath = join(
+    tempDir,
+    isJsonConfig(configPath) && basename(configPath).endsWith('.jsonc') ? 'oxlintrc.jsonc' : 'oxlintrc.json',
+  )
+  writeFileSync(tempConfigPath, JSON.stringify(config, null, 2), 'utf8')
+
+  const nextArgs = []
+  let replaced = false
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index]
+    if (token === '--config' || token === '-c') {
+      nextArgs.push(token, tempConfigPath)
+      index += 1
+      replaced = true
+    } else if (token.startsWith('--config=')) {
+      nextArgs.push(`--config=${tempConfigPath}`)
+      replaced = true
+    } else {
+      nextArgs.push(token)
+    }
+  }
+  if (!replaced) nextArgs.push('--config', tempConfigPath)
+
+  return {
+    args: nextArgs,
+    cleanup: () => rmSync(tempDir, { recursive: true, force: true }),
+  }
+}
+
+async function loadPluginWrapper(pluginUrl, pluginName, pluginNameIsAlias, workspaceUri) {
+  return getPluginRuntime().loadPlugin(pluginUrl, pluginName ?? null, pluginNameIsAlias, workspaceUri ?? null)
+}
+
+function setupRuleConfigsWrapper(optionsJson) {
+  return getPluginRuntime().setupRuleConfigs(optionsJson)
+}
+
+async function lintFileWrapper(filePath, bufferId, buffer, ruleIds, optionIds, settingsJson, globalsJson, workspaceUri) {
+  return getPluginRuntime().lintFile(
+    filePath,
+    bufferId,
+    buffer ?? null,
+    ruleIds,
+    optionIds,
+    settingsJson,
+    globalsJson,
+    workspaceUri ?? null,
+  )
+}
+
+function createWorkspaceWrapper() {
+  return Promise.resolve()
+}
+
+function destroyWorkspaceWrapper() {}
+
+function loadJsConfigsWrapper(paths) {
+  const runtime = getJsConfigRuntime()
+  const load = process.env.VP_VERSION ? runtime.loadVitePlusConfigs : runtime.loadJsConfigs
+  return load(paths)
+}
+
+async function lint(args) {
+  const prepared = await prepareLintConfig(args)
+  try {
+    return await lintWithPlugins(
+      prepared.args,
+      loadPluginWrapper,
+      setupRuleConfigsWrapper,
+      lintFileWrapper,
+      createWorkspaceWrapper,
+      destroyWorkspaceWrapper,
+      loadJsConfigsWrapper,
+    )
+  } finally {
+    prepared.cleanup()
+  }
+}
+
+module.exports = { lint }

@@ -1,0 +1,6 @@
+{
+  "plugins": ["arkts"],
+  "rules": {
+    "arkts/no-symbol": "error",
+  },
+}

@@ -12,6 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 format = { workspace = true }
+lint = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_parser = { workspace = true }

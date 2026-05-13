@@ -4,12 +4,16 @@ mod parse;
 
 use napi_derive::napi;
 use serde_json::Value;
-use std::path::PathBuf;
+use std::{ffi::OsString, path::PathBuf};
 
 use format::{
   should_ignore_file, ConfigResolver, ExternalFormatter, FormatFileStrategy,
   FormatResult as CoreFormatResult, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
   SourceFormatter,
+};
+use lint::{
+  JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadJsConfigsCb, JsLoadPluginCb,
+  JsSetupRuleConfigsCb,
 };
 
 #[napi(object)]
@@ -18,6 +22,36 @@ pub struct FormatResult {
   pub code: String,
   /// Parse and format errors.
   pub errors: Vec<String>,
+}
+
+/// Run the oxlint-compatible linter.
+#[napi]
+pub async fn lint(args: Vec<String>) -> bool {
+  let args = args.into_iter().map(OsString::from).collect();
+  lint::lint_args(args)
+}
+
+/// Run the oxlint-compatible linter with JavaScript plugin callbacks.
+#[napi]
+pub async fn lint_with_plugins(
+  args: Vec<String>,
+  load_plugin: JsLoadPluginCb,
+  setup_rule_configs: JsSetupRuleConfigsCb,
+  lint_file: JsLintFileCb,
+  create_workspace: JsCreateWorkspaceCb,
+  destroy_workspace: JsDestroyWorkspaceCb,
+  load_js_configs: JsLoadJsConfigsCb,
+) -> bool {
+  lint::lint_args_with_plugins(
+    args,
+    load_plugin,
+    setup_rule_configs,
+    lint_file,
+    create_workspace,
+    destroy_workspace,
+    load_js_configs,
+  )
+  .await
 }
 
 fn format_impl(

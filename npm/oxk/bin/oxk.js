@@ -2,6 +2,7 @@
 
 const VERSION = require('../package.json').version
 const { formatFiles } = require('./format.js')
+const { lint } = require('../lint.js')
 
 function parseBoolean(value, flagName) {
   if (value === 'true') {
@@ -43,10 +44,15 @@ Usage:
 
 Commands:
   format    Format files
+  lint      Lint files
 
 Global Options:
   --help, -h     Show help
   --version, -v  Show version
+
+Lint Options:
+  Supports oxlint-compatible options, configuration files, built-in plugins, and JS plugins.
+  Run "oxk lint --help" for the full lint option list.
 
 Format Options:
   --config PATH
@@ -72,6 +78,9 @@ Format Options:
 Examples:
   oxk format src/**/*.ets
   oxk format --exclude dist/** --config .oxfmtrc.json "src/**/*.{ts,ets}"
+  oxk lint src
+  oxk lint --config .oxlintrc.json --react-plugin "src/**/*.{ts,tsx,ets}"
+  oxk lint --config .oxlintrc.json "src/**/*.ets"
 `)
 }
 
@@ -268,13 +277,21 @@ async function main() {
     process.exit(0)
   }
 
-  if (command !== 'format') {
+  if (command !== 'format' && command !== 'lint') {
     console.error(`Unknown command: ${command}`)
     console.error("Run 'oxk --help' for usage information")
     process.exit(1)
   }
 
   try {
+    if (command === 'lint') {
+      const success = await lint(args.slice(1))
+      if (!success) {
+        process.exit(1)
+      }
+      return
+    }
+
     const { help, formatArgs } = parseFormatArgs(args.slice(1))
     if (help) {
       showHelp()
