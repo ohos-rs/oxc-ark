@@ -430,6 +430,38 @@ test('npm cli lint snapshots Rust arkts no-symbol diagnostics', (t) => {
   })
 })
 
+test('npm cli lint snapshots Rust arkts system API version diagnostics', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(
+      join(dir, '.oxlintrc.json'),
+      JSON.stringify({
+        plugins: ['arkts'],
+        rules: {
+          'no-unused-vars': 'off',
+          'arkts/system-api-version': [
+            'error',
+            {
+              minApiVersion: 11,
+            },
+          ],
+        },
+      }),
+      'utf8',
+    )
+    writeFileSync(
+      join(dir, 'input.ets'),
+      "import { router } from '@kit.ArkUI'\nrouter.back()\nrouter.push()\nrouter.showAlertBeforeBackPage()\n",
+      'utf8',
+    )
+
+    const result = runCli(['lint', 'input.ets', '--threads', '1', '--format', 'json'], dir)
+    const report = lintJsonSnapshot(result, dir)
+
+    t.is(result.status, 1, result.stdout || result.stderr)
+    t.snapshot(report)
+  })
+})
+
 testTsConfig('npm cli lint runs Rust arkts rules from oxlint.config.ts', (t) => {
   withTempDir((dir) => {
     writeFileSync(

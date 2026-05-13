@@ -1,3 +1,3 @@
 #!/bin/bash
 
-node ../../bin/oxk.js lint index.ets --threads 1
+node ../../bin/oxk.js lint . --threads 1

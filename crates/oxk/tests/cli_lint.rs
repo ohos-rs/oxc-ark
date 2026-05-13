@@ -226,3 +226,103 @@ fn cargo_cli_lint_arkts_reports_ast_stable_rules() {
     assert!(codes.contains(&"arkts(no-private-identifiers)".to_string()));
     assert!(codes.contains(&"arkts(no-definite-assignment)".to_string()));
 }
+
+#[test]
+fn cargo_cli_lint_arkts_system_api_version_reports_unsupported_api() {
+    let temp = TempDir::new();
+    fs::write(
+        temp.path().join(".oxlintrc.json"),
+        serde_json::json!({
+            "plugins": ["arkts"],
+            "rules": {
+                "no-unused-vars": "off",
+                "arkts/system-api-version": ["error", {
+                    "minApiVersion": 11
+                }]
+            }
+        })
+        .to_string(),
+    )
+    .expect("failed to write config");
+    fs::write(
+        temp.path().join("input.ets"),
+        "import { router } from '@kit.ArkUI'\nrouter.back()\nrouter.push()\nrouter.showAlertBeforeBackPage()\n",
+    )
+    .expect("failed to write fixture");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args(["lint", "input.ets", "--threads", "1", "--format", "json"])
+        .output()
+        .expect("failed to run oxk lint");
+
+    assert!(
+        !output.status.success(),
+        "lint should fail on unsupported ArkTS system API"
+    );
+    let report = lint_json(&output);
+    let codes = diagnostic_codes(&report);
+    assert_eq!(
+        codes,
+        vec!["arkts(system-api-version)", "arkts(system-api-version)"]
+    );
+    assert!(
+        report["diagnostics"][0]["message"]
+            .as_str()
+            .expect("message should be string")
+            .contains("requires API version 12")
+    );
+    assert!(
+        report["diagnostics"][1]["message"]
+            .as_str()
+            .expect("message should be string")
+            .contains("was removed or deprecated in API version 9")
+    );
+}
+
+#[test]
+fn cargo_cli_lint_arkts_system_api_version_reads_project_min_api_version() {
+    let temp = TempDir::new();
+    fs::create_dir_all(temp.path().join("AppScope")).expect("failed to create AppScope");
+    fs::write(
+        temp.path().join("AppScope/app.json5"),
+        "{ app: { minAPIVersion: 11, targetAPIVersion: 12, }, }\n",
+    )
+    .expect("failed to write app.json5");
+    fs::write(
+        temp.path().join(".oxlintrc.json"),
+        serde_json::json!({
+            "plugins": ["arkts"],
+            "rules": {
+                "no-unused-vars": "off",
+                "arkts/system-api-version": "error"
+            }
+        })
+        .to_string(),
+    )
+    .expect("failed to write config");
+    fs::write(
+        temp.path().join("input.ets"),
+        "import { router } from '@kit.ArkUI'\nrouter.back()\n",
+    )
+    .expect("failed to write fixture");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args(["lint", "input.ets", "--threads", "1", "--format", "json"])
+        .output()
+        .expect("failed to run oxk lint");
+
+    assert!(
+        !output.status.success(),
+        "lint should fail using minAPIVersion from project config"
+    );
+    let report = lint_json(&output);
+    assert_eq!(diagnostic_codes(&report), vec!["arkts(system-api-version)"]);
+    assert!(
+        report["diagnostics"][0]["message"]
+            .as_str()
+            .expect("message should be string")
+            .contains("configured minimum supported API version is 11")
+    );
+}

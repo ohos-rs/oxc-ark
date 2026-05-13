@@ -1,6 +1,7 @@
 use std::{
+    collections::HashMap,
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -19,6 +20,10 @@ use oxc_linter::{
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+
+mod system_api_versions;
+
+use system_api_versions::{SYSTEM_API_VERSIONS, SystemApiVersion};
 
 pub const ARKTS_PLUGIN_NAME: &str = "arkts";
 
@@ -88,6 +93,7 @@ enum ArktsCheck {
     LimitedStdlib,
     StrictTypingRequired,
     NoMisplacedImports,
+    SystemApiVersion,
     Noop,
 }
 
@@ -559,6 +565,11 @@ static ARKTS_RULES: &[ArktsRule] = &[
         "ArkTS restricts ESObject usage.",
         ArktsCheck::Noop,
     ),
+    rule_without_code(
+        "system-api-version",
+        "ArkTS system API usage must be supported by the configured minimum API version.",
+        ArktsCheck::SystemApiVersion,
+    ),
 ];
 
 const fn rule(
@@ -594,9 +605,317 @@ enum BackendRule {
     Delegate(u32),
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
+struct ArktsRuleOptions {
+    min_api_version: Option<u32>,
+    system_api_versions: Vec<(String, SystemApiVersion)>,
+}
+
+#[derive(Clone, Debug, Default)]
+struct ArktsOptionStore {
+    default: ArktsRuleOptions,
+    by_options_id: Vec<ArktsRuleOptions>,
+}
+
+impl ArktsOptionStore {
+    fn get(&self, options_id: usize) -> &ArktsRuleOptions {
+        self.by_options_id.get(options_id).unwrap_or(&self.default)
+    }
+}
+
+#[derive(Debug)]
 struct ExternalState {
     rules: Vec<BackendRule>,
+    delegate_options_by_id: Vec<u32>,
+    arkts_options: ArktsOptionStore,
+}
+
+impl Default for ExternalState {
+    fn default() -> Self {
+        Self {
+            rules: Vec::new(),
+            delegate_options_by_id: vec![0],
+            arkts_options: ArktsOptionStore {
+                default: ArktsRuleOptions::default(),
+                by_options_id: vec![ArktsRuleOptions::default()],
+            },
+        }
+    }
+}
+
+impl ExternalState {
+    fn setup_rule_options(&mut self, options_json: &str) -> Result<String, String> {
+        let config: ExternalRuleOptionsConfig = serde_json::from_str(options_json)
+            .map_err(|err| format!("Failed to parse external plugin options: {err}"))?;
+        let cwd = PathBuf::from(&config.cwd);
+        let default_options = ArktsRuleOptions {
+            min_api_version: find_project_min_api_version(&cwd),
+            system_api_versions: Vec::new(),
+        };
+
+        let option_count = config.options.len().max(1);
+        self.delegate_options_by_id = vec![0; option_count];
+        self.arkts_options = ArktsOptionStore {
+            default: default_options.clone(),
+            by_options_id: vec![default_options; option_count],
+        };
+
+        let mut delegate_rule_ids = vec![0_u32];
+        let mut delegate_options = vec![Vec::<serde_json::Value>::new()];
+
+        for options_id in 1..option_count {
+            let Some(rule_id) = config.rule_ids.get(options_id).copied() else {
+                continue;
+            };
+            let options = config.options.get(options_id).cloned().unwrap_or_default();
+            let backend = self
+                .rules
+                .get(rule_id as usize)
+                .copied()
+                .ok_or_else(|| format!("Unknown external rule id {rule_id}."))?;
+
+            match backend {
+                BackendRule::Arkts(rule_index) => {
+                    self.arkts_options.by_options_id[options_id] = parse_arkts_rule_options(
+                        &ARKTS_RULES[rule_index],
+                        &options,
+                        &cwd,
+                        &self.arkts_options.default,
+                    )?;
+                }
+                BackendRule::Delegate(delegate_rule_id) => {
+                    let delegate_options_id = u32::try_from(delegate_options.len())
+                        .map_err(|_| "JS plugin options id does not fit in u32.".to_string())?;
+                    self.delegate_options_by_id[options_id] = delegate_options_id;
+                    delegate_rule_ids.push(delegate_rule_id);
+                    delegate_options.push(options);
+                }
+            }
+        }
+
+        serde_json::to_string(&serde_json::json!({
+            "cwd": config.cwd,
+            "workspaceUri": config.workspace_uri,
+            "ruleIds": delegate_rule_ids,
+            "options": delegate_options,
+        }))
+        .map_err(|err| format!("Failed to serialize JS plugin options: {err}"))
+    }
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ExternalRuleOptionsConfig {
+    cwd: String,
+    workspace_uri: Option<String>,
+    rule_ids: Vec<u32>,
+    options: Vec<Vec<serde_json::Value>>,
+}
+
+fn parse_arkts_rule_options(
+    rule: &ArktsRule,
+    raw_options: &[serde_json::Value],
+    cwd: &Path,
+    default_options: &ArktsRuleOptions,
+) -> Result<ArktsRuleOptions, String> {
+    if rule.check != ArktsCheck::SystemApiVersion {
+        return Ok(default_options.clone());
+    }
+
+    let mut options = default_options.clone();
+    let Some(first) = raw_options.first() else {
+        return Ok(options);
+    };
+    let Some(object) = first.as_object() else {
+        return Err(
+            "arkts/system-api-version expects an options object, for example { \"minApiVersion\": 11 }."
+                .to_string(),
+        );
+    };
+
+    if let Some(min_api_version) = option_u32(object, &["minApiVersion", "minVersion"]) {
+        options.min_api_version = Some(min_api_version);
+    }
+
+    if let Some(file) = object
+        .get("apiVersionFile")
+        .or_else(|| object.get("apisFile"))
+        .and_then(serde_json::Value::as_str)
+    {
+        let file_path = resolve_config_path(cwd, file);
+        merge_api_version_file(&mut options, &file_path)?;
+    }
+
+    if let Some(apis) = object
+        .get("apis")
+        .or_else(|| object.get("apiVersions"))
+        .and_then(serde_json::Value::as_object)
+    {
+        merge_api_version_map(&mut options, apis)?;
+    }
+
+    Ok(options)
+}
+
+fn option_u32(object: &serde_json::Map<String, serde_json::Value>, keys: &[&str]) -> Option<u32> {
+    keys.iter().find_map(|key| {
+        object.get(*key).and_then(|value| {
+            value
+                .as_u64()
+                .and_then(|value| u32::try_from(value).ok())
+                .or_else(|| value.as_str().and_then(|value| value.parse::<u32>().ok()))
+        })
+    })
+}
+
+fn resolve_config_path(cwd: &Path, path: &str) -> PathBuf {
+    let path = PathBuf::from(path);
+    if path.is_absolute() {
+        path
+    } else {
+        cwd.join(path)
+    }
+}
+
+fn merge_api_version_file(options: &mut ArktsRuleOptions, path: &Path) -> Result<(), String> {
+    let mut source = fs::read_to_string(path).map_err(|err| {
+        format!(
+            "Failed to read ArkTS system API version file `{}`: {err}",
+            path.display()
+        )
+    })?;
+    if matches!(path.extension().and_then(|ext| ext.to_str()), Some("jsonc")) {
+        json_strip_comments::strip(&mut source).map_err(|err| {
+            format!(
+                "Failed to strip comments from ArkTS system API version file `{}`: {err}",
+                path.display()
+            )
+        })?;
+    }
+
+    let value: serde_json::Value = serde_json::from_str(&source).map_err(|err| {
+        format!(
+            "Failed to parse ArkTS system API version file `{}`: {err}",
+            path.display()
+        )
+    })?;
+    let object = value
+        .as_object()
+        .ok_or_else(|| "ArkTS system API version file must contain a JSON object.".to_string())?;
+
+    let apis = object
+        .get("apis")
+        .or_else(|| object.get("apiVersions"))
+        .and_then(serde_json::Value::as_object)
+        .unwrap_or(object);
+    merge_api_version_map(options, apis)
+}
+
+fn merge_api_version_map(
+    options: &mut ArktsRuleOptions,
+    apis: &serde_json::Map<String, serde_json::Value>,
+) -> Result<(), String> {
+    for (api, value) in apis {
+        let version = parse_system_api_version_value(api, value)?;
+        options.system_api_versions.push((api.clone(), version));
+    }
+    Ok(())
+}
+
+fn parse_system_api_version_value(
+    api: &str,
+    value: &serde_json::Value,
+) -> Result<SystemApiVersion, String> {
+    if let Some(since) = version_u32(value) {
+        return Ok(SystemApiVersion {
+            since,
+            removed: None,
+        });
+    }
+
+    let Some(object) = value.as_object() else {
+        return Err(format!(
+            "ArkTS system API version for `{api}` must be an integer or an object with `since`."
+        ));
+    };
+
+    let Some(since) = object
+        .get("since")
+        .or_else(|| object.get("version"))
+        .or_else(|| object.get("apiVersion"))
+        .or_else(|| object.get("apiLevel"))
+        .and_then(version_u32)
+    else {
+        return Err(format!(
+            "ArkTS system API version object for `{api}` must include integer `since`."
+        ));
+    };
+
+    let removed = object
+        .get("removed")
+        .or_else(|| object.get("removedVersion"))
+        .or_else(|| object.get("deleteVersion"))
+        .or_else(|| object.get("deletedVersion"))
+        .or_else(|| object.get("removalVersion"))
+        .or_else(|| object.get("deprecatedSince"))
+        .or_else(|| object.get("deprecatedVersion"))
+        .and_then(version_u32);
+
+    if let Some(removed) = removed
+        && removed < since
+    {
+        return Err(format!(
+            "ArkTS system API `{api}` removal version must be greater than or equal to since version."
+        ));
+    }
+
+    Ok(SystemApiVersion { since, removed })
+}
+
+fn version_u32(value: &serde_json::Value) -> Option<u32> {
+    value
+        .as_u64()
+        .and_then(|value| u32::try_from(value).ok())
+        .or_else(|| value.as_str().and_then(|value| value.parse::<u32>().ok()))
+}
+
+fn find_project_min_api_version(cwd: &Path) -> Option<u32> {
+    [
+        "AppScope/app.json5",
+        "app.json5",
+        "src/main/module.json5",
+        "entry/src/main/module.json5",
+    ]
+    .into_iter()
+    .filter_map(|path| fs::read_to_string(cwd.join(path)).ok())
+    .find_map(|source| {
+        find_numeric_property(&source, "minAPIVersion")
+            .or_else(|| find_numeric_property(&source, "minApiVersion"))
+    })
+}
+
+fn find_numeric_property(source: &str, key: &str) -> Option<u32> {
+    let double_quoted = format!("\"{key}\"");
+    let single_quoted = format!("'{key}'");
+    let start = source
+        .find(&double_quoted)
+        .or_else(|| source.find(&single_quoted))
+        .or_else(|| source.find(key))?;
+    let after_key = &source[start..];
+    let colon = after_key.find(':')?;
+    let mut value = after_key[colon + 1..].trim_start();
+    if let Some(stripped) = value.strip_prefix('"').or_else(|| value.strip_prefix('\'')) {
+        value = stripped;
+    }
+    let digits_len = value
+        .chars()
+        .take_while(|char| char.is_ascii_digit())
+        .map(char::len_utf8)
+        .sum();
+    if digits_len == 0 {
+        return None;
+    }
+    value[..digits_len].parse().ok()
 }
 
 pub fn create_external_linter(delegate: Option<ExternalLinterCallbacks>) -> ExternalLinter {
@@ -604,7 +923,7 @@ pub fn create_external_linter(delegate: Option<ExternalLinterCallbacks>) -> Exte
 
     ExternalLinter::new(
         load_plugin_callback(Arc::clone(&state), delegate.clone()),
-        setup_rule_configs_callback(delegate.clone()),
+        setup_rule_configs_callback(Arc::clone(&state), delegate.clone()),
         lint_file_callback(Arc::clone(&state), delegate.clone()),
         create_workspace_callback(delegate.clone()),
         destroy_workspace_callback(delegate),
@@ -660,14 +979,19 @@ fn load_plugin_callback(
 }
 
 fn setup_rule_configs_callback(
+    state: Arc<Mutex<ExternalState>>,
     delegate: Option<ExternalLinterCallbacks>,
 ) -> ExternalLinterSetupRuleConfigsCb {
     Arc::new(Box::new(move |options_json| {
+        let delegate_options_json = {
+            let mut state = state.lock().map_err(|err| err.to_string())?;
+            state.setup_rule_options(&options_json)?
+        };
+
         if let Some(delegate) = &delegate {
-            (delegate.setup_rule_configs)(options_json)
-        } else {
-            Ok(())
+            (delegate.setup_rule_configs)(delegate_options_json)?;
         }
+        Ok(())
     }))
 }
 
@@ -707,14 +1031,25 @@ fn lint_file_callback(
               globals_json,
               workspace_uri,
               allocator| {
-            let (arkts_rules, delegate_rules, delegate_options, delegate_rule_indices) = {
+            let (
+                arkts_rules,
+                delegate_rules,
+                delegate_options,
+                delegate_rule_indices,
+                arkts_options,
+            ) = {
                 let state = state.lock().map_err(|err| err.to_string())?;
                 split_rules(&state, &rule_ids, &options_ids)?
             };
 
             let mut diagnostics = Vec::new();
             if !arkts_rules.is_empty() && is_arkts_file(Path::new(&file_path)) {
-                diagnostics.extend(run_arkts_rules(&file_path, allocator, &arkts_rules)?);
+                diagnostics.extend(run_arkts_rules(
+                    &file_path,
+                    allocator,
+                    &arkts_rules,
+                    arkts_options,
+                )?);
             }
 
             if !delegate_rules.is_empty() {
@@ -754,7 +1089,13 @@ fn lint_file_callback(
     ))
 }
 
-type SplitRules = (Vec<ActiveArktsRule>, Vec<u32>, Vec<u32>, Vec<u32>);
+type SplitRules = (
+    Vec<ActiveArktsRule>,
+    Vec<u32>,
+    Vec<u32>,
+    Vec<u32>,
+    ArktsOptionStore,
+);
 
 fn split_rules(
     state: &ExternalState,
@@ -777,11 +1118,19 @@ fn split_rules(
                 arkts_rules.push(ActiveArktsRule {
                     active_index: active_index as u32,
                     rule: &ARKTS_RULES[rule_index],
+                    options_id: options_ids.get(active_index).copied().unwrap_or(0) as usize,
                 });
             }
             BackendRule::Delegate(delegate_rule_id) => {
                 delegate_rules.push(delegate_rule_id);
-                delegate_options.push(options_ids.get(active_index).copied().unwrap_or(0));
+                let options_id = options_ids.get(active_index).copied().unwrap_or(0) as usize;
+                delegate_options.push(
+                    state
+                        .delegate_options_by_id
+                        .get(options_id)
+                        .copied()
+                        .unwrap_or(0),
+                );
                 delegate_rule_indices.push(active_index as u32);
             }
         }
@@ -792,6 +1141,7 @@ fn split_rules(
         delegate_rules,
         delegate_options,
         delegate_rule_indices,
+        state.arkts_options.clone(),
     ))
 }
 
@@ -799,12 +1149,14 @@ fn split_rules(
 struct ActiveArktsRule {
     active_index: u32,
     rule: &'static ArktsRule,
+    options_id: usize,
 }
 
 fn run_arkts_rules(
     file_path: &str,
     allocator: &Allocator,
     active_rules: &[ActiveArktsRule],
+    options: ArktsOptionStore,
 ) -> Result<Vec<LintFileResult>, String> {
     let source_text = fs::read_to_string(file_path)
         .map_err(|err| format!("Failed to read ArkTS source file `{file_path}`: {err}"))?;
@@ -816,7 +1168,10 @@ fn run_arkts_rules(
         active: ActiveArktsRules::from_active(active_rules),
         diagnostics: Vec::new(),
         span_converter: span_table.converter(),
+        options,
         function_depth: 0,
+        system_api_imports: HashMap::new(),
+        reported_system_api_config: false,
     };
     visitor.visit_program(&parser_return.program);
     Ok(visitor.diagnostics)
@@ -893,6 +1248,7 @@ struct ActiveArktsRules {
     limited_stdlib: Option<ActiveArktsRule>,
     strict_typing_required: Option<ActiveArktsRule>,
     no_misplaced_imports: Option<ActiveArktsRule>,
+    system_api_version: Option<ActiveArktsRule>,
 }
 
 impl ActiveArktsRules {
@@ -959,6 +1315,7 @@ impl ActiveArktsRules {
                 ArktsCheck::LimitedStdlib => active.limited_stdlib = Some(*rule),
                 ArktsCheck::StrictTypingRequired => active.strict_typing_required = Some(*rule),
                 ArktsCheck::NoMisplacedImports => active.no_misplaced_imports = Some(*rule),
+                ArktsCheck::SystemApiVersion => active.system_api_version = Some(*rule),
                 ArktsCheck::Noop => {}
             }
         }
@@ -966,20 +1323,24 @@ impl ActiveArktsRules {
     }
 }
 
+#[derive(Clone, Debug)]
+struct SystemImport {
+    module: String,
+    imported: Option<String>,
+}
+
 struct ArktsVisitor<'c> {
     active: ActiveArktsRules,
     diagnostics: Vec<LintFileResult>,
     span_converter: Option<Utf8ToUtf16Converter<'c>>,
+    options: ArktsOptionStore,
     function_depth: usize,
+    system_api_imports: HashMap<String, SystemImport>,
+    reported_system_api_config: bool,
 }
 
 impl ArktsVisitor<'_> {
     fn report(&mut self, active: ActiveArktsRule, span: Span) {
-        let mut span = span;
-        if let Some(converter) = &mut self.span_converter {
-            converter.convert_span(&mut span);
-        }
-
         let message = if let Some(code) = active.rule.code {
             format!(
                 "{} ({}: {code})",
@@ -989,6 +1350,14 @@ impl ArktsVisitor<'_> {
         } else {
             format!("{} ({})", active.rule.message, active.rule.doc_name())
         };
+        self.report_message(active, span, message);
+    }
+
+    fn report_message(&mut self, active: ActiveArktsRule, span: Span, message: String) {
+        let mut span = span;
+        if let Some(converter) = &mut self.span_converter {
+            converter.convert_span(&mut span);
+        }
 
         self.diagnostics.push(LintFileResult {
             rule_index: active.active_index,
@@ -998,6 +1367,120 @@ impl ArktsVisitor<'_> {
             fixes: None,
             suggestions: None,
         });
+    }
+
+    fn options_for(&self, active: ActiveArktsRule) -> &ArktsRuleOptions {
+        self.options.get(active.options_id)
+    }
+
+    fn report_system_api_version(&mut self, active: ActiveArktsRule, api: &str, span: Span) {
+        let options = self.options_for(active);
+        let Some(min_api_version) = options.min_api_version else {
+            if !self.reported_system_api_config {
+                self.reported_system_api_config = true;
+                self.report_message(
+                    active,
+                    Span::new(0, 0),
+                    format!(
+                        "arkts/system-api-version requires `minApiVersion` or `minAPIVersion` in project config. ({})",
+                        active.rule.doc_name()
+                    ),
+                );
+            }
+            return;
+        };
+
+        let Some(api_version) = system_api_version(options, api) else {
+            return;
+        };
+
+        if api_version.since > min_api_version {
+            self.report_message(
+                active,
+                span,
+                format!(
+                    "System API `{api}` requires API version {}, but the configured minimum supported API version is {min_api_version}. ({})",
+                    api_version.since,
+                    active.rule.doc_name()
+                ),
+            );
+            return;
+        }
+
+        if let Some(removed) = api_version.removed
+            && min_api_version >= removed
+        {
+            self.report_message(
+                active,
+                span,
+                format!(
+                    "System API `{api}` was removed or deprecated in API version {removed}, but the configured minimum supported API version is {min_api_version}. ({})",
+                    active.rule.doc_name()
+                ),
+            );
+        }
+    }
+
+    fn system_api_key_from_expression(
+        &self,
+        expression: &Expression<'_>,
+    ) -> Option<(String, Span)> {
+        let mut segments: Vec<&str> = Vec::new();
+        let mut current = expression;
+
+        loop {
+            match current {
+                Expression::Identifier(identifier) => {
+                    let import = self.system_api_imports.get(identifier.name.as_str())?;
+                    let mut api = import.module.clone();
+                    if let Some(imported) = &import.imported {
+                        api.push('.');
+                        api.push_str(imported);
+                    }
+                    for segment in segments.iter().rev() {
+                        api.push('.');
+                        api.push_str(segment);
+                    }
+                    return Some((api, expression.span()));
+                }
+                Expression::StaticMemberExpression(member) => {
+                    segments.push(member.property.name.as_str());
+                    current = &member.object;
+                }
+                _ => return None,
+            }
+        }
+    }
+
+    fn system_api_key_from_static_member(
+        &self,
+        member: &StaticMemberExpression<'_>,
+    ) -> Option<(String, Span)> {
+        let mut segments = vec![member.property.name.as_str()];
+        let mut current = &member.object;
+
+        loop {
+            match current {
+                Expression::Identifier(identifier) => {
+                    let import = self.system_api_imports.get(identifier.name.as_str())?;
+                    let mut api = import.module.clone();
+                    if let Some(imported) = &import.imported {
+                        api.push('.');
+                        api.push_str(imported);
+                    }
+                    for segment in segments.iter().rev() {
+                        api.push('.');
+                        api.push_str(segment);
+                    }
+                    return Some((api, member.span));
+                }
+                Expression::StaticMemberExpression(inner) => {
+                    segments.push(inner.property.name.as_str());
+                    current = &inner.object;
+                }
+                _ => return None,
+            }
+        }
     }
 }
 
@@ -1009,6 +1492,10 @@ impl ArktsRule {
 
 impl<'a> Visit<'a> for ArktsVisitor<'_> {
     fn visit_program(&mut self, it: &Program<'a>) {
+        if self.active.system_api_version.is_some() {
+            self.system_api_imports = collect_system_api_imports(&it.body);
+        }
+
         if let Some(active) = self.active.strict_typing_required
             && (it.source_text.contains("@ts-ignore") || it.source_text.contains("@ts-nocheck"))
         {
@@ -1079,6 +1566,12 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
             && let Some(active) = self.active.no_symbol
         {
             self.report(active, it.callee.span());
+        }
+        if let Some(active) = self.active.system_api_version
+            && let Expression::Identifier(_) = &it.callee
+            && let Some((api, span)) = self.system_api_key_from_expression(&it.callee)
+        {
+            self.report_system_api_version(active, &api, span);
         }
         if is_identifier(&it.callee, "require")
             && let Some(active) = self.active.no_require
@@ -1283,6 +1776,11 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
     }
 
     fn visit_import_declaration(&mut self, it: &ImportDeclaration<'a>) {
+        if let Some(active) = self.active.system_api_version
+            && let Some(module) = system_module_name(it.source.value.as_str())
+        {
+            self.report_system_api_version(active, module, it.source.span);
+        }
         if it.with_clause.is_some()
             && let Some(active) = self.active.no_import_assertions
         {
@@ -1519,6 +2017,15 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
         walk::walk_computed_member_expression(self, it);
     }
 
+    fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
+        if let Some(active) = self.active.system_api_version
+            && let Some((api, span)) = self.system_api_key_from_static_member(it)
+        {
+            self.report_system_api_version(active, &api, span);
+        }
+        walk::walk_static_member_expression(self, it);
+    }
+
     fn visit_sequence_expression(&mut self, it: &SequenceExpression<'a>) {
         if let Some(active) = self.active.no_comma_outside_loops {
             self.report(active, it.span);
@@ -1539,6 +2046,117 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
 
 fn is_identifier(expression: &Expression<'_>, name: &str) -> bool {
     matches!(expression, Expression::Identifier(identifier) if identifier.name == name)
+}
+
+fn collect_system_api_imports<'a>(body: &[Statement<'a>]) -> HashMap<String, SystemImport> {
+    let mut imports = HashMap::new();
+    for statement in body {
+        match statement {
+            Statement::ImportDeclaration(declaration) => {
+                collect_system_api_import_declaration(
+                    declaration.source.value.as_str(),
+                    declaration
+                        .specifiers
+                        .as_ref()
+                        .map(|specifiers| specifiers.as_slice()),
+                    &mut imports,
+                );
+            }
+            Statement::LazyImportDeclaration(declaration) => {
+                collect_system_api_import_declaration(
+                    declaration.source.value.as_str(),
+                    declaration
+                        .specifiers
+                        .as_ref()
+                        .map(|specifiers| specifiers.as_slice()),
+                    &mut imports,
+                );
+            }
+            _ => {}
+        }
+    }
+    imports
+}
+
+fn collect_system_api_import_declaration<'a>(
+    source: &str,
+    specifiers: Option<&[ImportDeclarationSpecifier<'a>]>,
+    imports: &mut HashMap<String, SystemImport>,
+) {
+    let Some(module) = system_module_name(source) else {
+        return;
+    };
+
+    let Some(specifiers) = specifiers else {
+        return;
+    };
+
+    for specifier in specifiers {
+        match specifier {
+            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                if let Some(imported) = module_export_name(&specifier.imported) {
+                    imports.insert(
+                        specifier.local.name.to_string(),
+                        SystemImport {
+                            module: module.to_string(),
+                            imported: Some(imported.to_string()),
+                        },
+                    );
+                }
+            }
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                imports.insert(
+                    specifier.local.name.to_string(),
+                    SystemImport {
+                        module: module.to_string(),
+                        imported: None,
+                    },
+                );
+            }
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                imports.insert(
+                    specifier.local.name.to_string(),
+                    SystemImport {
+                        module: module.to_string(),
+                        imported: None,
+                    },
+                );
+            }
+        }
+    }
+}
+
+fn module_export_name<'a>(name: &'a ModuleExportName<'a>) -> Option<&'a str> {
+    match name {
+        ModuleExportName::IdentifierName(identifier) => Some(identifier.name.as_str()),
+        ModuleExportName::IdentifierReference(identifier) => Some(identifier.name.as_str()),
+        ModuleExportName::StringLiteral(literal) => Some(literal.value.as_str()),
+    }
+}
+
+fn system_module_name(source: &str) -> Option<&str> {
+    if source.starts_with("@ohos.")
+        || source.starts_with("@kit.")
+        || source.starts_with("@system.")
+        || source.starts_with("@hms.")
+    {
+        Some(source)
+    } else {
+        None
+    }
+}
+
+fn system_api_version(options: &ArktsRuleOptions, api: &str) -> Option<SystemApiVersion> {
+    options
+        .system_api_versions
+        .iter()
+        .rev()
+        .find_map(|(name, version)| (name == api).then_some(*version))
+        .or_else(|| {
+            SYSTEM_API_VERSIONS
+                .iter()
+                .find_map(|(name, version)| (*name == api).then_some(*version))
+        })
 }
 
 fn static_member_property<'a>(expression: &'a Expression<'a>) -> Option<&'a str> {

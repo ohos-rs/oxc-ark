@@ -60,12 +60,46 @@ the plugin does not enable rules automatically. Enable each rule explicitly in
     "arkts/no-symbol": "error",
     "arkts/no-var": "error",
     "arkts/no-any-unknown": "error",
+    "arkts/system-api-version": [
+      "error",
+      {
+        "minApiVersion": 11,
+      },
+    ],
   },
 }
 ```
 
 Rules are reported as `arkts(<rule>)`, for example `arkts(no-symbol)`.
 ArkTS rules only run for `.ets` files. The `.arkts` extension is not supported.
+`arkts/system-api-version` compares imported system API usage with the
+configured minimum supported API version. The minimum version must be within the
+API availability range: `since <= minApiVersion < removed/deprecated`. It accepts:
+
+- `minApiVersion`: project minimum API version. If omitted, oxk scans common
+  OpenHarmony project files such as `AppScope/app.json5` for `minAPIVersion`.
+- `apis` / `apiVersions`: object mapping API names to the API version that
+  introduced them, or objects like `{ "since": 9, "removed": 11 }`. The built-in
+  SDK table is used by default; this is only for local overrides or additions.
+- `deprecatedSince` / `deprecatedVersion`: treated as the first version where
+  the API should no longer be used.
+- `apiVersionFile`: JSON or JSONC file containing the same mapping, either at
+  the top level or under `apis`.
+
+`@kit.*` imports are supported through SDK kit aliases, for example
+`import { router } from "@kit.ArkUI"`.
+
+Refresh the built-in table from a JSON/JSONC mapping or an OpenHarmony SDK
+declaration directory:
+
+```bash
+pnpm run sync:arkts-api-versions -- /path/to/ets/api
+pnpm run sync:arkts-api-versions -- /path/to/system-api-versions.jsonc
+```
+
+The generated table is written to `crates/lint/src/arkts/system_api_versions.rs`
+by default, keeping generated data separate from rule implementation code. When
+the source path is `ets/api`, sibling `ets/kits` is included automatically.
 
 Example:
 
