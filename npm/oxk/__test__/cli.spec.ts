@@ -3,9 +3,27 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const cliPath = fileURLToPath(new URL('../bin/oxk.js', import.meta.url))
+
+function canImportTypeScriptConfig() {
+  const dir = mkdtempSync(join(tmpdir(), 'oxk-ts-config-'))
+  try {
+    const configPath = join(dir, 'oxlint.config.ts')
+    writeFileSync(configPath, 'export default {}\n', 'utf8')
+    const result = spawnSync(
+      process.execPath,
+      ['-e', 'import(process.argv[1]).then(() => {}, () => process.exit(1))', pathToFileURL(configPath).href],
+      { encoding: 'utf8' },
+    )
+    return result.status === 0
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+}
+
+const testTsConfig = canImportTypeScriptConfig() ? test : test.skip
 
 function runCli(args: string[], cwd: string) {
   return spawnSync(process.execPath, [cliPath, ...args], {
@@ -171,7 +189,7 @@ test('npm cli lint loads .oxlintrc.jsonc', (t) => {
   })
 })
 
-test('npm cli lint loads oxlint.config.ts', (t) => {
+testTsConfig('npm cli lint loads oxlint.config.ts', (t) => {
   withTempDir((dir) => {
     writeFileSync(join(dir, 'oxlint.config.ts'), "export default { rules: { 'no-debugger': 'off' } }\n", 'utf8')
     const filePath = join(dir, 'input.ts')
@@ -412,7 +430,7 @@ test('npm cli lint snapshots Rust arkts no-symbol diagnostics', (t) => {
   })
 })
 
-test('npm cli lint runs Rust arkts rules from oxlint.config.ts', (t) => {
+testTsConfig('npm cli lint runs Rust arkts rules from oxlint.config.ts', (t) => {
   withTempDir((dir) => {
     writeFileSync(
       join(dir, 'oxlint.config.ts'),

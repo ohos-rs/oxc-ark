@@ -110,9 +110,7 @@ function isJsonConfig(configPath) {
 }
 
 async function loadJsConfig(configPath) {
-  const runtime = getJsConfigRuntime()
-  const load = process.env.VP_VERSION ? runtime.loadVitePlusConfigs : runtime.loadJsConfigs
-  const response = JSON.parse(await load([configPath]))
+  const response = JSON.parse(await getJsConfigRuntime().loadJsConfigs([configPath]))
 
   if (Array.isArray(response.Success)) {
     const [result] = response.Success
@@ -140,10 +138,7 @@ async function loadConfig(configPath) {
 
 function hasArktsPluginConfig(config) {
   if (!config || typeof config !== 'object' || Array.isArray(config)) return false
-  if (
-    Array.isArray(config.plugins) &&
-    config.plugins.some((plugin) => plugin === ARKTS_PLUGIN_NAME)
-  ) {
+  if (Array.isArray(config.plugins) && config.plugins.some((plugin) => plugin === ARKTS_PLUGIN_NAME)) {
     return true
   }
   return Array.isArray(config.overrides) && config.overrides.some(hasArktsPluginConfig)
@@ -152,9 +147,7 @@ function hasArktsPluginConfig(config) {
 function isArktsJsPluginEntry(entry) {
   if (entry === ARKTS_PLUGIN_NAME) return true
   return (
-    entry &&
-    typeof entry === 'object' &&
-    (entry.name === ARKTS_PLUGIN_NAME || entry.specifier === ARKTS_PLUGIN_NAME)
+    entry && typeof entry === 'object' && (entry.name === ARKTS_PLUGIN_NAME || entry.specifier === ARKTS_PLUGIN_NAME)
   )
 }
 
@@ -256,7 +249,16 @@ function setupRuleConfigsWrapper(optionsJson) {
   return getPluginRuntime().setupRuleConfigs(optionsJson)
 }
 
-async function lintFileWrapper(filePath, bufferId, buffer, ruleIds, optionIds, settingsJson, globalsJson, workspaceUri) {
+async function lintFileWrapper(
+  filePath,
+  bufferId,
+  buffer,
+  ruleIds,
+  optionIds,
+  settingsJson,
+  globalsJson,
+  workspaceUri,
+) {
   return getPluginRuntime().lintFile(
     filePath,
     bufferId,
@@ -276,26 +278,40 @@ function createWorkspaceWrapper() {
 function destroyWorkspaceWrapper() {}
 
 function loadJsConfigsWrapper(paths) {
-  const runtime = getJsConfigRuntime()
-  const load = process.env.VP_VERSION ? runtime.loadVitePlusConfigs : runtime.loadJsConfigs
-  return load(paths)
+  return getJsConfigRuntime().loadJsConfigs(paths)
+}
+
+async function withStandardOxlintEnv(run) {
+  const vpVersion = process.env.VP_VERSION
+  delete process.env.VP_VERSION
+  try {
+    return await run()
+  } finally {
+    if (vpVersion === undefined) {
+      delete process.env.VP_VERSION
+    } else {
+      process.env.VP_VERSION = vpVersion
+    }
+  }
 }
 
 async function lint(args) {
-  const prepared = await prepareLintConfig(args)
-  try {
-    return await lintWithPlugins(
-      prepared.args,
-      loadPluginWrapper,
-      setupRuleConfigsWrapper,
-      lintFileWrapper,
-      createWorkspaceWrapper,
-      destroyWorkspaceWrapper,
-      loadJsConfigsWrapper,
-    )
-  } finally {
-    prepared.cleanup()
-  }
+  return withStandardOxlintEnv(async () => {
+    const prepared = await prepareLintConfig(args)
+    try {
+      return await lintWithPlugins(
+        prepared.args,
+        loadPluginWrapper,
+        setupRuleConfigsWrapper,
+        lintFileWrapper,
+        createWorkspaceWrapper,
+        destroyWorkspaceWrapper,
+        loadJsConfigsWrapper,
+      )
+    } finally {
+      prepared.cleanup()
+    }
+  })
 }
 
 module.exports = { lint }
