@@ -97,6 +97,9 @@ export declare const enum ImportNameKind {
 /** Run the oxlint-compatible linter. */
 export declare function lint(args: Array<string>): Promise<boolean>
 
+/** Run the oxlint-compatible linter synchronously. */
+export declare function lintSync(args: Array<string>): boolean
+
 /** Run the oxlint-compatible linter with JavaScript plugin callbacks. */
 export declare function lintWithPlugins(args: Array<string>, loadPlugin: any, setupRuleConfigs: any, lintFile: any, createWorkspace: any, destroyWorkspace: any, loadJsConfigs: any): Promise<boolean>
 

@@ -3,7 +3,6 @@ use std::sync::atomic::Ordering;
 use std::{
     ffi::OsString,
     future::Future,
-    io::BufWriter,
     sync::{Arc, OnceLock, mpsc::channel},
 };
 
@@ -22,11 +21,11 @@ use oxc_linter::{
 };
 use serde::Deserialize;
 
-use oxlint::cli::{CliRunner, init_miette, init_tracing, lint_command};
+use oxlint::cli::{init_miette, init_tracing, lint_command};
 
 use crate::{
     arkts::{self, ExternalLinterCallbacks},
-    handle_threads_once, is_success, prepare_arkts_config,
+    handle_threads_once, prepare_arkts_config, run_lint_command,
 };
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
@@ -139,8 +138,7 @@ pub async fn lint_args_with_plugins(
         create_workspace,
         destroy_workspace,
     );
-    let mut stdout = BufWriter::new(std::io::stdout());
-    is_success(CliRunner::new(command, Some(external_linter)).run(&mut stdout))
+    run_lint_command(command, prepared.arkts, Some(external_linter))
 }
 
 fn create_external_linter(

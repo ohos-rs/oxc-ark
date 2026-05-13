@@ -578,6 +578,7 @@ module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
 module.exports.format = nativeBinding.format
 module.exports.ImportNameKind = nativeBinding.ImportNameKind
 module.exports.lint = nativeBinding.lint
+module.exports.lintSync = nativeBinding.lintSync
 module.exports.lintWithPlugins = nativeBinding.lintWithPlugins
 module.exports.parse = nativeBinding.parse
 module.exports.Severity = nativeBinding.Severity

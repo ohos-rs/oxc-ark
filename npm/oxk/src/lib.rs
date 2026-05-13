@@ -35,10 +35,27 @@ pub async fn lint(args: Vec<String>) -> bool {
   lint::lint_args(args)
 }
 
+/// Run the oxlint-compatible linter synchronously.
+#[cfg(not(target_family = "wasm"))]
+#[napi]
+pub fn lint_sync(args: Vec<String>) -> bool {
+  let args = args.into_iter().map(OsString::from).collect();
+  lint::lint_args(args)
+}
+
 /// Run the oxlint-compatible linter.
 #[cfg(target_family = "wasm")]
 #[napi]
 pub async fn lint(_args: Vec<String>) -> napi::Result<bool> {
+  Err(napi::Error::from_reason(
+    "oxk lint is not supported in WASI builds. Use the native npm package or the cargo CLI for linting.",
+  ))
+}
+
+/// Run the oxlint-compatible linter synchronously.
+#[cfg(target_family = "wasm")]
+#[napi]
+pub fn lint_sync(_args: Vec<String>) -> napi::Result<bool> {
   Err(napi::Error::from_reason(
     "oxk lint is not supported in WASI builds. Use the native npm package or the cargo CLI for linting.",
   ))

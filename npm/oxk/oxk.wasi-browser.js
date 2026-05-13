@@ -62,6 +62,7 @@ export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 export const format = __napiModule.exports.format
 export const ImportNameKind = __napiModule.exports.ImportNameKind
 export const lint = __napiModule.exports.lint
+export const lintSync = __napiModule.exports.lintSync
 export const lintWithPlugins = __napiModule.exports.lintWithPlugins
 export const parse = __napiModule.exports.parse
 export const Severity = __napiModule.exports.Severity

@@ -1,10 +1,7 @@
 const { mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs')
 const { tmpdir } = require('node:os')
 const { basename, join, resolve } = require('node:path')
-const { lintWithPlugins } = require('./index.js')
-
-const ARKTS_PLUGIN_NAME = 'arkts'
-const ARKTS_PLUGIN_SOURCE = "module.exports = { meta: { name: 'arkts' }, rules: {} };\n"
+const { lint: lintNative, lintSync, lintWithPlugins } = require('./index.js')
 
 let pluginRuntime = null
 let jsConfigRuntime = null
@@ -136,56 +133,16 @@ async function loadConfig(configPath) {
   return loadJsConfig(configPath)
 }
 
-function hasArktsPluginConfig(config) {
+function hasJsPlugins(config) {
   if (!config || typeof config !== 'object' || Array.isArray(config)) return false
-  if (Array.isArray(config.plugins) && config.plugins.some((plugin) => plugin === ARKTS_PLUGIN_NAME)) {
-    return true
-  }
-  return Array.isArray(config.overrides) && config.overrides.some(hasArktsPluginConfig)
-}
-
-function isArktsJsPluginEntry(entry) {
-  if (entry === ARKTS_PLUGIN_NAME) return true
-  return (
-    entry && typeof entry === 'object' && (entry.name === ARKTS_PLUGIN_NAME || entry.specifier === ARKTS_PLUGIN_NAME)
-  )
-}
-
-function ensureArktsJsPlugin(config, pluginPath) {
-  const entry = { name: ARKTS_PLUGIN_NAME, specifier: pluginPath }
-  if (Array.isArray(config.jsPlugins)) {
-    if (!config.jsPlugins.some(isArktsJsPluginEntry)) config.jsPlugins.push(entry)
-  } else {
-    config.jsPlugins = [entry]
-  }
-}
-
-function rewriteArktsPluginConfig(config, pluginPath) {
-  if (!config || typeof config !== 'object' || Array.isArray(config)) return false
-
-  let changed = false
-  if (Array.isArray(config.plugins)) {
-    const plugins = config.plugins.filter((plugin) => plugin !== ARKTS_PLUGIN_NAME)
-    if (plugins.length !== config.plugins.length) {
-      config.plugins = plugins
-      ensureArktsJsPlugin(config, pluginPath)
-      changed = true
-    }
-  }
-
-  if (Array.isArray(config.overrides)) {
-    for (const overrideConfig of config.overrides) {
-      changed = rewriteArktsPluginConfig(overrideConfig, pluginPath) || changed
-    }
-  }
-
-  return changed
+  if (Array.isArray(config.jsPlugins) && config.jsPlugins.length > 0) return true
+  return Array.isArray(config.overrides) && config.overrides.some(hasJsPlugins)
 }
 
 async function prepareLintConfig(args) {
   const cwd = process.cwd()
   const configPath = findConfigPath(args, cwd)
-  if (!configPath) return { args, cleanup: () => {} }
+  if (!configPath) return { args, cleanup: () => {}, needsJsPlugins: false }
 
   let config
   try {
@@ -200,15 +157,10 @@ async function prepareLintConfig(args) {
     if (!tempDir) tempDir = mkdtempSync(join(tmpdir(), 'oxk-lint-config-'))
     return tempDir
   }
-
-  if (hasArktsPluginConfig(config)) {
-    const pluginPath = join(ensureTempDir(), 'arkts-plugin.js')
-    writeFileSync(pluginPath, ARKTS_PLUGIN_SOURCE, 'utf8')
-    shouldRewrite = rewriteArktsPluginConfig(config, pluginPath) || shouldRewrite
-  }
+  const needsJsPlugins = hasJsPlugins(config)
 
   if (!shouldRewrite) {
-    return { args, cleanup: () => {} }
+    return { args, cleanup: () => {}, needsJsPlugins }
   }
 
   tempDir = ensureTempDir()
@@ -238,6 +190,7 @@ async function prepareLintConfig(args) {
   return {
     args: nextArgs,
     cleanup: () => rmSync(tempDir, { recursive: true, force: true }),
+    needsJsPlugins,
   }
 }
 
@@ -299,6 +252,10 @@ async function lint(args) {
   return withStandardOxlintEnv(async () => {
     const prepared = await prepareLintConfig(args)
     try {
+      if (!prepared.needsJsPlugins) {
+        return typeof lintSync === 'function' ? lintSync(prepared.args) : lintNative(prepared.args)
+      }
+
       return await lintWithPlugins(
         prepared.args,
         loadPluginWrapper,

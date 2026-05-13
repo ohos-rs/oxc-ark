@@ -7,12 +7,22 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use oxlint::cli::{CliRunResult, CliRunner, LintCommand, init_miette, init_tracing, lint_command};
-use serde_json::{Map, Value, map::Entry};
+use oxc_linter::ExternalLinter;
+use oxlint::cli::{CliRunResult, LintCommand, init_miette, init_tracing, lint_command};
+use serde_json::Value;
 
 mod arkts;
+mod config_loader;
+mod mode;
 #[cfg(feature = "napi")]
 mod napi_lint;
+mod output_formatter;
+mod runner;
+mod walk;
+
+const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
+const DEFAULT_JSONC_OXLINTRC_NAME: &str = ".oxlintrc.jsonc";
+const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
 
 #[cfg(feature = "napi")]
 pub use napi_lint::{
@@ -51,13 +61,24 @@ pub fn lint_args(args: Vec<OsString>) -> bool {
 
     handle_threads_once(&command);
 
-    let mut stdout = BufWriter::new(std::io::stdout());
-    is_success(CliRunner::new(command, Some(arkts::create_external_linter(None))).run(&mut stdout))
+    run_lint_command(command, prepared.arkts, None)
 }
 
 struct PreparedLintArgs {
     args: Vec<OsString>,
+    arkts: ArktsLintConfig,
     _temp_config: Option<TempArktsConfig>,
+}
+
+#[derive(Clone, Default)]
+struct ArktsLintConfig {
+    rules: Vec<arkts::StandaloneRuleConfig>,
+}
+
+impl ArktsLintConfig {
+    fn is_empty(&self) -> bool {
+        self.rules.is_empty()
+    }
 }
 
 struct TempArktsConfig {
@@ -77,10 +98,6 @@ impl TempArktsConfig {
         Ok(Self { dir })
     }
 
-    fn plugin_path(&self) -> PathBuf {
-        self.dir.join("arkts-plugin.js")
-    }
-
     fn config_path(&self) -> PathBuf {
         self.dir.join("oxlintrc.json")
     }
@@ -96,6 +113,7 @@ fn prepare_arkts_config(args: Vec<OsString>) -> Result<PreparedLintArgs, String>
     let Some(config_path) = find_lint_config_path(&args) else {
         return Ok(PreparedLintArgs {
             args,
+            arkts: ArktsLintConfig::default(),
             _temp_config: None,
         });
     };
@@ -103,6 +121,7 @@ fn prepare_arkts_config(args: Vec<OsString>) -> Result<PreparedLintArgs, String>
     if !is_json_lint_config(&config_path) {
         return Ok(PreparedLintArgs {
             args,
+            arkts: ArktsLintConfig::default(),
             _temp_config: None,
         });
     }
@@ -128,23 +147,16 @@ fn prepare_arkts_config(args: Vec<OsString>) -> Result<PreparedLintArgs, String>
         )
     })?;
 
-    if !config_contains_arkts_plugin(&config) {
+    let mut arkts_config = ArktsLintConfig::default();
+    if !rewrite_arkts_builtin_config(&mut config, &mut arkts_config)? {
         return Ok(PreparedLintArgs {
             args,
+            arkts: arkts_config,
             _temp_config: None,
         });
     }
 
     let temp_config = TempArktsConfig::new()?;
-    let plugin_path = temp_config.plugin_path();
-    arkts::write_placeholder_plugin(&plugin_path).map_err(|err| {
-        format!(
-            "Failed to write ArkTS plugin placeholder `{}`: {err}",
-            plugin_path.display()
-        )
-    })?;
-    rewrite_arkts_plugin_config(&mut config, &plugin_path);
-
     let temp_config_path = temp_config.config_path();
     let config_text = serde_json::to_string_pretty(&config)
         .map_err(|err| format!("Failed to serialize rewritten ArkTS lint config: {err}"))?;
@@ -157,6 +169,7 @@ fn prepare_arkts_config(args: Vec<OsString>) -> Result<PreparedLintArgs, String>
 
     Ok(PreparedLintArgs {
         args: replace_config_arg(args, &temp_config_path),
+        arkts: arkts_config,
         _temp_config: Some(temp_config),
     })
 }
@@ -196,28 +209,12 @@ fn is_json_lint_config(path: &Path) -> bool {
     )
 }
 
-fn config_contains_arkts_plugin(value: &Value) -> bool {
-    let Some(object) = value.as_object() else {
-        return false;
-    };
-
-    object
-        .get("plugins")
-        .and_then(Value::as_array)
-        .is_some_and(|plugins| {
-            plugins
-                .iter()
-                .any(|plugin| plugin.as_str() == Some(arkts::ARKTS_PLUGIN_NAME))
-        })
-        || object
-            .get("overrides")
-            .and_then(Value::as_array)
-            .is_some_and(|overrides| overrides.iter().any(config_contains_arkts_plugin))
-}
-
-fn rewrite_arkts_plugin_config(value: &mut Value, plugin_path: &Path) -> bool {
+fn rewrite_arkts_builtin_config(
+    value: &mut Value,
+    arkts_config: &mut ArktsLintConfig,
+) -> Result<bool, String> {
     let Some(object) = value.as_object_mut() else {
-        return false;
+        return Ok(false);
     };
 
     let mut changed = false;
@@ -225,47 +222,96 @@ fn rewrite_arkts_plugin_config(value: &mut Value, plugin_path: &Path) -> bool {
         let before_len = plugins.len();
         plugins.retain(|plugin| plugin.as_str() != Some(arkts::ARKTS_PLUGIN_NAME));
         if plugins.len() != before_len {
-            ensure_arkts_js_plugin(object, plugin_path);
+            changed = true;
+        }
+    }
+
+    if let Some(Value::Object(rules)) = object.get_mut("rules") {
+        let arkts_rule_keys = rules
+            .keys()
+            .filter(|rule_name| rule_name.starts_with("arkts/"))
+            .cloned()
+            .collect::<Vec<_>>();
+        for rule_key in arkts_rule_keys {
+            let raw_rule_config = rules
+                .remove(&rule_key)
+                .expect("rule key collected from this map should exist");
+            if let Some(rule_config) = parse_arkts_rule_config(&rule_key, &raw_rule_config)? {
+                arkts_config.rules.push(rule_config);
+            }
             changed = true;
         }
     }
 
     if let Some(Value::Array(overrides)) = object.get_mut("overrides") {
         for override_config in overrides {
-            changed |= rewrite_arkts_plugin_config(override_config, plugin_path);
+            changed |= rewrite_arkts_builtin_config(override_config, arkts_config)?;
         }
     }
 
-    changed
+    Ok(changed)
 }
 
-fn ensure_arkts_js_plugin(object: &mut Map<String, Value>, plugin_path: &Path) {
-    let entry = arkts::arkts_plugin_config_entry(plugin_path);
-    match object.entry("jsPlugins") {
-        Entry::Occupied(mut occupied) => {
-            if let Value::Array(js_plugins) = occupied.get_mut() {
-                if !js_plugins.iter().any(is_arkts_js_plugin_entry) {
-                    js_plugins.push(entry);
-                }
-            } else {
-                occupied.insert(Value::Array(vec![entry]));
-            }
-        }
-        Entry::Vacant(vacant) => {
-            vacant.insert(Value::Array(vec![entry]));
-        }
+fn parse_arkts_rule_config(
+    full_rule_name: &str,
+    raw_rule_config: &Value,
+) -> Result<Option<arkts::StandaloneRuleConfig>, String> {
+    let rule_name = full_rule_name
+        .strip_prefix("arkts/")
+        .ok_or_else(|| format!("Invalid ArkTS lint rule name `{full_rule_name}`."))?;
+    if !arkts::is_rule_name(rule_name) {
+        return Err(format!("Unknown ArkTS lint rule `{full_rule_name}`."));
     }
+
+    let (severity_value, options) = match raw_rule_config {
+        Value::Array(values) => {
+            let Some(severity) = values.first() else {
+                return Err(format!(
+                    "ArkTS lint rule `{full_rule_name}` must include a severity."
+                ));
+            };
+            (severity, values.iter().skip(1).cloned().collect::<Vec<_>>())
+        }
+        value => (value, Vec::new()),
+    };
+
+    let Some(severity) = parse_arkts_severity(full_rule_name, severity_value)? else {
+        return Ok(None);
+    };
+
+    Ok(Some(arkts::StandaloneRuleConfig {
+        name: rule_name.to_string(),
+        severity,
+        options,
+    }))
 }
 
-fn is_arkts_js_plugin_entry(value: &Value) -> bool {
-    value.as_str() == Some(arkts::ARKTS_PLUGIN_NAME)
-        || value.as_object().is_some_and(|object| {
-            object
-                .get("name")
-                .and_then(Value::as_str)
-                .or_else(|| object.get("specifier").and_then(Value::as_str))
-                == Some(arkts::ARKTS_PLUGIN_NAME)
-        })
+fn parse_arkts_severity(
+    rule_name: &str,
+    value: &Value,
+) -> Result<Option<arkts::StandaloneSeverity>, String> {
+    match value {
+        Value::String(value) => match value.as_str() {
+            "off" | "0" => Ok(None),
+            "warn" | "warning" | "1" => Ok(Some(arkts::StandaloneSeverity::Warn)),
+            "error" | "deny" | "2" => Ok(Some(arkts::StandaloneSeverity::Error)),
+            _ => Err(format!(
+                "ArkTS lint rule `{rule_name}` has invalid severity `{value}`."
+            )),
+        },
+        Value::Number(value) if value.as_u64() == Some(0) => Ok(None),
+        Value::Number(value) if value.as_u64() == Some(1) => {
+            Ok(Some(arkts::StandaloneSeverity::Warn))
+        }
+        Value::Number(value) if value.as_u64() == Some(2) => {
+            Ok(Some(arkts::StandaloneSeverity::Error))
+        }
+        Value::Bool(false) => Ok(None),
+        Value::Bool(true) => Ok(Some(arkts::StandaloneSeverity::Error)),
+        _ => Err(format!(
+            "ArkTS lint rule `{rule_name}` must use severity off, warn, or error."
+        )),
+    }
 }
 
 fn replace_config_arg(args: Vec<OsString>, config_path: &Path) -> Vec<OsString> {
@@ -299,6 +345,15 @@ fn replace_config_arg(args: Vec<OsString>, config_path: &Path) -> Vec<OsString> 
     }
 
     next_args
+}
+
+fn run_lint_command(
+    command: LintCommand,
+    arkts_config: ArktsLintConfig,
+    external_linter: Option<ExternalLinter>,
+) -> bool {
+    let mut stdout = BufWriter::new(std::io::stdout());
+    is_success(runner::OxkLintRunner::new(command, arkts_config, external_linter).run(&mut stdout))
 }
 
 fn handle_threads_once(command: &LintCommand) {

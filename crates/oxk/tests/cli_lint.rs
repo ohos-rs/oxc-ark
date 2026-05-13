@@ -186,6 +186,71 @@ fn cargo_cli_lint_arkts_no_symbol_reports_symbol_constructs() {
 }
 
 #[test]
+fn cargo_cli_lint_arkts_default_output_uses_codeframe() {
+    let temp = TempDir::new();
+    fs::write(
+        temp.path().join(".oxlintrc.json"),
+        serde_json::json!({
+            "plugins": ["arkts"],
+            "rules": {
+                "no-unused-vars": "off",
+                "arkts/no-symbol": "error"
+            }
+        })
+        .to_string(),
+    )
+    .expect("failed to write config");
+    fs::write(
+        temp.path().join("input.ets"),
+        "debugger\nconst key = Symbol('id')\n",
+    )
+    .expect("failed to write fixture");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args(["lint", "input.ets", "--threads", "1", "-D", "no-debugger"])
+        .output()
+        .expect("failed to run oxk lint");
+
+    assert!(
+        !output.status.success(),
+        "lint should fail on arkts/no-symbol"
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let output_text = format!("{stdout}\n{stderr}");
+    assert!(
+        output_text.contains("eslint(no-debugger)"),
+        "default output should include the oxlint rule code:\n{output_text}"
+    );
+    assert!(
+        output_text.contains("arkts(no-symbol)"),
+        "default output should include the ArkTS rule code:\n{output_text}"
+    );
+    assert!(
+        output_text.contains("const key = Symbol('id')"),
+        "default output should include a source code frame:\n{output_text}"
+    );
+    let oxlint_index = output_text
+        .find("eslint(no-debugger)")
+        .expect("oxlint diagnostic should exist");
+    let arkts_index = output_text
+        .find("arkts(no-symbol)")
+        .expect("arkts diagnostic should exist");
+    let summary_index = output_text
+        .find("Found ")
+        .expect("default summary should exist");
+    assert!(
+        oxlint_index < summary_index && arkts_index < summary_index,
+        "all diagnostics should be printed before the summary:\n{output_text}"
+    );
+    assert!(
+        output_text.contains("Found 0 warnings and 2 errors."),
+        "default summary should count oxlint and ArkTS diagnostics together:\n{output_text}"
+    );
+}
+
+#[test]
 fn cargo_cli_lint_arkts_reports_ast_stable_rules() {
     let temp = TempDir::new();
     fs::write(

@@ -1,21 +1,19 @@
+#[cfg(feature = "napi")]
+use std::sync::{Arc, Mutex};
 use std::{
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
 };
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
-use oxc_ast_visit::{
-    Visit,
-    utf8_to_utf16::{Utf8ToUtf16, Utf8ToUtf16Converter},
-    walk,
-};
+use oxc_ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16Converter, walk};
+use oxc_linter::LintFileResult;
+#[cfg(feature = "napi")]
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
     ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileResult, LoadPluginResult,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -27,6 +25,7 @@ use system_api_versions::{SYSTEM_API_VERSIONS, SystemApiVersion};
 
 pub const ARKTS_PLUGIN_NAME: &str = "arkts";
 
+#[cfg(feature = "napi")]
 #[derive(Clone)]
 pub struct ExternalLinterCallbacks {
     pub load_plugin: ExternalLinterLoadPluginCb,
@@ -34,6 +33,28 @@ pub struct ExternalLinterCallbacks {
     pub lint_file: ExternalLinterLintFileCb,
     pub create_workspace: ExternalLinterCreateWorkspaceCb,
     pub destroy_workspace: ExternalLinterDestroyWorkspaceCb,
+}
+
+#[derive(Debug)]
+pub struct StandaloneDiagnostic {
+    pub rule_name: String,
+    pub severity: StandaloneSeverity,
+    pub message: String,
+    pub start: u32,
+    pub end: u32,
+}
+
+#[derive(Clone, Debug)]
+pub struct StandaloneRuleConfig {
+    pub name: String,
+    pub severity: StandaloneSeverity,
+    pub options: Vec<serde_json::Value>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum StandaloneSeverity {
+    Warn,
+    Error,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -599,12 +620,6 @@ const fn rule_without_code(
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-enum BackendRule {
-    Arkts(usize),
-    Delegate(u32),
-}
-
 #[derive(Clone, Debug, Default)]
 struct ArktsRuleOptions {
     min_api_version: Option<u32>,
@@ -623,42 +638,31 @@ impl ArktsOptionStore {
     }
 }
 
+#[cfg(feature = "napi")]
 #[derive(Debug)]
 struct ExternalState {
-    rules: Vec<BackendRule>,
+    rules: Vec<u32>,
     delegate_options_by_id: Vec<u32>,
-    arkts_options: ArktsOptionStore,
 }
 
+#[cfg(feature = "napi")]
 impl Default for ExternalState {
     fn default() -> Self {
         Self {
             rules: Vec::new(),
             delegate_options_by_id: vec![0],
-            arkts_options: ArktsOptionStore {
-                default: ArktsRuleOptions::default(),
-                by_options_id: vec![ArktsRuleOptions::default()],
-            },
         }
     }
 }
 
+#[cfg(feature = "napi")]
 impl ExternalState {
     fn setup_rule_options(&mut self, options_json: &str) -> Result<String, String> {
         let config: ExternalRuleOptionsConfig = serde_json::from_str(options_json)
             .map_err(|err| format!("Failed to parse external plugin options: {err}"))?;
-        let cwd = PathBuf::from(&config.cwd);
-        let default_options = ArktsRuleOptions {
-            min_api_version: find_project_min_api_version(&cwd),
-            system_api_versions: Vec::new(),
-        };
 
         let option_count = config.options.len().max(1);
         self.delegate_options_by_id = vec![0; option_count];
-        self.arkts_options = ArktsOptionStore {
-            default: default_options.clone(),
-            by_options_id: vec![default_options; option_count],
-        };
 
         let mut delegate_rule_ids = vec![0_u32];
         let mut delegate_options = vec![Vec::<serde_json::Value>::new()];
@@ -668,29 +672,17 @@ impl ExternalState {
                 continue;
             };
             let options = config.options.get(options_id).cloned().unwrap_or_default();
-            let backend = self
+            let delegate_rule_id = self
                 .rules
                 .get(rule_id as usize)
                 .copied()
                 .ok_or_else(|| format!("Unknown external rule id {rule_id}."))?;
 
-            match backend {
-                BackendRule::Arkts(rule_index) => {
-                    self.arkts_options.by_options_id[options_id] = parse_arkts_rule_options(
-                        &ARKTS_RULES[rule_index],
-                        &options,
-                        &cwd,
-                        &self.arkts_options.default,
-                    )?;
-                }
-                BackendRule::Delegate(delegate_rule_id) => {
-                    let delegate_options_id = u32::try_from(delegate_options.len())
-                        .map_err(|_| "JS plugin options id does not fit in u32.".to_string())?;
-                    self.delegate_options_by_id[options_id] = delegate_options_id;
-                    delegate_rule_ids.push(delegate_rule_id);
-                    delegate_options.push(options);
-                }
-            }
+            let delegate_options_id = u32::try_from(delegate_options.len())
+                .map_err(|_| "JS plugin options id does not fit in u32.".to_string())?;
+            self.delegate_options_by_id[options_id] = delegate_options_id;
+            delegate_rule_ids.push(delegate_rule_id);
+            delegate_options.push(options);
         }
 
         serde_json::to_string(&serde_json::json!({
@@ -703,6 +695,7 @@ impl ExternalState {
     }
 }
 
+#[cfg(feature = "napi")]
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ExternalRuleOptionsConfig {
@@ -918,6 +911,7 @@ fn find_numeric_property(source: &str, key: &str) -> Option<u32> {
     value[..digits_len].parse().ok()
 }
 
+#[cfg(feature = "napi")]
 pub fn create_external_linter(delegate: Option<ExternalLinterCallbacks>) -> ExternalLinter {
     let state = Arc::new(Mutex::new(ExternalState::default()));
 
@@ -930,28 +924,13 @@ pub fn create_external_linter(delegate: Option<ExternalLinterCallbacks>) -> Exte
     )
 }
 
+#[cfg(feature = "napi")]
 fn load_plugin_callback(
     state: Arc<Mutex<ExternalState>>,
     delegate: Option<ExternalLinterCallbacks>,
 ) -> ExternalLinterLoadPluginCb {
     Arc::new(Box::new(
         move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
-            if plugin_name.as_deref() == Some(ARKTS_PLUGIN_NAME) {
-                let mut state = state.lock().map_err(|err| err.to_string())?;
-                let offset = state.rules.len();
-                state
-                    .rules
-                    .extend((0..ARKTS_RULES.len()).map(BackendRule::Arkts));
-                return Ok(LoadPluginResult {
-                    name: ARKTS_PLUGIN_NAME.to_string(),
-                    offset,
-                    rule_names: ARKTS_RULES
-                        .iter()
-                        .map(|rule| rule.name.to_string())
-                        .collect(),
-                });
-            }
-
             let Some(delegate) = &delegate else {
                 return Err(
                     "JavaScript plugins are not available in the cargo lint runner.".to_string(),
@@ -968,16 +947,16 @@ fn load_plugin_callback(
             let offset = state.rules.len();
             let delegate_offset = u32::try_from(result.offset)
                 .map_err(|_| "JS plugin rule offset does not fit in u32.".to_string())?;
-            state.rules.extend(
-                (0..result.rule_names.len())
-                    .map(|index| BackendRule::Delegate(delegate_offset + index as u32)),
-            );
+            state
+                .rules
+                .extend((0..result.rule_names.len()).map(|index| delegate_offset + index as u32));
             result.offset = offset;
             Ok(result)
         },
     ))
 }
 
+#[cfg(feature = "napi")]
 fn setup_rule_configs_callback(
     state: Arc<Mutex<ExternalState>>,
     delegate: Option<ExternalLinterCallbacks>,
@@ -995,6 +974,7 @@ fn setup_rule_configs_callback(
     }))
 }
 
+#[cfg(feature = "napi")]
 fn create_workspace_callback(
     delegate: Option<ExternalLinterCallbacks>,
 ) -> ExternalLinterCreateWorkspaceCb {
@@ -1007,6 +987,7 @@ fn create_workspace_callback(
     }))
 }
 
+#[cfg(feature = "napi")]
 fn destroy_workspace_callback(
     delegate: Option<ExternalLinterCallbacks>,
 ) -> ExternalLinterDestroyWorkspaceCb {
@@ -1019,6 +1000,7 @@ fn destroy_workspace_callback(
     }))
 }
 
+#[cfg(feature = "napi")]
 fn lint_file_callback(
     state: Arc<Mutex<ExternalState>>,
     delegate: Option<ExternalLinterCallbacks>,
@@ -1031,27 +1013,12 @@ fn lint_file_callback(
               globals_json,
               workspace_uri,
               allocator| {
-            let (
-                arkts_rules,
-                delegate_rules,
-                delegate_options,
-                delegate_rule_indices,
-                arkts_options,
-            ) = {
+            let (delegate_rules, delegate_options, delegate_rule_indices) = {
                 let state = state.lock().map_err(|err| err.to_string())?;
                 split_rules(&state, &rule_ids, &options_ids)?
             };
 
             let mut diagnostics = Vec::new();
-            if !arkts_rules.is_empty() && is_arkts_file(Path::new(&file_path)) {
-                diagnostics.extend(run_arkts_rules(
-                    &file_path,
-                    allocator,
-                    &arkts_rules,
-                    arkts_options,
-                )?);
-            }
-
             if !delegate_rules.is_empty() {
                 let Some(delegate) = &delegate else {
                     return Err(
@@ -1089,60 +1056,38 @@ fn lint_file_callback(
     ))
 }
 
-type SplitRules = (
-    Vec<ActiveArktsRule>,
-    Vec<u32>,
-    Vec<u32>,
-    Vec<u32>,
-    ArktsOptionStore,
-);
+#[cfg(feature = "napi")]
+type SplitRules = (Vec<u32>, Vec<u32>, Vec<u32>);
 
+#[cfg(feature = "napi")]
 fn split_rules(
     state: &ExternalState,
     rule_ids: &[u32],
     options_ids: &[u32],
 ) -> Result<SplitRules, String> {
-    let mut arkts_rules = Vec::new();
     let mut delegate_rules = Vec::new();
     let mut delegate_options = Vec::new();
     let mut delegate_rule_indices = Vec::new();
 
     for (active_index, rule_id) in rule_ids.iter().enumerate() {
-        let backend = state
+        let delegate_rule_id = state
             .rules
             .get(*rule_id as usize)
             .copied()
             .ok_or_else(|| format!("Unknown external rule id {rule_id}."))?;
-        match backend {
-            BackendRule::Arkts(rule_index) => {
-                arkts_rules.push(ActiveArktsRule {
-                    active_index: active_index as u32,
-                    rule: &ARKTS_RULES[rule_index],
-                    options_id: options_ids.get(active_index).copied().unwrap_or(0) as usize,
-                });
-            }
-            BackendRule::Delegate(delegate_rule_id) => {
-                delegate_rules.push(delegate_rule_id);
-                let options_id = options_ids.get(active_index).copied().unwrap_or(0) as usize;
-                delegate_options.push(
-                    state
-                        .delegate_options_by_id
-                        .get(options_id)
-                        .copied()
-                        .unwrap_or(0),
-                );
-                delegate_rule_indices.push(active_index as u32);
-            }
-        }
+        delegate_rules.push(delegate_rule_id);
+        let options_id = options_ids.get(active_index).copied().unwrap_or(0) as usize;
+        delegate_options.push(
+            state
+                .delegate_options_by_id
+                .get(options_id)
+                .copied()
+                .unwrap_or(0),
+        );
+        delegate_rule_indices.push(active_index as u32);
     }
 
-    Ok((
-        arkts_rules,
-        delegate_rules,
-        delegate_options,
-        delegate_rule_indices,
-        state.arkts_options.clone(),
-    ))
+    Ok((delegate_rules, delegate_options, delegate_rule_indices))
 }
 
 #[derive(Clone, Copy)]
@@ -1154,20 +1099,18 @@ struct ActiveArktsRule {
 
 fn run_arkts_rules(
     file_path: &str,
+    source_text: &str,
     allocator: &Allocator,
     active_rules: &[ActiveArktsRule],
     options: ArktsOptionStore,
 ) -> Result<Vec<LintFileResult>, String> {
-    let source_text = fs::read_to_string(file_path)
-        .map_err(|err| format!("Failed to read ArkTS source file `{file_path}`: {err}"))?;
     let source_type = source_type_for_arkts_path(file_path);
-    let parser_return = Parser::new(allocator, &source_text, source_type).parse();
-    let span_table = Utf8ToUtf16::new(&source_text);
+    let parser_return = Parser::new(allocator, source_text, source_type).parse();
 
     let mut visitor = ArktsVisitor {
         active: ActiveArktsRules::from_active(active_rules),
         diagnostics: Vec::new(),
-        span_converter: span_table.converter(),
+        span_converter: None,
         options,
         function_depth: 0,
         system_api_imports: HashMap::new(),
@@ -2269,16 +2212,85 @@ fn is_unsupported_utility_type(name: &str) -> bool {
     )
 }
 
-pub fn arkts_plugin_config_entry(plugin_path: &Path) -> serde_json::Value {
-    serde_json::json!({
-        "name": ARKTS_PLUGIN_NAME,
-        "specifier": plugin_path.to_string_lossy(),
+pub fn is_rule_name(name: &str) -> bool {
+    find_rule(name).is_some()
+}
+
+#[allow(dead_code)]
+pub fn lint_standalone_file(
+    file_path: &Path,
+    rules: &[StandaloneRuleConfig],
+    cwd: &Path,
+) -> Result<Vec<StandaloneDiagnostic>, String> {
+    let source_text = fs::read_to_string(file_path).map_err(|err| {
+        format!(
+            "Failed to read ArkTS source file `{}`: {err}",
+            file_path.display()
+        )
+    })?;
+    lint_standalone_source(file_path, &source_text, rules, cwd)
+}
+
+pub fn lint_standalone_source(
+    file_path: &Path,
+    source_text: &str,
+    rules: &[StandaloneRuleConfig],
+    cwd: &Path,
+) -> Result<Vec<StandaloneDiagnostic>, String> {
+    if rules.is_empty() || !is_arkts_file(file_path) {
+        return Ok(Vec::new());
+    }
+
+    let default_options = ArktsRuleOptions {
+        min_api_version: find_project_min_api_version(cwd),
+        system_api_versions: Vec::new(),
+    };
+
+    let mut active_rules = Vec::with_capacity(rules.len());
+    let mut by_options_id = Vec::with_capacity(rules.len());
+    for (index, config) in rules.iter().enumerate() {
+        let rule = find_rule(&config.name)
+            .ok_or_else(|| format!("Unknown ArkTS lint rule `arkts/{}`.", config.name))?;
+        let parsed_options =
+            parse_arkts_rule_options(rule, &config.options, cwd, &default_options)?;
+        by_options_id.push(parsed_options);
+        active_rules.push(ActiveArktsRule {
+            active_index: index as u32,
+            rule,
+            options_id: index,
+        });
+    }
+
+    let allocator = Allocator::default();
+    let option_store = ArktsOptionStore {
+        default: default_options,
+        by_options_id,
+    };
+
+    run_arkts_rules(
+        &file_path.to_string_lossy(),
+        source_text,
+        &allocator,
+        &active_rules,
+        option_store,
+    )
+    .map(|diagnostics| {
+        diagnostics
+            .into_iter()
+            .filter_map(|diagnostic| {
+                let config = rules.get(diagnostic.rule_index as usize)?;
+                Some(StandaloneDiagnostic {
+                    rule_name: config.name.clone(),
+                    severity: config.severity,
+                    message: diagnostic.message,
+                    start: diagnostic.start,
+                    end: diagnostic.end,
+                })
+            })
+            .collect()
     })
 }
 
-pub fn write_placeholder_plugin(path: &Path) -> std::io::Result<()> {
-    fs::write(
-        path,
-        "module.exports = { meta: { name: 'arkts' }, rules: {} };\n",
-    )
+fn find_rule(name: &str) -> Option<&'static ArktsRule> {
+    ARKTS_RULES.iter().find(|rule| rule.name == name)
 }
