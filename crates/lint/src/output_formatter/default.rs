@@ -1,0 +1,161 @@
+// Portions of this file are derived from Oxc's oxlint implementation.
+// Copyright (c) Oxc project contributors.
+// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
+
+#![allow(dead_code)]
+
+use crate::output_formatter::InternalFormatter;
+use oxc_diagnostics::{
+    Error, GraphicalReportHandler,
+    reporter::{DiagnosticReporter, DiagnosticResult},
+};
+use oxc_linter::table::RuleTable;
+use rustc_hash::FxHashSet;
+
+#[derive(Debug)]
+pub struct DefaultOutputFormatter;
+
+impl InternalFormatter for DefaultOutputFormatter {
+    fn all_rules(&self, enabled_rules: FxHashSet<&str>) -> Option<String> {
+        let mut output = String::new();
+        let table = RuleTable::default();
+        for section in &table.sections {
+            output.push_str(&section.render_markdown_table_cli(&enabled_rules));
+            output.push('\n');
+        }
+        output.push_str(format!("Default: {}\n", table.turned_on_by_default_count).as_str());
+        output.push_str(format!("Total: {}\n", table.total).as_str());
+        Some(output)
+    }
+
+    fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
+        Some(lint_command_info.format_execution_summary())
+    }
+
+    #[cfg(not(any(test, feature = "testing")))]
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        Box::new(GraphicalReporter::default())
+    }
+
+    #[cfg(any(test, feature = "testing"))]
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        use crate::output_formatter::default::test_implementation::GraphicalReporterTester;
+
+        Box::new(GraphicalReporterTester::default())
+    }
+}
+
+/// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
+///
+/// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
+#[cfg_attr(all(not(test), feature = "testing"), expect(dead_code))]
+struct GraphicalReporter {
+    handler: GraphicalReportHandler,
+}
+
+impl Default for GraphicalReporter {
+    fn default() -> Self {
+        Self {
+            handler: GraphicalReportHandler::new(),
+        }
+    }
+}
+
+impl DiagnosticReporter for GraphicalReporter {
+    fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+        Some(get_diagnostic_result_output(result))
+    }
+
+    fn render_error(&mut self, error: Error) -> Option<String> {
+        let mut output = String::new();
+        self.handler
+            .render_report(&mut output, error.as_ref())
+            .unwrap();
+        Some(output)
+    }
+}
+
+pub(super) fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {
+    let mut output = String::new();
+
+    if result.warnings_count() + result.errors_count() > 0 {
+        output.push('\n');
+    }
+
+    output.push_str(
+        format!(
+            "Found {} warning{} and {} error{}.\n",
+            result.warnings_count(),
+            if result.warnings_count() == 1 {
+                ""
+            } else {
+                "s"
+            },
+            result.errors_count(),
+            if result.errors_count() == 1 { "" } else { "s" },
+        )
+        .as_str(),
+    );
+
+    if result.max_warnings_exceeded() {
+        output.push_str(
+            format!(
+                "Exceeded maximum number of warnings. Found {}.\n",
+                result.warnings_count()
+            )
+            .as_str(),
+        );
+    }
+
+    output
+}
+
+#[cfg(any(test, feature = "testing"))]
+mod test_implementation {
+    use oxc_diagnostics::{
+        Error, GraphicalReportHandler, GraphicalTheme,
+        reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    };
+
+    use crate::output_formatter::default::get_diagnostic_result_output;
+
+    #[derive(Default)]
+    pub struct GraphicalReporterTester {
+        diagnostics: Vec<Error>,
+    }
+
+    impl DiagnosticReporter for GraphicalReporterTester {
+        fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none())
+                // links print ansi escape codes, which makes snapshots harder to read
+                .with_links(false);
+            let mut output = String::new();
+
+            self.diagnostics.sort_by_cached_key(|diagnostic| {
+                let info = Info::new(diagnostic);
+                (
+                    info.filename,
+                    info.start,
+                    info.end,
+                    info.rule_id,
+                    info.message,
+                )
+            });
+
+            for diagnostic in &self.diagnostics {
+                handler
+                    .render_report(&mut output, diagnostic.as_ref())
+                    .unwrap();
+            }
+
+            output.push_str(&get_diagnostic_result_output(result));
+
+            Some(output)
+        }
+
+        fn render_error(&mut self, error: Error) -> Option<String> {
+            self.diagnostics.push(error);
+            None
+        }
+    }
+}

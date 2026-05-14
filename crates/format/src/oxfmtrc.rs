@@ -1,3 +1,7 @@
+// Portions of this file are derived from Oxc's oxfmt implementation.
+// Copyright (c) Oxc project contributors.
+// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
+
 //! Minimal .oxfmtrc / OxfmtOptions implementation compatible with oxfmt.
 //! Adapted from ohos-rs/oxc apps/oxfmt for use without the full oxfmt crate.
 

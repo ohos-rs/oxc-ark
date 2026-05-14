@@ -1,0 +1,157 @@
+// Portions of this file are derived from Oxc's oxlint implementation.
+// Copyright (c) Oxc project contributors.
+// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
+
+use std::{cell::RefCell, rc::Rc};
+
+use oxc_str::CompactStr;
+
+use miette::JSONReportHandler;
+use rustc_hash::FxHashSet;
+use serde::Serialize;
+
+use oxc_diagnostics::{
+    Error,
+    reporter::{DiagnosticReporter, DiagnosticResult},
+};
+use oxc_linter::{RuleCategory, rules::RULES};
+
+use crate::output_formatter::InternalFormatter;
+
+#[derive(Debug, Default)]
+pub struct JsonOutputFormatter {
+    reporter: JsonReporterWrapper,
+}
+
+impl InternalFormatter for JsonOutputFormatter {
+    fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
+        #[derive(Debug, Serialize)]
+        struct RuleInfoJson<'a> {
+            scope: &'a str,
+            value: &'a str,
+            category: RuleCategory,
+            #[cfg(feature = "ruledocs")]
+            version: &'a str,
+            type_aware: bool,
+            fix: String,
+            default: bool,
+            docs_url: CompactStr,
+        }
+
+        // Determine which rules are turned on by default (same logic as RuleTable)
+        let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
+        let default_rules: FxHashSet<&'static str> = RULES
+            .iter()
+            .filter(|rule| {
+                rule.category() == RuleCategory::Correctness
+                    && default_plugin_names.contains(&rule.plugin_name())
+            })
+            .map(oxc_linter::rules::RuleEnum::name)
+            .collect();
+
+        let mut rules_info: Vec<_> = RULES
+            .iter()
+            .map(|rule| RuleInfoJson {
+                scope: rule.plugin_name(),
+                value: rule.name(),
+                category: rule.category(),
+                #[cfg(feature = "ruledocs")]
+                version: rule.version(),
+                type_aware: rule.is_tsgolint_rule(),
+                fix: rule.fix().to_string(),
+                default: default_rules.contains(rule.name()),
+                docs_url: format!(
+                    "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
+                    rule.plugin_name(),
+                    rule.name()
+                )
+                .into(),
+            })
+            .collect();
+
+        rules_info.sort_by_key(|rule| (rule.scope, rule.value));
+
+        Some(serde_json::to_string_pretty(&rules_info).expect("Failed to serialize"))
+    }
+
+    fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
+        let diagnostics = self.reporter.0.borrow_mut().render();
+        let number_of_rules = lint_command_info
+            .number_of_rules
+            .map_or("null".to_string(), |x| x.to_string());
+        let start_time = lint_command_info.start_time.as_secs_f64();
+
+        Some(format!(
+            r#"{{ "diagnostics": {},
+              "number_of_files": {},
+              "number_of_rules": {},
+              "threads_count": {},
+              "start_time": {}
+            }}
+            "#,
+            diagnostics,
+            lint_command_info.number_of_files,
+            number_of_rules,
+            lint_command_info.threads_count,
+            start_time,
+        ))
+    }
+
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        Box::new(self.reporter.clone())
+    }
+}
+
+/// Renders reports as a JSON array of objects.
+///
+/// Note that, due to syntactic restrictions of JSON arrays, this reporter waits until all
+/// diagnostics have been reported before writing them to the output stream.
+#[derive(Default, Debug)]
+struct JsonReporter {
+    diagnostics: Vec<Error>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct JsonReporterWrapper(Rc<RefCell<JsonReporter>>);
+
+impl DiagnosticReporter for JsonReporterWrapper {
+    fn finish(&mut self, _result: &DiagnosticResult) -> Option<String> {
+        None
+    }
+
+    fn render_error(&mut self, error: Error) -> Option<String> {
+        self.0.borrow_mut().render_error(error)
+    }
+}
+
+impl DiagnosticReporter for JsonReporter {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
+        None
+    }
+
+    fn render_error(&mut self, error: Error) -> Option<String> {
+        self.diagnostics.push(error);
+        None
+    }
+}
+
+impl JsonReporter {
+    pub(super) fn render(&mut self) -> String {
+        format_json(&mut self.diagnostics)
+    }
+}
+
+/// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-json>
+fn format_json(diagnostics: &mut Vec<Error>) -> String {
+    let handler = JSONReportHandler::new();
+    let messages = diagnostics
+        .drain(..)
+        .map(|error| {
+            let mut output = String::new();
+            handler.render_report(&mut output, error.as_ref()).unwrap();
+            output
+        })
+        .collect::<Vec<_>>()
+        .join(",\n");
+    format!("[{messages}]")
+}

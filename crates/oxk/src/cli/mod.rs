@@ -1,18 +1,24 @@
 mod format;
+mod lint;
 
 use bpaf::{Doc, OptionParser, Parser, construct};
 use owo_colors::OwoColorize;
 use owo_colors::colors::CustomColor;
 
 use format::cli_format;
+use lint::cli_lint;
 
 pub fn cli_run() -> OptionParser<crate::Options> {
     let format = cli_format()
         .to_options()
         .command("format")
         .help("Format ArkTS/ArkUI code");
+    let lint = cli_lint()
+        .to_options()
+        .command("lint")
+        .help("Lint JavaScript, TypeScript, ArkTS, and ArkUI code");
 
-    construct!([format]).to_options()
+    construct!([format, lint]).to_options()
 }
 
 pub struct Info();
@@ -38,7 +44,7 @@ impl From<Info> for Doc {
                 .as_str(),
         );
         doc.text(
-            "\n \n This command is used for parsing and formatting ArkTS/ArkUI code."
+            "\n \n This command is used for parsing, formatting, and linting ArkTS/ArkUI code."
                 .blue()
                 .to_string()
                 .as_str(),

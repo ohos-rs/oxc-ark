@@ -26,6 +26,7 @@ oxc_syntax = { workspace = true }
 rustc-hash = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
+lint = { workspace = true, features = ["napi"] }
 tokio = { workspace = true }
 
 # WASM target only supports specific Tokio features

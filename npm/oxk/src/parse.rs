@@ -407,7 +407,11 @@ pub async fn parse(
 /// Parse JS/TS/ArkTS source text and return an ESTree-compatible AST.
 #[cfg(target_family = "wasm")]
 #[napi]
-pub fn parse(filename: String, source_text: String, options: Option<ParserOptions>) -> ParseResult {
+pub async fn parse(
+  filename: String,
+  source_text: String,
+  options: Option<ParserOptions>,
+) -> ParseResult {
   let options = options.unwrap_or_default();
   parse_with_return(&filename, &source_text, &options)
 }

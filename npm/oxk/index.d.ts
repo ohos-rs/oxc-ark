@@ -72,15 +72,6 @@ export declare const enum ExportLocalNameKind {
   None = 'None'
 }
 
-/**
- * Format a file with the given options.
- *
- * This function supports multiple file types:
- * - JavaScript/TypeScript files (via oxc_formatter)
- * - TOML files (via oxc_toml)
- * - JSON/JSON5/JSONC files (via native Rust formatters)
- * - Other files (via external formatter callbacks when napi feature is enabled)
- */
 export declare function format(filename: string, sourceText: string, options?: any | undefined | null, initExternalFormatterCb?: (numThreads: number) => Promise<string[]>, formatEmbeddedCb?: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb?: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<FormatResult>
 
 export interface FormatResult {
@@ -102,6 +93,15 @@ export declare const enum ImportNameKind {
   NamespaceObject = 'NamespaceObject',
   Default = 'Default'
 }
+
+/** Run the oxlint-compatible linter. */
+export declare function lint(args: Array<string>): Promise<boolean>
+
+/** Run the oxlint-compatible linter synchronously. */
+export declare function lintSync(args: Array<string>): boolean
+
+/** Run the oxlint-compatible linter with JavaScript plugin callbacks. */
+export declare function lintWithPlugins(args: Array<string>, loadPlugin: any, setupRuleConfigs: any, lintFile: any, createWorkspace: any, destroyWorkspace: any, loadJsConfigs: any): Promise<boolean>
 
 export interface OxcError {
   severity: Severity

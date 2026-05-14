@@ -1,0 +1,9 @@
+{
+  "ignorePatterns": [
+    "index.js",
+    "index.d.ts",
+    "oxk.wasi-browser.js",
+    "oxk.wasi.cjs",
+    "oxlint-runtime/**"
+  ]
+}

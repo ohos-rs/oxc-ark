@@ -31,6 +31,9 @@
     "browser.js",
     "format.js",
     "format.d.ts",
+    "lint.js",
+    "lint.d.ts",
+    "oxlint-runtime",
     "bin"
   ],
   "exports": {
@@ -41,6 +44,10 @@
     "./format": {
       "types": "./format.d.ts",
       "default": "./format.js"
+    },
+    "./lint": {
+      "types": "./lint.d.ts",
+      "default": "./lint.js"
     }
   },
   "napi": {
@@ -59,11 +66,11 @@
       "aarch64-unknown-linux-musl",
       "aarch64-pc-windows-msvc",
       "armv7-linux-androideabi",
-      "wasm32-wasi-preview1-threads"
+      "wasm32-wasip1-threads"
     ]
   },
   "engines": {
-    "node": ">= 10"
+    "node": "^20.19.0 || >=22.18.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -72,8 +79,10 @@
   "scripts": {
     "artifacts": "napi artifacts",
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
-    "build": "napi build --platform --release",
-    "build:debug": "napi build --platform",
+    "build": "napi build --platform --release --no-dts-cache",
+    "build:debug": "napi build --platform --no-dts-cache",
+    "build:debug:binding": "node scripts/build-binding-only.cjs",
+    "build:oxlint-runtime": "node scripts/build-oxlint-runtime.mjs",
     "format": "run-p format:prettier format:rs format:toml",
     "format:prettier": "prettier . -w",
     "format:toml": "taplo format",
@@ -81,6 +90,9 @@
     "lint": "oxlint",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
+    "test:binding": "ava __test__/index.spec.ts __test__/format.spec.ts",
+    "test:cli": "ava __test__/cli.spec.ts",
+    "test:wasi": "node scripts/smoke-wasi.cjs",
     "test:build": "pnpm run build:debug && pnpm run test",
     "version": "napi version"
   },
@@ -95,9 +107,14 @@
     "@napi-rs/wasm-runtime": "^1.0.4",
     "@oxc-node/core": "^0.0.35",
     "@tybys/wasm-util": "^0.10.0",
+    "@typescript-eslint/scope-manager": "^8.59.3",
+    "ajv": "6.14.0",
     "ava": "^6.4.1",
     "chalk": "^5.6.2",
     "emnapi": "^1.5.0",
+    "esbuild": "0.25.11",
+    "eslint": "^9.39.4",
+    "esquery": "^1.7.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
     "npm-run-all2": "^8.0.4",

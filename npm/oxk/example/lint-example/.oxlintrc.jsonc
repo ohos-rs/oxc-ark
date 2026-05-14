@@ -1,0 +1,13 @@
+{
+  "plugins": ["arkts"],
+  "rules": {
+    "no-unused-vars": "off",
+    "arkts/no-symbol": "error",
+    "arkts/system-api-version": [
+      "error",
+      {
+        "minApiVersion": 11
+      }
+    ]
+  }
+}

@@ -1,0 +1,30672 @@
+// Portions of this file are derived from Oxc's oxlint implementation.
+// Copyright (c) Oxc project contributors.
+// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
+
+var Yv = Object.create
+var Ss = Object.defineProperty
+var Lv = Object.getOwnPropertyDescriptor
+var Uv = Object.getOwnPropertyNames
+var Iv = Object.getPrototypeOf,
+  kv = Object.prototype.hasOwnProperty
+var x = (e, t) => () => (t || e((t = { exports: {} }).exports, t), t.exports),
+  Rv = (e, t) => {
+    for (var n in t) Ss(e, n, { get: t[n], enumerable: !0 })
+  },
+  TT = (e, t, n, a) => {
+    if ((t && typeof t == 'object') || typeof t == 'function')
+      for (let r of Uv(t))
+        !kv.call(e, r) && r !== n && Ss(e, r, { get: () => t[r], enumerable: !(a = Lv(t, r)) || a.enumerable })
+    return e
+  }
+var _s = (e, t, n) => (
+    (n = e != null ? Yv(Iv(e)) : {}),
+    TT(t || !e || !e.__esModule ? Ss(n, 'default', { value: e, enumerable: !0 }) : n, e)
+  ),
+  Vv = (e) => TT(Ss({}, '__esModule', { value: !0 }), e)
+var Yd = x((to) => {
+  'use strict'
+  var Zi = {
+      ArrayExpression: ['elements'],
+      ArrayPattern: ['elements'],
+      ArrowFunctionExpression: ['params', 'body'],
+      AssignmentExpression: ['left', 'right'],
+      AssignmentPattern: ['left', 'right'],
+      AwaitExpression: ['argument'],
+      BinaryExpression: ['left', 'right'],
+      BlockStatement: ['body'],
+      BreakStatement: ['label'],
+      CallExpression: ['callee', 'arguments'],
+      CatchClause: ['param', 'body'],
+      ChainExpression: ['expression'],
+      ClassBody: ['body'],
+      ClassDeclaration: ['id', 'superClass', 'body'],
+      ClassExpression: ['id', 'superClass', 'body'],
+      ConditionalExpression: ['test', 'consequent', 'alternate'],
+      ContinueStatement: ['label'],
+      DebuggerStatement: [],
+      DoWhileStatement: ['body', 'test'],
+      EmptyStatement: [],
+      ExperimentalRestProperty: ['argument'],
+      ExperimentalSpreadProperty: ['argument'],
+      ExportAllDeclaration: ['exported', 'source', 'attributes'],
+      ExportDefaultDeclaration: ['declaration'],
+      ExportNamedDeclaration: ['declaration', 'specifiers', 'source', 'attributes'],
+      ExportSpecifier: ['local', 'exported'],
+      ExpressionStatement: ['expression'],
+      ForInStatement: ['left', 'right', 'body'],
+      ForOfStatement: ['left', 'right', 'body'],
+      ForStatement: ['init', 'test', 'update', 'body'],
+      FunctionDeclaration: ['id', 'params', 'body'],
+      FunctionExpression: ['id', 'params', 'body'],
+      Identifier: [],
+      IfStatement: ['test', 'consequent', 'alternate'],
+      ImportAttribute: ['key', 'value'],
+      ImportDeclaration: ['specifiers', 'source', 'attributes'],
+      ImportDefaultSpecifier: ['local'],
+      ImportExpression: ['source', 'options'],
+      ImportNamespaceSpecifier: ['local'],
+      ImportSpecifier: ['imported', 'local'],
+      JSXAttribute: ['name', 'value'],
+      JSXClosingElement: ['name'],
+      JSXClosingFragment: [],
+      JSXElement: ['openingElement', 'children', 'closingElement'],
+      JSXEmptyExpression: [],
+      JSXExpressionContainer: ['expression'],
+      JSXFragment: ['openingFragment', 'children', 'closingFragment'],
+      JSXIdentifier: [],
+      JSXMemberExpression: ['object', 'property'],
+      JSXNamespacedName: ['namespace', 'name'],
+      JSXOpeningElement: ['name', 'attributes'],
+      JSXOpeningFragment: [],
+      JSXSpreadAttribute: ['argument'],
+      JSXSpreadChild: ['expression'],
+      JSXText: [],
+      LabeledStatement: ['label', 'body'],
+      Literal: [],
+      LogicalExpression: ['left', 'right'],
+      MemberExpression: ['object', 'property'],
+      MetaProperty: ['meta', 'property'],
+      MethodDefinition: ['key', 'value'],
+      NewExpression: ['callee', 'arguments'],
+      ObjectExpression: ['properties'],
+      ObjectPattern: ['properties'],
+      PrivateIdentifier: [],
+      Program: ['body'],
+      Property: ['key', 'value'],
+      PropertyDefinition: ['key', 'value'],
+      RestElement: ['argument'],
+      ReturnStatement: ['argument'],
+      SequenceExpression: ['expressions'],
+      SpreadElement: ['argument'],
+      StaticBlock: ['body'],
+      Super: [],
+      SwitchCase: ['test', 'consequent'],
+      SwitchStatement: ['discriminant', 'cases'],
+      TaggedTemplateExpression: ['tag', 'quasi'],
+      TemplateElement: [],
+      TemplateLiteral: ['quasis', 'expressions'],
+      ThisExpression: [],
+      ThrowStatement: ['argument'],
+      TryStatement: ['block', 'handler', 'finalizer'],
+      UnaryExpression: ['argument'],
+      UpdateExpression: ['argument'],
+      VariableDeclaration: ['declarations'],
+      VariableDeclarator: ['id', 'init'],
+      WhileStatement: ['test', 'body'],
+      WithStatement: ['object', 'body'],
+      YieldExpression: ['argument'],
+    },
+    GL = Object.keys(Zi)
+  for (let e of GL) Object.freeze(Zi[e])
+  Object.freeze(Zi)
+  var NL = new Set(['parent', 'leadingComments', 'trailingComments'])
+  function qL(e) {
+    return !NL.has(e) && e[0] !== '_'
+  }
+  function jL(e) {
+    return Object.keys(e).filter(qL)
+  }
+  function zL(e) {
+    let t = Object.assign({}, Zi)
+    for (let n of Object.keys(e))
+      if (Object.hasOwn(t, n)) {
+        let a = new Set(e[n])
+        for (let r of t[n]) a.add(r)
+        t[n] = Object.freeze(Array.from(a))
+      } else t[n] = Object.freeze(Array.from(e[n]))
+    return Object.freeze(t)
+  }
+  to.KEYS = Zi
+  to.getKeys = jL
+  to.unionWith = zL
+})
+var ly = x((ro) => {
+  'use strict'
+  Object.defineProperty(ro, '__esModule', { value: !0 })
+  ro.getKeys = void 0
+  var WL = Yd()
+  ro.getKeys = WL.getKeys
+})
+var uy = x((hn) => {
+  'use strict'
+  var $L =
+      (hn && hn.__createBinding) ||
+      (Object.create
+        ? function (e, t, n, a) {
+            a === void 0 && (a = n)
+            var r = Object.getOwnPropertyDescriptor(t, n)
+            ;((!r || ('get' in r ? !t.__esModule : r.writable || r.configurable)) &&
+              (r = {
+                enumerable: !0,
+                get: function () {
+                  return t[n]
+                },
+              }),
+              Object.defineProperty(e, a, r))
+          }
+        : function (e, t, n, a) {
+            ;(a === void 0 && (a = n), (e[a] = t[n]))
+          }),
+    HL =
+      (hn && hn.__setModuleDefault) ||
+      (Object.create
+        ? function (e, t) {
+            Object.defineProperty(e, 'default', { enumerable: !0, value: t })
+          }
+        : function (e, t) {
+            e.default = t
+          }),
+    KL =
+      (hn && hn.__importStar) ||
+      (function () {
+        var e = function (t) {
+          return (
+            (e =
+              Object.getOwnPropertyNames ||
+              function (n) {
+                var a = []
+                for (var r in n) Object.prototype.hasOwnProperty.call(n, r) && (a[a.length] = r)
+                return a
+              }),
+            e(t)
+          )
+        }
+        return function (t) {
+          if (t && t.__esModule) return t
+          var n = {}
+          if (t != null) for (var a = e(t), r = 0; r < a.length; r++) a[r] !== 'default' && $L(n, t, a[r])
+          return (HL(n, t), n)
+        }
+      })()
+  Object.defineProperty(hn, '__esModule', { value: !0 })
+  hn.visitorKeys = void 0
+  var JL = KL(Yd()),
+    $t = (() => {
+      let e = ['typeParameters', 'params', 'returnType'],
+        t = [...e, 'body'],
+        n = ['decorators', 'key', 'typeAnnotation']
+      return {
+        AbstractPropertyDefinition: ['decorators', 'key', 'typeAnnotation'],
+        AnonymousFunction: t,
+        AsExpression: ['expression', 'typeAnnotation'],
+        ClassDeclaration: [
+          'decorators',
+          'id',
+          'typeParameters',
+          'superClass',
+          'superTypeArguments',
+          'implements',
+          'body',
+        ],
+        Function: ['id', ...t],
+        FunctionType: e,
+        PropertyDefinition: [...n, 'value'],
+      }
+    })(),
+    XL = {
+      AccessorProperty: $t.PropertyDefinition,
+      ArrayPattern: ['decorators', 'elements', 'typeAnnotation'],
+      ArrowFunctionExpression: $t.AnonymousFunction,
+      AssignmentPattern: ['decorators', 'left', 'right', 'typeAnnotation'],
+      CallExpression: ['callee', 'typeArguments', 'arguments'],
+      ClassDeclaration: $t.ClassDeclaration,
+      ClassExpression: $t.ClassDeclaration,
+      Decorator: ['expression'],
+      ExportAllDeclaration: ['exported', 'source', 'attributes'],
+      ExportNamedDeclaration: ['declaration', 'specifiers', 'source', 'attributes'],
+      FunctionDeclaration: $t.Function,
+      FunctionExpression: $t.Function,
+      Identifier: ['decorators', 'typeAnnotation'],
+      ImportAttribute: ['key', 'value'],
+      ImportDeclaration: ['specifiers', 'source', 'attributes'],
+      ImportExpression: ['source', 'options'],
+      JSXClosingFragment: [],
+      JSXOpeningElement: ['name', 'typeArguments', 'attributes'],
+      JSXOpeningFragment: [],
+      JSXSpreadChild: ['expression'],
+      MethodDefinition: ['decorators', 'key', 'value'],
+      NewExpression: ['callee', 'typeArguments', 'arguments'],
+      ObjectPattern: ['decorators', 'properties', 'typeAnnotation'],
+      PropertyDefinition: $t.PropertyDefinition,
+      RestElement: ['decorators', 'argument', 'typeAnnotation'],
+      StaticBlock: ['body'],
+      TaggedTemplateExpression: ['tag', 'typeArguments', 'quasi'],
+      TSAbstractAccessorProperty: $t.AbstractPropertyDefinition,
+      TSAbstractKeyword: [],
+      TSAbstractMethodDefinition: ['key', 'value'],
+      TSAbstractPropertyDefinition: $t.AbstractPropertyDefinition,
+      TSAnyKeyword: [],
+      TSArrayType: ['elementType'],
+      TSAsExpression: $t.AsExpression,
+      TSAsyncKeyword: [],
+      TSBigIntKeyword: [],
+      TSBooleanKeyword: [],
+      TSCallSignatureDeclaration: $t.FunctionType,
+      TSClassImplements: ['expression', 'typeArguments'],
+      TSConditionalType: ['checkType', 'extendsType', 'trueType', 'falseType'],
+      TSConstructorType: $t.FunctionType,
+      TSConstructSignatureDeclaration: $t.FunctionType,
+      TSDeclareFunction: $t.Function,
+      TSDeclareKeyword: [],
+      TSEmptyBodyFunctionExpression: ['id', ...$t.FunctionType],
+      TSEnumBody: ['members'],
+      TSEnumDeclaration: ['id', 'body'],
+      TSEnumMember: ['id', 'initializer'],
+      TSExportAssignment: ['expression'],
+      TSExportKeyword: [],
+      TSExternalModuleReference: ['expression'],
+      TSFunctionType: $t.FunctionType,
+      TSImportEqualsDeclaration: ['id', 'moduleReference'],
+      TSImportType: ['source', 'options', 'qualifier', 'typeArguments'],
+      TSIndexedAccessType: ['objectType', 'indexType'],
+      TSIndexSignature: ['parameters', 'typeAnnotation'],
+      TSInferType: ['typeParameter'],
+      TSInstantiationExpression: ['expression', 'typeArguments'],
+      TSInterfaceBody: ['body'],
+      TSInterfaceDeclaration: ['id', 'typeParameters', 'extends', 'body'],
+      TSInterfaceHeritage: ['expression', 'typeArguments'],
+      TSIntersectionType: ['types'],
+      TSIntrinsicKeyword: [],
+      TSLiteralType: ['literal'],
+      TSMappedType: ['key', 'constraint', 'nameType', 'typeAnnotation'],
+      TSMethodSignature: ['key', 'typeParameters', 'params', 'returnType'],
+      TSModuleBlock: ['body'],
+      TSModuleDeclaration: ['id', 'body'],
+      TSNamedTupleMember: ['label', 'elementType'],
+      TSNamespaceExportDeclaration: ['id'],
+      TSNeverKeyword: [],
+      TSNonNullExpression: ['expression'],
+      TSNullKeyword: [],
+      TSNumberKeyword: [],
+      TSObjectKeyword: [],
+      TSOptionalType: ['typeAnnotation'],
+      TSParameterProperty: ['decorators', 'parameter'],
+      TSPrivateKeyword: [],
+      TSPropertySignature: ['key', 'typeAnnotation'],
+      TSProtectedKeyword: [],
+      TSPublicKeyword: [],
+      TSQualifiedName: ['left', 'right'],
+      TSReadonlyKeyword: [],
+      TSRestType: ['typeAnnotation'],
+      TSSatisfiesExpression: $t.AsExpression,
+      TSStaticKeyword: [],
+      TSStringKeyword: [],
+      TSSymbolKeyword: [],
+      TSTemplateLiteralType: ['quasis', 'types'],
+      TSThisType: [],
+      TSTupleType: ['elementTypes'],
+      TSTypeAliasDeclaration: ['id', 'typeParameters', 'typeAnnotation'],
+      TSTypeAnnotation: ['typeAnnotation'],
+      TSTypeAssertion: ['typeAnnotation', 'expression'],
+      TSTypeLiteral: ['members'],
+      TSTypeOperator: ['typeAnnotation'],
+      TSTypeParameter: ['name', 'constraint', 'default'],
+      TSTypeParameterDeclaration: ['params'],
+      TSTypeParameterInstantiation: ['params'],
+      TSTypePredicate: ['parameterName', 'typeAnnotation'],
+      TSTypeQuery: ['exprName', 'typeArguments'],
+      TSTypeReference: ['typeName', 'typeArguments'],
+      TSUndefinedKeyword: [],
+      TSUnionType: ['types'],
+      TSUnknownKeyword: [],
+      TSVoidKeyword: [],
+    }
+  hn.visitorKeys = JL.unionWith(XL)
+})
+var Ld = x((Ti) => {
+  'use strict'
+  Object.defineProperty(Ti, '__esModule', { value: !0 })
+  Ti.visitorKeys = Ti.getKeys = void 0
+  var QL = ly()
+  Object.defineProperty(Ti, 'getKeys', {
+    enumerable: !0,
+    get: function () {
+      return QL.getKeys
+    },
+  })
+  var ZL = uy()
+  Object.defineProperty(Ti, 'visitorKeys', {
+    enumerable: !0,
+    get: function () {
+      return ZL.visitorKeys
+    },
+  })
+})
+var Ud = x((hi) => {
+  'use strict'
+  Object.defineProperty(hi, '__esModule', { value: !0 })
+  hi.AST_TOKEN_TYPES = hi.AST_NODE_TYPES = void 0
+  var cy
+  ;(function (e) {
+    ;((e.AccessorProperty = 'AccessorProperty'),
+      (e.ArrayExpression = 'ArrayExpression'),
+      (e.ArrayPattern = 'ArrayPattern'),
+      (e.ArrowFunctionExpression = 'ArrowFunctionExpression'),
+      (e.AssignmentExpression = 'AssignmentExpression'),
+      (e.AssignmentPattern = 'AssignmentPattern'),
+      (e.AwaitExpression = 'AwaitExpression'),
+      (e.BinaryExpression = 'BinaryExpression'),
+      (e.BlockStatement = 'BlockStatement'),
+      (e.BreakStatement = 'BreakStatement'),
+      (e.CallExpression = 'CallExpression'),
+      (e.CatchClause = 'CatchClause'),
+      (e.ChainExpression = 'ChainExpression'),
+      (e.ClassBody = 'ClassBody'),
+      (e.ClassDeclaration = 'ClassDeclaration'),
+      (e.ClassExpression = 'ClassExpression'),
+      (e.ConditionalExpression = 'ConditionalExpression'),
+      (e.ContinueStatement = 'ContinueStatement'),
+      (e.DebuggerStatement = 'DebuggerStatement'),
+      (e.Decorator = 'Decorator'),
+      (e.DoWhileStatement = 'DoWhileStatement'),
+      (e.EmptyStatement = 'EmptyStatement'),
+      (e.ExportAllDeclaration = 'ExportAllDeclaration'),
+      (e.ExportDefaultDeclaration = 'ExportDefaultDeclaration'),
+      (e.ExportNamedDeclaration = 'ExportNamedDeclaration'),
+      (e.ExportSpecifier = 'ExportSpecifier'),
+      (e.ExpressionStatement = 'ExpressionStatement'),
+      (e.ForInStatement = 'ForInStatement'),
+      (e.ForOfStatement = 'ForOfStatement'),
+      (e.ForStatement = 'ForStatement'),
+      (e.FunctionDeclaration = 'FunctionDeclaration'),
+      (e.FunctionExpression = 'FunctionExpression'),
+      (e.Identifier = 'Identifier'),
+      (e.IfStatement = 'IfStatement'),
+      (e.ImportAttribute = 'ImportAttribute'),
+      (e.ImportDeclaration = 'ImportDeclaration'),
+      (e.ImportDefaultSpecifier = 'ImportDefaultSpecifier'),
+      (e.ImportExpression = 'ImportExpression'),
+      (e.ImportNamespaceSpecifier = 'ImportNamespaceSpecifier'),
+      (e.ImportSpecifier = 'ImportSpecifier'),
+      (e.JSXAttribute = 'JSXAttribute'),
+      (e.JSXClosingElement = 'JSXClosingElement'),
+      (e.JSXClosingFragment = 'JSXClosingFragment'),
+      (e.JSXElement = 'JSXElement'),
+      (e.JSXEmptyExpression = 'JSXEmptyExpression'),
+      (e.JSXExpressionContainer = 'JSXExpressionContainer'),
+      (e.JSXFragment = 'JSXFragment'),
+      (e.JSXIdentifier = 'JSXIdentifier'),
+      (e.JSXMemberExpression = 'JSXMemberExpression'),
+      (e.JSXNamespacedName = 'JSXNamespacedName'),
+      (e.JSXOpeningElement = 'JSXOpeningElement'),
+      (e.JSXOpeningFragment = 'JSXOpeningFragment'),
+      (e.JSXSpreadAttribute = 'JSXSpreadAttribute'),
+      (e.JSXSpreadChild = 'JSXSpreadChild'),
+      (e.JSXText = 'JSXText'),
+      (e.LabeledStatement = 'LabeledStatement'),
+      (e.Literal = 'Literal'),
+      (e.LogicalExpression = 'LogicalExpression'),
+      (e.MemberExpression = 'MemberExpression'),
+      (e.MetaProperty = 'MetaProperty'),
+      (e.MethodDefinition = 'MethodDefinition'),
+      (e.NewExpression = 'NewExpression'),
+      (e.ObjectExpression = 'ObjectExpression'),
+      (e.ObjectPattern = 'ObjectPattern'),
+      (e.PrivateIdentifier = 'PrivateIdentifier'),
+      (e.Program = 'Program'),
+      (e.Property = 'Property'),
+      (e.PropertyDefinition = 'PropertyDefinition'),
+      (e.RestElement = 'RestElement'),
+      (e.ReturnStatement = 'ReturnStatement'),
+      (e.SequenceExpression = 'SequenceExpression'),
+      (e.SpreadElement = 'SpreadElement'),
+      (e.StaticBlock = 'StaticBlock'),
+      (e.Super = 'Super'),
+      (e.SwitchCase = 'SwitchCase'),
+      (e.SwitchStatement = 'SwitchStatement'),
+      (e.TaggedTemplateExpression = 'TaggedTemplateExpression'),
+      (e.TemplateElement = 'TemplateElement'),
+      (e.TemplateLiteral = 'TemplateLiteral'),
+      (e.ThisExpression = 'ThisExpression'),
+      (e.ThrowStatement = 'ThrowStatement'),
+      (e.TryStatement = 'TryStatement'),
+      (e.UnaryExpression = 'UnaryExpression'),
+      (e.UpdateExpression = 'UpdateExpression'),
+      (e.VariableDeclaration = 'VariableDeclaration'),
+      (e.VariableDeclarator = 'VariableDeclarator'),
+      (e.WhileStatement = 'WhileStatement'),
+      (e.WithStatement = 'WithStatement'),
+      (e.YieldExpression = 'YieldExpression'),
+      (e.TSAbstractAccessorProperty = 'TSAbstractAccessorProperty'),
+      (e.TSAbstractKeyword = 'TSAbstractKeyword'),
+      (e.TSAbstractMethodDefinition = 'TSAbstractMethodDefinition'),
+      (e.TSAbstractPropertyDefinition = 'TSAbstractPropertyDefinition'),
+      (e.TSAnyKeyword = 'TSAnyKeyword'),
+      (e.TSArrayType = 'TSArrayType'),
+      (e.TSAsExpression = 'TSAsExpression'),
+      (e.TSAsyncKeyword = 'TSAsyncKeyword'),
+      (e.TSBigIntKeyword = 'TSBigIntKeyword'),
+      (e.TSBooleanKeyword = 'TSBooleanKeyword'),
+      (e.TSCallSignatureDeclaration = 'TSCallSignatureDeclaration'),
+      (e.TSClassImplements = 'TSClassImplements'),
+      (e.TSConditionalType = 'TSConditionalType'),
+      (e.TSConstructorType = 'TSConstructorType'),
+      (e.TSConstructSignatureDeclaration = 'TSConstructSignatureDeclaration'),
+      (e.TSDeclareFunction = 'TSDeclareFunction'),
+      (e.TSDeclareKeyword = 'TSDeclareKeyword'),
+      (e.TSEmptyBodyFunctionExpression = 'TSEmptyBodyFunctionExpression'),
+      (e.TSEnumBody = 'TSEnumBody'),
+      (e.TSEnumDeclaration = 'TSEnumDeclaration'),
+      (e.TSEnumMember = 'TSEnumMember'),
+      (e.TSExportAssignment = 'TSExportAssignment'),
+      (e.TSExportKeyword = 'TSExportKeyword'),
+      (e.TSExternalModuleReference = 'TSExternalModuleReference'),
+      (e.TSFunctionType = 'TSFunctionType'),
+      (e.TSImportEqualsDeclaration = 'TSImportEqualsDeclaration'),
+      (e.TSImportType = 'TSImportType'),
+      (e.TSIndexedAccessType = 'TSIndexedAccessType'),
+      (e.TSIndexSignature = 'TSIndexSignature'),
+      (e.TSInferType = 'TSInferType'),
+      (e.TSInstantiationExpression = 'TSInstantiationExpression'),
+      (e.TSInterfaceBody = 'TSInterfaceBody'),
+      (e.TSInterfaceDeclaration = 'TSInterfaceDeclaration'),
+      (e.TSInterfaceHeritage = 'TSInterfaceHeritage'),
+      (e.TSIntersectionType = 'TSIntersectionType'),
+      (e.TSIntrinsicKeyword = 'TSIntrinsicKeyword'),
+      (e.TSLiteralType = 'TSLiteralType'),
+      (e.TSMappedType = 'TSMappedType'),
+      (e.TSMethodSignature = 'TSMethodSignature'),
+      (e.TSModuleBlock = 'TSModuleBlock'),
+      (e.TSModuleDeclaration = 'TSModuleDeclaration'),
+      (e.TSNamedTupleMember = 'TSNamedTupleMember'),
+      (e.TSNamespaceExportDeclaration = 'TSNamespaceExportDeclaration'),
+      (e.TSNeverKeyword = 'TSNeverKeyword'),
+      (e.TSNonNullExpression = 'TSNonNullExpression'),
+      (e.TSNullKeyword = 'TSNullKeyword'),
+      (e.TSNumberKeyword = 'TSNumberKeyword'),
+      (e.TSObjectKeyword = 'TSObjectKeyword'),
+      (e.TSOptionalType = 'TSOptionalType'),
+      (e.TSParameterProperty = 'TSParameterProperty'),
+      (e.TSPrivateKeyword = 'TSPrivateKeyword'),
+      (e.TSPropertySignature = 'TSPropertySignature'),
+      (e.TSProtectedKeyword = 'TSProtectedKeyword'),
+      (e.TSPublicKeyword = 'TSPublicKeyword'),
+      (e.TSQualifiedName = 'TSQualifiedName'),
+      (e.TSReadonlyKeyword = 'TSReadonlyKeyword'),
+      (e.TSRestType = 'TSRestType'),
+      (e.TSSatisfiesExpression = 'TSSatisfiesExpression'),
+      (e.TSStaticKeyword = 'TSStaticKeyword'),
+      (e.TSStringKeyword = 'TSStringKeyword'),
+      (e.TSSymbolKeyword = 'TSSymbolKeyword'),
+      (e.TSTemplateLiteralType = 'TSTemplateLiteralType'),
+      (e.TSThisType = 'TSThisType'),
+      (e.TSTupleType = 'TSTupleType'),
+      (e.TSTypeAliasDeclaration = 'TSTypeAliasDeclaration'),
+      (e.TSTypeAnnotation = 'TSTypeAnnotation'),
+      (e.TSTypeAssertion = 'TSTypeAssertion'),
+      (e.TSTypeLiteral = 'TSTypeLiteral'),
+      (e.TSTypeOperator = 'TSTypeOperator'),
+      (e.TSTypeParameter = 'TSTypeParameter'),
+      (e.TSTypeParameterDeclaration = 'TSTypeParameterDeclaration'),
+      (e.TSTypeParameterInstantiation = 'TSTypeParameterInstantiation'),
+      (e.TSTypePredicate = 'TSTypePredicate'),
+      (e.TSTypeQuery = 'TSTypeQuery'),
+      (e.TSTypeReference = 'TSTypeReference'),
+      (e.TSUndefinedKeyword = 'TSUndefinedKeyword'),
+      (e.TSUnionType = 'TSUnionType'),
+      (e.TSUnknownKeyword = 'TSUnknownKeyword'),
+      (e.TSVoidKeyword = 'TSVoidKeyword'))
+  })(cy || (hi.AST_NODE_TYPES = cy = {}))
+  var fy
+  ;(function (e) {
+    ;((e.Boolean = 'Boolean'),
+      (e.Identifier = 'Identifier'),
+      (e.JSXIdentifier = 'JSXIdentifier'),
+      (e.PrivateIdentifier = 'PrivateIdentifier'),
+      (e.JSXText = 'JSXText'),
+      (e.Keyword = 'Keyword'),
+      (e.Null = 'Null'),
+      (e.Numeric = 'Numeric'),
+      (e.Punctuator = 'Punctuator'),
+      (e.RegularExpression = 'RegularExpression'),
+      (e.String = 'String'),
+      (e.Template = 'Template'),
+      (e.Block = 'Block'),
+      (e.Line = 'Line'))
+  })(fy || (hi.AST_TOKEN_TYPES = fy = {}))
+})
+var py = x((dy) => {
+  'use strict'
+  Object.defineProperty(dy, '__esModule', { value: !0 })
+})
+var my = x((Ey) => {
+  'use strict'
+  Object.defineProperty(Ey, '__esModule', { value: !0 })
+})
+var Ty = x((Pn) => {
+  'use strict'
+  var e2 =
+      (Pn && Pn.__createBinding) ||
+      (Object.create
+        ? function (e, t, n, a) {
+            a === void 0 && (a = n)
+            var r = Object.getOwnPropertyDescriptor(t, n)
+            ;((!r || ('get' in r ? !t.__esModule : r.writable || r.configurable)) &&
+              (r = {
+                enumerable: !0,
+                get: function () {
+                  return t[n]
+                },
+              }),
+              Object.defineProperty(e, a, r))
+          }
+        : function (e, t, n, a) {
+            ;(a === void 0 && (a = n), (e[a] = t[n]))
+          }),
+    t2 =
+      (Pn && Pn.__setModuleDefault) ||
+      (Object.create
+        ? function (e, t) {
+            Object.defineProperty(e, 'default', { enumerable: !0, value: t })
+          }
+        : function (e, t) {
+            e.default = t
+          }),
+    r2 =
+      (Pn && Pn.__importStar) ||
+      (function () {
+        var e = function (t) {
+          return (
+            (e =
+              Object.getOwnPropertyNames ||
+              function (n) {
+                var a = []
+                for (var r in n) Object.prototype.hasOwnProperty.call(n, r) && (a[a.length] = r)
+                return a
+              }),
+            e(t)
+          )
+        }
+        return function (t) {
+          if (t && t.__esModule) return t
+          var n = {}
+          if (t != null) for (var a = e(t), r = 0; r < a.length; r++) a[r] !== 'default' && e2(n, t, a[r])
+          return (t2(n, t), n)
+        }
+      })()
+  Object.defineProperty(Pn, '__esModule', { value: !0 })
+  Pn.TSESTree = void 0
+  Pn.TSESTree = r2(Ud())
+})
+var In = x((_r) => {
+  'use strict'
+  var n2 =
+      (_r && _r.__createBinding) ||
+      (Object.create
+        ? function (e, t, n, a) {
+            a === void 0 && (a = n)
+            var r = Object.getOwnPropertyDescriptor(t, n)
+            ;((!r || ('get' in r ? !t.__esModule : r.writable || r.configurable)) &&
+              (r = {
+                enumerable: !0,
+                get: function () {
+                  return t[n]
+                },
+              }),
+              Object.defineProperty(e, a, r))
+          }
+        : function (e, t, n, a) {
+            ;(a === void 0 && (a = n), (e[a] = t[n]))
+          }),
+    Id =
+      (_r && _r.__exportStar) ||
+      function (e, t) {
+        for (var n in e) n !== 'default' && !Object.prototype.hasOwnProperty.call(t, n) && n2(t, e, n)
+      }
+  Object.defineProperty(_r, '__esModule', { value: !0 })
+  _r.AST_TOKEN_TYPES = _r.AST_NODE_TYPES = void 0
+  var hy = Ud()
+  Object.defineProperty(_r, 'AST_NODE_TYPES', {
+    enumerable: !0,
+    get: function () {
+      return hy.AST_NODE_TYPES
+    },
+  })
+  Object.defineProperty(_r, 'AST_TOKEN_TYPES', {
+    enumerable: !0,
+    get: function () {
+      return hy.AST_TOKEN_TYPES
+    },
+  })
+  Id(py(), _r)
+  Id(my(), _r)
+  Id(Ty(), _r)
+})
+var Pi = x((kd) => {
+  'use strict'
+  Object.defineProperty(kd, '__esModule', { value: !0 })
+  kd.assert = a2
+  function a2(e, t) {
+    if (e == null) throw new Error(t)
+  }
+})
+var es = x((ao) => {
+  'use strict'
+  Object.defineProperty(ao, '__esModule', { value: !0 })
+  ao.createIdGenerator = s2
+  ao.resetIds = o2
+  var no = new Map(),
+    i2 = 0
+  function s2() {
+    let e = (i2 += 1)
+    return (
+      no.set(e, 0),
+      () => {
+        let n = (no.get(e) ?? 0) + 1
+        return (no.set(e, n), n)
+      }
+    )
+  }
+  function o2() {
+    no.clear()
+  }
+})
+var Br = x((io) => {
+  'use strict'
+  Object.defineProperty(io, '__esModule', { value: !0 })
+  io.DefinitionBase = void 0
+  var l2 = es(),
+    u2 = (0, l2.createIdGenerator)(),
+    Rd = class {
+      $id = u2()
+      type
+      name
+      node
+      parent
+      constructor(t, n, a, r) {
+        ;((this.type = t), (this.name = n), (this.node = a), (this.parent = r))
+      }
+    }
+  io.DefinitionBase = Rd
+})
+var br = x((so) => {
+  'use strict'
+  Object.defineProperty(so, '__esModule', { value: !0 })
+  so.DefinitionType = void 0
+  var Py
+  ;(function (e) {
+    ;((e.CatchClause = 'CatchClause'),
+      (e.ClassName = 'ClassName'),
+      (e.FunctionName = 'FunctionName'),
+      (e.ImplicitGlobalVariable = 'ImplicitGlobalVariable'),
+      (e.ImportBinding = 'ImportBinding'),
+      (e.Parameter = 'Parameter'),
+      (e.TSEnumName = 'TSEnumName'),
+      (e.TSEnumMember = 'TSEnumMemberName'),
+      (e.TSModuleName = 'TSModuleName'),
+      (e.Type = 'Type'),
+      (e.Variable = 'Variable'))
+  })(Py || (so.DefinitionType = Py = {}))
+})
+var yy = x((oo) => {
+  'use strict'
+  Object.defineProperty(oo, '__esModule', { value: !0 })
+  oo.CatchClauseDefinition = void 0
+  var c2 = Br(),
+    f2 = br(),
+    Vd = class extends c2.DefinitionBase {
+      isTypeDefinition = !1
+      isVariableDefinition = !0
+      constructor(t, n) {
+        super(f2.DefinitionType.CatchClause, t, n, null)
+      }
+    }
+  oo.CatchClauseDefinition = Vd
+})
+var gy = x((lo) => {
+  'use strict'
+  Object.defineProperty(lo, '__esModule', { value: !0 })
+  lo.ClassNameDefinition = void 0
+  var d2 = Br(),
+    p2 = br(),
+    Dd = class extends d2.DefinitionBase {
+      isTypeDefinition = !0
+      isVariableDefinition = !0
+      constructor(t, n) {
+        super(p2.DefinitionType.ClassName, t, n, null)
+      }
+    }
+  lo.ClassNameDefinition = Dd
+})
+var _y = x((Sy) => {
+  'use strict'
+  Object.defineProperty(Sy, '__esModule', { value: !0 })
+})
+var by = x((uo) => {
+  'use strict'
+  Object.defineProperty(uo, '__esModule', { value: !0 })
+  uo.FunctionNameDefinition = void 0
+  var E2 = Br(),
+    m2 = br(),
+    wd = class extends E2.DefinitionBase {
+      isTypeDefinition = !1
+      isVariableDefinition = !0
+      constructor(t, n) {
+        super(m2.DefinitionType.FunctionName, t, n, null)
+      }
+    }
+  uo.FunctionNameDefinition = wd
+})
+var Od = x((co) => {
+  'use strict'
+  Object.defineProperty(co, '__esModule', { value: !0 })
+  co.ImplicitGlobalVariableDefinition = void 0
+  var T2 = Br(),
+    h2 = br(),
+    Md = class extends T2.DefinitionBase {
+      isTypeDefinition = !1
+      isVariableDefinition = !0
+      constructor(t, n) {
+        super(h2.DefinitionType.ImplicitGlobalVariable, t, n, null)
+      }
+    }
+  co.ImplicitGlobalVariableDefinition = Md
+})
+var vy = x((fo) => {
+  'use strict'
+  Object.defineProperty(fo, '__esModule', { value: !0 })
+  fo.ImportBindingDefinition = void 0
+  var P2 = Br(),
+    y2 = br(),
+    Fd = class extends P2.DefinitionBase {
+      isTypeDefinition = !0
+      isVariableDefinition = !0
+      constructor(t, n, a) {
+        super(y2.DefinitionType.ImportBinding, t, n, a)
+      }
+    }
+  fo.ImportBindingDefinition = Fd
+})
+var xy = x((po) => {
+  'use strict'
+  Object.defineProperty(po, '__esModule', { value: !0 })
+  po.ParameterDefinition = void 0
+  var g2 = Br(),
+    S2 = br(),
+    Bd = class extends g2.DefinitionBase {
+      isTypeDefinition = !1
+      isVariableDefinition = !0
+      rest
+      constructor(t, n, a) {
+        ;(super(S2.DefinitionType.Parameter, t, n, null), (this.rest = a))
+      }
+    }
+  po.ParameterDefinition = Bd
+})
+var Ay = x((Eo) => {
+  'use strict'
+  Object.defineProperty(Eo, '__esModule', { value: !0 })
+  Eo.TSEnumMemberDefinition = void 0
+  var _2 = Br(),
+    b2 = br(),
+    Gd = class extends _2.DefinitionBase {
+      isTypeDefinition = !0
+      isVariableDefinition = !0
+      constructor(t, n) {
+        super(b2.DefinitionType.TSEnumMember, t, n, null)
+      }
+    }
+  Eo.TSEnumMemberDefinition = Gd
+})
+var Cy = x((mo) => {
+  'use strict'
+  Object.defineProperty(mo, '__esModule', { value: !0 })
+  mo.TSEnumNameDefinition = void 0
+  var v2 = Br(),
+    x2 = br(),
+    Nd = class extends v2.DefinitionBase {
+      isTypeDefinition = !0
+      isVariableDefinition = !0
+      constructor(t, n) {
+        super(x2.DefinitionType.TSEnumName, t, n, null)
+      }
+    }
+  mo.TSEnumNameDefinition = Nd
+})
+var Yy = x((To) => {
+  'use strict'
+  Object.defineProperty(To, '__esModule', { value: !0 })
+  To.TSModuleNameDefinition = void 0
+  var A2 = Br(),
+    C2 = br(),
+    qd = class extends A2.DefinitionBase {
+      isTypeDefinition = !0
+      isVariableDefinition = !0
+      constructor(t, n) {
+        super(C2.DefinitionType.TSModuleName, t, n, null)
+      }
+    }
+  To.TSModuleNameDefinition = qd
+})
+var Ly = x((ho) => {
+  'use strict'
+  Object.defineProperty(ho, '__esModule', { value: !0 })
+  ho.TypeDefinition = void 0
+  var Y2 = Br(),
+    L2 = br(),
+    jd = class extends Y2.DefinitionBase {
+      isTypeDefinition = !0
+      isVariableDefinition = !1
+      constructor(t, n) {
+        super(L2.DefinitionType.Type, t, n, null)
+      }
+    }
+  ho.TypeDefinition = jd
+})
+var Uy = x((Po) => {
+  'use strict'
+  Object.defineProperty(Po, '__esModule', { value: !0 })
+  Po.VariableDefinition = void 0
+  var U2 = Br(),
+    I2 = br(),
+    zd = class extends U2.DefinitionBase {
+      isTypeDefinition = !1
+      isVariableDefinition = !0
+      constructor(t, n, a) {
+        super(I2.DefinitionType.Variable, t, n, a)
+      }
+    }
+  Po.VariableDefinition = zd
+})
+var za = x((kt) => {
+  'use strict'
+  var k2 =
+      (kt && kt.__createBinding) ||
+      (Object.create
+        ? function (e, t, n, a) {
+            a === void 0 && (a = n)
+            var r = Object.getOwnPropertyDescriptor(t, n)
+            ;((!r || ('get' in r ? !t.__esModule : r.writable || r.configurable)) &&
+              (r = {
+                enumerable: !0,
+                get: function () {
+                  return t[n]
+                },
+              }),
+              Object.defineProperty(e, a, r))
+          }
+        : function (e, t, n, a) {
+            ;(a === void 0 && (a = n), (e[a] = t[n]))
+          }),
+    vr =
+      (kt && kt.__exportStar) ||
+      function (e, t) {
+        for (var n in e) n !== 'default' && !Object.prototype.hasOwnProperty.call(t, n) && k2(t, e, n)
+      }
+  Object.defineProperty(kt, '__esModule', { value: !0 })
+  vr(yy(), kt)
+  vr(gy(), kt)
+  vr(_y(), kt)
+  vr(br(), kt)
+  vr(by(), kt)
+  vr(Od(), kt)
+  vr(vy(), kt)
+  vr(xy(), kt)
+  vr(Ay(), kt)
+  vr(Cy(), kt)
+  vr(Yy(), kt)
+  vr(Ly(), kt)
+  vr(Uy(), kt)
+})
+var se = x((ea) => {
+  'use strict'
+  Object.defineProperty(ea, '__esModule', { value: !0 })
+  ea.TYPE_VALUE = ea.VALUE = ea.TYPE = void 0
+  ea.TYPE = Object.freeze({ eslintImplicitGlobalSetting: 'readonly', isTypeVariable: !0, isValueVariable: !1 })
+  ea.VALUE = Object.freeze({ eslintImplicitGlobalSetting: 'readonly', isTypeVariable: !1, isValueVariable: !0 })
+  ea.TYPE_VALUE = Object.freeze({ eslintImplicitGlobalSetting: 'readonly', isTypeVariable: !0, isValueVariable: !0 })
+})
+var go = x((yo) => {
+  'use strict'
+  Object.defineProperty(yo, '__esModule', { value: !0 })
+  yo.decorators = void 0
+  var Gr = se()
+  yo.decorators = {
+    libs: [],
+    variables: [
+      ['ClassMemberDecoratorContext', Gr.TYPE],
+      ['DecoratorContext', Gr.TYPE],
+      ['DecoratorMetadataObject', Gr.TYPE],
+      ['DecoratorMetadata', Gr.TYPE],
+      ['ClassDecoratorContext', Gr.TYPE],
+      ['ClassMethodDecoratorContext', Gr.TYPE],
+      ['ClassGetterDecoratorContext', Gr.TYPE],
+      ['ClassSetterDecoratorContext', Gr.TYPE],
+      ['ClassAccessorDecoratorContext', Gr.TYPE],
+      ['ClassAccessorDecoratorTarget', Gr.TYPE],
+      ['ClassAccessorDecoratorResult', Gr.TYPE],
+      ['ClassFieldDecoratorContext', Gr.TYPE],
+    ],
+  }
+})
+var Wd = x((_o) => {
+  'use strict'
+  Object.defineProperty(_o, '__esModule', { value: !0 })
+  _o.decorators_legacy = void 0
+  var So = se()
+  _o.decorators_legacy = {
+    libs: [],
+    variables: [
+      ['ClassDecorator', So.TYPE],
+      ['PropertyDecorator', So.TYPE],
+      ['MethodDecorator', So.TYPE],
+      ['ParameterDecorator', So.TYPE],
+    ],
+  }
+})
+var ts = x((bo) => {
+  'use strict'
+  Object.defineProperty(bo, '__esModule', { value: !0 })
+  bo.es5 = void 0
+  var ee = se(),
+    R2 = go(),
+    V2 = Wd()
+  bo.es5 = {
+    libs: [R2.decorators, V2.decorators_legacy],
+    variables: [
+      ['Symbol', ee.TYPE],
+      ['PropertyKey', ee.TYPE],
+      ['PropertyDescriptor', ee.TYPE],
+      ['PropertyDescriptorMap', ee.TYPE],
+      ['Object', ee.TYPE_VALUE],
+      ['ObjectConstructor', ee.TYPE],
+      ['Function', ee.TYPE_VALUE],
+      ['FunctionConstructor', ee.TYPE],
+      ['ThisParameterType', ee.TYPE],
+      ['OmitThisParameter', ee.TYPE],
+      ['CallableFunction', ee.TYPE],
+      ['NewableFunction', ee.TYPE],
+      ['IArguments', ee.TYPE],
+      ['String', ee.TYPE_VALUE],
+      ['StringConstructor', ee.TYPE],
+      ['Boolean', ee.TYPE_VALUE],
+      ['BooleanConstructor', ee.TYPE],
+      ['Number', ee.TYPE_VALUE],
+      ['NumberConstructor', ee.TYPE],
+      ['TemplateStringsArray', ee.TYPE],
+      ['ImportMeta', ee.TYPE],
+      ['ImportCallOptions', ee.TYPE],
+      ['ImportAssertions', ee.TYPE],
+      ['ImportAttributes', ee.TYPE],
+      ['Math', ee.TYPE_VALUE],
+      ['Date', ee.TYPE_VALUE],
+      ['DateConstructor', ee.TYPE],
+      ['RegExpMatchArray', ee.TYPE],
+      ['RegExpExecArray', ee.TYPE],
+      ['RegExp', ee.TYPE_VALUE],
+      ['RegExpConstructor', ee.TYPE],
+      ['Error', ee.TYPE_VALUE],
+      ['ErrorConstructor', ee.TYPE],
+      ['EvalError', ee.TYPE_VALUE],
+      ['EvalErrorConstructor', ee.TYPE],
+      ['RangeError', ee.TYPE_VALUE],
+      ['RangeErrorConstructor', ee.TYPE],
+      ['ReferenceError', ee.TYPE_VALUE],
+      ['ReferenceErrorConstructor', ee.TYPE],
+      ['SyntaxError', ee.TYPE_VALUE],
+      ['SyntaxErrorConstructor', ee.TYPE],
+      ['TypeError', ee.TYPE_VALUE],
+      ['TypeErrorConstructor', ee.TYPE],
+      ['URIError', ee.TYPE_VALUE],
+      ['URIErrorConstructor', ee.TYPE],
+      ['JSON', ee.TYPE_VALUE],
+      ['ReadonlyArray', ee.TYPE],
+      ['ConcatArray', ee.TYPE],
+      ['Array', ee.TYPE_VALUE],
+      ['ArrayConstructor', ee.TYPE],
+      ['TypedPropertyDescriptor', ee.TYPE],
+      ['PromiseConstructorLike', ee.TYPE],
+      ['PromiseLike', ee.TYPE],
+      ['Promise', ee.TYPE],
+      ['Awaited', ee.TYPE],
+      ['ArrayLike', ee.TYPE],
+      ['Partial', ee.TYPE],
+      ['Required', ee.TYPE],
+      ['Readonly', ee.TYPE],
+      ['Pick', ee.TYPE],
+      ['Record', ee.TYPE],
+      ['Exclude', ee.TYPE],
+      ['Extract', ee.TYPE],
+      ['Omit', ee.TYPE],
+      ['NonNullable', ee.TYPE],
+      ['Parameters', ee.TYPE],
+      ['ConstructorParameters', ee.TYPE],
+      ['ReturnType', ee.TYPE],
+      ['InstanceType', ee.TYPE],
+      ['Uppercase', ee.TYPE],
+      ['Lowercase', ee.TYPE],
+      ['Capitalize', ee.TYPE],
+      ['Uncapitalize', ee.TYPE],
+      ['NoInfer', ee.TYPE],
+      ['ThisType', ee.TYPE],
+      ['WeakKeyTypes', ee.TYPE],
+      ['WeakKey', ee.TYPE],
+      ['ArrayBuffer', ee.TYPE_VALUE],
+      ['ArrayBufferTypes', ee.TYPE],
+      ['ArrayBufferLike', ee.TYPE],
+      ['ArrayBufferConstructor', ee.TYPE],
+      ['ArrayBufferView', ee.TYPE],
+      ['DataView', ee.TYPE_VALUE],
+      ['DataViewConstructor', ee.TYPE],
+      ['Int8Array', ee.TYPE_VALUE],
+      ['Int8ArrayConstructor', ee.TYPE],
+      ['Uint8Array', ee.TYPE_VALUE],
+      ['Uint8ArrayConstructor', ee.TYPE],
+      ['Uint8ClampedArray', ee.TYPE_VALUE],
+      ['Uint8ClampedArrayConstructor', ee.TYPE],
+      ['Int16Array', ee.TYPE_VALUE],
+      ['Int16ArrayConstructor', ee.TYPE],
+      ['Uint16Array', ee.TYPE_VALUE],
+      ['Uint16ArrayConstructor', ee.TYPE],
+      ['Int32Array', ee.TYPE_VALUE],
+      ['Int32ArrayConstructor', ee.TYPE],
+      ['Uint32Array', ee.TYPE_VALUE],
+      ['Uint32ArrayConstructor', ee.TYPE],
+      ['Float32Array', ee.TYPE_VALUE],
+      ['Float32ArrayConstructor', ee.TYPE],
+      ['Float64Array', ee.TYPE_VALUE],
+      ['Float64ArrayConstructor', ee.TYPE],
+      ['Intl', ee.TYPE_VALUE],
+    ],
+  }
+})
+var xo = x((vo) => {
+  'use strict'
+  Object.defineProperty(vo, '__esModule', { value: !0 })
+  vo.es2015_collection = void 0
+  var yn = se()
+  vo.es2015_collection = {
+    libs: [],
+    variables: [
+      ['Map', yn.TYPE_VALUE],
+      ['MapConstructor', yn.TYPE],
+      ['ReadonlyMap', yn.TYPE],
+      ['WeakMap', yn.TYPE_VALUE],
+      ['WeakMapConstructor', yn.TYPE],
+      ['Set', yn.TYPE_VALUE],
+      ['SetConstructor', yn.TYPE],
+      ['ReadonlySet', yn.TYPE],
+      ['WeakSet', yn.TYPE_VALUE],
+      ['WeakSetConstructor', yn.TYPE],
+    ],
+  }
+})
+var Co = x((Ao) => {
+  'use strict'
+  Object.defineProperty(Ao, '__esModule', { value: !0 })
+  Ao.es2015_core = void 0
+  var St = se()
+  Ao.es2015_core = {
+    libs: [],
+    variables: [
+      ['Array', St.TYPE],
+      ['ArrayConstructor', St.TYPE],
+      ['DateConstructor', St.TYPE],
+      ['Function', St.TYPE],
+      ['Math', St.TYPE],
+      ['NumberConstructor', St.TYPE],
+      ['ObjectConstructor', St.TYPE],
+      ['ReadonlyArray', St.TYPE],
+      ['RegExp', St.TYPE],
+      ['RegExpConstructor', St.TYPE],
+      ['String', St.TYPE],
+      ['StringConstructor', St.TYPE],
+      ['Int8Array', St.TYPE],
+      ['Uint8Array', St.TYPE],
+      ['Uint8ClampedArray', St.TYPE],
+      ['Int16Array', St.TYPE],
+      ['Uint16Array', St.TYPE],
+      ['Int32Array', St.TYPE],
+      ['Uint32Array', St.TYPE],
+      ['Float32Array', St.TYPE],
+      ['Float64Array', St.TYPE],
+    ],
+  }
+})
+var ur = x((Yo) => {
+  'use strict'
+  Object.defineProperty(Yo, '__esModule', { value: !0 })
+  Yo.es2015_symbol = void 0
+  var D2 = se()
+  Yo.es2015_symbol = { libs: [], variables: [['SymbolConstructor', D2.TYPE]] }
+})
+var rr = x((Lo) => {
+  'use strict'
+  Object.defineProperty(Lo, '__esModule', { value: !0 })
+  Lo.es2015_iterable = void 0
+  var Ve = se(),
+    w2 = ur()
+  Lo.es2015_iterable = {
+    libs: [w2.es2015_symbol],
+    variables: [
+      ['SymbolConstructor', Ve.TYPE],
+      ['IteratorYieldResult', Ve.TYPE],
+      ['IteratorReturnResult', Ve.TYPE],
+      ['IteratorResult', Ve.TYPE],
+      ['Iterator', Ve.TYPE],
+      ['Iterable', Ve.TYPE],
+      ['IterableIterator', Ve.TYPE],
+      ['IteratorObject', Ve.TYPE],
+      ['BuiltinIteratorReturn', Ve.TYPE],
+      ['ArrayIterator', Ve.TYPE],
+      ['Array', Ve.TYPE],
+      ['ArrayConstructor', Ve.TYPE],
+      ['ReadonlyArray', Ve.TYPE],
+      ['IArguments', Ve.TYPE],
+      ['MapIterator', Ve.TYPE],
+      ['Map', Ve.TYPE],
+      ['ReadonlyMap', Ve.TYPE],
+      ['MapConstructor', Ve.TYPE],
+      ['WeakMap', Ve.TYPE],
+      ['WeakMapConstructor', Ve.TYPE],
+      ['SetIterator', Ve.TYPE],
+      ['Set', Ve.TYPE],
+      ['ReadonlySet', Ve.TYPE],
+      ['SetConstructor', Ve.TYPE],
+      ['WeakSet', Ve.TYPE],
+      ['WeakSetConstructor', Ve.TYPE],
+      ['Promise', Ve.TYPE],
+      ['PromiseConstructor', Ve.TYPE],
+      ['StringIterator', Ve.TYPE],
+      ['String', Ve.TYPE],
+      ['Int8Array', Ve.TYPE],
+      ['Int8ArrayConstructor', Ve.TYPE],
+      ['Uint8Array', Ve.TYPE],
+      ['Uint8ArrayConstructor', Ve.TYPE],
+      ['Uint8ClampedArray', Ve.TYPE],
+      ['Uint8ClampedArrayConstructor', Ve.TYPE],
+      ['Int16Array', Ve.TYPE],
+      ['Int16ArrayConstructor', Ve.TYPE],
+      ['Uint16Array', Ve.TYPE],
+      ['Uint16ArrayConstructor', Ve.TYPE],
+      ['Int32Array', Ve.TYPE],
+      ['Int32ArrayConstructor', Ve.TYPE],
+      ['Uint32Array', Ve.TYPE],
+      ['Uint32ArrayConstructor', Ve.TYPE],
+      ['Float32Array', Ve.TYPE],
+      ['Float32ArrayConstructor', Ve.TYPE],
+      ['Float64Array', Ve.TYPE],
+      ['Float64ArrayConstructor', Ve.TYPE],
+    ],
+  }
+})
+var Io = x((Uo) => {
+  'use strict'
+  Object.defineProperty(Uo, '__esModule', { value: !0 })
+  Uo.es2015_generator = void 0
+  var $d = se(),
+    M2 = rr()
+  Uo.es2015_generator = {
+    libs: [M2.es2015_iterable],
+    variables: [
+      ['Generator', $d.TYPE],
+      ['GeneratorFunction', $d.TYPE],
+      ['GeneratorFunctionConstructor', $d.TYPE],
+    ],
+  }
+})
+var Ro = x((ko) => {
+  'use strict'
+  Object.defineProperty(ko, '__esModule', { value: !0 })
+  ko.es2015_promise = void 0
+  var O2 = se()
+  ko.es2015_promise = { libs: [], variables: [['PromiseConstructor', O2.TYPE]] }
+})
+var Do = x((Vo) => {
+  'use strict'
+  Object.defineProperty(Vo, '__esModule', { value: !0 })
+  Vo.es2015_proxy = void 0
+  var Iy = se()
+  Vo.es2015_proxy = {
+    libs: [],
+    variables: [
+      ['ProxyHandler', Iy.TYPE],
+      ['ProxyConstructor', Iy.TYPE],
+    ],
+  }
+})
+var Mo = x((wo) => {
+  'use strict'
+  Object.defineProperty(wo, '__esModule', { value: !0 })
+  wo.es2015_reflect = void 0
+  var F2 = se()
+  wo.es2015_reflect = { libs: [], variables: [['Reflect', F2.TYPE_VALUE]] }
+})
+var ta = x((Oo) => {
+  'use strict'
+  Object.defineProperty(Oo, '__esModule', { value: !0 })
+  Oo.es2015_symbol_wellknown = void 0
+  var He = se(),
+    B2 = ur()
+  Oo.es2015_symbol_wellknown = {
+    libs: [B2.es2015_symbol],
+    variables: [
+      ['SymbolConstructor', He.TYPE],
+      ['Symbol', He.TYPE],
+      ['Array', He.TYPE],
+      ['ReadonlyArray', He.TYPE],
+      ['Date', He.TYPE],
+      ['Map', He.TYPE],
+      ['WeakMap', He.TYPE],
+      ['Set', He.TYPE],
+      ['WeakSet', He.TYPE],
+      ['JSON', He.TYPE],
+      ['Function', He.TYPE],
+      ['GeneratorFunction', He.TYPE],
+      ['Math', He.TYPE],
+      ['Promise', He.TYPE],
+      ['PromiseConstructor', He.TYPE],
+      ['RegExp', He.TYPE],
+      ['RegExpConstructor', He.TYPE],
+      ['String', He.TYPE],
+      ['ArrayBuffer', He.TYPE],
+      ['DataView', He.TYPE],
+      ['Int8Array', He.TYPE],
+      ['Uint8Array', He.TYPE],
+      ['Uint8ClampedArray', He.TYPE],
+      ['Int16Array', He.TYPE],
+      ['Uint16Array', He.TYPE],
+      ['Int32Array', He.TYPE],
+      ['Uint32Array', He.TYPE],
+      ['Float32Array', He.TYPE],
+      ['Float64Array', He.TYPE],
+      ['ArrayConstructor', He.TYPE],
+      ['MapConstructor', He.TYPE],
+      ['SetConstructor', He.TYPE],
+      ['ArrayBufferConstructor', He.TYPE],
+    ],
+  }
+})
+var yi = x((Fo) => {
+  'use strict'
+  Object.defineProperty(Fo, '__esModule', { value: !0 })
+  Fo.es2015 = void 0
+  var G2 = ts(),
+    N2 = xo(),
+    q2 = Co(),
+    j2 = Io(),
+    z2 = rr(),
+    W2 = Ro(),
+    $2 = Do(),
+    H2 = Mo(),
+    K2 = ur(),
+    J2 = ta()
+  Fo.es2015 = {
+    libs: [
+      G2.es5,
+      q2.es2015_core,
+      N2.es2015_collection,
+      z2.es2015_iterable,
+      j2.es2015_generator,
+      W2.es2015_promise,
+      $2.es2015_proxy,
+      H2.es2015_reflect,
+      K2.es2015_symbol,
+      J2.es2015_symbol_wellknown,
+    ],
+    variables: [],
+  }
+})
+var Wa = x((Bo) => {
+  'use strict'
+  Object.defineProperty(Bo, '__esModule', { value: !0 })
+  Bo.es2018_asynciterable = void 0
+  var rs = se(),
+    X2 = rr(),
+    Q2 = ur()
+  Bo.es2018_asynciterable = {
+    libs: [Q2.es2015_symbol, X2.es2015_iterable],
+    variables: [
+      ['SymbolConstructor', rs.TYPE],
+      ['AsyncIterator', rs.TYPE],
+      ['AsyncIterable', rs.TYPE],
+      ['AsyncIterableIterator', rs.TYPE],
+      ['AsyncIteratorObject', rs.TYPE],
+    ],
+  }
+})
+var cr = x((Go) => {
+  'use strict'
+  Object.defineProperty(Go, '__esModule', { value: !0 })
+  Go.dom = void 0
+  var i = se(),
+    Z2 = yi(),
+    eU = Wa()
+  Go.dom = {
+    libs: [Z2.es2015, eU.es2018_asynciterable],
+    variables: [
+      ['AacEncoderConfig', i.TYPE],
+      ['AddEventListenerOptions', i.TYPE],
+      ['AddressErrors', i.TYPE],
+      ['AesCbcParams', i.TYPE],
+      ['AesCtrParams', i.TYPE],
+      ['AesDerivedKeyParams', i.TYPE],
+      ['AesGcmParams', i.TYPE],
+      ['AesKeyAlgorithm', i.TYPE],
+      ['AesKeyGenParams', i.TYPE],
+      ['Algorithm', i.TYPE],
+      ['AllAcceptedCredentialsOptions', i.TYPE],
+      ['AnalyserOptions', i.TYPE],
+      ['AnimationEventInit', i.TYPE],
+      ['AnimationPlaybackEventInit', i.TYPE],
+      ['AssignedNodesOptions', i.TYPE],
+      ['AudioBufferOptions', i.TYPE],
+      ['AudioBufferSourceOptions', i.TYPE],
+      ['AudioConfiguration', i.TYPE],
+      ['AudioContextOptions', i.TYPE],
+      ['AudioDataCopyToOptions', i.TYPE],
+      ['AudioDataInit', i.TYPE],
+      ['AudioDecoderConfig', i.TYPE],
+      ['AudioDecoderInit', i.TYPE],
+      ['AudioDecoderSupport', i.TYPE],
+      ['AudioEncoderConfig', i.TYPE],
+      ['AudioEncoderInit', i.TYPE],
+      ['AudioEncoderSupport', i.TYPE],
+      ['AudioNodeOptions', i.TYPE],
+      ['AudioProcessingEventInit', i.TYPE],
+      ['AudioTimestamp', i.TYPE],
+      ['AudioWorkletNodeOptions', i.TYPE],
+      ['AuthenticationExtensionsClientInputs', i.TYPE],
+      ['AuthenticationExtensionsClientInputsJSON', i.TYPE],
+      ['AuthenticationExtensionsClientOutputs', i.TYPE],
+      ['AuthenticationExtensionsClientOutputsJSON', i.TYPE],
+      ['AuthenticationExtensionsLargeBlobInputs', i.TYPE],
+      ['AuthenticationExtensionsLargeBlobInputsJSON', i.TYPE],
+      ['AuthenticationExtensionsLargeBlobOutputs', i.TYPE],
+      ['AuthenticationExtensionsLargeBlobOutputsJSON', i.TYPE],
+      ['AuthenticationExtensionsPRFInputs', i.TYPE],
+      ['AuthenticationExtensionsPRFInputsJSON', i.TYPE],
+      ['AuthenticationExtensionsPRFOutputs', i.TYPE],
+      ['AuthenticationExtensionsPRFOutputsJSON', i.TYPE],
+      ['AuthenticationExtensionsPRFValues', i.TYPE],
+      ['AuthenticationExtensionsPRFValuesJSON', i.TYPE],
+      ['AuthenticationResponseJSON', i.TYPE],
+      ['AuthenticatorAssertionResponseJSON', i.TYPE],
+      ['AuthenticatorAttestationResponseJSON', i.TYPE],
+      ['AuthenticatorSelectionCriteria', i.TYPE],
+      ['AvcEncoderConfig', i.TYPE],
+      ['BiquadFilterOptions', i.TYPE],
+      ['BlobEventInit', i.TYPE],
+      ['BlobPropertyBag', i.TYPE],
+      ['CSSMatrixComponentOptions', i.TYPE],
+      ['CSSNumericType', i.TYPE],
+      ['CSSStyleSheetInit', i.TYPE],
+      ['CacheQueryOptions', i.TYPE],
+      ['CanvasRenderingContext2DSettings', i.TYPE],
+      ['CaretPositionFromPointOptions', i.TYPE],
+      ['ChannelMergerOptions', i.TYPE],
+      ['ChannelSplitterOptions', i.TYPE],
+      ['CheckVisibilityOptions', i.TYPE],
+      ['ClientQueryOptions', i.TYPE],
+      ['ClipboardEventInit', i.TYPE],
+      ['ClipboardItemOptions', i.TYPE],
+      ['CloseEventInit', i.TYPE],
+      ['CommandEventInit', i.TYPE],
+      ['CompositionEventInit', i.TYPE],
+      ['ComputedEffectTiming', i.TYPE],
+      ['ComputedKeyframe', i.TYPE],
+      ['ConstantSourceOptions', i.TYPE],
+      ['ConstrainBooleanOrDOMStringParameters', i.TYPE],
+      ['ConstrainBooleanParameters', i.TYPE],
+      ['ConstrainDOMStringParameters', i.TYPE],
+      ['ConstrainDoubleRange', i.TYPE],
+      ['ConstrainULongRange', i.TYPE],
+      ['ContentVisibilityAutoStateChangeEventInit', i.TYPE],
+      ['ConvolverOptions', i.TYPE],
+      ['CookieChangeEventInit', i.TYPE],
+      ['CookieInit', i.TYPE],
+      ['CookieListItem', i.TYPE],
+      ['CookieStoreDeleteOptions', i.TYPE],
+      ['CookieStoreGetOptions', i.TYPE],
+      ['CredentialCreationOptions', i.TYPE],
+      ['CredentialPropertiesOutput', i.TYPE],
+      ['CredentialRequestOptions', i.TYPE],
+      ['CryptoKeyPair', i.TYPE],
+      ['CurrentUserDetailsOptions', i.TYPE],
+      ['CustomEventInit', i.TYPE],
+      ['DOMMatrix2DInit', i.TYPE],
+      ['DOMMatrixInit', i.TYPE],
+      ['DOMPointInit', i.TYPE],
+      ['DOMQuadInit', i.TYPE],
+      ['DOMRectInit', i.TYPE],
+      ['DelayOptions', i.TYPE],
+      ['DeviceMotionEventAccelerationInit', i.TYPE],
+      ['DeviceMotionEventInit', i.TYPE],
+      ['DeviceMotionEventRotationRateInit', i.TYPE],
+      ['DeviceOrientationEventInit', i.TYPE],
+      ['DisplayMediaStreamOptions', i.TYPE],
+      ['DocumentTimelineOptions', i.TYPE],
+      ['DoubleRange', i.TYPE],
+      ['DragEventInit', i.TYPE],
+      ['DynamicsCompressorOptions', i.TYPE],
+      ['EcKeyAlgorithm', i.TYPE],
+      ['EcKeyGenParams', i.TYPE],
+      ['EcKeyImportParams', i.TYPE],
+      ['EcdhKeyDeriveParams', i.TYPE],
+      ['EcdsaParams', i.TYPE],
+      ['EffectTiming', i.TYPE],
+      ['ElementCreationOptions', i.TYPE],
+      ['ElementDefinitionOptions', i.TYPE],
+      ['EncodedAudioChunkInit', i.TYPE],
+      ['EncodedAudioChunkMetadata', i.TYPE],
+      ['EncodedVideoChunkInit', i.TYPE],
+      ['EncodedVideoChunkMetadata', i.TYPE],
+      ['ErrorEventInit', i.TYPE],
+      ['EventInit', i.TYPE],
+      ['EventListenerOptions', i.TYPE],
+      ['EventModifierInit', i.TYPE],
+      ['EventSourceInit', i.TYPE],
+      ['FilePropertyBag', i.TYPE],
+      ['FileSystemCreateWritableOptions', i.TYPE],
+      ['FileSystemFlags', i.TYPE],
+      ['FileSystemGetDirectoryOptions', i.TYPE],
+      ['FileSystemGetFileOptions', i.TYPE],
+      ['FileSystemRemoveOptions', i.TYPE],
+      ['FocusEventInit', i.TYPE],
+      ['FocusOptions', i.TYPE],
+      ['FontFaceDescriptors', i.TYPE],
+      ['FontFaceSetLoadEventInit', i.TYPE],
+      ['FormDataEventInit', i.TYPE],
+      ['FullscreenOptions', i.TYPE],
+      ['GPUBindGroupDescriptor', i.TYPE],
+      ['GPUBindGroupEntry', i.TYPE],
+      ['GPUBindGroupLayoutDescriptor', i.TYPE],
+      ['GPUBindGroupLayoutEntry', i.TYPE],
+      ['GPUBlendComponent', i.TYPE],
+      ['GPUBlendState', i.TYPE],
+      ['GPUBufferBinding', i.TYPE],
+      ['GPUBufferBindingLayout', i.TYPE],
+      ['GPUBufferDescriptor', i.TYPE],
+      ['GPUCanvasConfiguration', i.TYPE],
+      ['GPUCanvasToneMapping', i.TYPE],
+      ['GPUColorDict', i.TYPE],
+      ['GPUColorTargetState', i.TYPE],
+      ['GPUCommandBufferDescriptor', i.TYPE],
+      ['GPUCommandEncoderDescriptor', i.TYPE],
+      ['GPUComputePassDescriptor', i.TYPE],
+      ['GPUComputePassTimestampWrites', i.TYPE],
+      ['GPUComputePipelineDescriptor', i.TYPE],
+      ['GPUCopyExternalImageDestInfo', i.TYPE],
+      ['GPUCopyExternalImageSourceInfo', i.TYPE],
+      ['GPUDepthStencilState', i.TYPE],
+      ['GPUDeviceDescriptor', i.TYPE],
+      ['GPUExtent3DDict', i.TYPE],
+      ['GPUExternalTextureBindingLayout', i.TYPE],
+      ['GPUExternalTextureDescriptor', i.TYPE],
+      ['GPUFragmentState', i.TYPE],
+      ['GPUMultisampleState', i.TYPE],
+      ['GPUObjectDescriptorBase', i.TYPE],
+      ['GPUOrigin2DDict', i.TYPE],
+      ['GPUOrigin3DDict', i.TYPE],
+      ['GPUPipelineDescriptorBase', i.TYPE],
+      ['GPUPipelineErrorInit', i.TYPE],
+      ['GPUPipelineLayoutDescriptor', i.TYPE],
+      ['GPUPrimitiveState', i.TYPE],
+      ['GPUProgrammableStage', i.TYPE],
+      ['GPUQuerySetDescriptor', i.TYPE],
+      ['GPUQueueDescriptor', i.TYPE],
+      ['GPURenderBundleDescriptor', i.TYPE],
+      ['GPURenderBundleEncoderDescriptor', i.TYPE],
+      ['GPURenderPassColorAttachment', i.TYPE],
+      ['GPURenderPassDepthStencilAttachment', i.TYPE],
+      ['GPURenderPassDescriptor', i.TYPE],
+      ['GPURenderPassLayout', i.TYPE],
+      ['GPURenderPassTimestampWrites', i.TYPE],
+      ['GPURenderPipelineDescriptor', i.TYPE],
+      ['GPURequestAdapterOptions', i.TYPE],
+      ['GPUSamplerBindingLayout', i.TYPE],
+      ['GPUSamplerDescriptor', i.TYPE],
+      ['GPUShaderModuleDescriptor', i.TYPE],
+      ['GPUStencilFaceState', i.TYPE],
+      ['GPUStorageTextureBindingLayout', i.TYPE],
+      ['GPUTexelCopyBufferInfo', i.TYPE],
+      ['GPUTexelCopyBufferLayout', i.TYPE],
+      ['GPUTexelCopyTextureInfo', i.TYPE],
+      ['GPUTextureBindingLayout', i.TYPE],
+      ['GPUTextureDescriptor', i.TYPE],
+      ['GPUTextureViewDescriptor', i.TYPE],
+      ['GPUUncapturedErrorEventInit', i.TYPE],
+      ['GPUVertexAttribute', i.TYPE],
+      ['GPUVertexBufferLayout', i.TYPE],
+      ['GPUVertexState', i.TYPE],
+      ['GainOptions', i.TYPE],
+      ['GamepadEffectParameters', i.TYPE],
+      ['GamepadEventInit', i.TYPE],
+      ['GetAnimationsOptions', i.TYPE],
+      ['GetComposedRangesOptions', i.TYPE],
+      ['GetHTMLOptions', i.TYPE],
+      ['GetNotificationOptions', i.TYPE],
+      ['GetRootNodeOptions', i.TYPE],
+      ['HashChangeEventInit', i.TYPE],
+      ['HkdfParams', i.TYPE],
+      ['HmacImportParams', i.TYPE],
+      ['HmacKeyAlgorithm', i.TYPE],
+      ['HmacKeyGenParams', i.TYPE],
+      ['IDBDatabaseInfo', i.TYPE],
+      ['IDBIndexParameters', i.TYPE],
+      ['IDBObjectStoreParameters', i.TYPE],
+      ['IDBTransactionOptions', i.TYPE],
+      ['IDBVersionChangeEventInit', i.TYPE],
+      ['IIRFilterOptions', i.TYPE],
+      ['IdleRequestOptions', i.TYPE],
+      ['ImageBitmapOptions', i.TYPE],
+      ['ImageBitmapRenderingContextSettings', i.TYPE],
+      ['ImageDataSettings', i.TYPE],
+      ['ImageDecodeOptions', i.TYPE],
+      ['ImageDecodeResult', i.TYPE],
+      ['ImageDecoderInit', i.TYPE],
+      ['ImageEncodeOptions', i.TYPE],
+      ['ImportNodeOptions', i.TYPE],
+      ['InputEventInit', i.TYPE],
+      ['IntersectionObserverInit', i.TYPE],
+      ['JsonWebKey', i.TYPE],
+      ['KeyAlgorithm', i.TYPE],
+      ['KeySystemTrackConfiguration', i.TYPE],
+      ['KeyboardEventInit', i.TYPE],
+      ['Keyframe', i.TYPE],
+      ['KeyframeAnimationOptions', i.TYPE],
+      ['KeyframeEffectOptions', i.TYPE],
+      ['LockInfo', i.TYPE],
+      ['LockManagerSnapshot', i.TYPE],
+      ['LockOptions', i.TYPE],
+      ['MIDIConnectionEventInit', i.TYPE],
+      ['MIDIMessageEventInit', i.TYPE],
+      ['MIDIOptions', i.TYPE],
+      ['MediaCapabilitiesDecodingInfo', i.TYPE],
+      ['MediaCapabilitiesEncodingInfo', i.TYPE],
+      ['MediaCapabilitiesInfo', i.TYPE],
+      ['MediaCapabilitiesKeySystemConfiguration', i.TYPE],
+      ['MediaConfiguration', i.TYPE],
+      ['MediaDecodingConfiguration', i.TYPE],
+      ['MediaElementAudioSourceOptions', i.TYPE],
+      ['MediaEncodingConfiguration', i.TYPE],
+      ['MediaEncryptedEventInit', i.TYPE],
+      ['MediaImage', i.TYPE],
+      ['MediaKeyMessageEventInit', i.TYPE],
+      ['MediaKeySystemConfiguration', i.TYPE],
+      ['MediaKeySystemMediaCapability', i.TYPE],
+      ['MediaKeysPolicy', i.TYPE],
+      ['MediaMetadataInit', i.TYPE],
+      ['MediaPositionState', i.TYPE],
+      ['MediaQueryListEventInit', i.TYPE],
+      ['MediaRecorderOptions', i.TYPE],
+      ['MediaSessionActionDetails', i.TYPE],
+      ['MediaSettingsRange', i.TYPE],
+      ['MediaStreamAudioSourceOptions', i.TYPE],
+      ['MediaStreamConstraints', i.TYPE],
+      ['MediaStreamTrackEventInit', i.TYPE],
+      ['MediaTrackCapabilities', i.TYPE],
+      ['MediaTrackConstraintSet', i.TYPE],
+      ['MediaTrackConstraints', i.TYPE],
+      ['MediaTrackSettings', i.TYPE],
+      ['MediaTrackSupportedConstraints', i.TYPE],
+      ['MessageEventInit', i.TYPE],
+      ['MouseEventInit', i.TYPE],
+      ['MultiCacheQueryOptions', i.TYPE],
+      ['MutationObserverInit', i.TYPE],
+      ['NavigateEventInit', i.TYPE],
+      ['NavigationCurrentEntryChangeEventInit', i.TYPE],
+      ['NavigationInterceptOptions', i.TYPE],
+      ['NavigationNavigateOptions', i.TYPE],
+      ['NavigationOptions', i.TYPE],
+      ['NavigationPreloadState', i.TYPE],
+      ['NavigationReloadOptions', i.TYPE],
+      ['NavigationResult', i.TYPE],
+      ['NavigationUpdateCurrentEntryOptions', i.TYPE],
+      ['NotificationOptions', i.TYPE],
+      ['OfflineAudioCompletionEventInit', i.TYPE],
+      ['OfflineAudioContextOptions', i.TYPE],
+      ['OptionalEffectTiming', i.TYPE],
+      ['OpusEncoderConfig', i.TYPE],
+      ['OscillatorOptions', i.TYPE],
+      ['PageRevealEventInit', i.TYPE],
+      ['PageSwapEventInit', i.TYPE],
+      ['PageTransitionEventInit', i.TYPE],
+      ['PannerOptions', i.TYPE],
+      ['PayerErrors', i.TYPE],
+      ['PaymentCurrencyAmount', i.TYPE],
+      ['PaymentDetailsBase', i.TYPE],
+      ['PaymentDetailsInit', i.TYPE],
+      ['PaymentDetailsModifier', i.TYPE],
+      ['PaymentDetailsUpdate', i.TYPE],
+      ['PaymentItem', i.TYPE],
+      ['PaymentMethodChangeEventInit', i.TYPE],
+      ['PaymentMethodData', i.TYPE],
+      ['PaymentOptions', i.TYPE],
+      ['PaymentRequestUpdateEventInit', i.TYPE],
+      ['PaymentShippingOption', i.TYPE],
+      ['PaymentValidationErrors', i.TYPE],
+      ['Pbkdf2Params', i.TYPE],
+      ['PerformanceMarkOptions', i.TYPE],
+      ['PerformanceMeasureOptions', i.TYPE],
+      ['PerformanceObserverInit', i.TYPE],
+      ['PeriodicWaveConstraints', i.TYPE],
+      ['PeriodicWaveOptions', i.TYPE],
+      ['PermissionDescriptor', i.TYPE],
+      ['PhotoCapabilities', i.TYPE],
+      ['PhotoSettings', i.TYPE],
+      ['PictureInPictureEventInit', i.TYPE],
+      ['PlaneLayout', i.TYPE],
+      ['PointerEventInit', i.TYPE],
+      ['PointerLockOptions', i.TYPE],
+      ['PopStateEventInit', i.TYPE],
+      ['PositionOptions', i.TYPE],
+      ['ProgressEventInit', i.TYPE],
+      ['PromiseRejectionEventInit', i.TYPE],
+      ['PropertyDefinition', i.TYPE],
+      ['PropertyIndexedKeyframes', i.TYPE],
+      ['PublicKeyCredentialCreationOptions', i.TYPE],
+      ['PublicKeyCredentialCreationOptionsJSON', i.TYPE],
+      ['PublicKeyCredentialDescriptor', i.TYPE],
+      ['PublicKeyCredentialDescriptorJSON', i.TYPE],
+      ['PublicKeyCredentialEntity', i.TYPE],
+      ['PublicKeyCredentialParameters', i.TYPE],
+      ['PublicKeyCredentialRequestOptions', i.TYPE],
+      ['PublicKeyCredentialRequestOptionsJSON', i.TYPE],
+      ['PublicKeyCredentialRpEntity', i.TYPE],
+      ['PublicKeyCredentialUserEntity', i.TYPE],
+      ['PublicKeyCredentialUserEntityJSON', i.TYPE],
+      ['PushSubscriptionJSON', i.TYPE],
+      ['PushSubscriptionOptionsInit', i.TYPE],
+      ['QueuingStrategy', i.TYPE],
+      ['QueuingStrategyInit', i.TYPE],
+      ['RTCAnswerOptions', i.TYPE],
+      ['RTCCertificateExpiration', i.TYPE],
+      ['RTCConfiguration', i.TYPE],
+      ['RTCDTMFToneChangeEventInit', i.TYPE],
+      ['RTCDataChannelEventInit', i.TYPE],
+      ['RTCDataChannelInit', i.TYPE],
+      ['RTCDtlsFingerprint', i.TYPE],
+      ['RTCEncodedAudioFrameMetadata', i.TYPE],
+      ['RTCEncodedFrameMetadata', i.TYPE],
+      ['RTCEncodedVideoFrameMetadata', i.TYPE],
+      ['RTCErrorEventInit', i.TYPE],
+      ['RTCErrorInit', i.TYPE],
+      ['RTCIceCandidateInit', i.TYPE],
+      ['RTCIceCandidatePairStats', i.TYPE],
+      ['RTCIceServer', i.TYPE],
+      ['RTCInboundRtpStreamStats', i.TYPE],
+      ['RTCLocalIceCandidateInit', i.TYPE],
+      ['RTCLocalSessionDescriptionInit', i.TYPE],
+      ['RTCOfferAnswerOptions', i.TYPE],
+      ['RTCOfferOptions', i.TYPE],
+      ['RTCOutboundRtpStreamStats', i.TYPE],
+      ['RTCPeerConnectionIceErrorEventInit', i.TYPE],
+      ['RTCPeerConnectionIceEventInit', i.TYPE],
+      ['RTCReceivedRtpStreamStats', i.TYPE],
+      ['RTCRtcpParameters', i.TYPE],
+      ['RTCRtpCapabilities', i.TYPE],
+      ['RTCRtpCodec', i.TYPE],
+      ['RTCRtpCodecParameters', i.TYPE],
+      ['RTCRtpCodingParameters', i.TYPE],
+      ['RTCRtpContributingSource', i.TYPE],
+      ['RTCRtpEncodingParameters', i.TYPE],
+      ['RTCRtpHeaderExtensionCapability', i.TYPE],
+      ['RTCRtpHeaderExtensionParameters', i.TYPE],
+      ['RTCRtpParameters', i.TYPE],
+      ['RTCRtpReceiveParameters', i.TYPE],
+      ['RTCRtpSendParameters', i.TYPE],
+      ['RTCRtpStreamStats', i.TYPE],
+      ['RTCRtpSynchronizationSource', i.TYPE],
+      ['RTCRtpTransceiverInit', i.TYPE],
+      ['RTCSentRtpStreamStats', i.TYPE],
+      ['RTCSessionDescriptionInit', i.TYPE],
+      ['RTCSetParameterOptions', i.TYPE],
+      ['RTCStats', i.TYPE],
+      ['RTCTrackEventInit', i.TYPE],
+      ['RTCTransportStats', i.TYPE],
+      ['ReadableStreamBYOBReaderReadOptions', i.TYPE],
+      ['ReadableStreamGetReaderOptions', i.TYPE],
+      ['ReadableStreamIteratorOptions', i.TYPE],
+      ['ReadableStreamReadDoneResult', i.TYPE],
+      ['ReadableStreamReadValueResult', i.TYPE],
+      ['ReadableWritablePair', i.TYPE],
+      ['RegistrationOptions', i.TYPE],
+      ['RegistrationResponseJSON', i.TYPE],
+      ['Report', i.TYPE],
+      ['ReportBody', i.TYPE],
+      ['ReportingObserverOptions', i.TYPE],
+      ['RequestInit', i.TYPE],
+      ['ResizeObserverOptions', i.TYPE],
+      ['ResponseInit', i.TYPE],
+      ['RsaHashedImportParams', i.TYPE],
+      ['RsaHashedKeyAlgorithm', i.TYPE],
+      ['RsaHashedKeyGenParams', i.TYPE],
+      ['RsaKeyAlgorithm', i.TYPE],
+      ['RsaKeyGenParams', i.TYPE],
+      ['RsaOaepParams', i.TYPE],
+      ['RsaOtherPrimesInfo', i.TYPE],
+      ['RsaPssParams', i.TYPE],
+      ['SVGBoundingBoxOptions', i.TYPE],
+      ['SanitizerAttributeNamespace', i.TYPE],
+      ['SanitizerConfig', i.TYPE],
+      ['SanitizerElementNamespace', i.TYPE],
+      ['SanitizerElementNamespaceWithAttributes', i.TYPE],
+      ['SchedulerPostTaskOptions', i.TYPE],
+      ['ScrollIntoViewOptions', i.TYPE],
+      ['ScrollOptions', i.TYPE],
+      ['ScrollTimelineOptions', i.TYPE],
+      ['ScrollToOptions', i.TYPE],
+      ['SecurityPolicyViolationEventInit', i.TYPE],
+      ['ShadowRootInit', i.TYPE],
+      ['ShareData', i.TYPE],
+      ['ShowPopoverOptions', i.TYPE],
+      ['SpeechRecognitionErrorEventInit', i.TYPE],
+      ['SpeechRecognitionEventInit', i.TYPE],
+      ['SpeechSynthesisErrorEventInit', i.TYPE],
+      ['SpeechSynthesisEventInit', i.TYPE],
+      ['StartViewTransitionOptions', i.TYPE],
+      ['StaticRangeInit', i.TYPE],
+      ['StereoPannerOptions', i.TYPE],
+      ['StorageEstimate', i.TYPE],
+      ['StorageEventInit', i.TYPE],
+      ['StreamPipeOptions', i.TYPE],
+      ['StructuredSerializeOptions', i.TYPE],
+      ['SubmitEventInit', i.TYPE],
+      ['SvcOutputMetadata', i.TYPE],
+      ['TaskControllerInit', i.TYPE],
+      ['TaskPriorityChangeEventInit', i.TYPE],
+      ['TaskSignalAnyInit', i.TYPE],
+      ['TextDecodeOptions', i.TYPE],
+      ['TextDecoderOptions', i.TYPE],
+      ['TextEncoderEncodeIntoResult', i.TYPE],
+      ['TimelineRangeOffset', i.TYPE],
+      ['ToggleEventInit', i.TYPE],
+      ['TogglePopoverOptions', i.TYPE],
+      ['TouchEventInit', i.TYPE],
+      ['TouchInit', i.TYPE],
+      ['TrackEventInit', i.TYPE],
+      ['Transformer', i.TYPE],
+      ['TransitionEventInit', i.TYPE],
+      ['UIEventInit', i.TYPE],
+      ['ULongRange', i.TYPE],
+      ['URLPatternComponentResult', i.TYPE],
+      ['URLPatternInit', i.TYPE],
+      ['URLPatternOptions', i.TYPE],
+      ['URLPatternResult', i.TYPE],
+      ['UnderlyingByteSource', i.TYPE],
+      ['UnderlyingDefaultSource', i.TYPE],
+      ['UnderlyingSink', i.TYPE],
+      ['UnderlyingSource', i.TYPE],
+      ['UnknownCredentialOptions', i.TYPE],
+      ['ValidityStateFlags', i.TYPE],
+      ['VideoColorSpaceInit', i.TYPE],
+      ['VideoConfiguration', i.TYPE],
+      ['VideoDecoderConfig', i.TYPE],
+      ['VideoDecoderInit', i.TYPE],
+      ['VideoDecoderSupport', i.TYPE],
+      ['VideoEncoderConfig', i.TYPE],
+      ['VideoEncoderEncodeOptions', i.TYPE],
+      ['VideoEncoderEncodeOptionsForAvc', i.TYPE],
+      ['VideoEncoderInit', i.TYPE],
+      ['VideoEncoderSupport', i.TYPE],
+      ['VideoFrameBufferInit', i.TYPE],
+      ['VideoFrameCallbackMetadata', i.TYPE],
+      ['VideoFrameCopyToOptions', i.TYPE],
+      ['VideoFrameInit', i.TYPE],
+      ['ViewTimelineOptions', i.TYPE],
+      ['WaveShaperOptions', i.TYPE],
+      ['WebGLContextAttributes', i.TYPE],
+      ['WebGLContextEventInit', i.TYPE],
+      ['WebTransportCloseInfo', i.TYPE],
+      ['WebTransportErrorOptions', i.TYPE],
+      ['WebTransportHash', i.TYPE],
+      ['WebTransportOptions', i.TYPE],
+      ['WebTransportSendOptions', i.TYPE],
+      ['WebTransportSendStreamOptions', i.TYPE],
+      ['WheelEventInit', i.TYPE],
+      ['WindowPostMessageOptions', i.TYPE],
+      ['WorkerOptions', i.TYPE],
+      ['WorkletOptions', i.TYPE],
+      ['WriteParams', i.TYPE],
+      ['NodeFilter', i.TYPE_VALUE],
+      ['XPathNSResolver', i.TYPE],
+      ['ANGLE_instanced_arrays', i.TYPE],
+      ['ARIAMixin', i.TYPE],
+      ['AbortController', i.TYPE_VALUE],
+      ['AbortSignalEventMap', i.TYPE],
+      ['AbortSignal', i.TYPE_VALUE],
+      ['AbstractRange', i.TYPE_VALUE],
+      ['AbstractWorkerEventMap', i.TYPE],
+      ['AbstractWorker', i.TYPE],
+      ['AnalyserNode', i.TYPE_VALUE],
+      ['Animatable', i.TYPE],
+      ['AnimationEventMap', i.TYPE],
+      ['Animation', i.TYPE_VALUE],
+      ['AnimationEffect', i.TYPE_VALUE],
+      ['AnimationEvent', i.TYPE_VALUE],
+      ['AnimationFrameProvider', i.TYPE],
+      ['AnimationPlaybackEvent', i.TYPE_VALUE],
+      ['AnimationTimeline', i.TYPE_VALUE],
+      ['Attr', i.TYPE_VALUE],
+      ['AudioBuffer', i.TYPE_VALUE],
+      ['AudioBufferSourceNode', i.TYPE_VALUE],
+      ['AudioContext', i.TYPE_VALUE],
+      ['AudioData', i.TYPE_VALUE],
+      ['AudioDecoderEventMap', i.TYPE],
+      ['AudioDecoder', i.TYPE_VALUE],
+      ['AudioDestinationNode', i.TYPE_VALUE],
+      ['AudioEncoderEventMap', i.TYPE],
+      ['AudioEncoder', i.TYPE_VALUE],
+      ['AudioListener', i.TYPE_VALUE],
+      ['AudioNode', i.TYPE_VALUE],
+      ['AudioParam', i.TYPE_VALUE],
+      ['AudioParamMap', i.TYPE_VALUE],
+      ['AudioProcessingEvent', i.TYPE_VALUE],
+      ['AudioScheduledSourceNodeEventMap', i.TYPE],
+      ['AudioScheduledSourceNode', i.TYPE_VALUE],
+      ['AudioWorklet', i.TYPE_VALUE],
+      ['AudioWorkletNodeEventMap', i.TYPE],
+      ['AudioWorkletNode', i.TYPE_VALUE],
+      ['AuthenticatorAssertionResponse', i.TYPE_VALUE],
+      ['AuthenticatorAttestationResponse', i.TYPE_VALUE],
+      ['AuthenticatorResponse', i.TYPE_VALUE],
+      ['BarProp', i.TYPE_VALUE],
+      ['BaseAudioContextEventMap', i.TYPE],
+      ['BaseAudioContext', i.TYPE_VALUE],
+      ['BeforeUnloadEvent', i.TYPE_VALUE],
+      ['BiquadFilterNode', i.TYPE_VALUE],
+      ['Blob', i.TYPE_VALUE],
+      ['BlobEvent', i.TYPE_VALUE],
+      ['Body', i.TYPE],
+      ['BroadcastChannelEventMap', i.TYPE],
+      ['BroadcastChannel', i.TYPE_VALUE],
+      ['ByteLengthQueuingStrategy', i.TYPE_VALUE],
+      ['CDATASection', i.TYPE_VALUE],
+      ['CSSAnimation', i.TYPE_VALUE],
+      ['CSSConditionRule', i.TYPE_VALUE],
+      ['CSSContainerRule', i.TYPE_VALUE],
+      ['CSSCounterStyleRule', i.TYPE_VALUE],
+      ['CSSFontFaceRule', i.TYPE_VALUE],
+      ['CSSFontFeatureValuesRule', i.TYPE_VALUE],
+      ['CSSFontPaletteValuesRule', i.TYPE_VALUE],
+      ['CSSGroupingRule', i.TYPE_VALUE],
+      ['CSSImageValue', i.TYPE_VALUE],
+      ['CSSImportRule', i.TYPE_VALUE],
+      ['CSSKeyframeRule', i.TYPE_VALUE],
+      ['CSSKeyframesRule', i.TYPE_VALUE],
+      ['CSSKeywordValue', i.TYPE_VALUE],
+      ['CSSLayerBlockRule', i.TYPE_VALUE],
+      ['CSSLayerStatementRule', i.TYPE_VALUE],
+      ['CSSMathClamp', i.TYPE_VALUE],
+      ['CSSMathInvert', i.TYPE_VALUE],
+      ['CSSMathMax', i.TYPE_VALUE],
+      ['CSSMathMin', i.TYPE_VALUE],
+      ['CSSMathNegate', i.TYPE_VALUE],
+      ['CSSMathProduct', i.TYPE_VALUE],
+      ['CSSMathSum', i.TYPE_VALUE],
+      ['CSSMathValue', i.TYPE_VALUE],
+      ['CSSMatrixComponent', i.TYPE_VALUE],
+      ['CSSMediaRule', i.TYPE_VALUE],
+      ['CSSNamespaceRule', i.TYPE_VALUE],
+      ['CSSNestedDeclarations', i.TYPE_VALUE],
+      ['CSSNumericArray', i.TYPE_VALUE],
+      ['CSSNumericValue', i.TYPE_VALUE],
+      ['CSSPageDescriptors', i.TYPE_VALUE],
+      ['CSSPageRule', i.TYPE_VALUE],
+      ['CSSPerspective', i.TYPE_VALUE],
+      ['CSSPositionTryDescriptors', i.TYPE_VALUE],
+      ['CSSPositionTryRule', i.TYPE_VALUE],
+      ['CSSPropertyRule', i.TYPE_VALUE],
+      ['CSSRotate', i.TYPE_VALUE],
+      ['CSSRule', i.TYPE_VALUE],
+      ['CSSRuleList', i.TYPE_VALUE],
+      ['CSSScale', i.TYPE_VALUE],
+      ['CSSScopeRule', i.TYPE_VALUE],
+      ['CSSSkew', i.TYPE_VALUE],
+      ['CSSSkewX', i.TYPE_VALUE],
+      ['CSSSkewY', i.TYPE_VALUE],
+      ['CSSStartingStyleRule', i.TYPE_VALUE],
+      ['CSSStyleDeclarationBase', i.TYPE],
+      ['CSSStyleDeclaration', i.TYPE_VALUE],
+      ['CSSStyleProperties', i.TYPE_VALUE],
+      ['CSSStyleRule', i.TYPE_VALUE],
+      ['CSSStyleSheet', i.TYPE_VALUE],
+      ['CSSStyleValue', i.TYPE_VALUE],
+      ['CSSSupportsRule', i.TYPE_VALUE],
+      ['CSSTransformComponent', i.TYPE_VALUE],
+      ['CSSTransformValue', i.TYPE_VALUE],
+      ['CSSTransition', i.TYPE_VALUE],
+      ['CSSTranslate', i.TYPE_VALUE],
+      ['CSSUnitValue', i.TYPE_VALUE],
+      ['CSSUnparsedValue', i.TYPE_VALUE],
+      ['CSSVariableReferenceValue', i.TYPE_VALUE],
+      ['CSSViewTransitionRule', i.TYPE_VALUE],
+      ['Cache', i.TYPE_VALUE],
+      ['CacheStorage', i.TYPE_VALUE],
+      ['CanvasCaptureMediaStreamTrack', i.TYPE_VALUE],
+      ['CanvasCompositing', i.TYPE],
+      ['CanvasDrawImage', i.TYPE],
+      ['CanvasDrawPath', i.TYPE],
+      ['CanvasFillStrokeStyles', i.TYPE],
+      ['CanvasFilters', i.TYPE],
+      ['CanvasGradient', i.TYPE_VALUE],
+      ['CanvasImageData', i.TYPE],
+      ['CanvasImageSmoothing', i.TYPE],
+      ['CanvasPath', i.TYPE],
+      ['CanvasPathDrawingStyles', i.TYPE],
+      ['CanvasPattern', i.TYPE_VALUE],
+      ['CanvasRect', i.TYPE],
+      ['CanvasRenderingContext2D', i.TYPE_VALUE],
+      ['CanvasSettings', i.TYPE],
+      ['CanvasShadowStyles', i.TYPE],
+      ['CanvasState', i.TYPE],
+      ['CanvasText', i.TYPE],
+      ['CanvasTextDrawingStyles', i.TYPE],
+      ['CanvasTransform', i.TYPE],
+      ['CanvasUserInterface', i.TYPE],
+      ['CaretPosition', i.TYPE_VALUE],
+      ['ChannelMergerNode', i.TYPE_VALUE],
+      ['ChannelSplitterNode', i.TYPE_VALUE],
+      ['CharacterData', i.TYPE_VALUE],
+      ['ChildNode', i.TYPE],
+      ['ClientRect', i.TYPE],
+      ['Clipboard', i.TYPE_VALUE],
+      ['ClipboardEvent', i.TYPE_VALUE],
+      ['ClipboardItem', i.TYPE_VALUE],
+      ['CloseEvent', i.TYPE_VALUE],
+      ['CommandEvent', i.TYPE_VALUE],
+      ['Comment', i.TYPE_VALUE],
+      ['CompositionEvent', i.TYPE_VALUE],
+      ['CompressionStream', i.TYPE_VALUE],
+      ['ConstantSourceNode', i.TYPE_VALUE],
+      ['ContentVisibilityAutoStateChangeEvent', i.TYPE_VALUE],
+      ['ConvolverNode', i.TYPE_VALUE],
+      ['CookieChangeEvent', i.TYPE_VALUE],
+      ['CookieStoreEventMap', i.TYPE],
+      ['CookieStore', i.TYPE_VALUE],
+      ['CookieStoreManager', i.TYPE_VALUE],
+      ['CountQueuingStrategy', i.TYPE_VALUE],
+      ['Credential', i.TYPE_VALUE],
+      ['CredentialsContainer', i.TYPE_VALUE],
+      ['Crypto', i.TYPE_VALUE],
+      ['CryptoKey', i.TYPE_VALUE],
+      ['CustomElementRegistry', i.TYPE_VALUE],
+      ['CustomEvent', i.TYPE_VALUE],
+      ['CustomStateSet', i.TYPE_VALUE],
+      ['DOMException', i.TYPE_VALUE],
+      ['DOMImplementation', i.TYPE_VALUE],
+      ['DOMMatrix', i.TYPE_VALUE],
+      ['SVGMatrix', i.TYPE_VALUE],
+      ['WebKitCSSMatrix', i.TYPE_VALUE],
+      ['DOMMatrixReadOnly', i.TYPE_VALUE],
+      ['DOMParser', i.TYPE_VALUE],
+      ['DOMPoint', i.TYPE_VALUE],
+      ['SVGPoint', i.TYPE_VALUE],
+      ['DOMPointReadOnly', i.TYPE_VALUE],
+      ['DOMQuad', i.TYPE_VALUE],
+      ['DOMRect', i.TYPE_VALUE],
+      ['SVGRect', i.TYPE_VALUE],
+      ['DOMRectList', i.TYPE_VALUE],
+      ['DOMRectReadOnly', i.TYPE_VALUE],
+      ['DOMStringList', i.TYPE_VALUE],
+      ['DOMStringMap', i.TYPE_VALUE],
+      ['DOMTokenList', i.TYPE_VALUE],
+      ['DataTransfer', i.TYPE_VALUE],
+      ['DataTransferItem', i.TYPE_VALUE],
+      ['DataTransferItemList', i.TYPE_VALUE],
+      ['DecompressionStream', i.TYPE_VALUE],
+      ['DelayNode', i.TYPE_VALUE],
+      ['DeviceMotionEvent', i.TYPE_VALUE],
+      ['DeviceMotionEventAcceleration', i.TYPE],
+      ['DeviceMotionEventRotationRate', i.TYPE],
+      ['DeviceOrientationEvent', i.TYPE_VALUE],
+      ['DigitalCredential', i.TYPE_VALUE],
+      ['DocumentEventMap', i.TYPE],
+      ['Document', i.TYPE_VALUE],
+      ['DocumentFragment', i.TYPE_VALUE],
+      ['DocumentOrShadowRoot', i.TYPE],
+      ['DocumentTimeline', i.TYPE_VALUE],
+      ['DocumentType', i.TYPE_VALUE],
+      ['DragEvent', i.TYPE_VALUE],
+      ['DynamicsCompressorNode', i.TYPE_VALUE],
+      ['EXT_blend_minmax', i.TYPE],
+      ['EXT_color_buffer_float', i.TYPE],
+      ['EXT_color_buffer_half_float', i.TYPE],
+      ['EXT_float_blend', i.TYPE],
+      ['EXT_frag_depth', i.TYPE],
+      ['EXT_sRGB', i.TYPE],
+      ['EXT_shader_texture_lod', i.TYPE],
+      ['EXT_texture_compression_bptc', i.TYPE],
+      ['EXT_texture_compression_rgtc', i.TYPE],
+      ['EXT_texture_filter_anisotropic', i.TYPE],
+      ['EXT_texture_norm16', i.TYPE],
+      ['ElementEventMap', i.TYPE],
+      ['Element', i.TYPE_VALUE],
+      ['ElementCSSInlineStyle', i.TYPE],
+      ['ElementContentEditable', i.TYPE],
+      ['ElementInternals', i.TYPE_VALUE],
+      ['EncodedAudioChunk', i.TYPE_VALUE],
+      ['EncodedVideoChunk', i.TYPE_VALUE],
+      ['ErrorEvent', i.TYPE_VALUE],
+      ['Event', i.TYPE_VALUE],
+      ['EventCounts', i.TYPE_VALUE],
+      ['EventListener', i.TYPE],
+      ['EventListenerObject', i.TYPE],
+      ['EventSourceEventMap', i.TYPE],
+      ['EventSource', i.TYPE_VALUE],
+      ['EventTarget', i.TYPE_VALUE],
+      ['External', i.TYPE_VALUE],
+      ['File', i.TYPE_VALUE],
+      ['FileList', i.TYPE_VALUE],
+      ['FileReaderEventMap', i.TYPE],
+      ['FileReader', i.TYPE_VALUE],
+      ['FileSystem', i.TYPE_VALUE],
+      ['FileSystemDirectoryEntry', i.TYPE_VALUE],
+      ['FileSystemDirectoryHandle', i.TYPE_VALUE],
+      ['FileSystemDirectoryReader', i.TYPE_VALUE],
+      ['FileSystemEntry', i.TYPE_VALUE],
+      ['FileSystemFileEntry', i.TYPE_VALUE],
+      ['FileSystemFileHandle', i.TYPE_VALUE],
+      ['FileSystemHandle', i.TYPE_VALUE],
+      ['FileSystemWritableFileStream', i.TYPE_VALUE],
+      ['FocusEvent', i.TYPE_VALUE],
+      ['FontFace', i.TYPE_VALUE],
+      ['FontFaceSetEventMap', i.TYPE],
+      ['FontFaceSet', i.TYPE_VALUE],
+      ['FontFaceSetLoadEvent', i.TYPE_VALUE],
+      ['FontFaceSource', i.TYPE],
+      ['FormData', i.TYPE_VALUE],
+      ['FormDataEvent', i.TYPE_VALUE],
+      ['FragmentDirective', i.TYPE_VALUE],
+      ['GPU', i.TYPE_VALUE],
+      ['GPUAdapter', i.TYPE_VALUE],
+      ['GPUAdapterInfo', i.TYPE_VALUE],
+      ['GPUBindGroup', i.TYPE_VALUE],
+      ['GPUBindGroupLayout', i.TYPE_VALUE],
+      ['GPUBindingCommandsMixin', i.TYPE],
+      ['GPUBuffer', i.TYPE_VALUE],
+      ['GPUCanvasContext', i.TYPE_VALUE],
+      ['GPUCommandBuffer', i.TYPE_VALUE],
+      ['GPUCommandEncoder', i.TYPE_VALUE],
+      ['GPUCompilationInfo', i.TYPE_VALUE],
+      ['GPUCompilationMessage', i.TYPE_VALUE],
+      ['GPUComputePassEncoder', i.TYPE_VALUE],
+      ['GPUComputePipeline', i.TYPE_VALUE],
+      ['GPUDebugCommandsMixin', i.TYPE],
+      ['GPUDeviceEventMap', i.TYPE],
+      ['GPUDevice', i.TYPE_VALUE],
+      ['GPUDeviceLostInfo', i.TYPE_VALUE],
+      ['GPUError', i.TYPE_VALUE],
+      ['GPUExternalTexture', i.TYPE_VALUE],
+      ['GPUInternalError', i.TYPE_VALUE],
+      ['GPUObjectBase', i.TYPE],
+      ['GPUOutOfMemoryError', i.TYPE_VALUE],
+      ['GPUPipelineBase', i.TYPE],
+      ['GPUPipelineError', i.TYPE_VALUE],
+      ['GPUPipelineLayout', i.TYPE_VALUE],
+      ['GPUQuerySet', i.TYPE_VALUE],
+      ['GPUQueue', i.TYPE_VALUE],
+      ['GPURenderBundle', i.TYPE_VALUE],
+      ['GPURenderBundleEncoder', i.TYPE_VALUE],
+      ['GPURenderCommandsMixin', i.TYPE],
+      ['GPURenderPassEncoder', i.TYPE_VALUE],
+      ['GPURenderPipeline', i.TYPE_VALUE],
+      ['GPUSampler', i.TYPE_VALUE],
+      ['GPUShaderModule', i.TYPE_VALUE],
+      ['GPUSupportedFeatures', i.TYPE_VALUE],
+      ['GPUSupportedLimits', i.TYPE_VALUE],
+      ['GPUTexture', i.TYPE_VALUE],
+      ['GPUTextureView', i.TYPE_VALUE],
+      ['GPUUncapturedErrorEvent', i.TYPE_VALUE],
+      ['GPUValidationError', i.TYPE_VALUE],
+      ['GainNode', i.TYPE_VALUE],
+      ['Gamepad', i.TYPE_VALUE],
+      ['GamepadButton', i.TYPE_VALUE],
+      ['GamepadEvent', i.TYPE_VALUE],
+      ['GamepadHapticActuator', i.TYPE_VALUE],
+      ['GenericTransformStream', i.TYPE],
+      ['Geolocation', i.TYPE_VALUE],
+      ['GeolocationCoordinates', i.TYPE_VALUE],
+      ['GeolocationPosition', i.TYPE_VALUE],
+      ['GeolocationPositionError', i.TYPE_VALUE],
+      ['GlobalEventHandlersEventMap', i.TYPE],
+      ['GlobalEventHandlers', i.TYPE],
+      ['HTMLAllCollection', i.TYPE_VALUE],
+      ['HTMLAnchorElement', i.TYPE_VALUE],
+      ['HTMLAreaElement', i.TYPE_VALUE],
+      ['HTMLAudioElement', i.TYPE_VALUE],
+      ['HTMLBRElement', i.TYPE_VALUE],
+      ['HTMLBaseElement', i.TYPE_VALUE],
+      ['HTMLBodyElementEventMap', i.TYPE],
+      ['HTMLBodyElement', i.TYPE_VALUE],
+      ['HTMLButtonElement', i.TYPE_VALUE],
+      ['HTMLCanvasElement', i.TYPE_VALUE],
+      ['HTMLCollectionBase', i.TYPE],
+      ['HTMLCollection', i.TYPE_VALUE],
+      ['HTMLCollectionOf', i.TYPE],
+      ['HTMLDListElement', i.TYPE_VALUE],
+      ['HTMLDataElement', i.TYPE_VALUE],
+      ['HTMLDataListElement', i.TYPE_VALUE],
+      ['HTMLDetailsElement', i.TYPE_VALUE],
+      ['HTMLDialogElement', i.TYPE_VALUE],
+      ['HTMLDirectoryElement', i.TYPE_VALUE],
+      ['HTMLDivElement', i.TYPE_VALUE],
+      ['HTMLDocument', i.TYPE_VALUE],
+      ['HTMLElementEventMap', i.TYPE],
+      ['HTMLElement', i.TYPE_VALUE],
+      ['HTMLEmbedElement', i.TYPE_VALUE],
+      ['HTMLFieldSetElement', i.TYPE_VALUE],
+      ['HTMLFontElement', i.TYPE_VALUE],
+      ['HTMLFormControlsCollection', i.TYPE_VALUE],
+      ['HTMLFormElement', i.TYPE_VALUE],
+      ['HTMLFrameElement', i.TYPE_VALUE],
+      ['HTMLFrameSetElementEventMap', i.TYPE],
+      ['HTMLFrameSetElement', i.TYPE_VALUE],
+      ['HTMLHRElement', i.TYPE_VALUE],
+      ['HTMLHeadElement', i.TYPE_VALUE],
+      ['HTMLHeadingElement', i.TYPE_VALUE],
+      ['HTMLHtmlElement', i.TYPE_VALUE],
+      ['HTMLHyperlinkElementUtils', i.TYPE],
+      ['HTMLIFrameElement', i.TYPE_VALUE],
+      ['HTMLImageElement', i.TYPE_VALUE],
+      ['HTMLInputElement', i.TYPE_VALUE],
+      ['HTMLLIElement', i.TYPE_VALUE],
+      ['HTMLLabelElement', i.TYPE_VALUE],
+      ['HTMLLegendElement', i.TYPE_VALUE],
+      ['HTMLLinkElement', i.TYPE_VALUE],
+      ['HTMLMapElement', i.TYPE_VALUE],
+      ['HTMLMarqueeElement', i.TYPE_VALUE],
+      ['HTMLMediaElementEventMap', i.TYPE],
+      ['HTMLMediaElement', i.TYPE_VALUE],
+      ['HTMLMenuElement', i.TYPE_VALUE],
+      ['HTMLMetaElement', i.TYPE_VALUE],
+      ['HTMLMeterElement', i.TYPE_VALUE],
+      ['HTMLModElement', i.TYPE_VALUE],
+      ['HTMLOListElement', i.TYPE_VALUE],
+      ['HTMLObjectElement', i.TYPE_VALUE],
+      ['HTMLOptGroupElement', i.TYPE_VALUE],
+      ['HTMLOptionElement', i.TYPE_VALUE],
+      ['HTMLOptionsCollection', i.TYPE_VALUE],
+      ['HTMLOrSVGElement', i.TYPE],
+      ['HTMLOutputElement', i.TYPE_VALUE],
+      ['HTMLParagraphElement', i.TYPE_VALUE],
+      ['HTMLParamElement', i.TYPE_VALUE],
+      ['HTMLPictureElement', i.TYPE_VALUE],
+      ['HTMLPreElement', i.TYPE_VALUE],
+      ['HTMLProgressElement', i.TYPE_VALUE],
+      ['HTMLQuoteElement', i.TYPE_VALUE],
+      ['HTMLScriptElement', i.TYPE_VALUE],
+      ['HTMLSelectElement', i.TYPE_VALUE],
+      ['HTMLSlotElement', i.TYPE_VALUE],
+      ['HTMLSourceElement', i.TYPE_VALUE],
+      ['HTMLSpanElement', i.TYPE_VALUE],
+      ['HTMLStyleElement', i.TYPE_VALUE],
+      ['HTMLTableCaptionElement', i.TYPE_VALUE],
+      ['HTMLTableCellElement', i.TYPE_VALUE],
+      ['HTMLTableColElement', i.TYPE_VALUE],
+      ['HTMLTableDataCellElement', i.TYPE],
+      ['HTMLTableElement', i.TYPE_VALUE],
+      ['HTMLTableHeaderCellElement', i.TYPE],
+      ['HTMLTableRowElement', i.TYPE_VALUE],
+      ['HTMLTableSectionElement', i.TYPE_VALUE],
+      ['HTMLTemplateElement', i.TYPE_VALUE],
+      ['HTMLTextAreaElement', i.TYPE_VALUE],
+      ['HTMLTimeElement', i.TYPE_VALUE],
+      ['HTMLTitleElement', i.TYPE_VALUE],
+      ['HTMLTrackElement', i.TYPE_VALUE],
+      ['HTMLUListElement', i.TYPE_VALUE],
+      ['HTMLUnknownElement', i.TYPE_VALUE],
+      ['HTMLVideoElementEventMap', i.TYPE],
+      ['HTMLVideoElement', i.TYPE_VALUE],
+      ['HashChangeEvent', i.TYPE_VALUE],
+      ['Headers', i.TYPE_VALUE],
+      ['Highlight', i.TYPE_VALUE],
+      ['HighlightRegistry', i.TYPE_VALUE],
+      ['History', i.TYPE_VALUE],
+      ['IDBCursor', i.TYPE_VALUE],
+      ['IDBCursorWithValue', i.TYPE_VALUE],
+      ['IDBDatabaseEventMap', i.TYPE],
+      ['IDBDatabase', i.TYPE_VALUE],
+      ['IDBFactory', i.TYPE_VALUE],
+      ['IDBIndex', i.TYPE_VALUE],
+      ['IDBKeyRange', i.TYPE_VALUE],
+      ['IDBObjectStore', i.TYPE_VALUE],
+      ['IDBOpenDBRequestEventMap', i.TYPE],
+      ['IDBOpenDBRequest', i.TYPE_VALUE],
+      ['IDBRequestEventMap', i.TYPE],
+      ['IDBRequest', i.TYPE_VALUE],
+      ['IDBTransactionEventMap', i.TYPE],
+      ['IDBTransaction', i.TYPE_VALUE],
+      ['IDBVersionChangeEvent', i.TYPE_VALUE],
+      ['IIRFilterNode', i.TYPE_VALUE],
+      ['IdleDeadline', i.TYPE_VALUE],
+      ['ImageBitmap', i.TYPE_VALUE],
+      ['ImageBitmapRenderingContext', i.TYPE_VALUE],
+      ['ImageCapture', i.TYPE_VALUE],
+      ['ImageData', i.TYPE_VALUE],
+      ['ImageDecoder', i.TYPE_VALUE],
+      ['ImageTrack', i.TYPE_VALUE],
+      ['ImageTrackList', i.TYPE_VALUE],
+      ['ImportMeta', i.TYPE],
+      ['InputDeviceInfo', i.TYPE_VALUE],
+      ['InputEvent', i.TYPE_VALUE],
+      ['IntersectionObserver', i.TYPE_VALUE],
+      ['IntersectionObserverEntry', i.TYPE_VALUE],
+      ['KHR_parallel_shader_compile', i.TYPE],
+      ['KeyboardEvent', i.TYPE_VALUE],
+      ['KeyframeEffect', i.TYPE_VALUE],
+      ['LargestContentfulPaint', i.TYPE_VALUE],
+      ['LinkStyle', i.TYPE],
+      ['Location', i.TYPE_VALUE],
+      ['Lock', i.TYPE_VALUE],
+      ['LockManager', i.TYPE_VALUE],
+      ['MIDIAccessEventMap', i.TYPE],
+      ['MIDIAccess', i.TYPE_VALUE],
+      ['MIDIConnectionEvent', i.TYPE_VALUE],
+      ['MIDIInputEventMap', i.TYPE],
+      ['MIDIInput', i.TYPE_VALUE],
+      ['MIDIInputMap', i.TYPE_VALUE],
+      ['MIDIMessageEvent', i.TYPE_VALUE],
+      ['MIDIOutput', i.TYPE_VALUE],
+      ['MIDIOutputMap', i.TYPE_VALUE],
+      ['MIDIPortEventMap', i.TYPE],
+      ['MIDIPort', i.TYPE_VALUE],
+      ['MathMLElementEventMap', i.TYPE],
+      ['MathMLElement', i.TYPE_VALUE],
+      ['MediaCapabilities', i.TYPE_VALUE],
+      ['MediaDeviceInfo', i.TYPE_VALUE],
+      ['MediaDevicesEventMap', i.TYPE],
+      ['MediaDevices', i.TYPE_VALUE],
+      ['MediaElementAudioSourceNode', i.TYPE_VALUE],
+      ['MediaEncryptedEvent', i.TYPE_VALUE],
+      ['MediaError', i.TYPE_VALUE],
+      ['MediaKeyMessageEvent', i.TYPE_VALUE],
+      ['MediaKeySessionEventMap', i.TYPE],
+      ['MediaKeySession', i.TYPE_VALUE],
+      ['MediaKeyStatusMap', i.TYPE_VALUE],
+      ['MediaKeySystemAccess', i.TYPE_VALUE],
+      ['MediaKeys', i.TYPE_VALUE],
+      ['MediaList', i.TYPE_VALUE],
+      ['MediaMetadata', i.TYPE_VALUE],
+      ['MediaQueryListEventMap', i.TYPE],
+      ['MediaQueryList', i.TYPE_VALUE],
+      ['MediaQueryListEvent', i.TYPE_VALUE],
+      ['MediaRecorderEventMap', i.TYPE],
+      ['MediaRecorder', i.TYPE_VALUE],
+      ['MediaSession', i.TYPE_VALUE],
+      ['MediaSourceEventMap', i.TYPE],
+      ['MediaSource', i.TYPE_VALUE],
+      ['MediaSourceHandle', i.TYPE_VALUE],
+      ['MediaStreamEventMap', i.TYPE],
+      ['MediaStream', i.TYPE_VALUE],
+      ['MediaStreamAudioDestinationNode', i.TYPE_VALUE],
+      ['MediaStreamAudioSourceNode', i.TYPE_VALUE],
+      ['MediaStreamTrackEventMap', i.TYPE],
+      ['MediaStreamTrack', i.TYPE_VALUE],
+      ['MediaStreamTrackEvent', i.TYPE_VALUE],
+      ['MessageChannel', i.TYPE_VALUE],
+      ['MessageEvent', i.TYPE_VALUE],
+      ['MessageEventTargetEventMap', i.TYPE],
+      ['MessageEventTarget', i.TYPE],
+      ['MessagePortEventMap', i.TYPE],
+      ['MessagePort', i.TYPE_VALUE],
+      ['MimeType', i.TYPE_VALUE],
+      ['MimeTypeArray', i.TYPE_VALUE],
+      ['MouseEvent', i.TYPE_VALUE],
+      ['MutationObserver', i.TYPE_VALUE],
+      ['MutationRecord', i.TYPE_VALUE],
+      ['NamedNodeMap', i.TYPE_VALUE],
+      ['NavigateEvent', i.TYPE_VALUE],
+      ['NavigationEventMap', i.TYPE],
+      ['Navigation', i.TYPE_VALUE],
+      ['NavigationActivation', i.TYPE_VALUE],
+      ['NavigationCurrentEntryChangeEvent', i.TYPE_VALUE],
+      ['NavigationDestination', i.TYPE_VALUE],
+      ['NavigationHistoryEntryEventMap', i.TYPE],
+      ['NavigationHistoryEntry', i.TYPE_VALUE],
+      ['NavigationPrecommitController', i.TYPE_VALUE],
+      ['NavigationPreloadManager', i.TYPE_VALUE],
+      ['NavigationTransition', i.TYPE_VALUE],
+      ['Navigator', i.TYPE_VALUE],
+      ['NavigatorAutomationInformation', i.TYPE],
+      ['NavigatorBadge', i.TYPE],
+      ['NavigatorConcurrentHardware', i.TYPE],
+      ['NavigatorContentUtils', i.TYPE],
+      ['NavigatorCookies', i.TYPE],
+      ['NavigatorGPU', i.TYPE],
+      ['NavigatorID', i.TYPE],
+      ['NavigatorLanguage', i.TYPE],
+      ['NavigatorLocks', i.TYPE],
+      ['NavigatorLogin', i.TYPE_VALUE],
+      ['NavigatorOnLine', i.TYPE],
+      ['NavigatorPlugins', i.TYPE],
+      ['NavigatorStorage', i.TYPE],
+      ['Node', i.TYPE_VALUE],
+      ['NodeIterator', i.TYPE_VALUE],
+      ['NodeList', i.TYPE_VALUE],
+      ['NodeListOf', i.TYPE],
+      ['NonDocumentTypeChildNode', i.TYPE],
+      ['NonElementParentNode', i.TYPE],
+      ['NotificationEventMap', i.TYPE],
+      ['Notification', i.TYPE_VALUE],
+      ['OES_draw_buffers_indexed', i.TYPE],
+      ['OES_element_index_uint', i.TYPE],
+      ['OES_fbo_render_mipmap', i.TYPE],
+      ['OES_standard_derivatives', i.TYPE],
+      ['OES_texture_float', i.TYPE],
+      ['OES_texture_float_linear', i.TYPE],
+      ['OES_texture_half_float', i.TYPE],
+      ['OES_texture_half_float_linear', i.TYPE],
+      ['OES_vertex_array_object', i.TYPE],
+      ['OVR_multiview2', i.TYPE],
+      ['OfflineAudioCompletionEvent', i.TYPE_VALUE],
+      ['OfflineAudioContextEventMap', i.TYPE],
+      ['OfflineAudioContext', i.TYPE_VALUE],
+      ['OffscreenCanvasEventMap', i.TYPE],
+      ['OffscreenCanvas', i.TYPE_VALUE],
+      ['OffscreenCanvasRenderingContext2D', i.TYPE_VALUE],
+      ['OscillatorNode', i.TYPE_VALUE],
+      ['OverconstrainedError', i.TYPE_VALUE],
+      ['PageRevealEvent', i.TYPE_VALUE],
+      ['PageSwapEvent', i.TYPE_VALUE],
+      ['PageTransitionEvent', i.TYPE_VALUE],
+      ['PaintTimingMixin', i.TYPE],
+      ['PannerNode', i.TYPE_VALUE],
+      ['ParentNode', i.TYPE],
+      ['Path2D', i.TYPE_VALUE],
+      ['PaymentAddress', i.TYPE_VALUE],
+      ['PaymentMethodChangeEvent', i.TYPE_VALUE],
+      ['PaymentRequestEventMap', i.TYPE],
+      ['PaymentRequest', i.TYPE_VALUE],
+      ['PaymentRequestUpdateEvent', i.TYPE_VALUE],
+      ['PaymentResponseEventMap', i.TYPE],
+      ['PaymentResponse', i.TYPE_VALUE],
+      ['PerformanceEventMap', i.TYPE],
+      ['Performance', i.TYPE_VALUE],
+      ['PerformanceEntry', i.TYPE_VALUE],
+      ['PerformanceEventTiming', i.TYPE_VALUE],
+      ['PerformanceMark', i.TYPE_VALUE],
+      ['PerformanceMeasure', i.TYPE_VALUE],
+      ['PerformanceNavigation', i.TYPE_VALUE],
+      ['PerformanceNavigationTiming', i.TYPE_VALUE],
+      ['PerformanceObserver', i.TYPE_VALUE],
+      ['PerformanceObserverEntryList', i.TYPE_VALUE],
+      ['PerformancePaintTiming', i.TYPE_VALUE],
+      ['PerformanceResourceTiming', i.TYPE_VALUE],
+      ['PerformanceServerTiming', i.TYPE_VALUE],
+      ['PerformanceTiming', i.TYPE_VALUE],
+      ['PeriodicWave', i.TYPE_VALUE],
+      ['PermissionStatusEventMap', i.TYPE],
+      ['PermissionStatus', i.TYPE_VALUE],
+      ['Permissions', i.TYPE_VALUE],
+      ['PictureInPictureEvent', i.TYPE_VALUE],
+      ['PictureInPictureWindowEventMap', i.TYPE],
+      ['PictureInPictureWindow', i.TYPE_VALUE],
+      ['Plugin', i.TYPE_VALUE],
+      ['PluginArray', i.TYPE_VALUE],
+      ['PointerEvent', i.TYPE_VALUE],
+      ['PopStateEvent', i.TYPE_VALUE],
+      ['PopoverTargetAttributes', i.TYPE],
+      ['ProcessingInstruction', i.TYPE_VALUE],
+      ['ProgressEvent', i.TYPE_VALUE],
+      ['PromiseRejectionEvent', i.TYPE_VALUE],
+      ['PublicKeyCredential', i.TYPE_VALUE],
+      ['PushManager', i.TYPE_VALUE],
+      ['PushManagerAttribute', i.TYPE],
+      ['PushSubscription', i.TYPE_VALUE],
+      ['PushSubscriptionOptions', i.TYPE_VALUE],
+      ['RTCCertificate', i.TYPE_VALUE],
+      ['RTCDTMFSenderEventMap', i.TYPE],
+      ['RTCDTMFSender', i.TYPE_VALUE],
+      ['RTCDTMFToneChangeEvent', i.TYPE_VALUE],
+      ['RTCDataChannelEventMap', i.TYPE],
+      ['RTCDataChannel', i.TYPE_VALUE],
+      ['RTCDataChannelEvent', i.TYPE_VALUE],
+      ['RTCDtlsTransportEventMap', i.TYPE],
+      ['RTCDtlsTransport', i.TYPE_VALUE],
+      ['RTCEncodedAudioFrame', i.TYPE_VALUE],
+      ['RTCEncodedVideoFrame', i.TYPE_VALUE],
+      ['RTCError', i.TYPE_VALUE],
+      ['RTCErrorEvent', i.TYPE_VALUE],
+      ['RTCIceCandidate', i.TYPE_VALUE],
+      ['RTCIceCandidatePair', i.TYPE],
+      ['RTCIceTransportEventMap', i.TYPE],
+      ['RTCIceTransport', i.TYPE_VALUE],
+      ['RTCPeerConnectionEventMap', i.TYPE],
+      ['RTCPeerConnection', i.TYPE_VALUE],
+      ['RTCPeerConnectionIceErrorEvent', i.TYPE_VALUE],
+      ['RTCPeerConnectionIceEvent', i.TYPE_VALUE],
+      ['RTCRtpReceiver', i.TYPE_VALUE],
+      ['RTCRtpScriptTransform', i.TYPE_VALUE],
+      ['RTCRtpSender', i.TYPE_VALUE],
+      ['RTCRtpTransceiver', i.TYPE_VALUE],
+      ['RTCSctpTransportEventMap', i.TYPE],
+      ['RTCSctpTransport', i.TYPE_VALUE],
+      ['RTCSessionDescription', i.TYPE_VALUE],
+      ['RTCStatsReport', i.TYPE_VALUE],
+      ['RTCTrackEvent', i.TYPE_VALUE],
+      ['RadioNodeList', i.TYPE_VALUE],
+      ['Range', i.TYPE_VALUE],
+      ['ReadableByteStreamController', i.TYPE_VALUE],
+      ['ReadableStream', i.TYPE_VALUE],
+      ['ReadableStreamBYOBReader', i.TYPE_VALUE],
+      ['ReadableStreamBYOBRequest', i.TYPE_VALUE],
+      ['ReadableStreamDefaultController', i.TYPE_VALUE],
+      ['ReadableStreamDefaultReader', i.TYPE_VALUE],
+      ['ReadableStreamGenericReader', i.TYPE],
+      ['RemotePlaybackEventMap', i.TYPE],
+      ['RemotePlayback', i.TYPE_VALUE],
+      ['ReportingObserver', i.TYPE_VALUE],
+      ['Request', i.TYPE_VALUE],
+      ['ResizeObserver', i.TYPE_VALUE],
+      ['ResizeObserverEntry', i.TYPE_VALUE],
+      ['ResizeObserverSize', i.TYPE_VALUE],
+      ['Response', i.TYPE_VALUE],
+      ['SVGAElement', i.TYPE_VALUE],
+      ['SVGAngle', i.TYPE_VALUE],
+      ['SVGAnimateElement', i.TYPE_VALUE],
+      ['SVGAnimateMotionElement', i.TYPE_VALUE],
+      ['SVGAnimateTransformElement', i.TYPE_VALUE],
+      ['SVGAnimatedAngle', i.TYPE_VALUE],
+      ['SVGAnimatedBoolean', i.TYPE_VALUE],
+      ['SVGAnimatedEnumeration', i.TYPE_VALUE],
+      ['SVGAnimatedInteger', i.TYPE_VALUE],
+      ['SVGAnimatedLength', i.TYPE_VALUE],
+      ['SVGAnimatedLengthList', i.TYPE_VALUE],
+      ['SVGAnimatedNumber', i.TYPE_VALUE],
+      ['SVGAnimatedNumberList', i.TYPE_VALUE],
+      ['SVGAnimatedPoints', i.TYPE],
+      ['SVGAnimatedPreserveAspectRatio', i.TYPE_VALUE],
+      ['SVGAnimatedRect', i.TYPE_VALUE],
+      ['SVGAnimatedString', i.TYPE_VALUE],
+      ['SVGAnimatedTransformList', i.TYPE_VALUE],
+      ['SVGAnimationElement', i.TYPE_VALUE],
+      ['SVGCircleElement', i.TYPE_VALUE],
+      ['SVGClipPathElement', i.TYPE_VALUE],
+      ['SVGComponentTransferFunctionElement', i.TYPE_VALUE],
+      ['SVGDefsElement', i.TYPE_VALUE],
+      ['SVGDescElement', i.TYPE_VALUE],
+      ['SVGElementEventMap', i.TYPE],
+      ['SVGElement', i.TYPE_VALUE],
+      ['SVGEllipseElement', i.TYPE_VALUE],
+      ['SVGFEBlendElement', i.TYPE_VALUE],
+      ['SVGFEColorMatrixElement', i.TYPE_VALUE],
+      ['SVGFEComponentTransferElement', i.TYPE_VALUE],
+      ['SVGFECompositeElement', i.TYPE_VALUE],
+      ['SVGFEConvolveMatrixElement', i.TYPE_VALUE],
+      ['SVGFEDiffuseLightingElement', i.TYPE_VALUE],
+      ['SVGFEDisplacementMapElement', i.TYPE_VALUE],
+      ['SVGFEDistantLightElement', i.TYPE_VALUE],
+      ['SVGFEDropShadowElement', i.TYPE_VALUE],
+      ['SVGFEFloodElement', i.TYPE_VALUE],
+      ['SVGFEFuncAElement', i.TYPE_VALUE],
+      ['SVGFEFuncBElement', i.TYPE_VALUE],
+      ['SVGFEFuncGElement', i.TYPE_VALUE],
+      ['SVGFEFuncRElement', i.TYPE_VALUE],
+      ['SVGFEGaussianBlurElement', i.TYPE_VALUE],
+      ['SVGFEImageElement', i.TYPE_VALUE],
+      ['SVGFEMergeElement', i.TYPE_VALUE],
+      ['SVGFEMergeNodeElement', i.TYPE_VALUE],
+      ['SVGFEMorphologyElement', i.TYPE_VALUE],
+      ['SVGFEOffsetElement', i.TYPE_VALUE],
+      ['SVGFEPointLightElement', i.TYPE_VALUE],
+      ['SVGFESpecularLightingElement', i.TYPE_VALUE],
+      ['SVGFESpotLightElement', i.TYPE_VALUE],
+      ['SVGFETileElement', i.TYPE_VALUE],
+      ['SVGFETurbulenceElement', i.TYPE_VALUE],
+      ['SVGFilterElement', i.TYPE_VALUE],
+      ['SVGFilterPrimitiveStandardAttributes', i.TYPE],
+      ['SVGFitToViewBox', i.TYPE],
+      ['SVGForeignObjectElement', i.TYPE_VALUE],
+      ['SVGGElement', i.TYPE_VALUE],
+      ['SVGGeometryElement', i.TYPE_VALUE],
+      ['SVGGradientElement', i.TYPE_VALUE],
+      ['SVGGraphicsElement', i.TYPE_VALUE],
+      ['SVGImageElement', i.TYPE_VALUE],
+      ['SVGLength', i.TYPE_VALUE],
+      ['SVGLengthList', i.TYPE_VALUE],
+      ['SVGLineElement', i.TYPE_VALUE],
+      ['SVGLinearGradientElement', i.TYPE_VALUE],
+      ['SVGMPathElement', i.TYPE_VALUE],
+      ['SVGMarkerElement', i.TYPE_VALUE],
+      ['SVGMaskElement', i.TYPE_VALUE],
+      ['SVGMetadataElement', i.TYPE_VALUE],
+      ['SVGNumber', i.TYPE_VALUE],
+      ['SVGNumberList', i.TYPE_VALUE],
+      ['SVGPathElement', i.TYPE_VALUE],
+      ['SVGPatternElement', i.TYPE_VALUE],
+      ['SVGPointList', i.TYPE_VALUE],
+      ['SVGPolygonElement', i.TYPE_VALUE],
+      ['SVGPolylineElement', i.TYPE_VALUE],
+      ['SVGPreserveAspectRatio', i.TYPE_VALUE],
+      ['SVGRadialGradientElement', i.TYPE_VALUE],
+      ['SVGRectElement', i.TYPE_VALUE],
+      ['SVGSVGElementEventMap', i.TYPE],
+      ['SVGSVGElement', i.TYPE_VALUE],
+      ['SVGScriptElement', i.TYPE_VALUE],
+      ['SVGSetElement', i.TYPE_VALUE],
+      ['SVGStopElement', i.TYPE_VALUE],
+      ['SVGStringList', i.TYPE_VALUE],
+      ['SVGStyleElement', i.TYPE_VALUE],
+      ['SVGSwitchElement', i.TYPE_VALUE],
+      ['SVGSymbolElement', i.TYPE_VALUE],
+      ['SVGTSpanElement', i.TYPE_VALUE],
+      ['SVGTests', i.TYPE],
+      ['SVGTextContentElement', i.TYPE_VALUE],
+      ['SVGTextElement', i.TYPE_VALUE],
+      ['SVGTextPathElement', i.TYPE_VALUE],
+      ['SVGTextPositioningElement', i.TYPE_VALUE],
+      ['SVGTitleElement', i.TYPE_VALUE],
+      ['SVGTransform', i.TYPE_VALUE],
+      ['SVGTransformList', i.TYPE_VALUE],
+      ['SVGURIReference', i.TYPE],
+      ['SVGUnitTypes', i.TYPE_VALUE],
+      ['SVGUseElement', i.TYPE_VALUE],
+      ['SVGViewElement', i.TYPE_VALUE],
+      ['Sanitizer', i.TYPE_VALUE],
+      ['Scheduler', i.TYPE_VALUE],
+      ['Screen', i.TYPE_VALUE],
+      ['ScreenOrientationEventMap', i.TYPE],
+      ['ScreenOrientation', i.TYPE_VALUE],
+      ['ScriptProcessorNodeEventMap', i.TYPE],
+      ['ScriptProcessorNode', i.TYPE_VALUE],
+      ['ScrollTimeline', i.TYPE_VALUE],
+      ['SecurityPolicyViolationEvent', i.TYPE_VALUE],
+      ['Selection', i.TYPE_VALUE],
+      ['ServiceWorkerEventMap', i.TYPE],
+      ['ServiceWorker', i.TYPE_VALUE],
+      ['ServiceWorkerContainerEventMap', i.TYPE],
+      ['ServiceWorkerContainer', i.TYPE_VALUE],
+      ['ServiceWorkerRegistrationEventMap', i.TYPE],
+      ['ServiceWorkerRegistration', i.TYPE_VALUE],
+      ['ShadowRootEventMap', i.TYPE],
+      ['ShadowRoot', i.TYPE_VALUE],
+      ['SharedWorker', i.TYPE_VALUE],
+      ['Slottable', i.TYPE],
+      ['SourceBufferEventMap', i.TYPE],
+      ['SourceBuffer', i.TYPE_VALUE],
+      ['SourceBufferListEventMap', i.TYPE],
+      ['SourceBufferList', i.TYPE_VALUE],
+      ['SpeechRecognitionAlternative', i.TYPE_VALUE],
+      ['SpeechRecognitionErrorEvent', i.TYPE_VALUE],
+      ['SpeechRecognitionEvent', i.TYPE_VALUE],
+      ['SpeechRecognitionResult', i.TYPE_VALUE],
+      ['SpeechRecognitionResultList', i.TYPE_VALUE],
+      ['SpeechSynthesisEventMap', i.TYPE],
+      ['SpeechSynthesis', i.TYPE_VALUE],
+      ['SpeechSynthesisErrorEvent', i.TYPE_VALUE],
+      ['SpeechSynthesisEvent', i.TYPE_VALUE],
+      ['SpeechSynthesisUtteranceEventMap', i.TYPE],
+      ['SpeechSynthesisUtterance', i.TYPE_VALUE],
+      ['SpeechSynthesisVoice', i.TYPE_VALUE],
+      ['StaticRange', i.TYPE_VALUE],
+      ['StereoPannerNode', i.TYPE_VALUE],
+      ['Storage', i.TYPE_VALUE],
+      ['StorageEvent', i.TYPE_VALUE],
+      ['StorageManager', i.TYPE_VALUE],
+      ['StylePropertyMap', i.TYPE_VALUE],
+      ['StylePropertyMapReadOnly', i.TYPE_VALUE],
+      ['StyleSheet', i.TYPE_VALUE],
+      ['StyleSheetList', i.TYPE_VALUE],
+      ['SubmitEvent', i.TYPE_VALUE],
+      ['SubtleCrypto', i.TYPE_VALUE],
+      ['TaskController', i.TYPE_VALUE],
+      ['TaskPriorityChangeEvent', i.TYPE_VALUE],
+      ['TaskSignalEventMap', i.TYPE],
+      ['TaskSignal', i.TYPE_VALUE],
+      ['Text', i.TYPE_VALUE],
+      ['TextDecoder', i.TYPE_VALUE],
+      ['TextDecoderCommon', i.TYPE],
+      ['TextDecoderStream', i.TYPE_VALUE],
+      ['TextEncoder', i.TYPE_VALUE],
+      ['TextEncoderCommon', i.TYPE],
+      ['TextEncoderStream', i.TYPE_VALUE],
+      ['TextEvent', i.TYPE_VALUE],
+      ['TextMetrics', i.TYPE_VALUE],
+      ['TextTrackEventMap', i.TYPE],
+      ['TextTrack', i.TYPE_VALUE],
+      ['TextTrackCueEventMap', i.TYPE],
+      ['TextTrackCue', i.TYPE_VALUE],
+      ['TextTrackCueList', i.TYPE_VALUE],
+      ['TextTrackListEventMap', i.TYPE],
+      ['TextTrackList', i.TYPE_VALUE],
+      ['TimeRanges', i.TYPE_VALUE],
+      ['ToggleEvent', i.TYPE_VALUE],
+      ['Touch', i.TYPE_VALUE],
+      ['TouchEvent', i.TYPE_VALUE],
+      ['TouchList', i.TYPE_VALUE],
+      ['TrackEvent', i.TYPE_VALUE],
+      ['TransformStream', i.TYPE_VALUE],
+      ['TransformStreamDefaultController', i.TYPE_VALUE],
+      ['TransitionEvent', i.TYPE_VALUE],
+      ['TreeWalker', i.TYPE_VALUE],
+      ['UIEvent', i.TYPE_VALUE],
+      ['URL', i.TYPE_VALUE],
+      ['webkitURL', i.TYPE_VALUE],
+      ['URLPattern', i.TYPE_VALUE],
+      ['URLSearchParams', i.TYPE_VALUE],
+      ['UserActivation', i.TYPE_VALUE],
+      ['VTTCue', i.TYPE_VALUE],
+      ['VTTRegion', i.TYPE_VALUE],
+      ['ValidityState', i.TYPE_VALUE],
+      ['VideoColorSpace', i.TYPE_VALUE],
+      ['VideoDecoderEventMap', i.TYPE],
+      ['VideoDecoder', i.TYPE_VALUE],
+      ['VideoEncoderEventMap', i.TYPE],
+      ['VideoEncoder', i.TYPE_VALUE],
+      ['VideoFrame', i.TYPE_VALUE],
+      ['VideoPlaybackQuality', i.TYPE_VALUE],
+      ['ViewTimeline', i.TYPE_VALUE],
+      ['ViewTransition', i.TYPE_VALUE],
+      ['ViewTransitionTypeSet', i.TYPE_VALUE],
+      ['VisualViewportEventMap', i.TYPE],
+      ['VisualViewport', i.TYPE_VALUE],
+      ['WEBGL_color_buffer_float', i.TYPE],
+      ['WEBGL_compressed_texture_astc', i.TYPE],
+      ['WEBGL_compressed_texture_etc', i.TYPE],
+      ['WEBGL_compressed_texture_etc1', i.TYPE],
+      ['WEBGL_compressed_texture_pvrtc', i.TYPE],
+      ['WEBGL_compressed_texture_s3tc', i.TYPE],
+      ['WEBGL_compressed_texture_s3tc_srgb', i.TYPE],
+      ['WEBGL_debug_renderer_info', i.TYPE],
+      ['WEBGL_debug_shaders', i.TYPE],
+      ['WEBGL_depth_texture', i.TYPE],
+      ['WEBGL_draw_buffers', i.TYPE],
+      ['WEBGL_lose_context', i.TYPE],
+      ['WEBGL_multi_draw', i.TYPE],
+      ['WGSLLanguageFeatures', i.TYPE_VALUE],
+      ['WakeLock', i.TYPE_VALUE],
+      ['WakeLockSentinelEventMap', i.TYPE],
+      ['WakeLockSentinel', i.TYPE_VALUE],
+      ['WaveShaperNode', i.TYPE_VALUE],
+      ['WebGL2RenderingContext', i.TYPE_VALUE],
+      ['WebGL2RenderingContextBase', i.TYPE],
+      ['WebGL2RenderingContextOverloads', i.TYPE],
+      ['WebGLActiveInfo', i.TYPE_VALUE],
+      ['WebGLBuffer', i.TYPE_VALUE],
+      ['WebGLContextEvent', i.TYPE_VALUE],
+      ['WebGLFramebuffer', i.TYPE_VALUE],
+      ['WebGLProgram', i.TYPE_VALUE],
+      ['WebGLQuery', i.TYPE_VALUE],
+      ['WebGLRenderbuffer', i.TYPE_VALUE],
+      ['WebGLRenderingContext', i.TYPE_VALUE],
+      ['WebGLRenderingContextBase', i.TYPE],
+      ['WebGLRenderingContextOverloads', i.TYPE],
+      ['WebGLSampler', i.TYPE_VALUE],
+      ['WebGLShader', i.TYPE_VALUE],
+      ['WebGLShaderPrecisionFormat', i.TYPE_VALUE],
+      ['WebGLSync', i.TYPE_VALUE],
+      ['WebGLTexture', i.TYPE_VALUE],
+      ['WebGLTransformFeedback', i.TYPE_VALUE],
+      ['WebGLUniformLocation', i.TYPE_VALUE],
+      ['WebGLVertexArrayObject', i.TYPE_VALUE],
+      ['WebGLVertexArrayObjectOES', i.TYPE],
+      ['WebSocketEventMap', i.TYPE],
+      ['WebSocket', i.TYPE_VALUE],
+      ['WebTransport', i.TYPE_VALUE],
+      ['WebTransportBidirectionalStream', i.TYPE_VALUE],
+      ['WebTransportDatagramDuplexStream', i.TYPE_VALUE],
+      ['WebTransportError', i.TYPE_VALUE],
+      ['WheelEvent', i.TYPE_VALUE],
+      ['WindowEventMap', i.TYPE],
+      ['Window', i.TYPE_VALUE],
+      ['WindowEventHandlersEventMap', i.TYPE],
+      ['WindowEventHandlers', i.TYPE],
+      ['WindowLocalStorage', i.TYPE],
+      ['WindowOrWorkerGlobalScope', i.TYPE],
+      ['WindowSessionStorage', i.TYPE],
+      ['WorkerEventMap', i.TYPE],
+      ['Worker', i.TYPE_VALUE],
+      ['Worklet', i.TYPE_VALUE],
+      ['WritableStream', i.TYPE_VALUE],
+      ['WritableStreamDefaultController', i.TYPE_VALUE],
+      ['WritableStreamDefaultWriter', i.TYPE_VALUE],
+      ['XMLDocument', i.TYPE_VALUE],
+      ['XMLHttpRequestEventMap', i.TYPE],
+      ['XMLHttpRequest', i.TYPE_VALUE],
+      ['XMLHttpRequestEventTargetEventMap', i.TYPE],
+      ['XMLHttpRequestEventTarget', i.TYPE_VALUE],
+      ['XMLHttpRequestUpload', i.TYPE_VALUE],
+      ['XMLSerializer', i.TYPE_VALUE],
+      ['XPathEvaluator', i.TYPE_VALUE],
+      ['XPathEvaluatorBase', i.TYPE],
+      ['XPathExpression', i.TYPE_VALUE],
+      ['XPathResult', i.TYPE_VALUE],
+      ['XSLTProcessor', i.TYPE_VALUE],
+      ['CSS', i.TYPE_VALUE],
+      ['WebAssembly', i.TYPE_VALUE],
+      ['Console', i.TYPE],
+      ['AudioDataOutputCallback', i.TYPE],
+      ['BlobCallback', i.TYPE],
+      ['CustomElementConstructor', i.TYPE],
+      ['DecodeErrorCallback', i.TYPE],
+      ['DecodeSuccessCallback', i.TYPE],
+      ['EncodedAudioChunkOutputCallback', i.TYPE],
+      ['EncodedVideoChunkOutputCallback', i.TYPE],
+      ['ErrorCallback', i.TYPE],
+      ['FileCallback', i.TYPE],
+      ['FileSystemEntriesCallback', i.TYPE],
+      ['FileSystemEntryCallback', i.TYPE],
+      ['FrameRequestCallback', i.TYPE],
+      ['FunctionStringCallback', i.TYPE],
+      ['IdleRequestCallback', i.TYPE],
+      ['IntersectionObserverCallback', i.TYPE],
+      ['LockGrantedCallback', i.TYPE],
+      ['MediaSessionActionHandler', i.TYPE],
+      ['MutationCallback', i.TYPE],
+      ['NavigationInterceptHandler', i.TYPE],
+      ['NavigationPrecommitHandler', i.TYPE],
+      ['NotificationPermissionCallback', i.TYPE],
+      ['OnBeforeUnloadEventHandlerNonNull', i.TYPE],
+      ['OnErrorEventHandlerNonNull', i.TYPE],
+      ['PerformanceObserverCallback', i.TYPE],
+      ['PositionCallback', i.TYPE],
+      ['PositionErrorCallback', i.TYPE],
+      ['QueuingStrategySize', i.TYPE],
+      ['RTCPeerConnectionErrorCallback', i.TYPE],
+      ['RTCSessionDescriptionCallback', i.TYPE],
+      ['RemotePlaybackAvailabilityCallback', i.TYPE],
+      ['ReportingObserverCallback', i.TYPE],
+      ['ResizeObserverCallback', i.TYPE],
+      ['SchedulerPostTaskCallback', i.TYPE],
+      ['TransformerFlushCallback', i.TYPE],
+      ['TransformerStartCallback', i.TYPE],
+      ['TransformerTransformCallback', i.TYPE],
+      ['UnderlyingSinkAbortCallback', i.TYPE],
+      ['UnderlyingSinkCloseCallback', i.TYPE],
+      ['UnderlyingSinkStartCallback', i.TYPE],
+      ['UnderlyingSinkWriteCallback', i.TYPE],
+      ['UnderlyingSourceCancelCallback', i.TYPE],
+      ['UnderlyingSourcePullCallback', i.TYPE],
+      ['UnderlyingSourceStartCallback', i.TYPE],
+      ['VideoFrameOutputCallback', i.TYPE],
+      ['VideoFrameRequestCallback', i.TYPE],
+      ['ViewTransitionUpdateCallback', i.TYPE],
+      ['VoidFunction', i.TYPE],
+      ['WebCodecsErrorCallback', i.TYPE],
+      ['HTMLElementTagNameMap', i.TYPE],
+      ['HTMLElementDeprecatedTagNameMap', i.TYPE],
+      ['SVGElementTagNameMap', i.TYPE],
+      ['MathMLElementTagNameMap', i.TYPE],
+      ['ElementTagNameMap', i.TYPE],
+      ['AlgorithmIdentifier', i.TYPE],
+      ['AllowSharedBufferSource', i.TYPE],
+      ['AutoFill', i.TYPE],
+      ['AutoFillField', i.TYPE],
+      ['AutoFillSection', i.TYPE],
+      ['Base64URLString', i.TYPE],
+      ['BigInteger', i.TYPE],
+      ['BlobPart', i.TYPE],
+      ['BodyInit', i.TYPE],
+      ['BufferSource', i.TYPE],
+      ['COSEAlgorithmIdentifier', i.TYPE],
+      ['CSSKeywordish', i.TYPE],
+      ['CSSNumberish', i.TYPE],
+      ['CSSPerspectiveValue', i.TYPE],
+      ['CSSUnparsedSegment', i.TYPE],
+      ['CanvasImageSource', i.TYPE],
+      ['ClipboardItemData', i.TYPE],
+      ['ClipboardItems', i.TYPE],
+      ['ConstrainBoolean', i.TYPE],
+      ['ConstrainBooleanOrDOMString', i.TYPE],
+      ['ConstrainDOMString', i.TYPE],
+      ['ConstrainDouble', i.TYPE],
+      ['ConstrainULong', i.TYPE],
+      ['CookieList', i.TYPE],
+      ['DOMHighResTimeStamp', i.TYPE],
+      ['EpochTimeStamp', i.TYPE],
+      ['EventListenerOrEventListenerObject', i.TYPE],
+      ['FileSystemWriteChunkType', i.TYPE],
+      ['Float32List', i.TYPE],
+      ['FormDataEntryValue', i.TYPE],
+      ['GLbitfield', i.TYPE],
+      ['GLboolean', i.TYPE],
+      ['GLclampf', i.TYPE],
+      ['GLenum', i.TYPE],
+      ['GLfloat', i.TYPE],
+      ['GLint', i.TYPE],
+      ['GLint64', i.TYPE],
+      ['GLintptr', i.TYPE],
+      ['GLsizei', i.TYPE],
+      ['GLsizeiptr', i.TYPE],
+      ['GLuint', i.TYPE],
+      ['GLuint64', i.TYPE],
+      ['GPUBindingResource', i.TYPE],
+      ['GPUBufferDynamicOffset', i.TYPE],
+      ['GPUBufferUsageFlags', i.TYPE],
+      ['GPUColor', i.TYPE],
+      ['GPUColorWriteFlags', i.TYPE],
+      ['GPUCopyExternalImageSource', i.TYPE],
+      ['GPUDepthBias', i.TYPE],
+      ['GPUExtent3D', i.TYPE],
+      ['GPUFlagsConstant', i.TYPE],
+      ['GPUIndex32', i.TYPE],
+      ['GPUIntegerCoordinate', i.TYPE],
+      ['GPUIntegerCoordinateOut', i.TYPE],
+      ['GPUMapModeFlags', i.TYPE],
+      ['GPUOrigin2D', i.TYPE],
+      ['GPUOrigin3D', i.TYPE],
+      ['GPUPipelineConstantValue', i.TYPE],
+      ['GPUSampleMask', i.TYPE],
+      ['GPUShaderStageFlags', i.TYPE],
+      ['GPUSignedOffset32', i.TYPE],
+      ['GPUSize32', i.TYPE],
+      ['GPUSize32Out', i.TYPE],
+      ['GPUSize64', i.TYPE],
+      ['GPUSize64Out', i.TYPE],
+      ['GPUStencilValue', i.TYPE],
+      ['GPUTextureUsageFlags', i.TYPE],
+      ['HTMLOrSVGImageElement', i.TYPE],
+      ['HTMLOrSVGScriptElement', i.TYPE],
+      ['HashAlgorithmIdentifier', i.TYPE],
+      ['HeadersInit', i.TYPE],
+      ['IDBValidKey', i.TYPE],
+      ['ImageBitmapSource', i.TYPE],
+      ['ImageBufferSource', i.TYPE],
+      ['ImageDataArray', i.TYPE],
+      ['Int32List', i.TYPE],
+      ['LineAndPositionSetting', i.TYPE],
+      ['MediaProvider', i.TYPE],
+      ['MessageEventSource', i.TYPE],
+      ['MutationRecordType', i.TYPE],
+      ['NamedCurve', i.TYPE],
+      ['OffscreenRenderingContext', i.TYPE],
+      ['OnBeforeUnloadEventHandler', i.TYPE],
+      ['OnErrorEventHandler', i.TYPE],
+      ['OptionalPostfixToken', i.TYPE],
+      ['OptionalPrefixToken', i.TYPE],
+      ['PerformanceEntryList', i.TYPE],
+      ['PublicKeyCredentialClientCapabilities', i.TYPE],
+      ['RTCRtpReceiverTransform', i.TYPE],
+      ['RTCRtpSenderTransform', i.TYPE],
+      ['ReadableStreamController', i.TYPE],
+      ['ReadableStreamReadResult', i.TYPE],
+      ['ReadableStreamReader', i.TYPE],
+      ['RenderingContext', i.TYPE],
+      ['ReportList', i.TYPE],
+      ['RequestInfo', i.TYPE],
+      ['SanitizerAttribute', i.TYPE],
+      ['SanitizerElement', i.TYPE],
+      ['SanitizerElementWithAttributes', i.TYPE],
+      ['SelectionDirection', i.TYPE],
+      ['TexImageSource', i.TYPE],
+      ['TimerHandler', i.TYPE],
+      ['Transferable', i.TYPE],
+      ['URLPatternInput', i.TYPE],
+      ['Uint32List', i.TYPE],
+      ['VibratePattern', i.TYPE],
+      ['WindowProxy', i.TYPE],
+      ['XMLHttpRequestBodyInit', i.TYPE],
+      ['AacBitstreamFormat', i.TYPE],
+      ['AlignSetting', i.TYPE],
+      ['AlphaOption', i.TYPE],
+      ['AnimationPlayState', i.TYPE],
+      ['AnimationReplaceState', i.TYPE],
+      ['AppendMode', i.TYPE],
+      ['AttestationConveyancePreference', i.TYPE],
+      ['AudioContextLatencyCategory', i.TYPE],
+      ['AudioContextState', i.TYPE],
+      ['AudioSampleFormat', i.TYPE],
+      ['AuthenticatorAttachment', i.TYPE],
+      ['AuthenticatorTransport', i.TYPE],
+      ['AutoFillAddressKind', i.TYPE],
+      ['AutoFillBase', i.TYPE],
+      ['AutoFillContactField', i.TYPE],
+      ['AutoFillContactKind', i.TYPE],
+      ['AutoFillCredentialField', i.TYPE],
+      ['AutoFillNormalField', i.TYPE],
+      ['AutoKeyword', i.TYPE],
+      ['AutomationRate', i.TYPE],
+      ['AvcBitstreamFormat', i.TYPE],
+      ['BinaryType', i.TYPE],
+      ['BiquadFilterType', i.TYPE],
+      ['BitrateMode', i.TYPE],
+      ['CSSMathOperator', i.TYPE],
+      ['CSSNumericBaseType', i.TYPE],
+      ['CanPlayTypeResult', i.TYPE],
+      ['CanvasDirection', i.TYPE],
+      ['CanvasFillRule', i.TYPE],
+      ['CanvasFontKerning', i.TYPE],
+      ['CanvasFontStretch', i.TYPE],
+      ['CanvasFontVariantCaps', i.TYPE],
+      ['CanvasLineCap', i.TYPE],
+      ['CanvasLineJoin', i.TYPE],
+      ['CanvasTextAlign', i.TYPE],
+      ['CanvasTextBaseline', i.TYPE],
+      ['CanvasTextRendering', i.TYPE],
+      ['ChannelCountMode', i.TYPE],
+      ['ChannelInterpretation', i.TYPE],
+      ['ClientTypes', i.TYPE],
+      ['CodecState', i.TYPE],
+      ['ColorGamut', i.TYPE],
+      ['ColorSpaceConversion', i.TYPE],
+      ['CompositeOperation', i.TYPE],
+      ['CompositeOperationOrAuto', i.TYPE],
+      ['CompressionFormat', i.TYPE],
+      ['CookieSameSite', i.TYPE],
+      ['CredentialMediationRequirement', i.TYPE],
+      ['DOMParserSupportedType', i.TYPE],
+      ['DirectionSetting', i.TYPE],
+      ['DisplayCaptureSurfaceType', i.TYPE],
+      ['DistanceModelType', i.TYPE],
+      ['DocumentReadyState', i.TYPE],
+      ['DocumentVisibilityState', i.TYPE],
+      ['EncodedAudioChunkType', i.TYPE],
+      ['EncodedVideoChunkType', i.TYPE],
+      ['EndOfStreamError', i.TYPE],
+      ['EndingType', i.TYPE],
+      ['FileSystemHandleKind', i.TYPE],
+      ['FillLightMode', i.TYPE],
+      ['FillMode', i.TYPE],
+      ['FontDisplay', i.TYPE],
+      ['FontFaceLoadStatus', i.TYPE],
+      ['FontFaceSetLoadStatus', i.TYPE],
+      ['FullscreenNavigationUI', i.TYPE],
+      ['GPUAddressMode', i.TYPE],
+      ['GPUAutoLayoutMode', i.TYPE],
+      ['GPUBlendFactor', i.TYPE],
+      ['GPUBlendOperation', i.TYPE],
+      ['GPUBufferBindingType', i.TYPE],
+      ['GPUBufferMapState', i.TYPE],
+      ['GPUCanvasAlphaMode', i.TYPE],
+      ['GPUCanvasToneMappingMode', i.TYPE],
+      ['GPUCompareFunction', i.TYPE],
+      ['GPUCompilationMessageType', i.TYPE],
+      ['GPUCullMode', i.TYPE],
+      ['GPUDeviceLostReason', i.TYPE],
+      ['GPUErrorFilter', i.TYPE],
+      ['GPUFeatureName', i.TYPE],
+      ['GPUFilterMode', i.TYPE],
+      ['GPUFrontFace', i.TYPE],
+      ['GPUIndexFormat', i.TYPE],
+      ['GPULoadOp', i.TYPE],
+      ['GPUMipmapFilterMode', i.TYPE],
+      ['GPUPipelineErrorReason', i.TYPE],
+      ['GPUPowerPreference', i.TYPE],
+      ['GPUPrimitiveTopology', i.TYPE],
+      ['GPUQueryType', i.TYPE],
+      ['GPUSamplerBindingType', i.TYPE],
+      ['GPUStencilOperation', i.TYPE],
+      ['GPUStorageTextureAccess', i.TYPE],
+      ['GPUStoreOp', i.TYPE],
+      ['GPUTextureAspect', i.TYPE],
+      ['GPUTextureDimension', i.TYPE],
+      ['GPUTextureFormat', i.TYPE],
+      ['GPUTextureSampleType', i.TYPE],
+      ['GPUTextureViewDimension', i.TYPE],
+      ['GPUVertexFormat', i.TYPE],
+      ['GPUVertexStepMode', i.TYPE],
+      ['GamepadHapticEffectType', i.TYPE],
+      ['GamepadHapticsResult', i.TYPE],
+      ['GamepadMappingType', i.TYPE],
+      ['GlobalCompositeOperation', i.TYPE],
+      ['HardwareAcceleration', i.TYPE],
+      ['HdrMetadataType', i.TYPE],
+      ['HighlightType', i.TYPE],
+      ['IDBCursorDirection', i.TYPE],
+      ['IDBRequestReadyState', i.TYPE],
+      ['IDBTransactionDurability', i.TYPE],
+      ['IDBTransactionMode', i.TYPE],
+      ['ImageDataPixelFormat', i.TYPE],
+      ['ImageOrientation', i.TYPE],
+      ['ImageSmoothingQuality', i.TYPE],
+      ['InsertPosition', i.TYPE],
+      ['IterationCompositeOperation', i.TYPE],
+      ['KeyFormat', i.TYPE],
+      ['KeyType', i.TYPE],
+      ['KeyUsage', i.TYPE],
+      ['LatencyMode', i.TYPE],
+      ['LineAlignSetting', i.TYPE],
+      ['LockMode', i.TYPE],
+      ['LoginStatus', i.TYPE],
+      ['MIDIPortConnectionState', i.TYPE],
+      ['MIDIPortDeviceState', i.TYPE],
+      ['MIDIPortType', i.TYPE],
+      ['MediaDecodingType', i.TYPE],
+      ['MediaDeviceKind', i.TYPE],
+      ['MediaEncodingType', i.TYPE],
+      ['MediaKeyMessageType', i.TYPE],
+      ['MediaKeySessionClosedReason', i.TYPE],
+      ['MediaKeySessionType', i.TYPE],
+      ['MediaKeyStatus', i.TYPE],
+      ['MediaKeysRequirement', i.TYPE],
+      ['MediaSessionAction', i.TYPE],
+      ['MediaSessionPlaybackState', i.TYPE],
+      ['MediaStreamTrackState', i.TYPE],
+      ['NavigationFocusReset', i.TYPE],
+      ['NavigationHistoryBehavior', i.TYPE],
+      ['NavigationScrollBehavior', i.TYPE],
+      ['NavigationTimingType', i.TYPE],
+      ['NavigationType', i.TYPE],
+      ['NotificationDirection', i.TYPE],
+      ['NotificationPermission', i.TYPE],
+      ['OffscreenRenderingContextId', i.TYPE],
+      ['OpusBitstreamFormat', i.TYPE],
+      ['OrientationLockType', i.TYPE],
+      ['OrientationType', i.TYPE],
+      ['OscillatorType', i.TYPE],
+      ['OverSampleType', i.TYPE],
+      ['PanningModelType', i.TYPE],
+      ['PaymentComplete', i.TYPE],
+      ['PaymentShippingType', i.TYPE],
+      ['PermissionName', i.TYPE],
+      ['PermissionState', i.TYPE],
+      ['PlaybackDirection', i.TYPE],
+      ['PositionAlignSetting', i.TYPE],
+      ['PredefinedColorSpace', i.TYPE],
+      ['PremultiplyAlpha', i.TYPE],
+      ['PresentationStyle', i.TYPE],
+      ['PublicKeyCredentialType', i.TYPE],
+      ['PushEncryptionKeyName', i.TYPE],
+      ['RTCBundlePolicy', i.TYPE],
+      ['RTCDataChannelState', i.TYPE],
+      ['RTCDegradationPreference', i.TYPE],
+      ['RTCDtlsRole', i.TYPE],
+      ['RTCDtlsTransportState', i.TYPE],
+      ['RTCErrorDetailType', i.TYPE],
+      ['RTCIceCandidateType', i.TYPE],
+      ['RTCIceComponent', i.TYPE],
+      ['RTCIceConnectionState', i.TYPE],
+      ['RTCIceGathererState', i.TYPE],
+      ['RTCIceGatheringState', i.TYPE],
+      ['RTCIceProtocol', i.TYPE],
+      ['RTCIceRole', i.TYPE],
+      ['RTCIceTcpCandidateType', i.TYPE],
+      ['RTCIceTransportPolicy', i.TYPE],
+      ['RTCIceTransportState', i.TYPE],
+      ['RTCPeerConnectionState', i.TYPE],
+      ['RTCPriorityType', i.TYPE],
+      ['RTCQualityLimitationReason', i.TYPE],
+      ['RTCRtcpMuxPolicy', i.TYPE],
+      ['RTCRtpTransceiverDirection', i.TYPE],
+      ['RTCSctpTransportState', i.TYPE],
+      ['RTCSdpType', i.TYPE],
+      ['RTCSignalingState', i.TYPE],
+      ['RTCStatsIceCandidatePairState', i.TYPE],
+      ['RTCStatsType', i.TYPE],
+      ['ReadableStreamReaderMode', i.TYPE],
+      ['ReadableStreamType', i.TYPE],
+      ['ReadyState', i.TYPE],
+      ['RecordingState', i.TYPE],
+      ['RedEyeReduction', i.TYPE],
+      ['ReferrerPolicy', i.TYPE],
+      ['RemotePlaybackState', i.TYPE],
+      ['RequestCache', i.TYPE],
+      ['RequestCredentials', i.TYPE],
+      ['RequestDestination', i.TYPE],
+      ['RequestMode', i.TYPE],
+      ['RequestPriority', i.TYPE],
+      ['RequestRedirect', i.TYPE],
+      ['ResidentKeyRequirement', i.TYPE],
+      ['ResizeObserverBoxOptions', i.TYPE],
+      ['ResizeQuality', i.TYPE],
+      ['ResponseType', i.TYPE],
+      ['SanitizerPresets', i.TYPE],
+      ['ScrollAxis', i.TYPE],
+      ['ScrollBehavior', i.TYPE],
+      ['ScrollLogicalPosition', i.TYPE],
+      ['ScrollRestoration', i.TYPE],
+      ['ScrollSetting', i.TYPE],
+      ['SecurityPolicyViolationEventDisposition', i.TYPE],
+      ['SelectionMode', i.TYPE],
+      ['ServiceWorkerState', i.TYPE],
+      ['ServiceWorkerUpdateViaCache', i.TYPE],
+      ['ShadowRootMode', i.TYPE],
+      ['SlotAssignmentMode', i.TYPE],
+      ['SpeechRecognitionErrorCode', i.TYPE],
+      ['SpeechSynthesisErrorCode', i.TYPE],
+      ['TaskPriority', i.TYPE],
+      ['TextTrackKind', i.TYPE],
+      ['TextTrackMode', i.TYPE],
+      ['TouchType', i.TYPE],
+      ['TransferFunction', i.TYPE],
+      ['UserVerificationRequirement', i.TYPE],
+      ['VideoColorPrimaries', i.TYPE],
+      ['VideoEncoderBitrateMode', i.TYPE],
+      ['VideoFacingModeEnum', i.TYPE],
+      ['VideoMatrixCoefficients', i.TYPE],
+      ['VideoPixelFormat', i.TYPE],
+      ['VideoTransferCharacteristics', i.TYPE],
+      ['WakeLockType', i.TYPE],
+      ['WebGLPowerPreference', i.TYPE],
+      ['WebTransportCongestionControl', i.TYPE],
+      ['WebTransportErrorSource', i.TYPE],
+      ['WorkerType', i.TYPE],
+      ['WriteCommandType', i.TYPE],
+      ['XMLHttpRequestResponseType', i.TYPE],
+      ['FormDataIterator', i.TYPE],
+      ['HeadersIterator', i.TYPE],
+      ['MediaKeyStatusMapIterator', i.TYPE],
+      ['StylePropertyMapReadOnlyIterator', i.TYPE],
+      ['URLSearchParamsIterator', i.TYPE],
+      ['FileSystemDirectoryHandleAsyncIterator', i.TYPE],
+      ['ReadableStreamAsyncIterator', i.TYPE],
+    ],
+  }
+})
+var ln = x((No) => {
+  'use strict'
+  Object.defineProperty(No, '__esModule', { value: !0 })
+  No.dom_asynciterable = void 0
+  No.dom_asynciterable = { libs: [], variables: [] }
+})
+var xr = x((qo) => {
+  'use strict'
+  Object.defineProperty(qo, '__esModule', { value: !0 })
+  qo.dom_iterable = void 0
+  qo.dom_iterable = { libs: [], variables: [] }
+})
+var ky = x((jo) => {
+  'use strict'
+  Object.defineProperty(jo, '__esModule', { value: !0 })
+  jo.es6 = void 0
+  var tU = ts(),
+    rU = xo(),
+    nU = Co(),
+    aU = Io(),
+    iU = rr(),
+    sU = Ro(),
+    oU = Do(),
+    lU = Mo(),
+    uU = ur(),
+    cU = ta()
+  jo.es6 = {
+    libs: [
+      tU.es5,
+      nU.es2015_core,
+      rU.es2015_collection,
+      iU.es2015_iterable,
+      aU.es2015_generator,
+      sU.es2015_promise,
+      oU.es2015_proxy,
+      lU.es2015_reflect,
+      uU.es2015_symbol,
+      cU.es2015_symbol_wellknown,
+    ],
+    variables: [],
+  }
+})
+var Wo = x((zo) => {
+  'use strict'
+  Object.defineProperty(zo, '__esModule', { value: !0 })
+  zo.es2016_array_include = void 0
+  var un = se()
+  zo.es2016_array_include = {
+    libs: [],
+    variables: [
+      ['Array', un.TYPE],
+      ['ReadonlyArray', un.TYPE],
+      ['Int8Array', un.TYPE],
+      ['Uint8Array', un.TYPE],
+      ['Uint8ClampedArray', un.TYPE],
+      ['Int16Array', un.TYPE],
+      ['Uint16Array', un.TYPE],
+      ['Int32Array', un.TYPE],
+      ['Uint32Array', un.TYPE],
+      ['Float32Array', un.TYPE],
+      ['Float64Array', un.TYPE],
+    ],
+  }
+})
+var Ho = x(($o) => {
+  'use strict'
+  Object.defineProperty($o, '__esModule', { value: !0 })
+  $o.es2016_intl = void 0
+  var fU = se()
+  $o.es2016_intl = { libs: [], variables: [['Intl', fU.TYPE_VALUE]] }
+})
+var Ry = x((Ko) => {
+  'use strict'
+  Object.defineProperty(Ko, '__esModule', { value: !0 })
+  Ko.es7 = void 0
+  var dU = yi(),
+    pU = Wo(),
+    EU = Ho()
+  Ko.es7 = { libs: [dU.es2015, pU.es2016_array_include, EU.es2016_intl], variables: [] }
+})
+var Xo = x((Jo) => {
+  'use strict'
+  Object.defineProperty(Jo, '__esModule', { value: !0 })
+  Jo.es2016 = void 0
+  var mU = yi(),
+    TU = Wo(),
+    hU = Ho()
+  Jo.es2016 = { libs: [mU.es2015, TU.es2016_array_include, hU.es2016_intl], variables: [] }
+})
+var fr = x((Qo) => {
+  'use strict'
+  Object.defineProperty(Qo, '__esModule', { value: !0 })
+  Qo.scripthost = void 0
+  var Ar = se()
+  Qo.scripthost = {
+    libs: [],
+    variables: [
+      ['ActiveXObject', Ar.TYPE_VALUE],
+      ['ITextWriter', Ar.TYPE],
+      ['TextStreamBase', Ar.TYPE],
+      ['TextStreamWriter', Ar.TYPE],
+      ['TextStreamReader', Ar.TYPE],
+      ['SafeArray', Ar.TYPE_VALUE],
+      ['Enumerator', Ar.TYPE_VALUE],
+      ['EnumeratorConstructor', Ar.TYPE],
+      ['VBArray', Ar.TYPE_VALUE],
+      ['VBArrayConstructor', Ar.TYPE],
+      ['VarDate', Ar.TYPE_VALUE],
+      ['DateConstructor', Ar.TYPE],
+      ['Date', Ar.TYPE],
+    ],
+  }
+})
+var dr = x((Zo) => {
+  'use strict'
+  Object.defineProperty(Zo, '__esModule', { value: !0 })
+  Zo.webworker_importscripts = void 0
+  Zo.webworker_importscripts = { libs: [], variables: [] }
+})
+var Vy = x((el) => {
+  'use strict'
+  Object.defineProperty(el, '__esModule', { value: !0 })
+  el.es2016_full = void 0
+  var PU = cr(),
+    yU = xr(),
+    gU = Xo(),
+    SU = fr(),
+    _U = dr()
+  el.es2016_full = {
+    libs: [gU.es2016, PU.dom, _U.webworker_importscripts, SU.scripthost, yU.dom_iterable],
+    variables: [],
+  }
+})
+var Hd = x((tl) => {
+  'use strict'
+  Object.defineProperty(tl, '__esModule', { value: !0 })
+  tl.es2017_arraybuffer = void 0
+  var bU = se()
+  tl.es2017_arraybuffer = { libs: [], variables: [['ArrayBufferConstructor', bU.TYPE]] }
+})
+var Kd = x((rl) => {
+  'use strict'
+  Object.defineProperty(rl, '__esModule', { value: !0 })
+  rl.es2017_date = void 0
+  var vU = se()
+  rl.es2017_date = { libs: [], variables: [['DateConstructor', vU.TYPE]] }
+})
+var Jd = x((nl) => {
+  'use strict'
+  Object.defineProperty(nl, '__esModule', { value: !0 })
+  nl.es2017_intl = void 0
+  var xU = se()
+  nl.es2017_intl = { libs: [], variables: [['Intl', xU.TYPE_VALUE]] }
+})
+var Xd = x((al) => {
+  'use strict'
+  Object.defineProperty(al, '__esModule', { value: !0 })
+  al.es2017_object = void 0
+  var AU = se()
+  al.es2017_object = { libs: [], variables: [['ObjectConstructor', AU.TYPE]] }
+})
+var Qd = x((sl) => {
+  'use strict'
+  Object.defineProperty(sl, '__esModule', { value: !0 })
+  sl.es2017_sharedmemory = void 0
+  var il = se(),
+    CU = ur(),
+    YU = ta()
+  sl.es2017_sharedmemory = {
+    libs: [CU.es2015_symbol, YU.es2015_symbol_wellknown],
+    variables: [
+      ['SharedArrayBuffer', il.TYPE_VALUE],
+      ['SharedArrayBufferConstructor', il.TYPE],
+      ['ArrayBufferTypes', il.TYPE],
+      ['Atomics', il.TYPE_VALUE],
+    ],
+  }
+})
+var Zd = x((ol) => {
+  'use strict'
+  Object.defineProperty(ol, '__esModule', { value: !0 })
+  ol.es2017_string = void 0
+  var LU = se()
+  ol.es2017_string = { libs: [], variables: [['String', LU.TYPE]] }
+})
+var ep = x((ll) => {
+  'use strict'
+  Object.defineProperty(ll, '__esModule', { value: !0 })
+  ll.es2017_typedarrays = void 0
+  var kn = se()
+  ll.es2017_typedarrays = {
+    libs: [],
+    variables: [
+      ['Int8ArrayConstructor', kn.TYPE],
+      ['Uint8ArrayConstructor', kn.TYPE],
+      ['Uint8ClampedArrayConstructor', kn.TYPE],
+      ['Int16ArrayConstructor', kn.TYPE],
+      ['Uint16ArrayConstructor', kn.TYPE],
+      ['Int32ArrayConstructor', kn.TYPE],
+      ['Uint32ArrayConstructor', kn.TYPE],
+      ['Float32ArrayConstructor', kn.TYPE],
+      ['Float64ArrayConstructor', kn.TYPE],
+    ],
+  }
+})
+var cl = x((ul) => {
+  'use strict'
+  Object.defineProperty(ul, '__esModule', { value: !0 })
+  ul.es2017 = void 0
+  var UU = Xo(),
+    IU = Hd(),
+    kU = Kd(),
+    RU = Jd(),
+    VU = Xd(),
+    DU = Qd(),
+    wU = Zd(),
+    MU = ep()
+  ul.es2017 = {
+    libs: [
+      UU.es2016,
+      IU.es2017_arraybuffer,
+      kU.es2017_date,
+      RU.es2017_intl,
+      VU.es2017_object,
+      DU.es2017_sharedmemory,
+      wU.es2017_string,
+      MU.es2017_typedarrays,
+    ],
+    variables: [],
+  }
+})
+var Dy = x((fl) => {
+  'use strict'
+  Object.defineProperty(fl, '__esModule', { value: !0 })
+  fl.es2017_full = void 0
+  var OU = cr(),
+    FU = xr(),
+    BU = cl(),
+    GU = fr(),
+    NU = dr()
+  fl.es2017_full = {
+    libs: [BU.es2017, OU.dom, NU.webworker_importscripts, GU.scripthost, FU.dom_iterable],
+    variables: [],
+  }
+})
+var rp = x((dl) => {
+  'use strict'
+  Object.defineProperty(dl, '__esModule', { value: !0 })
+  dl.es2018_asyncgenerator = void 0
+  var tp = se(),
+    qU = Wa()
+  dl.es2018_asyncgenerator = {
+    libs: [qU.es2018_asynciterable],
+    variables: [
+      ['AsyncGenerator', tp.TYPE],
+      ['AsyncGeneratorFunction', tp.TYPE],
+      ['AsyncGeneratorFunctionConstructor', tp.TYPE],
+    ],
+  }
+})
+var ns = x((pl) => {
+  'use strict'
+  Object.defineProperty(pl, '__esModule', { value: !0 })
+  pl.es2018_intl = void 0
+  var jU = se()
+  pl.es2018_intl = { libs: [], variables: [['Intl', jU.TYPE_VALUE]] }
+})
+var np = x((El) => {
+  'use strict'
+  Object.defineProperty(El, '__esModule', { value: !0 })
+  El.es2018_promise = void 0
+  var zU = se()
+  El.es2018_promise = { libs: [], variables: [['Promise', zU.TYPE]] }
+})
+var ip = x((ml) => {
+  'use strict'
+  Object.defineProperty(ml, '__esModule', { value: !0 })
+  ml.es2018_regexp = void 0
+  var ap = se()
+  ml.es2018_regexp = {
+    libs: [],
+    variables: [
+      ['RegExpMatchArray', ap.TYPE],
+      ['RegExpExecArray', ap.TYPE],
+      ['RegExp', ap.TYPE],
+    ],
+  }
+})
+var hl = x((Tl) => {
+  'use strict'
+  Object.defineProperty(Tl, '__esModule', { value: !0 })
+  Tl.es2018 = void 0
+  var WU = cl(),
+    $U = rp(),
+    HU = Wa(),
+    KU = ns(),
+    JU = np(),
+    XU = ip()
+  Tl.es2018 = {
+    libs: [
+      WU.es2017,
+      HU.es2018_asynciterable,
+      $U.es2018_asyncgenerator,
+      JU.es2018_promise,
+      XU.es2018_regexp,
+      KU.es2018_intl,
+    ],
+    variables: [],
+  }
+})
+var wy = x((Pl) => {
+  'use strict'
+  Object.defineProperty(Pl, '__esModule', { value: !0 })
+  Pl.es2018_full = void 0
+  var QU = cr(),
+    ZU = ln(),
+    eI = xr(),
+    tI = hl(),
+    rI = fr(),
+    nI = dr()
+  Pl.es2018_full = {
+    libs: [tI.es2018, QU.dom, nI.webworker_importscripts, rI.scripthost, eI.dom_iterable, ZU.dom_asynciterable],
+    variables: [],
+  }
+})
+var op = x((yl) => {
+  'use strict'
+  Object.defineProperty(yl, '__esModule', { value: !0 })
+  yl.es2019_array = void 0
+  var sp = se()
+  yl.es2019_array = {
+    libs: [],
+    variables: [
+      ['FlatArray', sp.TYPE],
+      ['ReadonlyArray', sp.TYPE],
+      ['Array', sp.TYPE],
+    ],
+  }
+})
+var lp = x((gl) => {
+  'use strict'
+  Object.defineProperty(gl, '__esModule', { value: !0 })
+  gl.es2019_intl = void 0
+  var aI = se()
+  gl.es2019_intl = { libs: [], variables: [['Intl', aI.TYPE_VALUE]] }
+})
+var up = x((Sl) => {
+  'use strict'
+  Object.defineProperty(Sl, '__esModule', { value: !0 })
+  Sl.es2019_object = void 0
+  var iI = se(),
+    sI = rr()
+  Sl.es2019_object = { libs: [sI.es2015_iterable], variables: [['ObjectConstructor', iI.TYPE]] }
+})
+var cp = x((_l) => {
+  'use strict'
+  Object.defineProperty(_l, '__esModule', { value: !0 })
+  _l.es2019_string = void 0
+  var oI = se()
+  _l.es2019_string = { libs: [], variables: [['String', oI.TYPE]] }
+})
+var fp = x((bl) => {
+  'use strict'
+  Object.defineProperty(bl, '__esModule', { value: !0 })
+  bl.es2019_symbol = void 0
+  var lI = se()
+  bl.es2019_symbol = { libs: [], variables: [['Symbol', lI.TYPE]] }
+})
+var xl = x((vl) => {
+  'use strict'
+  Object.defineProperty(vl, '__esModule', { value: !0 })
+  vl.es2019 = void 0
+  var uI = hl(),
+    cI = op(),
+    fI = lp(),
+    dI = up(),
+    pI = cp(),
+    EI = fp()
+  vl.es2019 = {
+    libs: [uI.es2018, cI.es2019_array, dI.es2019_object, pI.es2019_string, EI.es2019_symbol, fI.es2019_intl],
+    variables: [],
+  }
+})
+var My = x((Al) => {
+  'use strict'
+  Object.defineProperty(Al, '__esModule', { value: !0 })
+  Al.es2019_full = void 0
+  var mI = cr(),
+    TI = ln(),
+    hI = xr(),
+    PI = xl(),
+    yI = fr(),
+    gI = dr()
+  Al.es2019_full = {
+    libs: [PI.es2019, mI.dom, gI.webworker_importscripts, yI.scripthost, hI.dom_iterable, TI.dom_asynciterable],
+    variables: [],
+  }
+})
+var Rn = x((Cl) => {
+  'use strict'
+  Object.defineProperty(Cl, '__esModule', { value: !0 })
+  Cl.es2020_intl = void 0
+  var SI = se(),
+    _I = ns()
+  Cl.es2020_intl = { libs: [_I.es2018_intl], variables: [['Intl', SI.TYPE_VALUE]] }
+})
+var as = x((Yl) => {
+  'use strict'
+  Object.defineProperty(Yl, '__esModule', { value: !0 })
+  Yl.es2020_bigint = void 0
+  var Vn = se(),
+    bI = Rn()
+  Yl.es2020_bigint = {
+    libs: [bI.es2020_intl],
+    variables: [
+      ['BigIntToLocaleStringOptions', Vn.TYPE],
+      ['BigInt', Vn.TYPE_VALUE],
+      ['BigIntConstructor', Vn.TYPE],
+      ['BigInt64Array', Vn.TYPE_VALUE],
+      ['BigInt64ArrayConstructor', Vn.TYPE],
+      ['BigUint64Array', Vn.TYPE_VALUE],
+      ['BigUint64ArrayConstructor', Vn.TYPE],
+      ['DataView', Vn.TYPE],
+      ['Intl', Vn.TYPE_VALUE],
+    ],
+  }
+})
+var dp = x((Ll) => {
+  'use strict'
+  Object.defineProperty(Ll, '__esModule', { value: !0 })
+  Ll.es2020_date = void 0
+  var vI = se(),
+    xI = Rn()
+  Ll.es2020_date = { libs: [xI.es2020_intl], variables: [['Date', vI.TYPE]] }
+})
+var pp = x((Ul) => {
+  'use strict'
+  Object.defineProperty(Ul, '__esModule', { value: !0 })
+  Ul.es2020_number = void 0
+  var AI = se(),
+    CI = Rn()
+  Ul.es2020_number = { libs: [CI.es2020_intl], variables: [['Number', AI.TYPE]] }
+})
+var Ep = x((kl) => {
+  'use strict'
+  Object.defineProperty(kl, '__esModule', { value: !0 })
+  kl.es2020_promise = void 0
+  var Il = se()
+  kl.es2020_promise = {
+    libs: [],
+    variables: [
+      ['PromiseFulfilledResult', Il.TYPE],
+      ['PromiseRejectedResult', Il.TYPE],
+      ['PromiseSettledResult', Il.TYPE],
+      ['PromiseConstructor', Il.TYPE],
+    ],
+  }
+})
+var mp = x((Rl) => {
+  'use strict'
+  Object.defineProperty(Rl, '__esModule', { value: !0 })
+  Rl.es2020_sharedmemory = void 0
+  var YI = se(),
+    LI = as()
+  Rl.es2020_sharedmemory = { libs: [LI.es2020_bigint], variables: [['Atomics', YI.TYPE]] }
+})
+var Dl = x((Vl) => {
+  'use strict'
+  Object.defineProperty(Vl, '__esModule', { value: !0 })
+  Vl.es2020_symbol_wellknown = void 0
+  var Tp = se(),
+    UI = rr(),
+    II = ur()
+  Vl.es2020_symbol_wellknown = {
+    libs: [UI.es2015_iterable, II.es2015_symbol],
+    variables: [
+      ['SymbolConstructor', Tp.TYPE],
+      ['RegExpStringIterator', Tp.TYPE],
+      ['RegExp', Tp.TYPE],
+    ],
+  }
+})
+var hp = x((wl) => {
+  'use strict'
+  Object.defineProperty(wl, '__esModule', { value: !0 })
+  wl.es2020_string = void 0
+  var kI = se(),
+    RI = rr(),
+    VI = Rn(),
+    DI = Dl()
+  wl.es2020_string = {
+    libs: [RI.es2015_iterable, VI.es2020_intl, DI.es2020_symbol_wellknown],
+    variables: [['String', kI.TYPE]],
+  }
+})
+var Ol = x((Ml) => {
+  'use strict'
+  Object.defineProperty(Ml, '__esModule', { value: !0 })
+  Ml.es2020 = void 0
+  var wI = xl(),
+    MI = as(),
+    OI = dp(),
+    FI = Rn(),
+    BI = pp(),
+    GI = Ep(),
+    NI = mp(),
+    qI = hp(),
+    jI = Dl()
+  Ml.es2020 = {
+    libs: [
+      wI.es2019,
+      MI.es2020_bigint,
+      OI.es2020_date,
+      BI.es2020_number,
+      GI.es2020_promise,
+      NI.es2020_sharedmemory,
+      qI.es2020_string,
+      jI.es2020_symbol_wellknown,
+      FI.es2020_intl,
+    ],
+    variables: [],
+  }
+})
+var Oy = x((Fl) => {
+  'use strict'
+  Object.defineProperty(Fl, '__esModule', { value: !0 })
+  Fl.es2020_full = void 0
+  var zI = cr(),
+    WI = ln(),
+    $I = xr(),
+    HI = Ol(),
+    KI = fr(),
+    JI = dr()
+  Fl.es2020_full = {
+    libs: [HI.es2020, zI.dom, JI.webworker_importscripts, KI.scripthost, $I.dom_iterable, WI.dom_asynciterable],
+    variables: [],
+  }
+})
+var Pp = x((Bl) => {
+  'use strict'
+  Object.defineProperty(Bl, '__esModule', { value: !0 })
+  Bl.es2021_intl = void 0
+  var XI = se()
+  Bl.es2021_intl = { libs: [], variables: [['Intl', XI.TYPE_VALUE]] }
+})
+var Nl = x((Gl) => {
+  'use strict'
+  Object.defineProperty(Gl, '__esModule', { value: !0 })
+  Gl.es2021_promise = void 0
+  var yp = se()
+  Gl.es2021_promise = {
+    libs: [],
+    variables: [
+      ['AggregateError', yp.TYPE_VALUE],
+      ['AggregateErrorConstructor', yp.TYPE],
+      ['PromiseConstructor', yp.TYPE],
+    ],
+  }
+})
+var gp = x((ql) => {
+  'use strict'
+  Object.defineProperty(ql, '__esModule', { value: !0 })
+  ql.es2021_string = void 0
+  var QI = se()
+  ql.es2021_string = { libs: [], variables: [['String', QI.TYPE]] }
+})
+var Sp = x((zl) => {
+  'use strict'
+  Object.defineProperty(zl, '__esModule', { value: !0 })
+  zl.es2021_weakref = void 0
+  var jl = se(),
+    ZI = ta()
+  zl.es2021_weakref = {
+    libs: [ZI.es2015_symbol_wellknown],
+    variables: [
+      ['WeakRef', jl.TYPE_VALUE],
+      ['WeakRefConstructor', jl.TYPE],
+      ['FinalizationRegistry', jl.TYPE_VALUE],
+      ['FinalizationRegistryConstructor', jl.TYPE],
+    ],
+  }
+})
+var $l = x((Wl) => {
+  'use strict'
+  Object.defineProperty(Wl, '__esModule', { value: !0 })
+  Wl.es2021 = void 0
+  var ek = Ol(),
+    tk = Pp(),
+    rk = Nl(),
+    nk = gp(),
+    ak = Sp()
+  Wl.es2021 = {
+    libs: [ek.es2020, rk.es2021_promise, nk.es2021_string, ak.es2021_weakref, tk.es2021_intl],
+    variables: [],
+  }
+})
+var Fy = x((Hl) => {
+  'use strict'
+  Object.defineProperty(Hl, '__esModule', { value: !0 })
+  Hl.es2021_full = void 0
+  var ik = cr(),
+    sk = ln(),
+    ok = xr(),
+    lk = $l(),
+    uk = fr(),
+    ck = dr()
+  Hl.es2021_full = {
+    libs: [lk.es2021, ik.dom, ck.webworker_importscripts, uk.scripthost, ok.dom_iterable, sk.dom_asynciterable],
+    variables: [],
+  }
+})
+var _p = x((Kl) => {
+  'use strict'
+  Object.defineProperty(Kl, '__esModule', { value: !0 })
+  Kl.es2022_array = void 0
+  var Cr = se()
+  Kl.es2022_array = {
+    libs: [],
+    variables: [
+      ['Array', Cr.TYPE],
+      ['ReadonlyArray', Cr.TYPE],
+      ['Int8Array', Cr.TYPE],
+      ['Uint8Array', Cr.TYPE],
+      ['Uint8ClampedArray', Cr.TYPE],
+      ['Int16Array', Cr.TYPE],
+      ['Uint16Array', Cr.TYPE],
+      ['Int32Array', Cr.TYPE],
+      ['Uint32Array', Cr.TYPE],
+      ['Float32Array', Cr.TYPE],
+      ['Float64Array', Cr.TYPE],
+      ['BigInt64Array', Cr.TYPE],
+      ['BigUint64Array', Cr.TYPE],
+    ],
+  }
+})
+var bp = x((Jl) => {
+  'use strict'
+  Object.defineProperty(Jl, '__esModule', { value: !0 })
+  Jl.es2022_error = void 0
+  var gn = se(),
+    fk = Nl()
+  Jl.es2022_error = {
+    libs: [fk.es2021_promise],
+    variables: [
+      ['ErrorOptions', gn.TYPE],
+      ['Error', gn.TYPE],
+      ['ErrorConstructor', gn.TYPE],
+      ['EvalErrorConstructor', gn.TYPE],
+      ['RangeErrorConstructor', gn.TYPE],
+      ['ReferenceErrorConstructor', gn.TYPE],
+      ['SyntaxErrorConstructor', gn.TYPE],
+      ['TypeErrorConstructor', gn.TYPE],
+      ['URIErrorConstructor', gn.TYPE],
+      ['AggregateErrorConstructor', gn.TYPE],
+    ],
+  }
+})
+var vp = x((Xl) => {
+  'use strict'
+  Object.defineProperty(Xl, '__esModule', { value: !0 })
+  Xl.es2022_intl = void 0
+  var dk = se()
+  Xl.es2022_intl = { libs: [], variables: [['Intl', dk.TYPE_VALUE]] }
+})
+var xp = x((Ql) => {
+  'use strict'
+  Object.defineProperty(Ql, '__esModule', { value: !0 })
+  Ql.es2022_object = void 0
+  var pk = se()
+  Ql.es2022_object = { libs: [], variables: [['ObjectConstructor', pk.TYPE]] }
+})
+var Ap = x((eu) => {
+  'use strict'
+  Object.defineProperty(eu, '__esModule', { value: !0 })
+  eu.es2022_regexp = void 0
+  var Zl = se()
+  eu.es2022_regexp = {
+    libs: [],
+    variables: [
+      ['RegExpMatchArray', Zl.TYPE],
+      ['RegExpExecArray', Zl.TYPE],
+      ['RegExpIndicesArray', Zl.TYPE],
+      ['RegExp', Zl.TYPE],
+    ],
+  }
+})
+var Cp = x((tu) => {
+  'use strict'
+  Object.defineProperty(tu, '__esModule', { value: !0 })
+  tu.es2022_string = void 0
+  var Ek = se()
+  tu.es2022_string = { libs: [], variables: [['String', Ek.TYPE]] }
+})
+var nu = x((ru) => {
+  'use strict'
+  Object.defineProperty(ru, '__esModule', { value: !0 })
+  ru.es2022 = void 0
+  var mk = $l(),
+    Tk = _p(),
+    hk = bp(),
+    Pk = vp(),
+    yk = xp(),
+    gk = Ap(),
+    Sk = Cp()
+  ru.es2022 = {
+    libs: [
+      mk.es2021,
+      Tk.es2022_array,
+      hk.es2022_error,
+      Pk.es2022_intl,
+      yk.es2022_object,
+      gk.es2022_regexp,
+      Sk.es2022_string,
+    ],
+    variables: [],
+  }
+})
+var By = x((au) => {
+  'use strict'
+  Object.defineProperty(au, '__esModule', { value: !0 })
+  au.es2022_full = void 0
+  var _k = cr(),
+    bk = ln(),
+    vk = xr(),
+    xk = nu(),
+    Ak = fr(),
+    Ck = dr()
+  au.es2022_full = {
+    libs: [xk.es2022, _k.dom, Ck.webworker_importscripts, Ak.scripthost, vk.dom_iterable, bk.dom_asynciterable],
+    variables: [],
+  }
+})
+var Yp = x((iu) => {
+  'use strict'
+  Object.defineProperty(iu, '__esModule', { value: !0 })
+  iu.es2023_array = void 0
+  var Yr = se()
+  iu.es2023_array = {
+    libs: [],
+    variables: [
+      ['Array', Yr.TYPE],
+      ['ReadonlyArray', Yr.TYPE],
+      ['Int8Array', Yr.TYPE],
+      ['Uint8Array', Yr.TYPE],
+      ['Uint8ClampedArray', Yr.TYPE],
+      ['Int16Array', Yr.TYPE],
+      ['Uint16Array', Yr.TYPE],
+      ['Int32Array', Yr.TYPE],
+      ['Uint32Array', Yr.TYPE],
+      ['Float32Array', Yr.TYPE],
+      ['Float64Array', Yr.TYPE],
+      ['BigInt64Array', Yr.TYPE],
+      ['BigUint64Array', Yr.TYPE],
+    ],
+  }
+})
+var Lp = x((su) => {
+  'use strict'
+  Object.defineProperty(su, '__esModule', { value: !0 })
+  su.es2023_collection = void 0
+  var Yk = se()
+  su.es2023_collection = { libs: [], variables: [['WeakKeyTypes', Yk.TYPE]] }
+})
+var Up = x((ou) => {
+  'use strict'
+  Object.defineProperty(ou, '__esModule', { value: !0 })
+  ou.es2023_intl = void 0
+  var Lk = se()
+  ou.es2023_intl = { libs: [], variables: [['Intl', Lk.TYPE_VALUE]] }
+})
+var uu = x((lu) => {
+  'use strict'
+  Object.defineProperty(lu, '__esModule', { value: !0 })
+  lu.es2023 = void 0
+  var Uk = nu(),
+    Ik = Yp(),
+    kk = Lp(),
+    Rk = Up()
+  lu.es2023 = { libs: [Uk.es2022, Ik.es2023_array, kk.es2023_collection, Rk.es2023_intl], variables: [] }
+})
+var Gy = x((cu) => {
+  'use strict'
+  Object.defineProperty(cu, '__esModule', { value: !0 })
+  cu.es2023_full = void 0
+  var Vk = cr(),
+    Dk = ln(),
+    wk = xr(),
+    Mk = uu(),
+    Ok = fr(),
+    Fk = dr()
+  cu.es2023_full = {
+    libs: [Mk.es2023, Vk.dom, Fk.webworker_importscripts, Ok.scripthost, wk.dom_iterable, Dk.dom_asynciterable],
+    variables: [],
+  }
+})
+var Ip = x((fu) => {
+  'use strict'
+  Object.defineProperty(fu, '__esModule', { value: !0 })
+  fu.es2024_arraybuffer = void 0
+  var Ny = se()
+  fu.es2024_arraybuffer = {
+    libs: [],
+    variables: [
+      ['ArrayBuffer', Ny.TYPE],
+      ['ArrayBufferConstructor', Ny.TYPE],
+    ],
+  }
+})
+var pu = x((du) => {
+  'use strict'
+  Object.defineProperty(du, '__esModule', { value: !0 })
+  du.es2024_collection = void 0
+  var Bk = se()
+  du.es2024_collection = { libs: [], variables: [['MapConstructor', Bk.TYPE]] }
+})
+var kp = x((Eu) => {
+  'use strict'
+  Object.defineProperty(Eu, '__esModule', { value: !0 })
+  Eu.es2024_object = void 0
+  var Gk = se()
+  Eu.es2024_object = { libs: [], variables: [['ObjectConstructor', Gk.TYPE]] }
+})
+var Rp = x((mu) => {
+  'use strict'
+  Object.defineProperty(mu, '__esModule', { value: !0 })
+  mu.es2024_promise = void 0
+  var qy = se()
+  mu.es2024_promise = {
+    libs: [],
+    variables: [
+      ['PromiseWithResolvers', qy.TYPE],
+      ['PromiseConstructor', qy.TYPE],
+    ],
+  }
+})
+var Vp = x((Tu) => {
+  'use strict'
+  Object.defineProperty(Tu, '__esModule', { value: !0 })
+  Tu.es2024_regexp = void 0
+  var Nk = se()
+  Tu.es2024_regexp = { libs: [], variables: [['RegExp', Nk.TYPE]] }
+})
+var wp = x((hu) => {
+  'use strict'
+  Object.defineProperty(hu, '__esModule', { value: !0 })
+  hu.es2024_sharedmemory = void 0
+  var Dp = se(),
+    qk = as()
+  hu.es2024_sharedmemory = {
+    libs: [qk.es2020_bigint],
+    variables: [
+      ['Atomics', Dp.TYPE],
+      ['SharedArrayBuffer', Dp.TYPE],
+      ['SharedArrayBufferConstructor', Dp.TYPE],
+    ],
+  }
+})
+var Mp = x((Pu) => {
+  'use strict'
+  Object.defineProperty(Pu, '__esModule', { value: !0 })
+  Pu.es2024_string = void 0
+  var jk = se()
+  Pu.es2024_string = { libs: [], variables: [['String', jk.TYPE]] }
+})
+var gu = x((yu) => {
+  'use strict'
+  Object.defineProperty(yu, '__esModule', { value: !0 })
+  yu.es2024 = void 0
+  var zk = uu(),
+    Wk = Ip(),
+    $k = pu(),
+    Hk = kp(),
+    Kk = Rp(),
+    Jk = Vp(),
+    Xk = wp(),
+    Qk = Mp()
+  yu.es2024 = {
+    libs: [
+      zk.es2023,
+      Wk.es2024_arraybuffer,
+      $k.es2024_collection,
+      Hk.es2024_object,
+      Kk.es2024_promise,
+      Jk.es2024_regexp,
+      Xk.es2024_sharedmemory,
+      Qk.es2024_string,
+    ],
+    variables: [],
+  }
+})
+var jy = x((Su) => {
+  'use strict'
+  Object.defineProperty(Su, '__esModule', { value: !0 })
+  Su.es2024_full = void 0
+  var Zk = cr(),
+    eR = ln(),
+    tR = xr(),
+    rR = gu(),
+    nR = fr(),
+    aR = dr()
+  Su.es2024_full = {
+    libs: [rR.es2024, Zk.dom, aR.webworker_importscripts, nR.scripthost, tR.dom_iterable, eR.dom_asynciterable],
+    variables: [],
+  }
+})
+var bu = x((_u) => {
+  'use strict'
+  Object.defineProperty(_u, '__esModule', { value: !0 })
+  _u.es2025_collection = void 0
+  var Op = se(),
+    iR = pu()
+  _u.es2025_collection = {
+    libs: [iR.es2024_collection],
+    variables: [
+      ['ReadonlySetLike', Op.TYPE],
+      ['Set', Op.TYPE],
+      ['ReadonlySet', Op.TYPE],
+    ],
+  }
+})
+var Fp = x((xu) => {
+  'use strict'
+  Object.defineProperty(xu, '__esModule', { value: !0 })
+  xu.es2025_float16 = void 0
+  var vu = se(),
+    sR = rr(),
+    oR = ur()
+  xu.es2025_float16 = {
+    libs: [oR.es2015_symbol, sR.es2015_iterable],
+    variables: [
+      ['Float16Array', vu.TYPE_VALUE],
+      ['Float16ArrayConstructor', vu.TYPE],
+      ['Math', vu.TYPE],
+      ['DataView', vu.TYPE],
+    ],
+  }
+})
+var Cu = x((Au) => {
+  'use strict'
+  Object.defineProperty(Au, '__esModule', { value: !0 })
+  Au.es2025_intl = void 0
+  var lR = se(),
+    uR = ns()
+  Au.es2025_intl = { libs: [uR.es2018_intl], variables: [['Intl', lR.TYPE_VALUE]] }
+})
+var Bp = x((Yu) => {
+  'use strict'
+  Object.defineProperty(Yu, '__esModule', { value: !0 })
+  Yu.es2025_iterator = void 0
+  var zy = se(),
+    cR = rr()
+  Yu.es2025_iterator = {
+    libs: [cR.es2015_iterable],
+    variables: [
+      ['Iterator', zy.TYPE_VALUE],
+      ['IteratorObjectConstructor', zy.TYPE],
+    ],
+  }
+})
+var Gp = x((Lu) => {
+  'use strict'
+  Object.defineProperty(Lu, '__esModule', { value: !0 })
+  Lu.es2025_promise = void 0
+  var fR = se()
+  Lu.es2025_promise = { libs: [], variables: [['PromiseConstructor', fR.TYPE]] }
+})
+var Np = x((Uu) => {
+  'use strict'
+  Object.defineProperty(Uu, '__esModule', { value: !0 })
+  Uu.es2025_regexp = void 0
+  var dR = se()
+  Uu.es2025_regexp = { libs: [], variables: [['RegExpConstructor', dR.TYPE]] }
+})
+var ku = x((Iu) => {
+  'use strict'
+  Object.defineProperty(Iu, '__esModule', { value: !0 })
+  Iu.es2025 = void 0
+  var pR = gu(),
+    ER = bu(),
+    mR = Fp(),
+    TR = Cu(),
+    hR = Bp(),
+    PR = Gp(),
+    yR = Np()
+  Iu.es2025 = {
+    libs: [
+      pR.es2024,
+      ER.es2025_collection,
+      mR.es2025_float16,
+      TR.es2025_intl,
+      hR.es2025_iterator,
+      PR.es2025_promise,
+      yR.es2025_regexp,
+    ],
+    variables: [],
+  }
+})
+var Wy = x((Ru) => {
+  'use strict'
+  Object.defineProperty(Ru, '__esModule', { value: !0 })
+  Ru.es2025_full = void 0
+  var gR = cr(),
+    SR = ln(),
+    _R = xr(),
+    bR = ku(),
+    vR = fr(),
+    xR = dr()
+  Ru.es2025_full = {
+    libs: [bR.es2025, gR.dom, xR.webworker_importscripts, vR.scripthost, _R.dom_iterable, SR.dom_asynciterable],
+    variables: [],
+  }
+})
+var qp = x((Vu) => {
+  'use strict'
+  Object.defineProperty(Vu, '__esModule', { value: !0 })
+  Vu.esnext_array = void 0
+  var AR = se()
+  Vu.esnext_array = { libs: [], variables: [['ArrayConstructor', AR.TYPE]] }
+})
+var jp = x((Du) => {
+  'use strict'
+  Object.defineProperty(Du, '__esModule', { value: !0 })
+  Du.esnext_collection = void 0
+  var $y = se(),
+    CR = bu()
+  Du.esnext_collection = {
+    libs: [CR.es2025_collection],
+    variables: [
+      ['Map', $y.TYPE],
+      ['WeakMap', $y.TYPE],
+    ],
+  }
+})
+var is = x((wu) => {
+  'use strict'
+  Object.defineProperty(wu, '__esModule', { value: !0 })
+  wu.esnext_temporal = void 0
+  var YR = se(),
+    LR = ta(),
+    UR = Rn(),
+    IR = Cu()
+  wu.esnext_temporal = {
+    libs: [LR.es2015_symbol_wellknown, UR.es2020_intl, IR.es2025_intl],
+    variables: [['Temporal', YR.TYPE_VALUE]],
+  }
+})
+var zp = x((Mu) => {
+  'use strict'
+  Object.defineProperty(Mu, '__esModule', { value: !0 })
+  Mu.esnext_date = void 0
+  var kR = se(),
+    RR = is()
+  Mu.esnext_date = { libs: [RR.esnext_temporal], variables: [['Date', kR.TYPE]] }
+})
+var Wp = x((Ou) => {
+  'use strict'
+  Object.defineProperty(Ou, '__esModule', { value: !0 })
+  Ou.esnext_decorators = void 0
+  var Hy = se(),
+    VR = go(),
+    DR = ur()
+  Ou.esnext_decorators = {
+    libs: [DR.es2015_symbol, VR.decorators],
+    variables: [
+      ['SymbolConstructor', Hy.TYPE],
+      ['Function', Hy.TYPE],
+    ],
+  }
+})
+var $p = x((Fu) => {
+  'use strict'
+  Object.defineProperty(Fu, '__esModule', { value: !0 })
+  Fu.esnext_disposable = void 0
+  var cn = se(),
+    wR = rr(),
+    MR = ur(),
+    OR = Wa()
+  Fu.esnext_disposable = {
+    libs: [MR.es2015_symbol, wR.es2015_iterable, OR.es2018_asynciterable],
+    variables: [
+      ['SymbolConstructor', cn.TYPE],
+      ['Disposable', cn.TYPE],
+      ['AsyncDisposable', cn.TYPE],
+      ['SuppressedError', cn.TYPE_VALUE],
+      ['SuppressedErrorConstructor', cn.TYPE],
+      ['DisposableStack', cn.TYPE_VALUE],
+      ['DisposableStackConstructor', cn.TYPE],
+      ['AsyncDisposableStack', cn.TYPE_VALUE],
+      ['AsyncDisposableStackConstructor', cn.TYPE],
+      ['IteratorObject', cn.TYPE],
+      ['AsyncIteratorObject', cn.TYPE],
+    ],
+  }
+})
+var Hp = x((Bu) => {
+  'use strict'
+  Object.defineProperty(Bu, '__esModule', { value: !0 })
+  Bu.esnext_error = void 0
+  var FR = se()
+  Bu.esnext_error = { libs: [], variables: [['ErrorConstructor', FR.TYPE]] }
+})
+var Kp = x((Gu) => {
+  'use strict'
+  Object.defineProperty(Gu, '__esModule', { value: !0 })
+  Gu.esnext_intl = void 0
+  var BR = se(),
+    GR = is()
+  Gu.esnext_intl = { libs: [GR.esnext_temporal], variables: [['Intl', BR.TYPE_VALUE]] }
+})
+var Jp = x((Nu) => {
+  'use strict'
+  Object.defineProperty(Nu, '__esModule', { value: !0 })
+  Nu.esnext_sharedmemory = void 0
+  var NR = se()
+  Nu.esnext_sharedmemory = { libs: [], variables: [['Atomics', NR.TYPE]] }
+})
+var Xp = x((qu) => {
+  'use strict'
+  Object.defineProperty(qu, '__esModule', { value: !0 })
+  qu.esnext_typedarrays = void 0
+  var Ky = se()
+  qu.esnext_typedarrays = {
+    libs: [],
+    variables: [
+      ['Uint8Array', Ky.TYPE],
+      ['Uint8ArrayConstructor', Ky.TYPE],
+    ],
+  }
+})
+var Qp = x((ju) => {
+  'use strict'
+  Object.defineProperty(ju, '__esModule', { value: !0 })
+  ju.esnext = void 0
+  var qR = ku(),
+    jR = qp(),
+    zR = jp(),
+    WR = zp(),
+    $R = Wp(),
+    HR = $p(),
+    KR = Hp(),
+    JR = Kp(),
+    XR = Jp(),
+    QR = is(),
+    ZR = Xp()
+  ju.esnext = {
+    libs: [
+      qR.es2025,
+      JR.esnext_intl,
+      zR.esnext_collection,
+      $R.esnext_decorators,
+      HR.esnext_disposable,
+      jR.esnext_array,
+      KR.esnext_error,
+      XR.esnext_sharedmemory,
+      ZR.esnext_typedarrays,
+      QR.esnext_temporal,
+      WR.esnext_date,
+    ],
+    variables: [],
+  }
+})
+var Jy = x((zu) => {
+  'use strict'
+  Object.defineProperty(zu, '__esModule', { value: !0 })
+  zu.esnext_asynciterable = void 0
+  var ss = se(),
+    eV = rr(),
+    tV = ur()
+  zu.esnext_asynciterable = {
+    libs: [tV.es2015_symbol, eV.es2015_iterable],
+    variables: [
+      ['SymbolConstructor', ss.TYPE],
+      ['AsyncIterator', ss.TYPE],
+      ['AsyncIterable', ss.TYPE],
+      ['AsyncIterableIterator', ss.TYPE],
+      ['AsyncIteratorObject', ss.TYPE],
+    ],
+  }
+})
+var Xy = x((Wu) => {
+  'use strict'
+  Object.defineProperty(Wu, '__esModule', { value: !0 })
+  Wu.esnext_bigint = void 0
+  var Dn = se(),
+    rV = Rn()
+  Wu.esnext_bigint = {
+    libs: [rV.es2020_intl],
+    variables: [
+      ['BigIntToLocaleStringOptions', Dn.TYPE],
+      ['BigInt', Dn.TYPE_VALUE],
+      ['BigIntConstructor', Dn.TYPE],
+      ['BigInt64Array', Dn.TYPE_VALUE],
+      ['BigInt64ArrayConstructor', Dn.TYPE],
+      ['BigUint64Array', Dn.TYPE_VALUE],
+      ['BigUint64ArrayConstructor', Dn.TYPE],
+      ['DataView', Dn.TYPE],
+      ['Intl', Dn.TYPE_VALUE],
+    ],
+  }
+})
+var Qy = x((Hu) => {
+  'use strict'
+  Object.defineProperty(Hu, '__esModule', { value: !0 })
+  Hu.esnext_float16 = void 0
+  var $u = se(),
+    nV = rr(),
+    aV = ur()
+  Hu.esnext_float16 = {
+    libs: [aV.es2015_symbol, nV.es2015_iterable],
+    variables: [
+      ['Float16Array', $u.TYPE_VALUE],
+      ['Float16ArrayConstructor', $u.TYPE],
+      ['Math', $u.TYPE],
+      ['DataView', $u.TYPE],
+    ],
+  }
+})
+var Zy = x((Ku) => {
+  'use strict'
+  Object.defineProperty(Ku, '__esModule', { value: !0 })
+  Ku.esnext_full = void 0
+  var iV = cr(),
+    sV = ln(),
+    oV = xr(),
+    lV = Qp(),
+    uV = fr(),
+    cV = dr()
+  Ku.esnext_full = {
+    libs: [lV.esnext, iV.dom, cV.webworker_importscripts, uV.scripthost, oV.dom_iterable, sV.dom_asynciterable],
+    variables: [],
+  }
+})
+var tg = x((Ju) => {
+  'use strict'
+  Object.defineProperty(Ju, '__esModule', { value: !0 })
+  Ju.esnext_iterator = void 0
+  var eg = se(),
+    fV = rr()
+  Ju.esnext_iterator = {
+    libs: [fV.es2015_iterable],
+    variables: [
+      ['Iterator', eg.TYPE_VALUE],
+      ['IteratorObjectConstructor', eg.TYPE],
+    ],
+  }
+})
+var rg = x((Xu) => {
+  'use strict'
+  Object.defineProperty(Xu, '__esModule', { value: !0 })
+  Xu.esnext_object = void 0
+  var dV = se()
+  Xu.esnext_object = { libs: [], variables: [['ObjectConstructor', dV.TYPE]] }
+})
+var ng = x((Qu) => {
+  'use strict'
+  Object.defineProperty(Qu, '__esModule', { value: !0 })
+  Qu.esnext_promise = void 0
+  var pV = se()
+  Qu.esnext_promise = { libs: [], variables: [['PromiseConstructor', pV.TYPE]] }
+})
+var ag = x((Zu) => {
+  'use strict'
+  Object.defineProperty(Zu, '__esModule', { value: !0 })
+  Zu.esnext_regexp = void 0
+  var EV = se()
+  Zu.esnext_regexp = { libs: [], variables: [['RegExp', EV.TYPE]] }
+})
+var ig = x((ec) => {
+  'use strict'
+  Object.defineProperty(ec, '__esModule', { value: !0 })
+  ec.esnext_string = void 0
+  var mV = se()
+  ec.esnext_string = { libs: [], variables: [['String', mV.TYPE]] }
+})
+var sg = x((tc) => {
+  'use strict'
+  Object.defineProperty(tc, '__esModule', { value: !0 })
+  tc.esnext_symbol = void 0
+  var TV = se()
+  tc.esnext_symbol = { libs: [], variables: [['Symbol', TV.TYPE]] }
+})
+var og = x((nc) => {
+  'use strict'
+  Object.defineProperty(nc, '__esModule', { value: !0 })
+  nc.esnext_weakref = void 0
+  var rc = se(),
+    hV = ta()
+  nc.esnext_weakref = {
+    libs: [hV.es2015_symbol_wellknown],
+    variables: [
+      ['WeakRef', rc.TYPE_VALUE],
+      ['WeakRefConstructor', rc.TYPE],
+      ['FinalizationRegistry', rc.TYPE_VALUE],
+      ['FinalizationRegistryConstructor', rc.TYPE],
+    ],
+  }
+})
+var lg = x((ac) => {
+  'use strict'
+  Object.defineProperty(ac, '__esModule', { value: !0 })
+  ac.lib = void 0
+  var PV = cr(),
+    yV = ts(),
+    gV = fr(),
+    SV = dr()
+  ac.lib = { libs: [yV.es5, PV.dom, SV.webworker_importscripts, gV.scripthost], variables: [] }
+})
+var ug = x((ic) => {
+  'use strict'
+  Object.defineProperty(ic, '__esModule', { value: !0 })
+  ic.webworker = void 0
+  var o = se(),
+    _V = yi(),
+    bV = Wa()
+  ic.webworker = {
+    libs: [_V.es2015, bV.es2018_asynciterable],
+    variables: [
+      ['AacEncoderConfig', o.TYPE],
+      ['AddEventListenerOptions', o.TYPE],
+      ['AesCbcParams', o.TYPE],
+      ['AesCtrParams', o.TYPE],
+      ['AesDerivedKeyParams', o.TYPE],
+      ['AesGcmParams', o.TYPE],
+      ['AesKeyAlgorithm', o.TYPE],
+      ['AesKeyGenParams', o.TYPE],
+      ['Algorithm', o.TYPE],
+      ['AudioConfiguration', o.TYPE],
+      ['AudioDataCopyToOptions', o.TYPE],
+      ['AudioDataInit', o.TYPE],
+      ['AudioDecoderConfig', o.TYPE],
+      ['AudioDecoderInit', o.TYPE],
+      ['AudioDecoderSupport', o.TYPE],
+      ['AudioEncoderConfig', o.TYPE],
+      ['AudioEncoderInit', o.TYPE],
+      ['AudioEncoderSupport', o.TYPE],
+      ['AvcEncoderConfig', o.TYPE],
+      ['BlobPropertyBag', o.TYPE],
+      ['CSSMatrixComponentOptions', o.TYPE],
+      ['CSSNumericType', o.TYPE],
+      ['CacheQueryOptions', o.TYPE],
+      ['ClientQueryOptions', o.TYPE],
+      ['CloseEventInit', o.TYPE],
+      ['CookieInit', o.TYPE],
+      ['CookieListItem', o.TYPE],
+      ['CookieStoreDeleteOptions', o.TYPE],
+      ['CookieStoreGetOptions', o.TYPE],
+      ['CryptoKeyPair', o.TYPE],
+      ['CustomEventInit', o.TYPE],
+      ['DOMMatrix2DInit', o.TYPE],
+      ['DOMMatrixInit', o.TYPE],
+      ['DOMPointInit', o.TYPE],
+      ['DOMQuadInit', o.TYPE],
+      ['DOMRectInit', o.TYPE],
+      ['EcKeyGenParams', o.TYPE],
+      ['EcKeyImportParams', o.TYPE],
+      ['EcdhKeyDeriveParams', o.TYPE],
+      ['EcdsaParams', o.TYPE],
+      ['EncodedAudioChunkInit', o.TYPE],
+      ['EncodedAudioChunkMetadata', o.TYPE],
+      ['EncodedVideoChunkInit', o.TYPE],
+      ['EncodedVideoChunkMetadata', o.TYPE],
+      ['ErrorEventInit', o.TYPE],
+      ['EventInit', o.TYPE],
+      ['EventListenerOptions', o.TYPE],
+      ['EventSourceInit', o.TYPE],
+      ['ExtendableCookieChangeEventInit', o.TYPE],
+      ['ExtendableEventInit', o.TYPE],
+      ['ExtendableMessageEventInit', o.TYPE],
+      ['FetchEventInit', o.TYPE],
+      ['FilePropertyBag', o.TYPE],
+      ['FileSystemCreateWritableOptions', o.TYPE],
+      ['FileSystemGetDirectoryOptions', o.TYPE],
+      ['FileSystemGetFileOptions', o.TYPE],
+      ['FileSystemReadWriteOptions', o.TYPE],
+      ['FileSystemRemoveOptions', o.TYPE],
+      ['FontFaceDescriptors', o.TYPE],
+      ['FontFaceSetLoadEventInit', o.TYPE],
+      ['GPUBindGroupDescriptor', o.TYPE],
+      ['GPUBindGroupEntry', o.TYPE],
+      ['GPUBindGroupLayoutDescriptor', o.TYPE],
+      ['GPUBindGroupLayoutEntry', o.TYPE],
+      ['GPUBlendComponent', o.TYPE],
+      ['GPUBlendState', o.TYPE],
+      ['GPUBufferBinding', o.TYPE],
+      ['GPUBufferBindingLayout', o.TYPE],
+      ['GPUBufferDescriptor', o.TYPE],
+      ['GPUCanvasConfiguration', o.TYPE],
+      ['GPUCanvasToneMapping', o.TYPE],
+      ['GPUColorDict', o.TYPE],
+      ['GPUColorTargetState', o.TYPE],
+      ['GPUCommandBufferDescriptor', o.TYPE],
+      ['GPUCommandEncoderDescriptor', o.TYPE],
+      ['GPUComputePassDescriptor', o.TYPE],
+      ['GPUComputePassTimestampWrites', o.TYPE],
+      ['GPUComputePipelineDescriptor', o.TYPE],
+      ['GPUCopyExternalImageDestInfo', o.TYPE],
+      ['GPUCopyExternalImageSourceInfo', o.TYPE],
+      ['GPUDepthStencilState', o.TYPE],
+      ['GPUDeviceDescriptor', o.TYPE],
+      ['GPUExtent3DDict', o.TYPE],
+      ['GPUExternalTextureBindingLayout', o.TYPE],
+      ['GPUExternalTextureDescriptor', o.TYPE],
+      ['GPUFragmentState', o.TYPE],
+      ['GPUMultisampleState', o.TYPE],
+      ['GPUObjectDescriptorBase', o.TYPE],
+      ['GPUOrigin2DDict', o.TYPE],
+      ['GPUOrigin3DDict', o.TYPE],
+      ['GPUPipelineDescriptorBase', o.TYPE],
+      ['GPUPipelineErrorInit', o.TYPE],
+      ['GPUPipelineLayoutDescriptor', o.TYPE],
+      ['GPUPrimitiveState', o.TYPE],
+      ['GPUProgrammableStage', o.TYPE],
+      ['GPUQuerySetDescriptor', o.TYPE],
+      ['GPUQueueDescriptor', o.TYPE],
+      ['GPURenderBundleDescriptor', o.TYPE],
+      ['GPURenderBundleEncoderDescriptor', o.TYPE],
+      ['GPURenderPassColorAttachment', o.TYPE],
+      ['GPURenderPassDepthStencilAttachment', o.TYPE],
+      ['GPURenderPassDescriptor', o.TYPE],
+      ['GPURenderPassLayout', o.TYPE],
+      ['GPURenderPassTimestampWrites', o.TYPE],
+      ['GPURenderPipelineDescriptor', o.TYPE],
+      ['GPURequestAdapterOptions', o.TYPE],
+      ['GPUSamplerBindingLayout', o.TYPE],
+      ['GPUSamplerDescriptor', o.TYPE],
+      ['GPUShaderModuleDescriptor', o.TYPE],
+      ['GPUStencilFaceState', o.TYPE],
+      ['GPUStorageTextureBindingLayout', o.TYPE],
+      ['GPUTexelCopyBufferInfo', o.TYPE],
+      ['GPUTexelCopyBufferLayout', o.TYPE],
+      ['GPUTexelCopyTextureInfo', o.TYPE],
+      ['GPUTextureBindingLayout', o.TYPE],
+      ['GPUTextureDescriptor', o.TYPE],
+      ['GPUTextureViewDescriptor', o.TYPE],
+      ['GPUUncapturedErrorEventInit', o.TYPE],
+      ['GPUVertexAttribute', o.TYPE],
+      ['GPUVertexBufferLayout', o.TYPE],
+      ['GPUVertexState', o.TYPE],
+      ['GetNotificationOptions', o.TYPE],
+      ['HkdfParams', o.TYPE],
+      ['HmacImportParams', o.TYPE],
+      ['HmacKeyGenParams', o.TYPE],
+      ['IDBDatabaseInfo', o.TYPE],
+      ['IDBIndexParameters', o.TYPE],
+      ['IDBObjectStoreParameters', o.TYPE],
+      ['IDBTransactionOptions', o.TYPE],
+      ['IDBVersionChangeEventInit', o.TYPE],
+      ['ImageBitmapOptions', o.TYPE],
+      ['ImageBitmapRenderingContextSettings', o.TYPE],
+      ['ImageDataSettings', o.TYPE],
+      ['ImageDecodeOptions', o.TYPE],
+      ['ImageDecodeResult', o.TYPE],
+      ['ImageDecoderInit', o.TYPE],
+      ['ImageEncodeOptions', o.TYPE],
+      ['JsonWebKey', o.TYPE],
+      ['KeyAlgorithm', o.TYPE],
+      ['KeySystemTrackConfiguration', o.TYPE],
+      ['LockInfo', o.TYPE],
+      ['LockManagerSnapshot', o.TYPE],
+      ['LockOptions', o.TYPE],
+      ['MediaCapabilitiesDecodingInfo', o.TYPE],
+      ['MediaCapabilitiesEncodingInfo', o.TYPE],
+      ['MediaCapabilitiesInfo', o.TYPE],
+      ['MediaCapabilitiesKeySystemConfiguration', o.TYPE],
+      ['MediaConfiguration', o.TYPE],
+      ['MediaDecodingConfiguration', o.TYPE],
+      ['MediaEncodingConfiguration', o.TYPE],
+      ['MediaStreamTrackProcessorInit', o.TYPE],
+      ['MessageEventInit', o.TYPE],
+      ['MultiCacheQueryOptions', o.TYPE],
+      ['NavigationPreloadState', o.TYPE],
+      ['NotificationEventInit', o.TYPE],
+      ['NotificationOptions', o.TYPE],
+      ['OpusEncoderConfig', o.TYPE],
+      ['Pbkdf2Params', o.TYPE],
+      ['PerformanceMarkOptions', o.TYPE],
+      ['PerformanceMeasureOptions', o.TYPE],
+      ['PerformanceObserverInit', o.TYPE],
+      ['PermissionDescriptor', o.TYPE],
+      ['PlaneLayout', o.TYPE],
+      ['ProgressEventInit', o.TYPE],
+      ['PromiseRejectionEventInit', o.TYPE],
+      ['PushEventInit', o.TYPE],
+      ['PushSubscriptionChangeEventInit', o.TYPE],
+      ['PushSubscriptionJSON', o.TYPE],
+      ['PushSubscriptionOptionsInit', o.TYPE],
+      ['QueuingStrategy', o.TYPE],
+      ['QueuingStrategyInit', o.TYPE],
+      ['RTCEncodedAudioFrameMetadata', o.TYPE],
+      ['RTCEncodedFrameMetadata', o.TYPE],
+      ['RTCEncodedVideoFrameMetadata', o.TYPE],
+      ['ReadableStreamBYOBReaderReadOptions', o.TYPE],
+      ['ReadableStreamGetReaderOptions', o.TYPE],
+      ['ReadableStreamIteratorOptions', o.TYPE],
+      ['ReadableStreamReadDoneResult', o.TYPE],
+      ['ReadableStreamReadValueResult', o.TYPE],
+      ['ReadableWritablePair', o.TYPE],
+      ['RegistrationOptions', o.TYPE],
+      ['Report', o.TYPE],
+      ['ReportBody', o.TYPE],
+      ['ReportingObserverOptions', o.TYPE],
+      ['RequestInit', o.TYPE],
+      ['ResponseInit', o.TYPE],
+      ['RsaHashedImportParams', o.TYPE],
+      ['RsaHashedKeyGenParams', o.TYPE],
+      ['RsaKeyGenParams', o.TYPE],
+      ['RsaOaepParams', o.TYPE],
+      ['RsaOtherPrimesInfo', o.TYPE],
+      ['RsaPssParams', o.TYPE],
+      ['SchedulerPostTaskOptions', o.TYPE],
+      ['SecurityPolicyViolationEventInit', o.TYPE],
+      ['StorageEstimate', o.TYPE],
+      ['StreamPipeOptions', o.TYPE],
+      ['StructuredSerializeOptions', o.TYPE],
+      ['SvcOutputMetadata', o.TYPE],
+      ['TaskControllerInit', o.TYPE],
+      ['TaskPriorityChangeEventInit', o.TYPE],
+      ['TaskSignalAnyInit', o.TYPE],
+      ['TextDecodeOptions', o.TYPE],
+      ['TextDecoderOptions', o.TYPE],
+      ['TextEncoderEncodeIntoResult', o.TYPE],
+      ['Transformer', o.TYPE],
+      ['URLPatternComponentResult', o.TYPE],
+      ['URLPatternInit', o.TYPE],
+      ['URLPatternOptions', o.TYPE],
+      ['URLPatternResult', o.TYPE],
+      ['UnderlyingByteSource', o.TYPE],
+      ['UnderlyingDefaultSource', o.TYPE],
+      ['UnderlyingSink', o.TYPE],
+      ['UnderlyingSource', o.TYPE],
+      ['VideoColorSpaceInit', o.TYPE],
+      ['VideoConfiguration', o.TYPE],
+      ['VideoDecoderConfig', o.TYPE],
+      ['VideoDecoderInit', o.TYPE],
+      ['VideoDecoderSupport', o.TYPE],
+      ['VideoEncoderConfig', o.TYPE],
+      ['VideoEncoderEncodeOptions', o.TYPE],
+      ['VideoEncoderEncodeOptionsForAvc', o.TYPE],
+      ['VideoEncoderInit', o.TYPE],
+      ['VideoEncoderSupport', o.TYPE],
+      ['VideoFrameBufferInit', o.TYPE],
+      ['VideoFrameCopyToOptions', o.TYPE],
+      ['VideoFrameInit', o.TYPE],
+      ['WebGLContextAttributes', o.TYPE],
+      ['WebGLContextEventInit', o.TYPE],
+      ['WebTransportCloseInfo', o.TYPE],
+      ['WebTransportErrorOptions', o.TYPE],
+      ['WebTransportHash', o.TYPE],
+      ['WebTransportOptions', o.TYPE],
+      ['WebTransportSendOptions', o.TYPE],
+      ['WebTransportSendStreamOptions', o.TYPE],
+      ['WorkerOptions', o.TYPE],
+      ['WriteParams', o.TYPE],
+      ['ANGLE_instanced_arrays', o.TYPE],
+      ['AbortController', o.TYPE_VALUE],
+      ['AbortSignalEventMap', o.TYPE],
+      ['AbortSignal', o.TYPE_VALUE],
+      ['AbstractWorkerEventMap', o.TYPE],
+      ['AbstractWorker', o.TYPE],
+      ['AnimationFrameProvider', o.TYPE],
+      ['AudioData', o.TYPE_VALUE],
+      ['AudioDecoderEventMap', o.TYPE],
+      ['AudioDecoder', o.TYPE_VALUE],
+      ['AudioEncoderEventMap', o.TYPE],
+      ['AudioEncoder', o.TYPE_VALUE],
+      ['Blob', o.TYPE_VALUE],
+      ['Body', o.TYPE],
+      ['BroadcastChannelEventMap', o.TYPE],
+      ['BroadcastChannel', o.TYPE_VALUE],
+      ['ByteLengthQueuingStrategy', o.TYPE_VALUE],
+      ['CSSImageValue', o.TYPE_VALUE],
+      ['CSSKeywordValue', o.TYPE_VALUE],
+      ['CSSMathClamp', o.TYPE_VALUE],
+      ['CSSMathInvert', o.TYPE_VALUE],
+      ['CSSMathMax', o.TYPE_VALUE],
+      ['CSSMathMin', o.TYPE_VALUE],
+      ['CSSMathNegate', o.TYPE_VALUE],
+      ['CSSMathProduct', o.TYPE_VALUE],
+      ['CSSMathSum', o.TYPE_VALUE],
+      ['CSSMathValue', o.TYPE_VALUE],
+      ['CSSMatrixComponent', o.TYPE_VALUE],
+      ['CSSNumericArray', o.TYPE_VALUE],
+      ['CSSNumericValue', o.TYPE_VALUE],
+      ['CSSPerspective', o.TYPE_VALUE],
+      ['CSSRotate', o.TYPE_VALUE],
+      ['CSSScale', o.TYPE_VALUE],
+      ['CSSSkew', o.TYPE_VALUE],
+      ['CSSSkewX', o.TYPE_VALUE],
+      ['CSSSkewY', o.TYPE_VALUE],
+      ['CSSStyleValue', o.TYPE_VALUE],
+      ['CSSTransformComponent', o.TYPE_VALUE],
+      ['CSSTransformValue', o.TYPE_VALUE],
+      ['CSSTranslate', o.TYPE_VALUE],
+      ['CSSUnitValue', o.TYPE_VALUE],
+      ['CSSUnparsedValue', o.TYPE_VALUE],
+      ['CSSVariableReferenceValue', o.TYPE_VALUE],
+      ['Cache', o.TYPE_VALUE],
+      ['CacheStorage', o.TYPE_VALUE],
+      ['CanvasCompositing', o.TYPE],
+      ['CanvasDrawImage', o.TYPE],
+      ['CanvasDrawPath', o.TYPE],
+      ['CanvasFillStrokeStyles', o.TYPE],
+      ['CanvasFilters', o.TYPE],
+      ['CanvasGradient', o.TYPE_VALUE],
+      ['CanvasImageData', o.TYPE],
+      ['CanvasImageSmoothing', o.TYPE],
+      ['CanvasPath', o.TYPE],
+      ['CanvasPathDrawingStyles', o.TYPE],
+      ['CanvasPattern', o.TYPE_VALUE],
+      ['CanvasRect', o.TYPE],
+      ['CanvasShadowStyles', o.TYPE],
+      ['CanvasState', o.TYPE],
+      ['CanvasText', o.TYPE],
+      ['CanvasTextDrawingStyles', o.TYPE],
+      ['CanvasTransform', o.TYPE],
+      ['Client', o.TYPE_VALUE],
+      ['Clients', o.TYPE_VALUE],
+      ['CloseEvent', o.TYPE_VALUE],
+      ['CompressionStream', o.TYPE_VALUE],
+      ['CookieStore', o.TYPE_VALUE],
+      ['CookieStoreManager', o.TYPE_VALUE],
+      ['CountQueuingStrategy', o.TYPE_VALUE],
+      ['Crypto', o.TYPE_VALUE],
+      ['CryptoKey', o.TYPE_VALUE],
+      ['CustomEvent', o.TYPE_VALUE],
+      ['DOMException', o.TYPE_VALUE],
+      ['DOMMatrix', o.TYPE_VALUE],
+      ['DOMMatrixReadOnly', o.TYPE_VALUE],
+      ['DOMPoint', o.TYPE_VALUE],
+      ['DOMPointReadOnly', o.TYPE_VALUE],
+      ['DOMQuad', o.TYPE_VALUE],
+      ['DOMRect', o.TYPE_VALUE],
+      ['DOMRectReadOnly', o.TYPE_VALUE],
+      ['DOMStringList', o.TYPE_VALUE],
+      ['DecompressionStream', o.TYPE_VALUE],
+      ['DedicatedWorkerGlobalScopeEventMap', o.TYPE],
+      ['DedicatedWorkerGlobalScope', o.TYPE_VALUE],
+      ['EXT_blend_minmax', o.TYPE],
+      ['EXT_color_buffer_float', o.TYPE],
+      ['EXT_color_buffer_half_float', o.TYPE],
+      ['EXT_float_blend', o.TYPE],
+      ['EXT_frag_depth', o.TYPE],
+      ['EXT_sRGB', o.TYPE],
+      ['EXT_shader_texture_lod', o.TYPE],
+      ['EXT_texture_compression_bptc', o.TYPE],
+      ['EXT_texture_compression_rgtc', o.TYPE],
+      ['EXT_texture_filter_anisotropic', o.TYPE],
+      ['EXT_texture_norm16', o.TYPE],
+      ['EncodedAudioChunk', o.TYPE_VALUE],
+      ['EncodedVideoChunk', o.TYPE_VALUE],
+      ['ErrorEvent', o.TYPE_VALUE],
+      ['Event', o.TYPE_VALUE],
+      ['EventListener', o.TYPE],
+      ['EventListenerObject', o.TYPE],
+      ['EventSourceEventMap', o.TYPE],
+      ['EventSource', o.TYPE_VALUE],
+      ['EventTarget', o.TYPE_VALUE],
+      ['ExtendableCookieChangeEvent', o.TYPE_VALUE],
+      ['ExtendableEvent', o.TYPE_VALUE],
+      ['ExtendableMessageEvent', o.TYPE_VALUE],
+      ['FetchEvent', o.TYPE_VALUE],
+      ['File', o.TYPE_VALUE],
+      ['FileList', o.TYPE_VALUE],
+      ['FileReaderEventMap', o.TYPE],
+      ['FileReader', o.TYPE_VALUE],
+      ['FileReaderSync', o.TYPE_VALUE],
+      ['FileSystemDirectoryHandle', o.TYPE_VALUE],
+      ['FileSystemFileHandle', o.TYPE_VALUE],
+      ['FileSystemHandle', o.TYPE_VALUE],
+      ['FileSystemSyncAccessHandle', o.TYPE_VALUE],
+      ['FileSystemWritableFileStream', o.TYPE_VALUE],
+      ['FontFace', o.TYPE_VALUE],
+      ['FontFaceSetEventMap', o.TYPE],
+      ['FontFaceSet', o.TYPE_VALUE],
+      ['FontFaceSetLoadEvent', o.TYPE_VALUE],
+      ['FontFaceSource', o.TYPE],
+      ['FormData', o.TYPE_VALUE],
+      ['GPU', o.TYPE_VALUE],
+      ['GPUAdapter', o.TYPE_VALUE],
+      ['GPUAdapterInfo', o.TYPE_VALUE],
+      ['GPUBindGroup', o.TYPE_VALUE],
+      ['GPUBindGroupLayout', o.TYPE_VALUE],
+      ['GPUBindingCommandsMixin', o.TYPE],
+      ['GPUBuffer', o.TYPE_VALUE],
+      ['GPUCanvasContext', o.TYPE_VALUE],
+      ['GPUCommandBuffer', o.TYPE_VALUE],
+      ['GPUCommandEncoder', o.TYPE_VALUE],
+      ['GPUCompilationInfo', o.TYPE_VALUE],
+      ['GPUCompilationMessage', o.TYPE_VALUE],
+      ['GPUComputePassEncoder', o.TYPE_VALUE],
+      ['GPUComputePipeline', o.TYPE_VALUE],
+      ['GPUDebugCommandsMixin', o.TYPE],
+      ['GPUDeviceEventMap', o.TYPE],
+      ['GPUDevice', o.TYPE_VALUE],
+      ['GPUDeviceLostInfo', o.TYPE_VALUE],
+      ['GPUError', o.TYPE_VALUE],
+      ['GPUExternalTexture', o.TYPE_VALUE],
+      ['GPUInternalError', o.TYPE_VALUE],
+      ['GPUObjectBase', o.TYPE],
+      ['GPUOutOfMemoryError', o.TYPE_VALUE],
+      ['GPUPipelineBase', o.TYPE],
+      ['GPUPipelineError', o.TYPE_VALUE],
+      ['GPUPipelineLayout', o.TYPE_VALUE],
+      ['GPUQuerySet', o.TYPE_VALUE],
+      ['GPUQueue', o.TYPE_VALUE],
+      ['GPURenderBundle', o.TYPE_VALUE],
+      ['GPURenderBundleEncoder', o.TYPE_VALUE],
+      ['GPURenderCommandsMixin', o.TYPE],
+      ['GPURenderPassEncoder', o.TYPE_VALUE],
+      ['GPURenderPipeline', o.TYPE_VALUE],
+      ['GPUSampler', o.TYPE_VALUE],
+      ['GPUShaderModule', o.TYPE_VALUE],
+      ['GPUSupportedFeatures', o.TYPE_VALUE],
+      ['GPUSupportedLimits', o.TYPE_VALUE],
+      ['GPUTexture', o.TYPE_VALUE],
+      ['GPUTextureView', o.TYPE_VALUE],
+      ['GPUUncapturedErrorEvent', o.TYPE_VALUE],
+      ['GPUValidationError', o.TYPE_VALUE],
+      ['GenericTransformStream', o.TYPE],
+      ['Headers', o.TYPE_VALUE],
+      ['IDBCursor', o.TYPE_VALUE],
+      ['IDBCursorWithValue', o.TYPE_VALUE],
+      ['IDBDatabaseEventMap', o.TYPE],
+      ['IDBDatabase', o.TYPE_VALUE],
+      ['IDBFactory', o.TYPE_VALUE],
+      ['IDBIndex', o.TYPE_VALUE],
+      ['IDBKeyRange', o.TYPE_VALUE],
+      ['IDBObjectStore', o.TYPE_VALUE],
+      ['IDBOpenDBRequestEventMap', o.TYPE],
+      ['IDBOpenDBRequest', o.TYPE_VALUE],
+      ['IDBRequestEventMap', o.TYPE],
+      ['IDBRequest', o.TYPE_VALUE],
+      ['IDBTransactionEventMap', o.TYPE],
+      ['IDBTransaction', o.TYPE_VALUE],
+      ['IDBVersionChangeEvent', o.TYPE_VALUE],
+      ['ImageBitmap', o.TYPE_VALUE],
+      ['ImageBitmapRenderingContext', o.TYPE_VALUE],
+      ['ImageData', o.TYPE_VALUE],
+      ['ImageDecoder', o.TYPE_VALUE],
+      ['ImageTrack', o.TYPE_VALUE],
+      ['ImageTrackList', o.TYPE_VALUE],
+      ['ImportMeta', o.TYPE],
+      ['KHR_parallel_shader_compile', o.TYPE],
+      ['Lock', o.TYPE_VALUE],
+      ['LockManager', o.TYPE_VALUE],
+      ['MediaCapabilities', o.TYPE_VALUE],
+      ['MediaSourceHandle', o.TYPE_VALUE],
+      ['MediaStreamTrackProcessor', o.TYPE_VALUE],
+      ['MessageChannel', o.TYPE_VALUE],
+      ['MessageEvent', o.TYPE_VALUE],
+      ['MessageEventTargetEventMap', o.TYPE],
+      ['MessageEventTarget', o.TYPE],
+      ['MessagePortEventMap', o.TYPE],
+      ['MessagePort', o.TYPE_VALUE],
+      ['NavigationPreloadManager', o.TYPE_VALUE],
+      ['NavigatorBadge', o.TYPE],
+      ['NavigatorConcurrentHardware', o.TYPE],
+      ['NavigatorGPU', o.TYPE],
+      ['NavigatorID', o.TYPE],
+      ['NavigatorLanguage', o.TYPE],
+      ['NavigatorLocks', o.TYPE],
+      ['NavigatorOnLine', o.TYPE],
+      ['NavigatorStorage', o.TYPE],
+      ['NotificationEventMap', o.TYPE],
+      ['Notification', o.TYPE_VALUE],
+      ['NotificationEvent', o.TYPE_VALUE],
+      ['OES_draw_buffers_indexed', o.TYPE],
+      ['OES_element_index_uint', o.TYPE],
+      ['OES_fbo_render_mipmap', o.TYPE],
+      ['OES_standard_derivatives', o.TYPE],
+      ['OES_texture_float', o.TYPE],
+      ['OES_texture_float_linear', o.TYPE],
+      ['OES_texture_half_float', o.TYPE],
+      ['OES_texture_half_float_linear', o.TYPE],
+      ['OES_vertex_array_object', o.TYPE],
+      ['OVR_multiview2', o.TYPE],
+      ['OffscreenCanvasEventMap', o.TYPE],
+      ['OffscreenCanvas', o.TYPE_VALUE],
+      ['OffscreenCanvasRenderingContext2D', o.TYPE_VALUE],
+      ['Path2D', o.TYPE_VALUE],
+      ['PerformanceEventMap', o.TYPE],
+      ['Performance', o.TYPE_VALUE],
+      ['PerformanceEntry', o.TYPE_VALUE],
+      ['PerformanceMark', o.TYPE_VALUE],
+      ['PerformanceMeasure', o.TYPE_VALUE],
+      ['PerformanceObserver', o.TYPE_VALUE],
+      ['PerformanceObserverEntryList', o.TYPE_VALUE],
+      ['PerformanceResourceTiming', o.TYPE_VALUE],
+      ['PerformanceServerTiming', o.TYPE_VALUE],
+      ['PermissionStatusEventMap', o.TYPE],
+      ['PermissionStatus', o.TYPE_VALUE],
+      ['Permissions', o.TYPE_VALUE],
+      ['ProgressEvent', o.TYPE_VALUE],
+      ['PromiseRejectionEvent', o.TYPE_VALUE],
+      ['PushEvent', o.TYPE_VALUE],
+      ['PushManager', o.TYPE_VALUE],
+      ['PushManagerAttribute', o.TYPE],
+      ['PushMessageData', o.TYPE_VALUE],
+      ['PushSubscription', o.TYPE_VALUE],
+      ['PushSubscriptionChangeEvent', o.TYPE_VALUE],
+      ['PushSubscriptionOptions', o.TYPE_VALUE],
+      ['RTCDataChannelEventMap', o.TYPE],
+      ['RTCDataChannel', o.TYPE_VALUE],
+      ['RTCEncodedAudioFrame', o.TYPE_VALUE],
+      ['RTCEncodedVideoFrame', o.TYPE_VALUE],
+      ['RTCRtpScriptTransformer', o.TYPE_VALUE],
+      ['RTCTransformEvent', o.TYPE_VALUE],
+      ['ReadableByteStreamController', o.TYPE_VALUE],
+      ['ReadableStream', o.TYPE_VALUE],
+      ['ReadableStreamBYOBReader', o.TYPE_VALUE],
+      ['ReadableStreamBYOBRequest', o.TYPE_VALUE],
+      ['ReadableStreamDefaultController', o.TYPE_VALUE],
+      ['ReadableStreamDefaultReader', o.TYPE_VALUE],
+      ['ReadableStreamGenericReader', o.TYPE],
+      ['ReportingObserver', o.TYPE_VALUE],
+      ['Request', o.TYPE_VALUE],
+      ['Response', o.TYPE_VALUE],
+      ['Scheduler', o.TYPE_VALUE],
+      ['SecurityPolicyViolationEvent', o.TYPE_VALUE],
+      ['ServiceWorkerEventMap', o.TYPE],
+      ['ServiceWorker', o.TYPE_VALUE],
+      ['ServiceWorkerContainerEventMap', o.TYPE],
+      ['ServiceWorkerContainer', o.TYPE_VALUE],
+      ['ServiceWorkerGlobalScopeEventMap', o.TYPE],
+      ['ServiceWorkerGlobalScope', o.TYPE_VALUE],
+      ['ServiceWorkerRegistrationEventMap', o.TYPE],
+      ['ServiceWorkerRegistration', o.TYPE_VALUE],
+      ['SharedWorkerGlobalScopeEventMap', o.TYPE],
+      ['SharedWorkerGlobalScope', o.TYPE_VALUE],
+      ['StorageManager', o.TYPE_VALUE],
+      ['StylePropertyMapReadOnly', o.TYPE_VALUE],
+      ['SubtleCrypto', o.TYPE_VALUE],
+      ['TaskController', o.TYPE_VALUE],
+      ['TaskPriorityChangeEvent', o.TYPE_VALUE],
+      ['TaskSignalEventMap', o.TYPE],
+      ['TaskSignal', o.TYPE_VALUE],
+      ['TextDecoder', o.TYPE_VALUE],
+      ['TextDecoderCommon', o.TYPE],
+      ['TextDecoderStream', o.TYPE_VALUE],
+      ['TextEncoder', o.TYPE_VALUE],
+      ['TextEncoderCommon', o.TYPE],
+      ['TextEncoderStream', o.TYPE_VALUE],
+      ['TextMetrics', o.TYPE_VALUE],
+      ['TransformStream', o.TYPE_VALUE],
+      ['TransformStreamDefaultController', o.TYPE_VALUE],
+      ['URL', o.TYPE_VALUE],
+      ['URLPattern', o.TYPE_VALUE],
+      ['URLSearchParams', o.TYPE_VALUE],
+      ['VideoColorSpace', o.TYPE_VALUE],
+      ['VideoDecoderEventMap', o.TYPE],
+      ['VideoDecoder', o.TYPE_VALUE],
+      ['VideoEncoderEventMap', o.TYPE],
+      ['VideoEncoder', o.TYPE_VALUE],
+      ['VideoFrame', o.TYPE_VALUE],
+      ['WEBGL_color_buffer_float', o.TYPE],
+      ['WEBGL_compressed_texture_astc', o.TYPE],
+      ['WEBGL_compressed_texture_etc', o.TYPE],
+      ['WEBGL_compressed_texture_etc1', o.TYPE],
+      ['WEBGL_compressed_texture_pvrtc', o.TYPE],
+      ['WEBGL_compressed_texture_s3tc', o.TYPE],
+      ['WEBGL_compressed_texture_s3tc_srgb', o.TYPE],
+      ['WEBGL_debug_renderer_info', o.TYPE],
+      ['WEBGL_debug_shaders', o.TYPE],
+      ['WEBGL_depth_texture', o.TYPE],
+      ['WEBGL_draw_buffers', o.TYPE],
+      ['WEBGL_lose_context', o.TYPE],
+      ['WEBGL_multi_draw', o.TYPE],
+      ['WGSLLanguageFeatures', o.TYPE_VALUE],
+      ['WebGL2RenderingContext', o.TYPE_VALUE],
+      ['WebGL2RenderingContextBase', o.TYPE],
+      ['WebGL2RenderingContextOverloads', o.TYPE],
+      ['WebGLActiveInfo', o.TYPE_VALUE],
+      ['WebGLBuffer', o.TYPE_VALUE],
+      ['WebGLContextEvent', o.TYPE_VALUE],
+      ['WebGLFramebuffer', o.TYPE_VALUE],
+      ['WebGLProgram', o.TYPE_VALUE],
+      ['WebGLQuery', o.TYPE_VALUE],
+      ['WebGLRenderbuffer', o.TYPE_VALUE],
+      ['WebGLRenderingContext', o.TYPE_VALUE],
+      ['WebGLRenderingContextBase', o.TYPE],
+      ['WebGLRenderingContextOverloads', o.TYPE],
+      ['WebGLSampler', o.TYPE_VALUE],
+      ['WebGLShader', o.TYPE_VALUE],
+      ['WebGLShaderPrecisionFormat', o.TYPE_VALUE],
+      ['WebGLSync', o.TYPE_VALUE],
+      ['WebGLTexture', o.TYPE_VALUE],
+      ['WebGLTransformFeedback', o.TYPE_VALUE],
+      ['WebGLUniformLocation', o.TYPE_VALUE],
+      ['WebGLVertexArrayObject', o.TYPE_VALUE],
+      ['WebGLVertexArrayObjectOES', o.TYPE],
+      ['WebSocketEventMap', o.TYPE],
+      ['WebSocket', o.TYPE_VALUE],
+      ['WebTransport', o.TYPE_VALUE],
+      ['WebTransportBidirectionalStream', o.TYPE_VALUE],
+      ['WebTransportDatagramDuplexStream', o.TYPE_VALUE],
+      ['WebTransportError', o.TYPE_VALUE],
+      ['WindowClient', o.TYPE_VALUE],
+      ['WindowOrWorkerGlobalScope', o.TYPE],
+      ['WorkerEventMap', o.TYPE],
+      ['Worker', o.TYPE_VALUE],
+      ['WorkerGlobalScopeEventMap', o.TYPE],
+      ['WorkerGlobalScope', o.TYPE_VALUE],
+      ['WorkerLocation', o.TYPE_VALUE],
+      ['WorkerNavigator', o.TYPE_VALUE],
+      ['WritableStream', o.TYPE_VALUE],
+      ['WritableStreamDefaultController', o.TYPE_VALUE],
+      ['WritableStreamDefaultWriter', o.TYPE_VALUE],
+      ['XMLHttpRequestEventMap', o.TYPE],
+      ['XMLHttpRequest', o.TYPE_VALUE],
+      ['XMLHttpRequestEventTargetEventMap', o.TYPE],
+      ['XMLHttpRequestEventTarget', o.TYPE_VALUE],
+      ['XMLHttpRequestUpload', o.TYPE_VALUE],
+      ['WebAssembly', o.TYPE_VALUE],
+      ['Console', o.TYPE],
+      ['AudioDataOutputCallback', o.TYPE],
+      ['EncodedAudioChunkOutputCallback', o.TYPE],
+      ['EncodedVideoChunkOutputCallback', o.TYPE],
+      ['FrameRequestCallback', o.TYPE],
+      ['LockGrantedCallback', o.TYPE],
+      ['OnErrorEventHandlerNonNull', o.TYPE],
+      ['PerformanceObserverCallback', o.TYPE],
+      ['QueuingStrategySize', o.TYPE],
+      ['ReportingObserverCallback', o.TYPE],
+      ['SchedulerPostTaskCallback', o.TYPE],
+      ['TransformerFlushCallback', o.TYPE],
+      ['TransformerStartCallback', o.TYPE],
+      ['TransformerTransformCallback', o.TYPE],
+      ['UnderlyingSinkAbortCallback', o.TYPE],
+      ['UnderlyingSinkCloseCallback', o.TYPE],
+      ['UnderlyingSinkStartCallback', o.TYPE],
+      ['UnderlyingSinkWriteCallback', o.TYPE],
+      ['UnderlyingSourceCancelCallback', o.TYPE],
+      ['UnderlyingSourcePullCallback', o.TYPE],
+      ['UnderlyingSourceStartCallback', o.TYPE],
+      ['VideoFrameOutputCallback', o.TYPE],
+      ['VoidFunction', o.TYPE],
+      ['WebCodecsErrorCallback', o.TYPE],
+      ['AlgorithmIdentifier', o.TYPE],
+      ['AllowSharedBufferSource', o.TYPE],
+      ['BigInteger', o.TYPE],
+      ['BlobPart', o.TYPE],
+      ['BodyInit', o.TYPE],
+      ['BufferSource', o.TYPE],
+      ['CSSKeywordish', o.TYPE],
+      ['CSSNumberish', o.TYPE],
+      ['CSSPerspectiveValue', o.TYPE],
+      ['CSSUnparsedSegment', o.TYPE],
+      ['CanvasImageSource', o.TYPE],
+      ['CookieList', o.TYPE],
+      ['DOMHighResTimeStamp', o.TYPE],
+      ['EpochTimeStamp', o.TYPE],
+      ['EventListenerOrEventListenerObject', o.TYPE],
+      ['FileSystemWriteChunkType', o.TYPE],
+      ['Float32List', o.TYPE],
+      ['FormDataEntryValue', o.TYPE],
+      ['GLbitfield', o.TYPE],
+      ['GLboolean', o.TYPE],
+      ['GLclampf', o.TYPE],
+      ['GLenum', o.TYPE],
+      ['GLfloat', o.TYPE],
+      ['GLint', o.TYPE],
+      ['GLint64', o.TYPE],
+      ['GLintptr', o.TYPE],
+      ['GLsizei', o.TYPE],
+      ['GLsizeiptr', o.TYPE],
+      ['GLuint', o.TYPE],
+      ['GLuint64', o.TYPE],
+      ['GPUBindingResource', o.TYPE],
+      ['GPUBufferDynamicOffset', o.TYPE],
+      ['GPUBufferUsageFlags', o.TYPE],
+      ['GPUColor', o.TYPE],
+      ['GPUColorWriteFlags', o.TYPE],
+      ['GPUCopyExternalImageSource', o.TYPE],
+      ['GPUDepthBias', o.TYPE],
+      ['GPUExtent3D', o.TYPE],
+      ['GPUFlagsConstant', o.TYPE],
+      ['GPUIndex32', o.TYPE],
+      ['GPUIntegerCoordinate', o.TYPE],
+      ['GPUIntegerCoordinateOut', o.TYPE],
+      ['GPUMapModeFlags', o.TYPE],
+      ['GPUOrigin2D', o.TYPE],
+      ['GPUOrigin3D', o.TYPE],
+      ['GPUPipelineConstantValue', o.TYPE],
+      ['GPUSampleMask', o.TYPE],
+      ['GPUShaderStageFlags', o.TYPE],
+      ['GPUSignedOffset32', o.TYPE],
+      ['GPUSize32', o.TYPE],
+      ['GPUSize32Out', o.TYPE],
+      ['GPUSize64', o.TYPE],
+      ['GPUSize64Out', o.TYPE],
+      ['GPUStencilValue', o.TYPE],
+      ['GPUTextureUsageFlags', o.TYPE],
+      ['HashAlgorithmIdentifier', o.TYPE],
+      ['HeadersInit', o.TYPE],
+      ['IDBValidKey', o.TYPE],
+      ['ImageBitmapSource', o.TYPE],
+      ['ImageBufferSource', o.TYPE],
+      ['ImageDataArray', o.TYPE],
+      ['Int32List', o.TYPE],
+      ['MessageEventSource', o.TYPE],
+      ['NamedCurve', o.TYPE],
+      ['OffscreenRenderingContext', o.TYPE],
+      ['OnErrorEventHandler', o.TYPE],
+      ['PerformanceEntryList', o.TYPE],
+      ['PushMessageDataInit', o.TYPE],
+      ['ReadableStreamController', o.TYPE],
+      ['ReadableStreamReadResult', o.TYPE],
+      ['ReadableStreamReader', o.TYPE],
+      ['ReportList', o.TYPE],
+      ['RequestInfo', o.TYPE],
+      ['TexImageSource', o.TYPE],
+      ['TimerHandler', o.TYPE],
+      ['Transferable', o.TYPE],
+      ['URLPatternInput', o.TYPE],
+      ['Uint32List', o.TYPE],
+      ['XMLHttpRequestBodyInit', o.TYPE],
+      ['AacBitstreamFormat', o.TYPE],
+      ['AlphaOption', o.TYPE],
+      ['AudioSampleFormat', o.TYPE],
+      ['AvcBitstreamFormat', o.TYPE],
+      ['BinaryType', o.TYPE],
+      ['BitrateMode', o.TYPE],
+      ['CSSMathOperator', o.TYPE],
+      ['CSSNumericBaseType', o.TYPE],
+      ['CanvasDirection', o.TYPE],
+      ['CanvasFillRule', o.TYPE],
+      ['CanvasFontKerning', o.TYPE],
+      ['CanvasFontStretch', o.TYPE],
+      ['CanvasFontVariantCaps', o.TYPE],
+      ['CanvasLineCap', o.TYPE],
+      ['CanvasLineJoin', o.TYPE],
+      ['CanvasTextAlign', o.TYPE],
+      ['CanvasTextBaseline', o.TYPE],
+      ['CanvasTextRendering', o.TYPE],
+      ['ClientTypes', o.TYPE],
+      ['CodecState', o.TYPE],
+      ['ColorGamut', o.TYPE],
+      ['ColorSpaceConversion', o.TYPE],
+      ['CompressionFormat', o.TYPE],
+      ['CookieSameSite', o.TYPE],
+      ['DocumentVisibilityState', o.TYPE],
+      ['EncodedAudioChunkType', o.TYPE],
+      ['EncodedVideoChunkType', o.TYPE],
+      ['EndingType', o.TYPE],
+      ['FileSystemHandleKind', o.TYPE],
+      ['FontDisplay', o.TYPE],
+      ['FontFaceLoadStatus', o.TYPE],
+      ['FontFaceSetLoadStatus', o.TYPE],
+      ['FrameType', o.TYPE],
+      ['GPUAddressMode', o.TYPE],
+      ['GPUAutoLayoutMode', o.TYPE],
+      ['GPUBlendFactor', o.TYPE],
+      ['GPUBlendOperation', o.TYPE],
+      ['GPUBufferBindingType', o.TYPE],
+      ['GPUBufferMapState', o.TYPE],
+      ['GPUCanvasAlphaMode', o.TYPE],
+      ['GPUCanvasToneMappingMode', o.TYPE],
+      ['GPUCompareFunction', o.TYPE],
+      ['GPUCompilationMessageType', o.TYPE],
+      ['GPUCullMode', o.TYPE],
+      ['GPUDeviceLostReason', o.TYPE],
+      ['GPUErrorFilter', o.TYPE],
+      ['GPUFeatureName', o.TYPE],
+      ['GPUFilterMode', o.TYPE],
+      ['GPUFrontFace', o.TYPE],
+      ['GPUIndexFormat', o.TYPE],
+      ['GPULoadOp', o.TYPE],
+      ['GPUMipmapFilterMode', o.TYPE],
+      ['GPUPipelineErrorReason', o.TYPE],
+      ['GPUPowerPreference', o.TYPE],
+      ['GPUPrimitiveTopology', o.TYPE],
+      ['GPUQueryType', o.TYPE],
+      ['GPUSamplerBindingType', o.TYPE],
+      ['GPUStencilOperation', o.TYPE],
+      ['GPUStorageTextureAccess', o.TYPE],
+      ['GPUStoreOp', o.TYPE],
+      ['GPUTextureAspect', o.TYPE],
+      ['GPUTextureDimension', o.TYPE],
+      ['GPUTextureFormat', o.TYPE],
+      ['GPUTextureSampleType', o.TYPE],
+      ['GPUTextureViewDimension', o.TYPE],
+      ['GPUVertexFormat', o.TYPE],
+      ['GPUVertexStepMode', o.TYPE],
+      ['GlobalCompositeOperation', o.TYPE],
+      ['HardwareAcceleration', o.TYPE],
+      ['HdrMetadataType', o.TYPE],
+      ['IDBCursorDirection', o.TYPE],
+      ['IDBRequestReadyState', o.TYPE],
+      ['IDBTransactionDurability', o.TYPE],
+      ['IDBTransactionMode', o.TYPE],
+      ['ImageDataPixelFormat', o.TYPE],
+      ['ImageOrientation', o.TYPE],
+      ['ImageSmoothingQuality', o.TYPE],
+      ['KeyFormat', o.TYPE],
+      ['KeyType', o.TYPE],
+      ['KeyUsage', o.TYPE],
+      ['LatencyMode', o.TYPE],
+      ['LockMode', o.TYPE],
+      ['MediaDecodingType', o.TYPE],
+      ['MediaEncodingType', o.TYPE],
+      ['MediaKeysRequirement', o.TYPE],
+      ['NotificationDirection', o.TYPE],
+      ['NotificationPermission', o.TYPE],
+      ['OffscreenRenderingContextId', o.TYPE],
+      ['OpusBitstreamFormat', o.TYPE],
+      ['PermissionName', o.TYPE],
+      ['PermissionState', o.TYPE],
+      ['PredefinedColorSpace', o.TYPE],
+      ['PremultiplyAlpha', o.TYPE],
+      ['PushEncryptionKeyName', o.TYPE],
+      ['RTCDataChannelState', o.TYPE],
+      ['ReadableStreamReaderMode', o.TYPE],
+      ['ReadableStreamType', o.TYPE],
+      ['ReferrerPolicy', o.TYPE],
+      ['RequestCache', o.TYPE],
+      ['RequestCredentials', o.TYPE],
+      ['RequestDestination', o.TYPE],
+      ['RequestMode', o.TYPE],
+      ['RequestPriority', o.TYPE],
+      ['RequestRedirect', o.TYPE],
+      ['ResizeQuality', o.TYPE],
+      ['ResponseType', o.TYPE],
+      ['SecurityPolicyViolationEventDisposition', o.TYPE],
+      ['ServiceWorkerState', o.TYPE],
+      ['ServiceWorkerUpdateViaCache', o.TYPE],
+      ['TaskPriority', o.TYPE],
+      ['TransferFunction', o.TYPE],
+      ['VideoColorPrimaries', o.TYPE],
+      ['VideoEncoderBitrateMode', o.TYPE],
+      ['VideoMatrixCoefficients', o.TYPE],
+      ['VideoPixelFormat', o.TYPE],
+      ['VideoTransferCharacteristics', o.TYPE],
+      ['WebGLPowerPreference', o.TYPE],
+      ['WebTransportCongestionControl', o.TYPE],
+      ['WebTransportErrorSource', o.TYPE],
+      ['WorkerType', o.TYPE],
+      ['WriteCommandType', o.TYPE],
+      ['XMLHttpRequestResponseType', o.TYPE],
+      ['FormDataIterator', o.TYPE],
+      ['HeadersIterator', o.TYPE],
+      ['StylePropertyMapReadOnlyIterator', o.TYPE],
+      ['URLSearchParamsIterator', o.TYPE],
+      ['FileSystemDirectoryHandleAsyncIterator', o.TYPE],
+      ['ReadableStreamAsyncIterator', o.TYPE],
+    ],
+  }
+})
+var cg = x((sc) => {
+  'use strict'
+  Object.defineProperty(sc, '__esModule', { value: !0 })
+  sc.webworker_asynciterable = void 0
+  sc.webworker_asynciterable = { libs: [], variables: [] }
+})
+var fg = x((oc) => {
+  'use strict'
+  Object.defineProperty(oc, '__esModule', { value: !0 })
+  oc.webworker_iterable = void 0
+  oc.webworker_iterable = { libs: [], variables: [] }
+})
+var dg = x((lc) => {
+  'use strict'
+  Object.defineProperty(lc, '__esModule', { value: !0 })
+  lc.lib = void 0
+  var vV = go(),
+    xV = Wd(),
+    AV = cr(),
+    CV = ln(),
+    YV = xr(),
+    LV = ts(),
+    UV = ky(),
+    IV = Ry(),
+    kV = yi(),
+    RV = xo(),
+    VV = Co(),
+    DV = Io(),
+    wV = rr(),
+    MV = Ro(),
+    OV = Do(),
+    FV = Mo(),
+    BV = ur(),
+    GV = ta(),
+    NV = Xo(),
+    qV = Wo(),
+    jV = Vy(),
+    zV = Ho(),
+    WV = cl(),
+    $V = Hd(),
+    HV = Kd(),
+    KV = Dy(),
+    JV = Jd(),
+    XV = Xd(),
+    QV = Qd(),
+    ZV = Zd(),
+    eD = ep(),
+    tD = hl(),
+    rD = rp(),
+    nD = Wa(),
+    aD = wy(),
+    iD = ns(),
+    sD = np(),
+    oD = ip(),
+    lD = xl(),
+    uD = op(),
+    cD = My(),
+    fD = lp(),
+    dD = up(),
+    pD = cp(),
+    ED = fp(),
+    mD = Ol(),
+    TD = as(),
+    hD = dp(),
+    PD = Oy(),
+    yD = Rn(),
+    gD = pp(),
+    SD = Ep(),
+    _D = mp(),
+    bD = hp(),
+    vD = Dl(),
+    xD = $l(),
+    AD = Fy(),
+    CD = Pp(),
+    YD = Nl(),
+    LD = gp(),
+    UD = Sp(),
+    ID = nu(),
+    kD = _p(),
+    RD = bp(),
+    VD = By(),
+    DD = vp(),
+    wD = xp(),
+    MD = Ap(),
+    OD = Cp(),
+    FD = uu(),
+    BD = Yp(),
+    GD = Lp(),
+    ND = Gy(),
+    qD = Up(),
+    jD = gu(),
+    zD = Ip(),
+    WD = pu(),
+    $D = jy(),
+    HD = kp(),
+    KD = Rp(),
+    JD = Vp(),
+    XD = wp(),
+    QD = Mp(),
+    ZD = ku(),
+    ew = bu(),
+    tw = Fp(),
+    rw = Wy(),
+    nw = Cu(),
+    aw = Bp(),
+    iw = Gp(),
+    sw = Np(),
+    ow = Qp(),
+    lw = qp(),
+    uw = Jy(),
+    cw = Xy(),
+    fw = jp(),
+    dw = zp(),
+    pw = Wp(),
+    Ew = $p(),
+    mw = Hp(),
+    Tw = Qy(),
+    hw = Zy(),
+    Pw = Kp(),
+    yw = tg(),
+    gw = rg(),
+    Sw = ng(),
+    _w = ag(),
+    bw = Jp(),
+    vw = ig(),
+    xw = sg(),
+    Aw = is(),
+    Cw = Xp(),
+    Yw = og(),
+    Lw = lg(),
+    Uw = fr(),
+    Iw = ug(),
+    kw = cg(),
+    Rw = dr(),
+    Vw = fg()
+  lc.lib = new Map([
+    ['es5', LV.es5],
+    ['es6', UV.es6],
+    ['es2015', kV.es2015],
+    ['es7', IV.es7],
+    ['es2016', NV.es2016],
+    ['es2017', WV.es2017],
+    ['es2018', tD.es2018],
+    ['es2019', lD.es2019],
+    ['es2020', mD.es2020],
+    ['es2021', xD.es2021],
+    ['es2022', ID.es2022],
+    ['es2023', FD.es2023],
+    ['es2024', jD.es2024],
+    ['es2025', ZD.es2025],
+    ['esnext', ow.esnext],
+    ['dom', AV.dom],
+    ['dom.iterable', YV.dom_iterable],
+    ['dom.asynciterable', CV.dom_asynciterable],
+    ['webworker', Iw.webworker],
+    ['webworker.importscripts', Rw.webworker_importscripts],
+    ['webworker.iterable', Vw.webworker_iterable],
+    ['webworker.asynciterable', kw.webworker_asynciterable],
+    ['scripthost', Uw.scripthost],
+    ['es2015.core', VV.es2015_core],
+    ['es2015.collection', RV.es2015_collection],
+    ['es2015.generator', DV.es2015_generator],
+    ['es2015.iterable', wV.es2015_iterable],
+    ['es2015.promise', MV.es2015_promise],
+    ['es2015.proxy', OV.es2015_proxy],
+    ['es2015.reflect', FV.es2015_reflect],
+    ['es2015.symbol', BV.es2015_symbol],
+    ['es2015.symbol.wellknown', GV.es2015_symbol_wellknown],
+    ['es2016.array.include', qV.es2016_array_include],
+    ['es2016.intl', zV.es2016_intl],
+    ['es2017.arraybuffer', $V.es2017_arraybuffer],
+    ['es2017.date', HV.es2017_date],
+    ['es2017.object', XV.es2017_object],
+    ['es2017.sharedmemory', QV.es2017_sharedmemory],
+    ['es2017.string', ZV.es2017_string],
+    ['es2017.intl', JV.es2017_intl],
+    ['es2017.typedarrays', eD.es2017_typedarrays],
+    ['es2018.asyncgenerator', rD.es2018_asyncgenerator],
+    ['es2018.asynciterable', nD.es2018_asynciterable],
+    ['es2018.intl', iD.es2018_intl],
+    ['es2018.promise', sD.es2018_promise],
+    ['es2018.regexp', oD.es2018_regexp],
+    ['es2019.array', uD.es2019_array],
+    ['es2019.object', dD.es2019_object],
+    ['es2019.string', pD.es2019_string],
+    ['es2019.symbol', ED.es2019_symbol],
+    ['es2019.intl', fD.es2019_intl],
+    ['es2020.bigint', TD.es2020_bigint],
+    ['es2020.date', hD.es2020_date],
+    ['es2020.promise', SD.es2020_promise],
+    ['es2020.sharedmemory', _D.es2020_sharedmemory],
+    ['es2020.string', bD.es2020_string],
+    ['es2020.symbol.wellknown', vD.es2020_symbol_wellknown],
+    ['es2020.intl', yD.es2020_intl],
+    ['es2020.number', gD.es2020_number],
+    ['es2021.promise', YD.es2021_promise],
+    ['es2021.string', LD.es2021_string],
+    ['es2021.weakref', UD.es2021_weakref],
+    ['es2021.intl', CD.es2021_intl],
+    ['es2022.array', kD.es2022_array],
+    ['es2022.error', RD.es2022_error],
+    ['es2022.intl', DD.es2022_intl],
+    ['es2022.object', wD.es2022_object],
+    ['es2022.string', OD.es2022_string],
+    ['es2022.regexp', MD.es2022_regexp],
+    ['es2023.array', BD.es2023_array],
+    ['es2023.collection', GD.es2023_collection],
+    ['es2023.intl', qD.es2023_intl],
+    ['es2024.arraybuffer', zD.es2024_arraybuffer],
+    ['es2024.collection', WD.es2024_collection],
+    ['es2024.object', HD.es2024_object],
+    ['es2024.promise', KD.es2024_promise],
+    ['es2024.regexp', JD.es2024_regexp],
+    ['es2024.sharedmemory', XD.es2024_sharedmemory],
+    ['es2024.string', QD.es2024_string],
+    ['es2025.collection', ew.es2025_collection],
+    ['es2025.float16', tw.es2025_float16],
+    ['es2025.intl', nw.es2025_intl],
+    ['es2025.iterator', aw.es2025_iterator],
+    ['es2025.promise', iw.es2025_promise],
+    ['es2025.regexp', sw.es2025_regexp],
+    ['esnext.asynciterable', uw.esnext_asynciterable],
+    ['esnext.symbol', xw.esnext_symbol],
+    ['esnext.bigint', cw.esnext_bigint],
+    ['esnext.weakref', Yw.esnext_weakref],
+    ['esnext.object', gw.esnext_object],
+    ['esnext.regexp', _w.esnext_regexp],
+    ['esnext.string', vw.esnext_string],
+    ['esnext.float16', Tw.esnext_float16],
+    ['esnext.iterator', yw.esnext_iterator],
+    ['esnext.promise', Sw.esnext_promise],
+    ['esnext.array', lw.esnext_array],
+    ['esnext.collection', fw.esnext_collection],
+    ['esnext.date', dw.esnext_date],
+    ['esnext.decorators', pw.esnext_decorators],
+    ['esnext.disposable', Ew.esnext_disposable],
+    ['esnext.error', mw.esnext_error],
+    ['esnext.intl', Pw.esnext_intl],
+    ['esnext.sharedmemory', bw.esnext_sharedmemory],
+    ['esnext.temporal', Aw.esnext_temporal],
+    ['esnext.typedarrays', Cw.esnext_typedarrays],
+    ['decorators', vV.decorators],
+    ['decorators.legacy', xV.decorators_legacy],
+    ['es2016.full', jV.es2016_full],
+    ['es2017.full', KV.es2017_full],
+    ['es2018.full', aD.es2018_full],
+    ['es2019.full', cD.es2019_full],
+    ['es2020.full', PD.es2020_full],
+    ['es2021.full', AD.es2021_full],
+    ['es2022.full', VD.es2022_full],
+    ['es2023.full', ND.es2023_full],
+    ['es2024.full', $D.es2024_full],
+    ['es2025.full', rw.es2025_full],
+    ['esnext.full', hw.esnext_full],
+    ['lib', Lw.lib],
+  ])
+})
+var uc = x((ra) => {
+  'use strict'
+  Object.defineProperty(ra, '__esModule', { value: !0 })
+  ra.Reference = ra.ReferenceTypeFlag = ra.ReferenceFlag = void 0
+  var Dw = es(),
+    $a
+  ;(function (e) {
+    ;((e[(e.Read = 1)] = 'Read'), (e[(e.Write = 2)] = 'Write'), (e[(e.ReadWrite = 3)] = 'ReadWrite'))
+  })($a || (ra.ReferenceFlag = $a = {}))
+  var ww = (0, Dw.createIdGenerator)(),
+    os
+  ;(function (e) {
+    ;((e[(e.Value = 1)] = 'Value'), (e[(e.Type = 2)] = 'Type'))
+  })(os || (ra.ReferenceTypeFlag = os = {}))
+  var Zp = class {
+    $id = ww()
+    #e
+    from
+    identifier
+    init
+    maybeImplicitGlobal
+    resolved
+    writeExpr
+    #t
+    constructor(t, n, a, r, s, u, d = os.Value) {
+      ;((this.identifier = t),
+        (this.from = n),
+        (this.resolved = null),
+        (this.#e = a),
+        this.isWrite() && ((this.writeExpr = r), (this.init = u)),
+        (this.maybeImplicitGlobal = s),
+        (this.#t = d))
+    }
+    get isTypeReference() {
+      return (this.#t & os.Type) !== 0
+    }
+    get isValueReference() {
+      return (this.#t & os.Value) !== 0
+    }
+    isWrite() {
+      return !!(this.#e & $a.Write)
+    }
+    isRead() {
+      return !!(this.#e & $a.Read)
+    }
+    isReadOnly() {
+      return this.#e === $a.Read
+    }
+    isWriteOnly() {
+      return this.#e === $a.Write
+    }
+    isReadWrite() {
+      return this.#e === $a.ReadWrite
+    }
+  }
+  ra.Reference = Zp
+})
+var tE = x((cc) => {
+  'use strict'
+  Object.defineProperty(cc, '__esModule', { value: !0 })
+  cc.VariableBase = void 0
+  var Mw = es(),
+    Ow = (0, Mw.createIdGenerator)(),
+    eE = class {
+      $id = Ow()
+      defs = []
+      eslintUsed = !1
+      identifiers = []
+      name
+      references = []
+      scope
+      constructor(t, n) {
+        ;((this.name = t), (this.scope = n))
+      }
+    }
+  cc.VariableBase = eE
+})
+var nE = x((fc) => {
+  'use strict'
+  Object.defineProperty(fc, '__esModule', { value: !0 })
+  fc.ESLintScopeVariable = void 0
+  var Fw = tE(),
+    rE = class extends Fw.VariableBase {
+      writeable
+      eslintExplicitGlobal
+      eslintImplicitGlobalSetting
+      eslintExplicitGlobalComments
+    }
+  fc.ESLintScopeVariable = rE
+})
+var pg = x((dc) => {
+  'use strict'
+  Object.defineProperty(dc, '__esModule', { value: !0 })
+  dc.ImplicitLibVariable = void 0
+  var Bw = nE(),
+    aE = class extends Bw.ESLintScopeVariable {
+      isTypeVariable
+      isValueVariable
+      constructor(t, n, { eslintImplicitGlobalSetting: a, isTypeVariable: r, isValueVariable: s, writeable: u }) {
+        ;(super(n, t),
+          (this.isTypeVariable = r ?? !1),
+          (this.isValueVariable = s ?? !1),
+          (this.writeable = u ?? !1),
+          (this.eslintImplicitGlobalSetting = a ?? 'readonly'))
+      }
+    }
+  dc.ImplicitLibVariable = aE
+})
+var Eg = x((pc) => {
+  'use strict'
+  Object.defineProperty(pc, '__esModule', { value: !0 })
+  pc.Variable = void 0
+  var Gw = tE(),
+    iE = class extends Gw.VariableBase {
+      get isTypeVariable() {
+        return this.defs.length === 0 ? !0 : this.defs.some((t) => t.isTypeDefinition)
+      }
+      get isValueVariable() {
+        return this.defs.length === 0 ? !0 : this.defs.some((t) => t.isVariableDefinition)
+      }
+    }
+  pc.Variable = iE
+})
+var Ec = x((na) => {
+  'use strict'
+  Object.defineProperty(na, '__esModule', { value: !0 })
+  na.Variable = na.ImplicitLibVariable = na.ESLintScopeVariable = void 0
+  var Nw = nE()
+  Object.defineProperty(na, 'ESLintScopeVariable', {
+    enumerable: !0,
+    get: function () {
+      return Nw.ESLintScopeVariable
+    },
+  })
+  var qw = pg()
+  Object.defineProperty(na, 'ImplicitLibVariable', {
+    enumerable: !0,
+    get: function () {
+      return qw.ImplicitLibVariable
+    },
+  })
+  var jw = Eg()
+  Object.defineProperty(na, 'Variable', {
+    enumerable: !0,
+    get: function () {
+      return jw.Variable
+    },
+  })
+})
+var _t = x((mc) => {
+  'use strict'
+  Object.defineProperty(mc, '__esModule', { value: !0 })
+  mc.ScopeType = void 0
+  var mg
+  ;(function (e) {
+    ;((e.block = 'block'),
+      (e.catch = 'catch'),
+      (e.class = 'class'),
+      (e.classFieldInitializer = 'class-field-initializer'),
+      (e.classStaticBlock = 'class-static-block'),
+      (e.conditionalType = 'conditionalType'),
+      (e.for = 'for'),
+      (e.function = 'function'),
+      (e.functionExpressionName = 'function-expression-name'),
+      (e.functionType = 'functionType'),
+      (e.global = 'global'),
+      (e.mappedType = 'mappedType'),
+      (e.module = 'module'),
+      (e.switch = 'switch'),
+      (e.tsEnum = 'tsEnum'),
+      (e.tsModule = 'tsModule'),
+      (e.type = 'type'),
+      (e.with = 'with'))
+  })(mg || (mc.ScopeType = mg = {}))
+})
+var Rt = x((hc) => {
+  'use strict'
+  Object.defineProperty(hc, '__esModule', { value: !0 })
+  hc.ScopeBase = void 0
+  var Tc = In(),
+    zw = Pi(),
+    Ww = es(),
+    Sn = uc(),
+    $w = Ec(),
+    Ct = _t()
+  function Hw(e, t, n) {
+    let a
+    if (
+      e.upper?.isStrict ||
+      n ||
+      e.type === Ct.ScopeType.class ||
+      e.type === Ct.ScopeType.conditionalType ||
+      e.type === Ct.ScopeType.functionType ||
+      e.type === Ct.ScopeType.mappedType ||
+      e.type === Ct.ScopeType.module ||
+      e.type === Ct.ScopeType.tsEnum ||
+      e.type === Ct.ScopeType.tsModule ||
+      e.type === Ct.ScopeType.type
+    )
+      return !0
+    if (e.type === Ct.ScopeType.block || e.type === Ct.ScopeType.switch) return !1
+    if (e.type === Ct.ScopeType.function) {
+      let r = t
+      switch (r.type) {
+        case Tc.AST_NODE_TYPES.ArrowFunctionExpression:
+          if (r.body.type !== Tc.AST_NODE_TYPES.BlockStatement) return !1
+          a = r.body
+          break
+        case Tc.AST_NODE_TYPES.Program:
+          a = r
+          break
+        default:
+          a = r.body
+      }
+      if (!a) return !1
+    } else if (e.type === Ct.ScopeType.global) a = t
+    else return !1
+    for (let r of a.body) {
+      if (r.type !== Tc.AST_NODE_TYPES.ExpressionStatement || r.directive == null) break
+      if (r.directive === 'use strict') return !0
+    }
+    return !1
+  }
+  function Kw(e, t) {
+    e.scopes.push(t)
+    let n = e.nodeToScope.get(t.block)
+    n ? n.push(t) : e.nodeToScope.set(t.block, [t])
+  }
+  var Jw = (0, Ww.createIdGenerator)(),
+    Xw = new Set([
+      Ct.ScopeType.classFieldInitializer,
+      Ct.ScopeType.classStaticBlock,
+      Ct.ScopeType.function,
+      Ct.ScopeType.global,
+      Ct.ScopeType.module,
+      Ct.ScopeType.tsModule,
+    ]),
+    sE = class {
+      $id = Jw()
+      block
+      childScopes = []
+      #e
+      #t
+      functionExpressionScope = !1
+      isStrict
+      leftToResolve = []
+      references = []
+      set = new Map()
+      through = []
+      type
+      upper
+      variables = []
+      #n = (t) => {
+        let n = this
+        do (n.through.push(t), (n = n.upper))
+        while (n)
+      }
+      #r = (t) => {
+        ;(() => {
+          let a = t.identifier.name,
+            r = this.set.get(a)
+          if (!r || !this.isValidResolution(t, r)) return !1
+          let s = t.isTypeReference && r.isTypeVariable,
+            u = t.isValueReference && r.isValueVariable
+          return !s && !u ? !1 : (r.references.push(t), (t.resolved = r), !0)
+        })() || this.delegateToUpperScope(t)
+      }
+      variableScope
+      constructor(t, n, a, r, s) {
+        let u = a
+        ;((this.type = n),
+          (this.#t = this.type === Ct.ScopeType.global || this.type === Ct.ScopeType.with),
+          (this.block = r),
+          (this.variableScope = this.isVariableScope() ? this : u.variableScope),
+          (this.upper = a),
+          (this.isStrict = Hw(this, r, s)),
+          u?.childScopes.push(this),
+          (this.#e = t.declaredVariables),
+          Kw(t, this))
+      }
+      isVariableScope() {
+        return Xw.has(this.type)
+      }
+      close(t) {
+        let n = this.shouldStaticallyClose() ? this.#r : this.#n
+        return (
+          (0, zw.assert)(this.leftToResolve),
+          this.leftToResolve.forEach((a) => n(a)),
+          (this.leftToResolve = null),
+          this.upper
+        )
+      }
+      shouldStaticallyClose() {
+        return !this.#t || this.type === 'global'
+      }
+      defineVariable(t, n, a, r, s) {
+        let u = typeof t == 'string' ? t : t.name,
+          d = n.get(u)
+        ;(d || ((d = typeof t == 'string' ? new $w.Variable(u, this) : t), n.set(u, d), a.push(d)),
+          s &&
+            (d.defs.push(s), this.addDeclaredVariablesOfNode(d, s.node), this.addDeclaredVariablesOfNode(d, s.parent)),
+          r && d.identifiers.push(r))
+      }
+      delegateToUpperScope(t) {
+        ;(this.upper?.leftToResolve?.push(t), this.through.push(t))
+      }
+      isValidResolution(t, n) {
+        return !0
+      }
+      addDeclaredVariablesOfNode(t, n) {
+        if (n == null) return
+        let a = this.#e.get(n)
+        ;(a == null && ((a = []), this.#e.set(n, a)), a.includes(t) || a.push(t))
+      }
+      defineIdentifier(t, n) {
+        this.defineVariable(t.name, this.set, this.variables, t, n)
+      }
+      defineLiteralIdentifier(t, n) {
+        this.defineVariable(t.value, this.set, this.variables, null, n)
+      }
+      referenceDualValueType(t) {
+        let n = new Sn.Reference(
+          t,
+          this,
+          Sn.ReferenceFlag.Read,
+          null,
+          null,
+          !1,
+          Sn.ReferenceTypeFlag.Type | Sn.ReferenceTypeFlag.Value,
+        )
+        ;(this.references.push(n), this.leftToResolve?.push(n))
+      }
+      referenceType(t) {
+        let n = new Sn.Reference(t, this, Sn.ReferenceFlag.Read, null, null, !1, Sn.ReferenceTypeFlag.Type)
+        ;(this.references.push(n), this.leftToResolve?.push(n))
+      }
+      referenceValue(t, n = Sn.ReferenceFlag.Read, a, r, s = !1) {
+        let u = new Sn.Reference(t, this, n, a, r, s, Sn.ReferenceTypeFlag.Value)
+        ;(this.references.push(u), this.leftToResolve?.push(u))
+      }
+    }
+  hc.ScopeBase = sE
+})
+var Tg = x((Pc) => {
+  'use strict'
+  Object.defineProperty(Pc, '__esModule', { value: !0 })
+  Pc.BlockScope = void 0
+  var Qw = Rt(),
+    Zw = _t(),
+    oE = class extends Qw.ScopeBase {
+      constructor(t, n, a) {
+        super(t, Zw.ScopeType.block, n, a, !1)
+      }
+    }
+  Pc.BlockScope = oE
+})
+var hg = x((yc) => {
+  'use strict'
+  Object.defineProperty(yc, '__esModule', { value: !0 })
+  yc.CatchScope = void 0
+  var eM = Rt(),
+    tM = _t(),
+    lE = class extends eM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, tM.ScopeType.catch, n, a, !1)
+      }
+    }
+  yc.CatchScope = lE
+})
+var cE = x((gc) => {
+  'use strict'
+  Object.defineProperty(gc, '__esModule', { value: !0 })
+  gc.ClassFieldInitializerScope = void 0
+  var rM = Rt(),
+    nM = _t(),
+    uE = class extends rM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, nM.ScopeType.classFieldInitializer, n, a, !1)
+      }
+    }
+  gc.ClassFieldInitializerScope = uE
+})
+var Pg = x((Sc) => {
+  'use strict'
+  Object.defineProperty(Sc, '__esModule', { value: !0 })
+  Sc.ClassScope = void 0
+  var aM = Rt(),
+    iM = _t(),
+    fE = class extends aM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, iM.ScopeType.class, n, a, !1)
+      }
+    }
+  Sc.ClassScope = fE
+})
+var yg = x((_c) => {
+  'use strict'
+  Object.defineProperty(_c, '__esModule', { value: !0 })
+  _c.ConditionalTypeScope = void 0
+  var sM = Rt(),
+    oM = _t(),
+    dE = class extends sM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, oM.ScopeType.conditionalType, n, a, !1)
+      }
+    }
+  _c.ConditionalTypeScope = dE
+})
+var gg = x((bc) => {
+  'use strict'
+  Object.defineProperty(bc, '__esModule', { value: !0 })
+  bc.ForScope = void 0
+  var lM = Rt(),
+    uM = _t(),
+    pE = class extends lM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, uM.ScopeType.for, n, a, !1)
+      }
+    }
+  bc.ForScope = pE
+})
+var Sg = x((vc) => {
+  'use strict'
+  Object.defineProperty(vc, '__esModule', { value: !0 })
+  vc.FunctionExpressionNameScope = void 0
+  var cM = za(),
+    fM = Rt(),
+    dM = _t(),
+    EE = class extends fM.ScopeBase {
+      functionExpressionScope
+      constructor(t, n, a) {
+        ;(super(t, dM.ScopeType.functionExpressionName, n, a, !1),
+          a.id && this.defineIdentifier(a.id, new cM.FunctionNameDefinition(a.id, a)),
+          (this.functionExpressionScope = !0))
+      }
+    }
+  vc.FunctionExpressionNameScope = EE
+})
+var bg = x((xc) => {
+  'use strict'
+  Object.defineProperty(xc, '__esModule', { value: !0 })
+  xc.FunctionScope = void 0
+  var _g = In(),
+    pM = Rt(),
+    EM = _t(),
+    mE = class extends pM.ScopeBase {
+      constructor(t, n, a, r) {
+        ;(super(t, EM.ScopeType.function, n, a, r),
+          this.block.type !== _g.AST_NODE_TYPES.ArrowFunctionExpression &&
+            this.defineVariable('arguments', this.set, this.variables, null, null))
+      }
+      isValidResolution(t, n) {
+        if (this.block.type === _g.AST_NODE_TYPES.Program) return !0
+        let a = this.block.body?.range[0] ?? -1
+        return !(n.scope === this && t.identifier.range[0] < a && n.defs.every((r) => r.name.range[0] >= a))
+      }
+    }
+  xc.FunctionScope = mE
+})
+var vg = x((Ac) => {
+  'use strict'
+  Object.defineProperty(Ac, '__esModule', { value: !0 })
+  Ac.FunctionTypeScope = void 0
+  var mM = Rt(),
+    TM = _t(),
+    TE = class extends mM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, TM.ScopeType.functionType, n, a, !1)
+      }
+    }
+  Ac.FunctionTypeScope = TE
+})
+var Ag = x((Cc) => {
+  'use strict'
+  Object.defineProperty(Cc, '__esModule', { value: !0 })
+  Cc.GlobalScope = void 0
+  var hM = In(),
+    xg = Pi(),
+    PM = Od(),
+    yM = Ec(),
+    gM = Rt(),
+    SM = _t(),
+    hE = class extends gM.ScopeBase {
+      implicit
+      constructor(t, n) {
+        ;(super(t, SM.ScopeType.global, null, n, !1),
+          (this.implicit = { leftToBeResolved: [], set: new Map(), variables: [] }))
+      }
+      addVariables(t) {
+        for (let a of t) (this.defineVariable(a, this.set, this.variables, null, null), this.implicit.set.delete(a))
+        let n = new Set(t)
+        for (let a of this.through)
+          if (n.has(a.identifier.name)) {
+            let r = this.set.get(a.identifier.name)
+            ;((0, xg.assert)(r, `Expected variable with name "${a.identifier.name}" to be specified.`),
+              (a.resolved = r),
+              r.references.push(a))
+          }
+        ;((this.through = this.through.filter((a) => !n.has(a.identifier.name))),
+          (this.implicit.variables = this.implicit.variables.filter((a) => !n.has(a.name))),
+          (this.implicit.leftToBeResolved = this.implicit.leftToBeResolved.filter((a) => !n.has(a.identifier.name))))
+      }
+      close(t) {
+        ;(0, xg.assert)(this.leftToResolve)
+        for (let n of this.leftToResolve)
+          if (n.maybeImplicitGlobal && !this.set.has(n.identifier.name)) {
+            let a = n.maybeImplicitGlobal,
+              r = a.pattern
+            r.type === hM.AST_NODE_TYPES.Identifier &&
+              this.defineVariable(
+                r.name,
+                this.implicit.set,
+                this.implicit.variables,
+                r,
+                new PM.ImplicitGlobalVariableDefinition(a.pattern, a.node),
+              )
+          }
+        return (
+          (this.implicit.leftToBeResolved = this.leftToResolve),
+          super.close(t),
+          (this.implicit.leftToBeResolved = [...this.through]),
+          null
+        )
+      }
+      defineImplicitVariable(t, n) {
+        this.defineVariable(new yM.ImplicitLibVariable(this, t, n), this.set, this.variables, null, null)
+      }
+    }
+  Cc.GlobalScope = hE
+})
+var Cg = x((Yc) => {
+  'use strict'
+  Object.defineProperty(Yc, '__esModule', { value: !0 })
+  Yc.MappedTypeScope = void 0
+  var _M = Rt(),
+    bM = _t(),
+    PE = class extends _M.ScopeBase {
+      constructor(t, n, a) {
+        super(t, bM.ScopeType.mappedType, n, a, !1)
+      }
+    }
+  Yc.MappedTypeScope = PE
+})
+var Yg = x((Lc) => {
+  'use strict'
+  Object.defineProperty(Lc, '__esModule', { value: !0 })
+  Lc.ModuleScope = void 0
+  var vM = Rt(),
+    xM = _t(),
+    yE = class extends vM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, xM.ScopeType.module, n, a, !1)
+      }
+    }
+  Lc.ModuleScope = yE
+})
+var Ug = x((Lg) => {
+  'use strict'
+  Object.defineProperty(Lg, '__esModule', { value: !0 })
+})
+var Ig = x((Uc) => {
+  'use strict'
+  Object.defineProperty(Uc, '__esModule', { value: !0 })
+  Uc.SwitchScope = void 0
+  var AM = Rt(),
+    CM = _t(),
+    gE = class extends AM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, CM.ScopeType.switch, n, a, !1)
+      }
+    }
+  Uc.SwitchScope = gE
+})
+var kg = x((Ic) => {
+  'use strict'
+  Object.defineProperty(Ic, '__esModule', { value: !0 })
+  Ic.TSEnumScope = void 0
+  var YM = Rt(),
+    LM = _t(),
+    SE = class extends YM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, LM.ScopeType.tsEnum, n, a, !1)
+      }
+    }
+  Ic.TSEnumScope = SE
+})
+var Rg = x((kc) => {
+  'use strict'
+  Object.defineProperty(kc, '__esModule', { value: !0 })
+  kc.TSModuleScope = void 0
+  var UM = Rt(),
+    IM = _t(),
+    _E = class extends UM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, IM.ScopeType.tsModule, n, a, !1)
+      }
+    }
+  kc.TSModuleScope = _E
+})
+var Vg = x((Rc) => {
+  'use strict'
+  Object.defineProperty(Rc, '__esModule', { value: !0 })
+  Rc.TypeScope = void 0
+  var kM = Rt(),
+    RM = _t(),
+    bE = class extends kM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, RM.ScopeType.type, n, a, !1)
+      }
+    }
+  Rc.TypeScope = bE
+})
+var Dg = x((Vc) => {
+  'use strict'
+  Object.defineProperty(Vc, '__esModule', { value: !0 })
+  Vc.WithScope = void 0
+  var VM = Pi(),
+    DM = Rt(),
+    wM = _t(),
+    vE = class extends DM.ScopeBase {
+      constructor(t, n, a) {
+        super(t, wM.ScopeType.with, n, a, !1)
+      }
+      close(t) {
+        return this.shouldStaticallyClose()
+          ? super.close(t)
+          : ((0, VM.assert)(this.leftToResolve),
+            this.leftToResolve.forEach((n) => this.delegateToUpperScope(n)),
+            (this.leftToResolve = null),
+            this.upper)
+      }
+    }
+  Vc.WithScope = vE
+})
+var Dc = x((lt) => {
+  'use strict'
+  var MM =
+      (lt && lt.__createBinding) ||
+      (Object.create
+        ? function (e, t, n, a) {
+            a === void 0 && (a = n)
+            var r = Object.getOwnPropertyDescriptor(t, n)
+            ;((!r || ('get' in r ? !t.__esModule : r.writable || r.configurable)) &&
+              (r = {
+                enumerable: !0,
+                get: function () {
+                  return t[n]
+                },
+              }),
+              Object.defineProperty(e, a, r))
+          }
+        : function (e, t, n, a) {
+            ;(a === void 0 && (a = n), (e[a] = t[n]))
+          }),
+    Vt =
+      (lt && lt.__exportStar) ||
+      function (e, t) {
+        for (var n in e) n !== 'default' && !Object.prototype.hasOwnProperty.call(t, n) && MM(t, e, n)
+      }
+  Object.defineProperty(lt, '__esModule', { value: !0 })
+  Vt(Tg(), lt)
+  Vt(hg(), lt)
+  Vt(cE(), lt)
+  Vt(Pg(), lt)
+  Vt(yg(), lt)
+  Vt(gg(), lt)
+  Vt(Sg(), lt)
+  Vt(bg(), lt)
+  Vt(vg(), lt)
+  Vt(Ag(), lt)
+  Vt(Cg(), lt)
+  Vt(Yg(), lt)
+  Vt(Ug(), lt)
+  Vt(_t(), lt)
+  Vt(Ig(), lt)
+  Vt(kg(), lt)
+  Vt(Rg(), lt)
+  Vt(Vg(), lt)
+  Vt(Dg(), lt)
+})
+var Mc = x((wc) => {
+  'use strict'
+  Object.defineProperty(wc, '__esModule', { value: !0 })
+  wc.VisitorBase = void 0
+  var OM = Ld()
+  function FM(e) {
+    return typeof e == 'object' && e != null
+  }
+  function wg(e) {
+    return FM(e) && typeof e.type == 'string'
+  }
+  var xE = class {
+    #e
+    #t
+    constructor(t) {
+      ;((this.#e = t.childVisitorKeys ?? OM.visitorKeys), (this.#t = t.visitChildrenEvenIfSelectorExists ?? !1))
+    }
+    visitChildren(t, n = []) {
+      if (t?.type == null) return
+      let a = new Set([...n, 'parent']),
+        r = this.#e[t.type] ?? Object.keys(t)
+      for (let s of r) {
+        if (a.has(s)) continue
+        let u = t[s]
+        if (u)
+          if (Array.isArray(u)) for (let d of u) wg(d) && this.visit(d)
+          else wg(u) && this.visit(u)
+      }
+    }
+    visit(t) {
+      if (t?.type == null) return
+      let n = this[t.type]
+      ;(n && (n.call(this, t), !this.#t)) || this.visitChildren(t)
+    }
+  }
+  wc.VisitorBase = xE
+})
+var Fc = x((Oc) => {
+  'use strict'
+  Object.defineProperty(Oc, '__esModule', { value: !0 })
+  Oc.PatternVisitor = void 0
+  var gi = In(),
+    BM = Mc(),
+    AE = class extends BM.VisitorBase {
+      #e = []
+      #t
+      #n = []
+      #r
+      rightHandNodes = []
+      constructor(t, n, a) {
+        ;(super(t), (this.#r = n), (this.#t = a))
+      }
+      static isPattern(t) {
+        let n = t.type
+        return (
+          n === gi.AST_NODE_TYPES.Identifier ||
+          n === gi.AST_NODE_TYPES.ObjectPattern ||
+          n === gi.AST_NODE_TYPES.ArrayPattern ||
+          n === gi.AST_NODE_TYPES.SpreadElement ||
+          n === gi.AST_NODE_TYPES.RestElement ||
+          n === gi.AST_NODE_TYPES.AssignmentPattern
+        )
+      }
+      ArrayExpression(t) {
+        t.elements.forEach(this.visit, this)
+      }
+      ArrayPattern(t) {
+        for (let n of t.elements) this.visit(n)
+      }
+      AssignmentExpression(t) {
+        ;(this.#e.push(t), this.visit(t.left), this.rightHandNodes.push(t.right), this.#e.pop())
+      }
+      AssignmentPattern(t) {
+        ;(this.#e.push(t), this.visit(t.left), this.rightHandNodes.push(t.right), this.#e.pop())
+      }
+      CallExpression(t) {
+        ;(t.arguments.forEach((n) => {
+          this.rightHandNodes.push(n)
+        }),
+          this.visit(t.callee))
+      }
+      Decorator() {}
+      Identifier(t) {
+        let n = this.#n.at(-1)
+        this.#t(t, { assignments: this.#e, rest: n?.argument === t, topLevel: t === this.#r })
+      }
+      MemberExpression(t) {
+        ;(t.computed && this.rightHandNodes.push(t.property), this.rightHandNodes.push(t.object))
+      }
+      Property(t) {
+        ;(t.computed && this.rightHandNodes.push(t.key), this.visit(t.value))
+      }
+      RestElement(t) {
+        ;(this.#n.push(t), this.visit(t.argument), this.#n.pop())
+      }
+      SpreadElement(t) {
+        this.visit(t.argument)
+      }
+      TSTypeAnnotation() {}
+    }
+  Oc.PatternVisitor = AE
+})
+var Ha = x((Si) => {
+  'use strict'
+  Object.defineProperty(Si, '__esModule', { value: !0 })
+  Si.VisitorBase = Si.Visitor = void 0
+  var GM = Fc(),
+    NM = Mc(),
+    CE = class e extends NM.VisitorBase {
+      #e
+      constructor(t) {
+        ;(super(t instanceof e ? t.#e : t), (this.#e = t instanceof e ? t.#e : t))
+      }
+      visitPattern(t, n, a = { processRightHandNodes: !1 }) {
+        let r = new GM.PatternVisitor(this.#e, t, n)
+        ;(r.visit(t), a.processRightHandNodes && r.rightHandNodes.forEach(this.visit, this))
+      }
+    }
+  Si.Visitor = CE
+  var qM = Mc()
+  Object.defineProperty(Si, 'VisitorBase', {
+    enumerable: !0,
+    get: function () {
+      return qM.VisitorBase
+    },
+  })
+})
+var LE = x((Bc) => {
+  'use strict'
+  Object.defineProperty(Bc, '__esModule', { value: !0 })
+  Bc.TypeVisitor = void 0
+  var _i = In(),
+    bi = za(),
+    ls = Dc(),
+    jM = Ha(),
+    YE = class e extends jM.Visitor {
+      #e
+      constructor(t) {
+        ;(super(t), (this.#e = t))
+      }
+      static visit(t, n) {
+        new e(t).visit(n)
+      }
+      visitFunctionType(t) {
+        ;(this.#e.scopeManager.nestFunctionTypeScope(t), this.visit(t.typeParameters))
+        for (let n of t.params) {
+          let a = !1
+          ;(this.visitPattern(n, (r, s) => {
+            ;(this.#e.currentScope().defineIdentifier(r, new bi.ParameterDefinition(r, t, s.rest)),
+              r.typeAnnotation && (this.visit(r.typeAnnotation), (a = !0)))
+          }),
+            !a && 'typeAnnotation' in n && this.visit(n.typeAnnotation))
+        }
+        ;(this.visit(t.returnType), this.#e.close(t))
+      }
+      visitPropertyKey(t) {
+        t.computed && this.#e.visit(t.key)
+      }
+      Identifier(t) {
+        this.#e.currentScope().referenceType(t)
+      }
+      MemberExpression(t) {
+        this.visit(t.object)
+      }
+      TSCallSignatureDeclaration(t) {
+        this.visitFunctionType(t)
+      }
+      TSConditionalType(t) {
+        ;(this.#e.scopeManager.nestConditionalTypeScope(t),
+          this.visitChildren(t, ['falseType']),
+          this.#e.close(t),
+          this.visit(t.falseType))
+      }
+      TSConstructorType(t) {
+        this.visitFunctionType(t)
+      }
+      TSConstructSignatureDeclaration(t) {
+        this.visitFunctionType(t)
+      }
+      TSFunctionType(t) {
+        this.visitFunctionType(t)
+      }
+      TSImportType(t) {
+        this.visit(t.typeArguments)
+      }
+      TSIndexSignature(t) {
+        for (let n of t.parameters) n.type === _i.AST_NODE_TYPES.Identifier && this.visit(n.typeAnnotation)
+        this.visit(t.typeAnnotation)
+      }
+      TSInferType(t) {
+        let n = t.typeParameter,
+          a = this.#e.currentScope()
+        if (a.type === ls.ScopeType.functionType || a.type === ls.ScopeType.mappedType) {
+          let r = a.upper
+          for (; r; ) {
+            if (r.type === ls.ScopeType.functionType || r.type === ls.ScopeType.mappedType) {
+              r = r.upper
+              continue
+            }
+            if (r.type === ls.ScopeType.conditionalType) {
+              a = r
+              break
+            }
+            break
+          }
+        }
+        ;(a.defineIdentifier(n.name, new bi.TypeDefinition(n.name, n)), this.visit(n.constraint))
+      }
+      TSInterfaceDeclaration(t) {
+        ;(this.#e.currentScope().defineIdentifier(t.id, new bi.TypeDefinition(t.id, t)),
+          t.typeParameters && (this.#e.scopeManager.nestTypeScope(t), this.visit(t.typeParameters)),
+          t.extends.forEach(this.visit, this),
+          this.visit(t.body),
+          t.typeParameters && this.#e.close(t))
+      }
+      TSMappedType(t) {
+        ;(this.#e.scopeManager.nestMappedTypeScope(t),
+          this.#e.currentScope().defineIdentifier(t.key, new bi.TypeDefinition(t.key, t)),
+          this.visit(t.constraint),
+          this.visit(t.nameType),
+          this.visit(t.typeAnnotation),
+          this.#e.close(t))
+      }
+      TSMethodSignature(t) {
+        ;(this.visitPropertyKey(t), this.visitFunctionType(t))
+      }
+      TSNamedTupleMember(t) {
+        this.visit(t.elementType)
+      }
+      TSPropertySignature(t) {
+        ;(this.visitPropertyKey(t), this.visit(t.typeAnnotation))
+      }
+      TSQualifiedName(t) {
+        this.visit(t.left)
+      }
+      TSTypeAliasDeclaration(t) {
+        ;(this.#e.currentScope().defineIdentifier(t.id, new bi.TypeDefinition(t.id, t)),
+          t.typeParameters && (this.#e.scopeManager.nestTypeScope(t), this.visit(t.typeParameters)),
+          this.visit(t.typeAnnotation),
+          t.typeParameters && this.#e.close(t))
+      }
+      TSTypeParameter(t) {
+        ;(this.#e.currentScope().defineIdentifier(t.name, new bi.TypeDefinition(t.name, t)),
+          this.visit(t.constraint),
+          this.visit(t.default))
+      }
+      TSTypePredicate(t) {
+        ;(t.parameterName.type !== _i.AST_NODE_TYPES.TSThisType &&
+          this.#e.currentScope().referenceValue(t.parameterName),
+          this.visit(t.typeAnnotation))
+      }
+      TSTypeAnnotation(t) {
+        this.visitChildren(t)
+      }
+      TSTypeQuery(t) {
+        let n
+        if (t.exprName.type === _i.AST_NODE_TYPES.TSQualifiedName) {
+          let a = t.exprName
+          for (; a.left.type === _i.AST_NODE_TYPES.TSQualifiedName; ) a = a.left
+          n = a.left
+        } else ((n = t.exprName), t.exprName.type === _i.AST_NODE_TYPES.TSImportType && this.visit(t.exprName))
+        ;(n.type === _i.AST_NODE_TYPES.Identifier && this.#e.currentScope().referenceValue(n),
+          this.visit(t.typeArguments))
+      }
+    }
+  Bc.TypeVisitor = YE
+})
+var Mg = x((Gc) => {
+  'use strict'
+  Object.defineProperty(Gc, '__esModule', { value: !0 })
+  Gc.ClassVisitor = void 0
+  var aa = In(),
+    UE = za(),
+    zM = LE(),
+    WM = Ha(),
+    IE = class e extends WM.Visitor {
+      #e
+      constructor(t) {
+        ;(super(t), (this.#e = t))
+      }
+      static visit(t, n) {
+        new e(t).visitClass(n)
+      }
+      visit(t) {
+        t && t.type in this ? super.visit(t) : this.#e.visit(t)
+      }
+      visitClass(t) {
+        ;(t.type === aa.AST_NODE_TYPES.ClassDeclaration &&
+          t.id &&
+          this.#e.currentScope().defineIdentifier(t.id, new UE.ClassNameDefinition(t.id, t)),
+          t.decorators.forEach((n) => this.#e.visit(n)),
+          this.#e.scopeManager.nestClassScope(t),
+          t.id && this.#e.currentScope().defineIdentifier(t.id, new UE.ClassNameDefinition(t.id, t)),
+          this.#e.visit(t.superClass),
+          this.visitType(t.typeParameters),
+          this.visitType(t.superTypeArguments),
+          t.implements.forEach((n) => this.visitType(n)),
+          this.visit(t.body),
+          this.#e.close(t))
+      }
+      visitFunctionParameterTypeAnnotation(t) {
+        switch (t.type) {
+          case aa.AST_NODE_TYPES.AssignmentPattern:
+            this.visitType(t.left.typeAnnotation)
+            break
+          case aa.AST_NODE_TYPES.TSParameterProperty:
+            this.visitFunctionParameterTypeAnnotation(t.parameter)
+            break
+          default:
+            this.visitType(t.typeAnnotation)
+        }
+      }
+      visitMethod(t) {
+        ;(t.computed && this.#e.visit(t.key),
+          t.value.type === aa.AST_NODE_TYPES.FunctionExpression
+            ? this.visitMethodFunction(t.value)
+            : this.#e.visit(t.value),
+          t.decorators.forEach((n) => this.#e.visit(n)))
+      }
+      visitMethodFunction(t) {
+        ;(t.id && this.#e.scopeManager.nestFunctionExpressionNameScope(t),
+          t.params.forEach((n) => {
+            n.decorators.forEach((a) => this.visit(a))
+          }),
+          this.#e.scopeManager.nestFunctionScope(t, !0))
+        for (let n of t.params)
+          (this.visitPattern(
+            n,
+            (a, r) => {
+              ;(this.#e.currentScope().defineIdentifier(a, new UE.ParameterDefinition(a, t, r.rest)),
+                this.#e.referencingDefaultValue(a, r.assignments, null, !0))
+            },
+            { processRightHandNodes: !0 },
+          ),
+            this.visitFunctionParameterTypeAnnotation(n))
+        ;(this.visitType(t.returnType),
+          this.visitType(t.typeParameters),
+          this.#e.visitChildren(t.body),
+          this.#e.close(t))
+      }
+      visitPropertyBase(t) {
+        ;(t.computed && this.#e.visit(t.key),
+          t.value &&
+            ((t.type === aa.AST_NODE_TYPES.PropertyDefinition || t.type === aa.AST_NODE_TYPES.AccessorProperty) &&
+              this.#e.scopeManager.nestClassFieldInitializerScope(t.value),
+            this.#e.visit(t.value),
+            (t.type === aa.AST_NODE_TYPES.PropertyDefinition || t.type === aa.AST_NODE_TYPES.AccessorProperty) &&
+              this.#e.close(t.value)),
+          t.decorators.forEach((n) => this.#e.visit(n)))
+      }
+      visitPropertyDefinition(t) {
+        ;(this.visitPropertyBase(t), this.visitType(t.typeAnnotation))
+      }
+      visitType(t) {
+        t && zM.TypeVisitor.visit(this.#e, t)
+      }
+      AccessorProperty(t) {
+        this.visitPropertyDefinition(t)
+      }
+      ClassBody(t) {
+        this.visitChildren(t)
+      }
+      Identifier(t) {
+        this.#e.visit(t)
+      }
+      MethodDefinition(t) {
+        this.visitMethod(t)
+      }
+      PrivateIdentifier() {}
+      PropertyDefinition(t) {
+        this.visitPropertyDefinition(t)
+      }
+      StaticBlock(t) {
+        ;(this.#e.scopeManager.nestClassStaticBlockScope(t), t.body.forEach((n) => this.visit(n)), this.#e.close(t))
+      }
+      TSAbstractAccessorProperty(t) {
+        this.visitPropertyDefinition(t)
+      }
+      TSAbstractMethodDefinition(t) {
+        this.visitPropertyBase(t)
+      }
+      TSAbstractPropertyDefinition(t) {
+        this.visitPropertyDefinition(t)
+      }
+      TSIndexSignature(t) {
+        this.visitType(t)
+      }
+    }
+  Gc.ClassVisitor = IE
+})
+var Fg = x((Nc) => {
+  'use strict'
+  Object.defineProperty(Nc, '__esModule', { value: !0 })
+  Nc.ExportVisitor = void 0
+  var Og = In(),
+    $M = Ha(),
+    kE = class e extends $M.Visitor {
+      #e
+      #t
+      constructor(t, n) {
+        ;(super(n), (this.#e = t), (this.#t = n))
+      }
+      static visit(t, n) {
+        new e(n, t).visit(n)
+      }
+      ExportDefaultDeclaration(t) {
+        t.declaration.type === Og.AST_NODE_TYPES.Identifier && this.visit(t.declaration)
+      }
+      ExportNamedDeclaration(t) {
+        t.source || t.declaration || this.visitChildren(t)
+      }
+      ExportSpecifier(t) {
+        t.exportKind === 'type' && t.local.type === Og.AST_NODE_TYPES.Identifier
+          ? this.#t.currentScope().referenceType(t.local)
+          : this.visit(t.local)
+      }
+      Identifier(t) {
+        this.#e.exportKind === 'type'
+          ? this.#t.currentScope().referenceType(t)
+          : this.#t.currentScope().referenceDualValueType(t)
+      }
+    }
+  Nc.ExportVisitor = kE
+})
+var Bg = x((qc) => {
+  'use strict'
+  Object.defineProperty(qc, '__esModule', { value: !0 })
+  qc.ImportVisitor = void 0
+  var HM = za(),
+    KM = Ha(),
+    RE = class e extends KM.Visitor {
+      #e
+      #t
+      constructor(t, n) {
+        ;(super(n), (this.#e = t), (this.#t = n))
+      }
+      static visit(t, n) {
+        new e(n, t).visit(n)
+      }
+      ImportDefaultSpecifier(t) {
+        let n = t.local
+        this.visitImport(n, t)
+      }
+      ImportNamespaceSpecifier(t) {
+        let n = t.local
+        this.visitImport(n, t)
+      }
+      ImportSpecifier(t) {
+        let n = t.local
+        this.visitImport(n, t)
+      }
+      visitImport(t, n) {
+        this.#t.currentScope().defineIdentifier(t, new HM.ImportBindingDefinition(t, n, this.#e))
+      }
+    }
+  qc.ImportVisitor = RE
+})
+var jg = x((jc) => {
+  'use strict'
+  Object.defineProperty(jc, '__esModule', { value: !0 })
+  jc.Referencer = void 0
+  var Yt = In(),
+    Gg = Pi(),
+    wn = za(),
+    JM = dg(),
+    XM = Mg(),
+    Ng = Fg(),
+    QM = Bg(),
+    qg = Fc(),
+    Ka = uc(),
+    ZM = LE(),
+    eO = Ha(),
+    VE = class extends eO.Visitor {
+      #e = !1
+      #t = !1
+      #n
+      #r
+      #a
+      scopeManager
+      constructor(t, n) {
+        ;(super(t), (this.scopeManager = n), (this.#r = t.jsxPragma), (this.#n = t.jsxFragmentName), (this.#a = t.lib))
+      }
+      populateGlobalsFromLib(t) {
+        let n = this.resolveLibDefinitions()
+        for (let a of n) for (let [r, s] of a.variables) t.defineImplicitVariable(r, s)
+        t.defineImplicitVariable('const', {
+          eslintImplicitGlobalSetting: 'readonly',
+          isTypeVariable: !0,
+          isValueVariable: !1,
+        })
+      }
+      resolveLibDefinitions() {
+        let t = new Set()
+        for (let n of this.#a) {
+          let a = JM.lib.get(n)
+          if (!a) throw new Error(`Invalid value for lib provided: ${n}`)
+          t.add(a)
+        }
+        for (let n of t) for (let a of n.libs) t.add(a)
+        return t
+      }
+      close(t) {
+        for (; this.currentScope(!0) && t === this.currentScope().block; )
+          this.scopeManager.currentScope = this.currentScope().close(this.scopeManager)
+      }
+      currentScope(t) {
+        return (
+          t ||
+            (0, Gg.assert)(
+              this.scopeManager.currentScope,
+              'Expected currentScope to exist. This usually happens when analyze() is called with an incomplete AST node instead of a complete Program node.',
+            ),
+          this.scopeManager.currentScope
+        )
+      }
+      referencingDefaultValue(t, n, a, r) {
+        n.forEach((s) => {
+          this.currentScope().referenceValue(t, Ka.ReferenceFlag.Write, s.right, a, r)
+        })
+      }
+      referenceInSomeUpperScope(t) {
+        let n = this.scopeManager.currentScope
+        for (; n; ) {
+          let a = n.set.get(t)
+          if (!a) {
+            n = n.upper
+            continue
+          }
+          return (n.referenceValue(a.identifiers[0]), !0)
+        }
+        return !1
+      }
+      referenceJsxFragment() {
+        this.#n == null || this.#t || (this.#t = this.referenceInSomeUpperScope(this.#n))
+      }
+      referenceJsxPragma() {
+        this.#r == null || this.#e || (this.#e = this.referenceInSomeUpperScope(this.#r))
+      }
+      visitClass(t) {
+        XM.ClassVisitor.visit(this, t)
+      }
+      visitForIn(t) {
+        ;(t.left.type === Yt.AST_NODE_TYPES.VariableDeclaration &&
+          t.left.kind !== 'var' &&
+          this.scopeManager.nestForScope(t),
+          t.left.type === Yt.AST_NODE_TYPES.VariableDeclaration
+            ? (this.visit(t.left),
+              this.visitPattern(t.left.declarations[0].id, (n) => {
+                this.currentScope().referenceValue(n, Ka.ReferenceFlag.Write, t.right, null, !0)
+              }))
+            : this.visitPattern(
+                t.left,
+                (n, a) => {
+                  let r = this.currentScope().isStrict ? null : { node: t, pattern: n }
+                  ;(this.referencingDefaultValue(n, a.assignments, r, !1),
+                    this.currentScope().referenceValue(n, Ka.ReferenceFlag.Write, t.right, r, !1))
+                },
+                { processRightHandNodes: !0 },
+              ),
+          this.visit(t.right),
+          this.visit(t.body),
+          this.close(t))
+      }
+      visitFunction(t) {
+        ;(t.type === Yt.AST_NODE_TYPES.FunctionExpression
+          ? t.id && this.scopeManager.nestFunctionExpressionNameScope(t)
+          : t.id && this.currentScope().defineIdentifier(t.id, new wn.FunctionNameDefinition(t.id, t)),
+          this.scopeManager.nestFunctionScope(t, !1))
+        for (let n of t.params)
+          (this.visitPattern(
+            n,
+            (a, r) => {
+              ;(this.currentScope().defineIdentifier(a, new wn.ParameterDefinition(a, t, r.rest)),
+                this.referencingDefaultValue(a, r.assignments, null, !0))
+            },
+            { processRightHandNodes: !0 },
+          ),
+            this.visitFunctionParameterTypeAnnotation(n),
+            n.decorators.forEach((a) => this.visit(a)))
+        ;(this.visitType(t.returnType),
+          this.visitType(t.typeParameters),
+          t.body &&
+            (t.body.type === Yt.AST_NODE_TYPES.BlockStatement ? this.visitChildren(t.body) : this.visit(t.body)),
+          this.close(t))
+      }
+      visitFunctionParameterTypeAnnotation(t) {
+        switch (t.type) {
+          case Yt.AST_NODE_TYPES.AssignmentPattern:
+            this.visitType(t.left.typeAnnotation)
+            break
+          case Yt.AST_NODE_TYPES.TSParameterProperty:
+            this.visitFunctionParameterTypeAnnotation(t.parameter)
+            break
+          default:
+            this.visitType(t.typeAnnotation)
+            break
+        }
+      }
+      visitJSXElement(t) {
+        t.name.type === Yt.AST_NODE_TYPES.JSXIdentifier
+          ? (t.name.name[0].toUpperCase() === t.name.name[0] || t.name.name === 'this') && this.visit(t.name)
+          : this.visit(t.name)
+      }
+      visitProperty(t) {
+        ;(t.computed && this.visit(t.key), this.visit(t.value))
+      }
+      visitType(t) {
+        t && ZM.TypeVisitor.visit(this, t)
+      }
+      visitTypeAssertion(t) {
+        ;(this.visit(t.expression), this.visitType(t.typeAnnotation))
+      }
+      ArrowFunctionExpression(t) {
+        this.visitFunction(t)
+      }
+      AssignmentExpression(t) {
+        let n = this.visitExpressionTarget(t.left)
+        ;(qg.PatternVisitor.isPattern(n)
+          ? t.operator === '='
+            ? this.visitPattern(
+                n,
+                (a, r) => {
+                  let s = this.currentScope().isStrict ? null : { node: t, pattern: a }
+                  ;(this.referencingDefaultValue(a, r.assignments, s, !1),
+                    this.currentScope().referenceValue(a, Ka.ReferenceFlag.Write, t.right, s, !1))
+                },
+                { processRightHandNodes: !0 },
+              )
+            : n.type === Yt.AST_NODE_TYPES.Identifier &&
+              this.currentScope().referenceValue(n, Ka.ReferenceFlag.ReadWrite, t.right)
+          : this.visit(n),
+          this.visit(t.right))
+      }
+      BlockStatement(t) {
+        ;(this.scopeManager.nestBlockScope(t), this.visitChildren(t), this.close(t))
+      }
+      BreakStatement() {}
+      CallExpression(t) {
+        ;(this.visitChildren(t, ['typeArguments']), this.visitType(t.typeArguments))
+      }
+      CatchClause(t) {
+        ;(this.scopeManager.nestCatchScope(t),
+          t.param &&
+            this.visitPattern(
+              t.param,
+              (n, a) => {
+                ;(this.currentScope().defineIdentifier(n, new wn.CatchClauseDefinition(n, t)),
+                  this.referencingDefaultValue(n, a.assignments, null, !0))
+              },
+              { processRightHandNodes: !0 },
+            ),
+          this.visit(t.body),
+          this.close(t))
+      }
+      ClassDeclaration(t) {
+        this.visitClass(t)
+      }
+      ClassExpression(t) {
+        this.visitClass(t)
+      }
+      ContinueStatement() {}
+      ExportAllDeclaration() {}
+      ExportDefaultDeclaration(t) {
+        t.declaration.type === Yt.AST_NODE_TYPES.Identifier
+          ? Ng.ExportVisitor.visit(this, t)
+          : this.visit(t.declaration)
+      }
+      ExportNamedDeclaration(t) {
+        t.declaration ? this.visit(t.declaration) : Ng.ExportVisitor.visit(this, t)
+      }
+      ForInStatement(t) {
+        this.visitForIn(t)
+      }
+      ForOfStatement(t) {
+        this.visitForIn(t)
+      }
+      ForStatement(t) {
+        ;(t.init?.type === Yt.AST_NODE_TYPES.VariableDeclaration &&
+          t.init.kind !== 'var' &&
+          this.scopeManager.nestForScope(t),
+          this.visitChildren(t),
+          this.close(t))
+      }
+      FunctionDeclaration(t) {
+        this.visitFunction(t)
+      }
+      FunctionExpression(t) {
+        this.visitFunction(t)
+      }
+      Identifier(t) {
+        ;(this.currentScope().referenceValue(t), this.visitType(t.typeAnnotation))
+      }
+      ImportAttribute() {}
+      ImportDeclaration(t) {
+        ;((0, Gg.assert)(
+          this.scopeManager.isModule(),
+          'ImportDeclaration should appear when the mode is ES6 and in the module context.',
+        ),
+          QM.ImportVisitor.visit(this, t))
+      }
+      JSXAttribute(t) {
+        this.visit(t.value)
+      }
+      JSXClosingElement(t) {
+        this.visitJSXElement(t)
+      }
+      JSXFragment(t) {
+        ;(this.referenceJsxPragma(), this.referenceJsxFragment(), this.visitChildren(t))
+      }
+      JSXIdentifier(t) {
+        this.currentScope().referenceValue(t)
+      }
+      JSXMemberExpression(t) {
+        ;(t.object.type !== Yt.AST_NODE_TYPES.JSXIdentifier || t.object.name !== 'this') && this.visit(t.object)
+      }
+      JSXOpeningElement(t) {
+        ;(this.referenceJsxPragma(), this.visitJSXElement(t), this.visitType(t.typeArguments))
+        for (let n of t.attributes) this.visit(n)
+      }
+      LabeledStatement(t) {
+        this.visit(t.body)
+      }
+      MemberExpression(t) {
+        ;(this.visit(t.object), t.computed && this.visit(t.property))
+      }
+      MetaProperty() {}
+      NewExpression(t) {
+        ;(this.visitChildren(t, ['typeArguments']), this.visitType(t.typeArguments))
+      }
+      PrivateIdentifier() {}
+      Program(t) {
+        let n = this.scopeManager.nestGlobalScope(t)
+        ;(this.populateGlobalsFromLib(n),
+          this.scopeManager.isGlobalReturn() &&
+            ((this.currentScope().isStrict = !1), this.scopeManager.nestFunctionScope(t, !1)),
+          this.scopeManager.isModule() && this.scopeManager.nestModuleScope(t),
+          this.scopeManager.isImpliedStrict() && (this.currentScope().isStrict = !0),
+          this.visitChildren(t),
+          this.close(t))
+      }
+      Property(t) {
+        this.visitProperty(t)
+      }
+      SwitchStatement(t) {
+        ;(this.visit(t.discriminant), this.scopeManager.nestSwitchScope(t))
+        for (let n of t.cases) this.visit(n)
+        this.close(t)
+      }
+      TaggedTemplateExpression(t) {
+        ;(this.visit(t.tag), this.visit(t.quasi), this.visitType(t.typeArguments))
+      }
+      TSAsExpression(t) {
+        this.visitTypeAssertion(t)
+      }
+      TSDeclareFunction(t) {
+        this.visitFunction(t)
+      }
+      TSEmptyBodyFunctionExpression(t) {
+        this.visitFunction(t)
+      }
+      TSEnumDeclaration(t) {
+        ;(this.currentScope().defineIdentifier(t.id, new wn.TSEnumNameDefinition(t.id, t)),
+          this.scopeManager.nestTSEnumScope(t))
+        for (let n of t.body.members) {
+          if (n.id.type === Yt.AST_NODE_TYPES.Literal && typeof n.id.value == 'string') {
+            let a = n.id
+            this.currentScope().defineLiteralIdentifier(a, new wn.TSEnumMemberDefinition(a, n))
+          } else
+            n.id.type === Yt.AST_NODE_TYPES.Identifier &&
+              this.currentScope().defineIdentifier(n.id, new wn.TSEnumMemberDefinition(n.id, n))
+          this.visit(n.initializer)
+        }
+        this.close(t)
+      }
+      TSExportAssignment(t) {
+        t.expression.type === Yt.AST_NODE_TYPES.Identifier
+          ? this.currentScope().referenceDualValueType(t.expression)
+          : this.visit(t.expression)
+      }
+      TSImportEqualsDeclaration(t) {
+        if (
+          (this.currentScope().defineIdentifier(t.id, new wn.ImportBindingDefinition(t.id, t, t)),
+          t.moduleReference.type === Yt.AST_NODE_TYPES.TSQualifiedName)
+        ) {
+          let n = t.moduleReference.left
+          for (; n.type === Yt.AST_NODE_TYPES.TSQualifiedName; ) n = n.left
+          this.visit(n)
+        } else this.visit(t.moduleReference)
+      }
+      TSInstantiationExpression(t) {
+        ;(this.visitChildren(t, ['typeArguments']), this.visitType(t.typeArguments))
+      }
+      TSInterfaceDeclaration(t) {
+        this.visitType(t)
+      }
+      TSModuleDeclaration(t) {
+        ;(t.id.type === Yt.AST_NODE_TYPES.Identifier &&
+          t.kind !== 'global' &&
+          this.currentScope().defineIdentifier(t.id, new wn.TSModuleNameDefinition(t.id, t)),
+          this.scopeManager.nestTSModuleScope(t),
+          this.visit(t.body),
+          this.close(t))
+      }
+      TSSatisfiesExpression(t) {
+        this.visitTypeAssertion(t)
+      }
+      TSTypeAliasDeclaration(t) {
+        this.visitType(t)
+      }
+      TSTypeAssertion(t) {
+        this.visitTypeAssertion(t)
+      }
+      UpdateExpression(t) {
+        let n = this.visitExpressionTarget(t.argument)
+        qg.PatternVisitor.isPattern(n)
+          ? this.visitPattern(n, (a) => {
+              this.currentScope().referenceValue(a, Ka.ReferenceFlag.ReadWrite, null)
+            })
+          : this.visitChildren(t)
+      }
+      VariableDeclaration(t) {
+        let n = t.kind === 'var' ? this.currentScope().variableScope : this.currentScope()
+        for (let a of t.declarations) {
+          let r = a.init
+          ;(this.visitPattern(
+            a.id,
+            (s, u) => {
+              ;(n.defineIdentifier(s, new wn.VariableDefinition(s, a, t)),
+                this.referencingDefaultValue(s, u.assignments, null, !0),
+                r && this.currentScope().referenceValue(s, Ka.ReferenceFlag.Write, r, null, !0))
+            },
+            { processRightHandNodes: !0 },
+          ),
+            this.visit(a.init),
+            this.visitType(a.id.typeAnnotation))
+        }
+      }
+      WithStatement(t) {
+        ;(this.visit(t.object), this.scopeManager.nestWithScope(t), this.visit(t.body), this.close(t))
+      }
+      visitExpressionTarget(t) {
+        switch (t.type) {
+          case Yt.AST_NODE_TYPES.TSAsExpression:
+          case Yt.AST_NODE_TYPES.TSTypeAssertion:
+            this.visitType(t.typeAnnotation)
+          case Yt.AST_NODE_TYPES.TSNonNullExpression:
+            t = t.expression
+        }
+        return t
+      }
+    }
+  jc.Referencer = VE
+})
+var zg = x((zc) => {
+  'use strict'
+  Object.defineProperty(zc, '__esModule', { value: !0 })
+  zc.Referencer = void 0
+  var tO = jg()
+  Object.defineProperty(zc, 'Referencer', {
+    enumerable: !0,
+    get: function () {
+      return tO.Referencer
+    },
+  })
+})
+var Wg = x((Wc) => {
+  'use strict'
+  Object.defineProperty(Wc, '__esModule', { value: !0 })
+  Wc.ClassStaticBlockScope = void 0
+  var rO = Rt(),
+    nO = _t(),
+    DE = class extends rO.ScopeBase {
+      constructor(t, n, a) {
+        super(t, nO.ScopeType.classStaticBlock, n, a, !1)
+      }
+    }
+  Wc.ClassStaticBlockScope = DE
+})
+var ME = x(($c) => {
+  'use strict'
+  Object.defineProperty($c, '__esModule', { value: !0 })
+  $c.ScopeManager = void 0
+  var Ot = Pi(),
+    Ft = Dc(),
+    aO = cE(),
+    iO = Wg(),
+    wE = class {
+      #e
+      currentScope
+      declaredVariables
+      globalScope
+      nodeToScope
+      scopes
+      constructor(t) {
+        ;((this.scopes = []),
+          (this.globalScope = null),
+          (this.nodeToScope = new WeakMap()),
+          (this.currentScope = null),
+          (this.#e = t),
+          (this.declaredVariables = new WeakMap()))
+      }
+      isES6() {
+        return !0
+      }
+      isGlobalReturn() {
+        return this.#e.globalReturn === !0
+      }
+      isImpliedStrict() {
+        return this.#e.impliedStrict === !0
+      }
+      isModule() {
+        return this.#e.sourceType === 'module'
+      }
+      isStrictModeSupported() {
+        return !0
+      }
+      get variables() {
+        let t = new Set()
+        function n(a) {
+          ;(a.variables.forEach((r) => t.add(r)), a.childScopes.forEach(n))
+        }
+        return (this.scopes.forEach(n), [...t].sort((a, r) => a.$id - r.$id))
+      }
+      getDeclaredVariables(t) {
+        return this.declaredVariables.get(t) ?? []
+      }
+      acquire(t, n = !1) {
+        function a(s) {
+          return !(s.type === Ft.ScopeType.function && s.functionExpressionScope)
+        }
+        let r = this.nodeToScope.get(t)
+        if (!r || r.length === 0) return null
+        if (r.length === 1) return r[0]
+        if (n) {
+          for (let s = r.length - 1; s >= 0; --s) {
+            let u = r[s]
+            if (a(u)) return u
+          }
+          return null
+        }
+        return r.find(a) ?? null
+      }
+      addGlobals(t) {
+        this.globalScope?.addVariables(t)
+      }
+      nestBlockScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.BlockScope(this, this.currentScope, t)))
+      }
+      nestCatchScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.CatchScope(this, this.currentScope, t)))
+      }
+      nestClassFieldInitializerScope(t) {
+        return (
+          (0, Ot.assert)(this.currentScope),
+          this.nestScope(new aO.ClassFieldInitializerScope(this, this.currentScope, t))
+        )
+      }
+      nestClassScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.ClassScope(this, this.currentScope, t)))
+      }
+      nestClassStaticBlockScope(t) {
+        return (
+          (0, Ot.assert)(this.currentScope),
+          this.nestScope(new iO.ClassStaticBlockScope(this, this.currentScope, t))
+        )
+      }
+      nestConditionalTypeScope(t) {
+        return (
+          (0, Ot.assert)(this.currentScope),
+          this.nestScope(new Ft.ConditionalTypeScope(this, this.currentScope, t))
+        )
+      }
+      nestForScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.ForScope(this, this.currentScope, t)))
+      }
+      nestFunctionExpressionNameScope(t) {
+        return (
+          (0, Ot.assert)(this.currentScope),
+          this.nestScope(new Ft.FunctionExpressionNameScope(this, this.currentScope, t))
+        )
+      }
+      nestFunctionScope(t, n) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.FunctionScope(this, this.currentScope, t, n)))
+      }
+      nestFunctionTypeScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.FunctionTypeScope(this, this.currentScope, t)))
+      }
+      nestGlobalScope(t) {
+        return this.nestScope(new Ft.GlobalScope(this, t))
+      }
+      nestMappedTypeScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.MappedTypeScope(this, this.currentScope, t)))
+      }
+      nestModuleScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.ModuleScope(this, this.currentScope, t)))
+      }
+      nestSwitchScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.SwitchScope(this, this.currentScope, t)))
+      }
+      nestTSEnumScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.TSEnumScope(this, this.currentScope, t)))
+      }
+      nestTSModuleScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.TSModuleScope(this, this.currentScope, t)))
+      }
+      nestTypeScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.TypeScope(this, this.currentScope, t)))
+      }
+      nestWithScope(t) {
+        return ((0, Ot.assert)(this.currentScope), this.nestScope(new Ft.WithScope(this, this.currentScope, t)))
+      }
+      nestScope(t) {
+        return (
+          t instanceof Ft.GlobalScope && ((0, Ot.assert)(this.currentScope == null), (this.globalScope = t)),
+          (this.currentScope = t),
+          t
+        )
+      }
+    }
+  $c.ScopeManager = wE
+})
+var $g = x((OE) => {
+  'use strict'
+  Object.defineProperty(OE, '__esModule', { value: !0 })
+  OE.analyze = uO
+  var sO = Ld(),
+    oO = zg(),
+    lO = ME(),
+    vi = {
+      childVisitorKeys: sO.visitorKeys,
+      emitDecoratorMetadata: !1,
+      globalReturn: !1,
+      impliedStrict: !1,
+      jsxFragmentName: null,
+      jsxPragma: 'React',
+      lib: ['es2018'],
+      sourceType: 'script',
+    }
+  function uO(e, t) {
+    let n = {
+      childVisitorKeys: t?.childVisitorKeys ?? vi.childVisitorKeys,
+      emitDecoratorMetadata: !1,
+      globalReturn: t?.globalReturn ?? vi.globalReturn,
+      impliedStrict: t?.impliedStrict ?? vi.impliedStrict,
+      jsxFragmentName: t?.jsxFragmentName ?? vi.jsxFragmentName,
+      jsxPragma: t?.jsxPragma === void 0 ? vi.jsxPragma : t.jsxPragma,
+      lib: t?.lib ?? ['esnext'],
+      sourceType: t?.sourceType ?? vi.sourceType,
+    }
+    n.lib = n.lib.map((s) => s.toLowerCase())
+    let a = new lO.ScopeManager(n)
+    return (new oO.Referencer(n, a).visit(e), a)
+  }
+})
+var Hg = x((Dt) => {
+  'use strict'
+  var cO =
+      (Dt && Dt.__createBinding) ||
+      (Object.create
+        ? function (e, t, n, a) {
+            a === void 0 && (a = n)
+            var r = Object.getOwnPropertyDescriptor(t, n)
+            ;((!r || ('get' in r ? !t.__esModule : r.writable || r.configurable)) &&
+              (r = {
+                enumerable: !0,
+                get: function () {
+                  return t[n]
+                },
+              }),
+              Object.defineProperty(e, a, r))
+          }
+        : function (e, t, n, a) {
+            ;(a === void 0 && (a = n), (e[a] = t[n]))
+          }),
+    FE =
+      (Dt && Dt.__exportStar) ||
+      function (e, t) {
+        for (var n in e) n !== 'default' && !Object.prototype.hasOwnProperty.call(t, n) && cO(t, e, n)
+      }
+  Object.defineProperty(Dt, '__esModule', { value: !0 })
+  Dt.ScopeManager = Dt.Visitor = Dt.Reference = Dt.PatternVisitor = Dt.analyze = void 0
+  var fO = $g()
+  Object.defineProperty(Dt, 'analyze', {
+    enumerable: !0,
+    get: function () {
+      return fO.analyze
+    },
+  })
+  FE(za(), Dt)
+  var dO = Fc()
+  Object.defineProperty(Dt, 'PatternVisitor', {
+    enumerable: !0,
+    get: function () {
+      return dO.PatternVisitor
+    },
+  })
+  var pO = uc()
+  Object.defineProperty(Dt, 'Reference', {
+    enumerable: !0,
+    get: function () {
+      return pO.Reference
+    },
+  })
+  var EO = Ha()
+  Object.defineProperty(Dt, 'Visitor', {
+    enumerable: !0,
+    get: function () {
+      return EO.Visitor
+    },
+  })
+  FE(Dc(), Dt)
+  var mO = ME()
+  Object.defineProperty(Dt, 'ScopeManager', {
+    enumerable: !0,
+    get: function () {
+      return mO.ScopeManager
+    },
+  })
+  FE(Ec(), Dt)
+})
+var qE = x((SW, sS) => {
+  'use strict'
+  function dF(e, t = 'Assertion failed.') {
+    if (!e) throw new Error(t)
+  }
+  sS.exports = dF
+})
+var uS = x((_W, lS) => {
+  'use strict'
+  var pF = /^(?:(?:Do)?While|For(?:In|Of)?|Switch)Statement$/u,
+    oS = /\r\n|[\r\n\u2028\u2029]/u,
+    EF = /^#!([^\r\n]+)/u
+  function mF() {
+    return new RegExp(oS.source, 'gu')
+  }
+  lS.exports = { breakableTypePattern: pF, lineBreakPattern: oS, createGlobalLinebreakMatcher: mF, shebangPattern: EF }
+})
+var fS = x((bW, cS) => {
+  var xi = 1e3,
+    Ai = xi * 60,
+    Ci = Ai * 60,
+    Xa = Ci * 24,
+    TF = Xa * 7,
+    hF = Xa * 365.25
+  cS.exports = function (e, t) {
+    t = t || {}
+    var n = typeof e
+    if (n === 'string' && e.length > 0) return PF(e)
+    if (n === 'number' && isFinite(e)) return t.long ? gF(e) : yF(e)
+    throw new Error('val is not a non-empty string or a valid number. val=' + JSON.stringify(e))
+  }
+  function PF(e) {
+    if (((e = String(e)), !(e.length > 100))) {
+      var t =
+        /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
+          e,
+        )
+      if (t) {
+        var n = parseFloat(t[1]),
+          a = (t[2] || 'ms').toLowerCase()
+        switch (a) {
+          case 'years':
+          case 'year':
+          case 'yrs':
+          case 'yr':
+          case 'y':
+            return n * hF
+          case 'weeks':
+          case 'week':
+          case 'w':
+            return n * TF
+          case 'days':
+          case 'day':
+          case 'd':
+            return n * Xa
+          case 'hours':
+          case 'hour':
+          case 'hrs':
+          case 'hr':
+          case 'h':
+            return n * Ci
+          case 'minutes':
+          case 'minute':
+          case 'mins':
+          case 'min':
+          case 'm':
+            return n * Ai
+          case 'seconds':
+          case 'second':
+          case 'secs':
+          case 'sec':
+          case 's':
+            return n * xi
+          case 'milliseconds':
+          case 'millisecond':
+          case 'msecs':
+          case 'msec':
+          case 'ms':
+            return n
+          default:
+            return
+        }
+      }
+    }
+  }
+  function yF(e) {
+    var t = Math.abs(e)
+    return t >= Xa
+      ? Math.round(e / Xa) + 'd'
+      : t >= Ci
+        ? Math.round(e / Ci) + 'h'
+        : t >= Ai
+          ? Math.round(e / Ai) + 'm'
+          : t >= xi
+            ? Math.round(e / xi) + 's'
+            : e + 'ms'
+  }
+  function gF(e) {
+    var t = Math.abs(e)
+    return t >= Xa
+      ? Qc(e, t, Xa, 'day')
+      : t >= Ci
+        ? Qc(e, t, Ci, 'hour')
+        : t >= Ai
+          ? Qc(e, t, Ai, 'minute')
+          : t >= xi
+            ? Qc(e, t, xi, 'second')
+            : e + ' ms'
+  }
+  function Qc(e, t, n, a) {
+    var r = t >= n * 1.5
+    return Math.round(e / n) + ' ' + a + (r ? 's' : '')
+  }
+})
+var jE = x((vW, dS) => {
+  function SF(e) {
+    ;((n.debug = n),
+      (n.default = n),
+      (n.coerce = P),
+      (n.disable = u),
+      (n.enable = r),
+      (n.enabled = d),
+      (n.humanize = fS()),
+      (n.destroy = y),
+      Object.keys(e).forEach((E) => {
+        n[E] = e[E]
+      }),
+      (n.names = []),
+      (n.skips = []),
+      (n.formatters = {}))
+    function t(E) {
+      let m = 0
+      for (let _ = 0; _ < E.length; _++) ((m = (m << 5) - m + E.charCodeAt(_)), (m |= 0))
+      return n.colors[Math.abs(m) % n.colors.length]
+    }
+    n.selectColor = t
+    function n(E) {
+      let m,
+        _ = null,
+        T,
+        v
+      function C(...L) {
+        if (!C.enabled) return
+        let F = C,
+          $ = Number(new Date()),
+          j = $ - (m || $)
+        ;((F.diff = j),
+          (F.prev = m),
+          (F.curr = $),
+          (m = $),
+          (L[0] = n.coerce(L[0])),
+          typeof L[0] != 'string' && L.unshift('%O'))
+        let Q = 0
+        ;((L[0] = L[0].replace(/%([a-zA-Z%])/g, (V, A) => {
+          if (V === '%%') return '%'
+          Q++
+          let z = n.formatters[A]
+          if (typeof z == 'function') {
+            let B = L[Q]
+            ;((V = z.call(F, B)), L.splice(Q, 1), Q--)
+          }
+          return V
+        })),
+          n.formatArgs.call(F, L),
+          (F.log || n.log).apply(F, L))
+      }
+      return (
+        (C.namespace = E),
+        (C.useColors = n.useColors()),
+        (C.color = n.selectColor(E)),
+        (C.extend = a),
+        (C.destroy = n.destroy),
+        Object.defineProperty(C, 'enabled', {
+          enumerable: !0,
+          configurable: !1,
+          get: () => (_ !== null ? _ : (T !== n.namespaces && ((T = n.namespaces), (v = n.enabled(E))), v)),
+          set: (L) => {
+            _ = L
+          },
+        }),
+        typeof n.init == 'function' && n.init(C),
+        C
+      )
+    }
+    function a(E, m) {
+      let _ = n(this.namespace + (typeof m > 'u' ? ':' : m) + E)
+      return ((_.log = this.log), _)
+    }
+    function r(E) {
+      ;(n.save(E), (n.namespaces = E), (n.names = []), (n.skips = []))
+      let m = (typeof E == 'string' ? E : '').trim().replace(/\s+/g, ',').split(',').filter(Boolean)
+      for (let _ of m) _[0] === '-' ? n.skips.push(_.slice(1)) : n.names.push(_)
+    }
+    function s(E, m) {
+      let _ = 0,
+        T = 0,
+        v = -1,
+        C = 0
+      for (; _ < E.length; )
+        if (T < m.length && (m[T] === E[_] || m[T] === '*')) m[T] === '*' ? ((v = T), (C = _), T++) : (_++, T++)
+        else if (v !== -1) ((T = v + 1), C++, (_ = C))
+        else return !1
+      for (; T < m.length && m[T] === '*'; ) T++
+      return T === m.length
+    }
+    function u() {
+      let E = [...n.names, ...n.skips.map((m) => '-' + m)].join(',')
+      return (n.enable(''), E)
+    }
+    function d(E) {
+      for (let m of n.skips) if (s(E, m)) return !1
+      for (let m of n.names) if (s(E, m)) return !0
+      return !1
+    }
+    function P(E) {
+      return E instanceof Error ? E.stack || E.message : E
+    }
+    function y() {
+      console.warn(
+        'Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.',
+      )
+    }
+    return (n.enable(n.load()), n)
+  }
+  dS.exports = SF
+})
+var pS = x((pr, Zc) => {
+  pr.formatArgs = bF
+  pr.save = vF
+  pr.load = xF
+  pr.useColors = _F
+  pr.storage = AF()
+  pr.destroy = (() => {
+    let e = !1
+    return () => {
+      e ||
+        ((e = !0),
+        console.warn(
+          'Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.',
+        ))
+    }
+  })()
+  pr.colors = [
+    '#0000CC',
+    '#0000FF',
+    '#0033CC',
+    '#0033FF',
+    '#0066CC',
+    '#0066FF',
+    '#0099CC',
+    '#0099FF',
+    '#00CC00',
+    '#00CC33',
+    '#00CC66',
+    '#00CC99',
+    '#00CCCC',
+    '#00CCFF',
+    '#3300CC',
+    '#3300FF',
+    '#3333CC',
+    '#3333FF',
+    '#3366CC',
+    '#3366FF',
+    '#3399CC',
+    '#3399FF',
+    '#33CC00',
+    '#33CC33',
+    '#33CC66',
+    '#33CC99',
+    '#33CCCC',
+    '#33CCFF',
+    '#6600CC',
+    '#6600FF',
+    '#6633CC',
+    '#6633FF',
+    '#66CC00',
+    '#66CC33',
+    '#9900CC',
+    '#9900FF',
+    '#9933CC',
+    '#9933FF',
+    '#99CC00',
+    '#99CC33',
+    '#CC0000',
+    '#CC0033',
+    '#CC0066',
+    '#CC0099',
+    '#CC00CC',
+    '#CC00FF',
+    '#CC3300',
+    '#CC3333',
+    '#CC3366',
+    '#CC3399',
+    '#CC33CC',
+    '#CC33FF',
+    '#CC6600',
+    '#CC6633',
+    '#CC9900',
+    '#CC9933',
+    '#CCCC00',
+    '#CCCC33',
+    '#FF0000',
+    '#FF0033',
+    '#FF0066',
+    '#FF0099',
+    '#FF00CC',
+    '#FF00FF',
+    '#FF3300',
+    '#FF3333',
+    '#FF3366',
+    '#FF3399',
+    '#FF33CC',
+    '#FF33FF',
+    '#FF6600',
+    '#FF6633',
+    '#FF9900',
+    '#FF9933',
+    '#FFCC00',
+    '#FFCC33',
+  ]
+  function _F() {
+    if (typeof window < 'u' && window.process && (window.process.type === 'renderer' || window.process.__nwjs))
+      return !0
+    if (
+      typeof navigator < 'u' &&
+      navigator.userAgent &&
+      navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)
+    )
+      return !1
+    let e
+    return (
+      (typeof document < 'u' &&
+        document.documentElement &&
+        document.documentElement.style &&
+        document.documentElement.style.WebkitAppearance) ||
+      (typeof window < 'u' &&
+        window.console &&
+        (window.console.firebug || (window.console.exception && window.console.table))) ||
+      (typeof navigator < 'u' &&
+        navigator.userAgent &&
+        (e = navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)) &&
+        parseInt(e[1], 10) >= 31) ||
+      (typeof navigator < 'u' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/))
+    )
+  }
+  function bF(e) {
+    if (
+      ((e[0] =
+        (this.useColors ? '%c' : '') +
+        this.namespace +
+        (this.useColors ? ' %c' : ' ') +
+        e[0] +
+        (this.useColors ? '%c ' : ' ') +
+        '+' +
+        Zc.exports.humanize(this.diff)),
+      !this.useColors)
+    )
+      return
+    let t = 'color: ' + this.color
+    e.splice(1, 0, t, 'color: inherit')
+    let n = 0,
+      a = 0
+    ;(e[0].replace(/%[a-zA-Z%]/g, (r) => {
+      r !== '%%' && (n++, r === '%c' && (a = n))
+    }),
+      e.splice(a, 0, t))
+  }
+  pr.log = console.debug || console.log || (() => {})
+  function vF(e) {
+    try {
+      e ? pr.storage.setItem('debug', e) : pr.storage.removeItem('debug')
+    } catch {}
+  }
+  function xF() {
+    let e
+    try {
+      e = pr.storage.getItem('debug') || pr.storage.getItem('DEBUG')
+    } catch {}
+    return (!e && typeof process < 'u' && 'env' in process && (e = process.env.DEBUG), e)
+  }
+  function AF() {
+    try {
+      return localStorage
+    } catch {}
+  }
+  Zc.exports = jE()(pr)
+  var { formatters: CF } = Zc.exports
+  CF.j = function (e) {
+    try {
+      return JSON.stringify(e)
+    } catch (t) {
+      return '[UnexpectedJSONParseError]: ' + t.message
+    }
+  }
+})
+var mS = x((xW, ES) => {
+  'use strict'
+  ES.exports = (e, t) => {
+    t = t || process.argv
+    let n = e.startsWith('-') ? '' : e.length === 1 ? '-' : '--',
+      a = t.indexOf(n + e),
+      r = t.indexOf('--')
+    return a !== -1 && (r === -1 ? !0 : a < r)
+  }
+})
+var hS = x((AW, TS) => {
+  'use strict'
+  var YF = require('os'),
+    fn = mS(),
+    Qt = process.env,
+    Yi
+  fn('no-color') || fn('no-colors') || fn('color=false')
+    ? (Yi = !1)
+    : (fn('color') || fn('colors') || fn('color=true') || fn('color=always')) && (Yi = !0)
+  'FORCE_COLOR' in Qt && (Yi = Qt.FORCE_COLOR.length === 0 || parseInt(Qt.FORCE_COLOR, 10) !== 0)
+  function LF(e) {
+    return e === 0 ? !1 : { level: e, hasBasic: !0, has256: e >= 2, has16m: e >= 3 }
+  }
+  function UF(e) {
+    if (Yi === !1) return 0
+    if (fn('color=16m') || fn('color=full') || fn('color=truecolor')) return 3
+    if (fn('color=256')) return 2
+    if (e && !e.isTTY && Yi !== !0) return 0
+    let t = Yi ? 1 : 0
+    if (process.platform === 'win32') {
+      let n = YF.release().split('.')
+      return Number(process.versions.node.split('.')[0]) >= 8 && Number(n[0]) >= 10 && Number(n[2]) >= 10586
+        ? Number(n[2]) >= 14931
+          ? 3
+          : 2
+        : 1
+    }
+    if ('CI' in Qt)
+      return ['TRAVIS', 'CIRCLECI', 'APPVEYOR', 'GITLAB_CI'].some((n) => n in Qt) || Qt.CI_NAME === 'codeship' ? 1 : t
+    if ('TEAMCITY_VERSION' in Qt) return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(Qt.TEAMCITY_VERSION) ? 1 : 0
+    if (Qt.COLORTERM === 'truecolor') return 3
+    if ('TERM_PROGRAM' in Qt) {
+      let n = parseInt((Qt.TERM_PROGRAM_VERSION || '').split('.')[0], 10)
+      switch (Qt.TERM_PROGRAM) {
+        case 'iTerm.app':
+          return n >= 3 ? 3 : 2
+        case 'Apple_Terminal':
+          return 2
+      }
+    }
+    return /-256(color)?$/i.test(Qt.TERM)
+      ? 2
+      : /^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(Qt.TERM) || 'COLORTERM' in Qt
+        ? 1
+        : (Qt.TERM === 'dumb', t)
+  }
+  function zE(e) {
+    let t = UF(e)
+    return LF(t)
+  }
+  TS.exports = { supportsColor: zE, stdout: zE(process.stdout), stderr: zE(process.stderr) }
+})
+var yS = x((Bt, tf) => {
+  var IF = require('tty'),
+    ef = require('util')
+  Bt.init = OF
+  Bt.log = DF
+  Bt.formatArgs = RF
+  Bt.save = wF
+  Bt.load = MF
+  Bt.useColors = kF
+  Bt.destroy = ef.deprecate(
+    () => {},
+    'Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.',
+  )
+  Bt.colors = [6, 2, 3, 4, 5, 1]
+  try {
+    let e = hS()
+    e &&
+      (e.stderr || e).level >= 2 &&
+      (Bt.colors = [
+        20, 21, 26, 27, 32, 33, 38, 39, 40, 41, 42, 43, 44, 45, 56, 57, 62, 63, 68, 69, 74, 75, 76, 77, 78, 79, 80, 81,
+        92, 93, 98, 99, 112, 113, 128, 129, 134, 135, 148, 149, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170,
+        171, 172, 173, 178, 179, 184, 185, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 214,
+        215, 220, 221,
+      ])
+  } catch {}
+  Bt.inspectOpts = Object.keys(process.env)
+    .filter((e) => /^debug_/i.test(e))
+    .reduce((e, t) => {
+      let n = t
+          .substring(6)
+          .toLowerCase()
+          .replace(/_([a-z])/g, (r, s) => s.toUpperCase()),
+        a = process.env[t]
+      return (
+        /^(yes|on|true|enabled)$/i.test(a)
+          ? (a = !0)
+          : /^(no|off|false|disabled)$/i.test(a)
+            ? (a = !1)
+            : a === 'null'
+              ? (a = null)
+              : (a = Number(a)),
+        (e[n] = a),
+        e
+      )
+    }, {})
+  function kF() {
+    return 'colors' in Bt.inspectOpts ? !!Bt.inspectOpts.colors : IF.isatty(process.stderr.fd)
+  }
+  function RF(e) {
+    let { namespace: t, useColors: n } = this
+    if (n) {
+      let a = this.color,
+        r = '\x1B[3' + (a < 8 ? a : '8;5;' + a),
+        s = `  ${r};1m${t} \x1B[0m`
+      ;((e[0] =
+        s +
+        e[0]
+          .split(
+            `
+`,
+          )
+          .join(
+            `
+` + s,
+          )),
+        e.push(r + 'm+' + tf.exports.humanize(this.diff) + '\x1B[0m'))
+    } else e[0] = VF() + t + ' ' + e[0]
+  }
+  function VF() {
+    return Bt.inspectOpts.hideDate ? '' : new Date().toISOString() + ' '
+  }
+  function DF(...e) {
+    return process.stderr.write(
+      ef.formatWithOptions(Bt.inspectOpts, ...e) +
+        `
+`,
+    )
+  }
+  function wF(e) {
+    e ? (process.env.DEBUG = e) : delete process.env.DEBUG
+  }
+  function MF() {
+    return process.env.DEBUG
+  }
+  function OF(e) {
+    e.inspectOpts = {}
+    let t = Object.keys(Bt.inspectOpts)
+    for (let n = 0; n < t.length; n++) e.inspectOpts[t[n]] = Bt.inspectOpts[t[n]]
+  }
+  tf.exports = jE()(Bt)
+  var { formatters: PS } = tf.exports
+  PS.o = function (e) {
+    return (
+      (this.inspectOpts.colors = this.useColors),
+      ef
+        .inspect(e, this.inspectOpts)
+        .split(
+          `
+`,
+        )
+        .map((t) => t.trim())
+        .join(' ')
+    )
+  }
+  PS.O = function (e) {
+    return ((this.inspectOpts.colors = this.useColors), ef.inspect(e, this.inspectOpts))
+  }
+})
+var gS = x((CW, WE) => {
+  typeof process > 'u' || process.type === 'renderer' || process.browser === !0 || process.__nwjs
+    ? (WE.exports = pS())
+    : (WE.exports = yS())
+})
+var $E = x((YW, SS) => {
+  'use strict'
+  var sa = gS()('eslint:code-path')
+  function FF(e) {
+    return e.id + (e.reachable ? '' : '!')
+  }
+  function rf(e, t) {
+    let n = t ? `:${t}` : ''
+    switch (e.type) {
+      case 'Identifier':
+        return `${e.type}${n} (${e.name})`
+      case 'Literal':
+        return `${e.type}${n} (${e.value})`
+      default:
+        return `${e.type}${n}`
+    }
+  }
+  SS.exports = {
+    enabled: sa.enabled,
+    dump: sa,
+    dumpState: sa.enabled
+      ? function (e, t, n) {
+          for (let a = 0; a < t.currentSegments.length; ++a) {
+            let r = t.currentSegments[a].internal
+            if (n) {
+              let s = r.nodes.length - 1
+              s >= 0 && r.nodes[s] === rf(e, 'enter') ? (r.nodes[s] = rf(e, void 0)) : r.nodes.push(rf(e, 'exit'))
+            } else r.nodes.push(rf(e, 'enter'))
+          }
+          sa([`${t.currentSegments.map(FF).join(',')})`, `${e.type}${n ? ':exit' : ''}`].join(' '))
+        }
+      : sa,
+    dumpDot: sa.enabled
+      ? function (e) {
+          let t = `
+digraph {
+node[shape=box,style="rounded,filled",fillcolor=white];
+initial[label="",shape=circle,style=filled,fillcolor=black,width=0.25,height=0.25];
+`
+          ;(e.returnedSegments.length > 0 &&
+            (t += `final[label="",shape=doublecircle,style=filled,fillcolor=black,width=0.25,height=0.25];
+`),
+            e.thrownSegments.length > 0 &&
+              (t += `thrown[label="\u2718",shape=circle,width=0.3,height=0.3,fixedsize=true];
+`))
+          let n = Object.create(null),
+            a = this.makeDotArrows(e, n)
+          for (let r in n) {
+            let s = n[r]
+            ;((t += `${r}[`),
+              s.reachable
+                ? (t += 'label="')
+                : (t += 'style="rounded,dashed,filled",fillcolor="#FF9800",label="<<unreachable>>\\n'),
+              s.internal.nodes.length > 0 ? (t += s.internal.nodes.join('\\n')) : (t += '????'),
+              (t += `"];
+`))
+          }
+          ;((t += `${a}
+`),
+            (t += '}'),
+            sa('DOT', t))
+        }
+      : sa,
+    makeDotArrows(e, t) {
+      let n = [[e.initialSegment, 0]],
+        a = t || Object.create(null),
+        r = e.initialSegment.id,
+        s = `initial->${e.initialSegment.id}`
+      for (; n.length > 0; ) {
+        let u = n.pop(),
+          d = u[0],
+          P = u[1]
+        if (a[d.id] && P === 0) continue
+        a[d.id] = d
+        let y = d.allNextSegments[P]
+        y &&
+          (r === d.id
+            ? (s += `->${y.id}`)
+            : (s += `;
+${d.id}->${y.id}`),
+          (r = y.id),
+          n.unshift([d, 1 + P]),
+          n.push([y, 0]))
+      }
+      return (
+        e.returnedSegments.forEach((u) => {
+          ;(r === u.id
+            ? (s += '->final')
+            : (s += `;
+${u.id}->final`),
+            (r = null))
+        }),
+        e.thrownSegments.forEach((u) => {
+          ;(r === u.id
+            ? (s += '->thrown')
+            : (s += `;
+${u.id}->thrown`),
+            (r = null))
+        }),
+        `${s};`
+      )
+    },
+  }
+})
+var nf = x((LW, _S) => {
+  'use strict'
+  var BF = $E()
+  function HE(e) {
+    return e.reachable
+  }
+  var KE = class e {
+    constructor(t, n, a) {
+      ;((this.id = t),
+        (this.nextSegments = []),
+        (this.prevSegments = n.filter(HE)),
+        (this.allNextSegments = []),
+        (this.allPrevSegments = n),
+        (this.reachable = a),
+        Object.defineProperty(this, 'internal', { value: { used: !1, loopedPrevSegments: [] } }),
+        BF.enabled && (this.internal.nodes = []))
+    }
+    isLoopedPrevSegment(t) {
+      return this.internal.loopedPrevSegments.includes(t)
+    }
+    static newRoot(t) {
+      return new e(t, [], !0)
+    }
+    static newNext(t, n) {
+      return new e(t, e.flattenUnusedSegments(n), n.some(HE))
+    }
+    static newUnreachable(t, n) {
+      let a = new e(t, e.flattenUnusedSegments(n), !1)
+      return (e.markUsed(a), a)
+    }
+    static newDisconnected(t, n) {
+      return new e(t, [], n.some(HE))
+    }
+    static markUsed(t) {
+      if (t.internal.used) return
+      t.internal.used = !0
+      let n
+      if (t.reachable)
+        for (n = 0; n < t.allPrevSegments.length; ++n) {
+          let a = t.allPrevSegments[n]
+          ;(a.allNextSegments.push(t), a.nextSegments.push(t))
+        }
+      else for (n = 0; n < t.allPrevSegments.length; ++n) t.allPrevSegments[n].allNextSegments.push(t)
+    }
+    static markPrevSegmentAsLooped(t, n) {
+      t.internal.loopedPrevSegments.push(n)
+    }
+    static flattenUnusedSegments(t) {
+      let n = new Set()
+      for (let a = 0; a < t.length; ++a) {
+        let r = t[a]
+        if (!n.has(r))
+          if (r.internal.used) n.add(r)
+          else
+            for (let s = 0; s < r.allPrevSegments.length; ++s) {
+              let u = r.allPrevSegments[s]
+              n.has(u) || n.add(u)
+            }
+      }
+      return [...n]
+    }
+  }
+  _S.exports = KE
+})
+var xS = x((UW, vS) => {
+  'use strict'
+  var JE = qE(),
+    us = nf()
+  function GF(e) {
+    return e.reachable
+  }
+  function XE(e, t, n, a) {
+    let r = e.segmentsList,
+      s = t >= 0 ? t : r.length + t,
+      u = n >= 0 ? n : r.length + n,
+      d = []
+    for (let P = 0; P < e.count; ++P) {
+      let y = []
+      for (let E = s; E <= u; ++E) y.push(r[E][P])
+      d.push(a(e.idGenerator.next(), y))
+    }
+    return d
+  }
+  function bS(e, t) {
+    let n = t
+    for (; n.length > e.count; ) {
+      let a = []
+      for (let r = 0, s = Math.floor(n.length / 2); r < s; ++r)
+        a.push(us.newNext(e.idGenerator.next(), [n[r], n[r + s]]))
+      n = a
+    }
+    return n
+  }
+  var QE = class e {
+    constructor(t, n, a) {
+      ;((this.idGenerator = t), (this.upper = n), (this.count = a), (this.segmentsList = []))
+    }
+    get head() {
+      let t = this.segmentsList
+      return t.length === 0 ? [] : t.at(-1)
+    }
+    get empty() {
+      return this.segmentsList.length === 0
+    }
+    get reachable() {
+      let t = this.head
+      return t.length > 0 && t.some(GF)
+    }
+    makeNext(t, n) {
+      return XE(this, t, n, us.newNext)
+    }
+    makeUnreachable(t, n) {
+      return XE(this, t, n, us.newUnreachable)
+    }
+    makeDisconnected(t, n) {
+      return XE(this, t, n, us.newDisconnected)
+    }
+    add(t) {
+      ;(JE(t.length >= this.count, `${t.length} >= ${this.count}`), this.segmentsList.push(bS(this, t)))
+    }
+    replaceHead(t) {
+      ;(JE(t.length >= this.count, `${t.length} >= ${this.count}`), this.segmentsList.splice(-1, 1, bS(this, t)))
+    }
+    addAll(t) {
+      ;(JE(t.count === this.count), this.segmentsList.push(...t.segmentsList))
+    }
+    clear() {
+      this.segmentsList = []
+    }
+    static newRoot(t) {
+      let n = new e(t, null, 1)
+      return (n.add([us.newRoot(t.next())]), n)
+    }
+    static newEmpty(t, n) {
+      return new e(t.idGenerator, t, (n ? 2 : 1) * t.count)
+    }
+  }
+  vS.exports = QE
+})
+var US = x((IW, LS) => {
+  'use strict'
+  var sf = nf(),
+    Lr = xS(),
+    em = class {
+      constructor(t, n, a, r) {
+        ;((this.upper = t), (this.breakable = n), (this.label = a), (this.brokenForkContext = Lr.newEmpty(r)))
+      }
+    },
+    tm = class {
+      constructor(t) {
+        ;((this.upper = t), (this.choiceContextCount = 0))
+      }
+    },
+    rm = class {
+      constructor(t, n, a, r) {
+        ;((this.upper = t),
+          (this.kind = n),
+          (this.isForkingAsResult = a),
+          (this.trueForkContext = Lr.newEmpty(r)),
+          (this.falseForkContext = Lr.newEmpty(r)),
+          (this.nullishForkContext = Lr.newEmpty(r)),
+          (this.processed = !1))
+      }
+    },
+    Za = class {
+      constructor(t, n, a, r) {
+        ;((this.upper = t), (this.type = n), (this.label = a), (this.brokenForkContext = r.brokenForkContext))
+      }
+    },
+    nm = class extends Za {
+      constructor(t, n, a) {
+        ;(super(t, 'WhileStatement', n, a), (this.test = void 0), (this.continueDestSegments = null))
+      }
+    },
+    am = class extends Za {
+      constructor(t, n, a, r) {
+        ;(super(t, 'DoWhileStatement', n, a),
+          (this.test = void 0),
+          (this.entrySegments = null),
+          (this.continueForkContext = Lr.newEmpty(r)))
+      }
+    },
+    im = class extends Za {
+      constructor(t, n, a) {
+        ;(super(t, 'ForStatement', n, a),
+          (this.test = void 0),
+          (this.endOfInitSegments = null),
+          (this.testSegments = null),
+          (this.endOfTestSegments = null),
+          (this.updateSegments = null),
+          (this.endOfUpdateSegments = null),
+          (this.continueDestSegments = null))
+      }
+    },
+    sm = class extends Za {
+      constructor(t, n, a) {
+        ;(super(t, 'ForInStatement', n, a),
+          (this.prevSegments = null),
+          (this.leftSegments = null),
+          (this.endOfLeftSegments = null),
+          (this.continueDestSegments = null))
+      }
+    },
+    om = class extends Za {
+      constructor(t, n, a) {
+        ;(super(t, 'ForOfStatement', n, a),
+          (this.prevSegments = null),
+          (this.leftSegments = null),
+          (this.endOfLeftSegments = null),
+          (this.continueDestSegments = null))
+      }
+    },
+    lm = class {
+      constructor(t, n) {
+        ;((this.upper = t),
+          (this.hasCase = n),
+          (this.defaultSegments = null),
+          (this.defaultBodySegments = null),
+          (this.foundEmptyDefault = !1),
+          (this.lastIsDefault = !1),
+          (this.forkCount = 0))
+      }
+    },
+    um = class {
+      constructor(t, n, a) {
+        ;((this.upper = t),
+          (this.hasFinalizer = n),
+          (this.position = 'try'),
+          (this.returnedForkContext = n ? Lr.newEmpty(a) : null),
+          (this.thrownForkContext = Lr.newEmpty(a)),
+          (this.lastOfTryIsReachable = !1),
+          (this.lastOfCatchIsReachable = !1))
+      }
+    }
+  function AS(e, t, n, a) {
+    for (let r = 0; r < a.length; ++r) {
+      let s = a[r]
+      ;(e.push(s), t.includes(s) || n.push(s))
+    }
+  }
+  function NF(e, t) {
+    if (!t) return e.loopContext
+    let n = e.loopContext
+    for (; n; ) {
+      if (n.label === t) return n
+      n = n.upper
+    }
+    return null
+  }
+  function qF(e, t) {
+    let n = e.breakContext
+    for (; n; ) {
+      if (t ? n.label === t : n.breakable) return n
+      n = n.upper
+    }
+    return null
+  }
+  function CS(e) {
+    let t = e.tryContext
+    for (; t; ) {
+      if (t.hasFinalizer && t.position !== 'finally') return t
+      t = t.upper
+    }
+    return e
+  }
+  function ZE(e) {
+    let t = e.tryContext
+    for (; t; ) {
+      if (t.position === 'try' || (t.hasFinalizer && t.position === 'catch')) return t
+      t = t.upper
+    }
+    return e
+  }
+  function af(e, t) {
+    e.splice(e.indexOf(t), 1)
+  }
+  function jF(e, t) {
+    for (let n = 0; n < e.length; ++n) {
+      let a = e[n],
+        r = t[n]
+      ;(af(a.nextSegments, r), af(a.allNextSegments, r), af(r.prevSegments, a), af(r.allPrevSegments, a))
+    }
+  }
+  function Qa(e, t, n) {
+    let a = sf.flattenUnusedSegments(t),
+      r = sf.flattenUnusedSegments(n),
+      s = Math.min(a.length, r.length)
+    for (let u = 0; u < s; ++u) {
+      let d = a[u],
+        P = r[u]
+      ;(P.reachable && d.nextSegments.push(P),
+        d.reachable && P.prevSegments.push(d),
+        d.allNextSegments.push(P),
+        P.allPrevSegments.push(d),
+        P.allPrevSegments.length >= 2 && sf.markPrevSegmentAsLooped(P, d),
+        e.notifyLooped(d, P))
+    }
+  }
+  function YS(e, t, n) {
+    ;(t.processed || (t.trueForkContext.add(n), t.falseForkContext.add(n), t.nullishForkContext.add(n)),
+      e.test !== !0 && e.brokenForkContext.addAll(t.falseForkContext),
+      (e.endOfTestSegments = t.trueForkContext.makeNext(0, -1)))
+  }
+  var cm = class {
+    constructor(t, n) {
+      ;((this.idGenerator = t),
+        (this.notifyLooped = n),
+        (this.forkContext = Lr.newRoot(t)),
+        (this.choiceContext = null),
+        (this.switchContext = null),
+        (this.tryContext = null),
+        (this.loopContext = null),
+        (this.breakContext = null),
+        (this.chainContext = null),
+        (this.currentSegments = []),
+        (this.initialSegment = this.forkContext.head[0]),
+        (this.finalSegments = []),
+        (this.returnedForkContext = []),
+        (this.thrownForkContext = []))
+      let a = this.finalSegments,
+        r = this.returnedForkContext,
+        s = this.thrownForkContext
+      ;((r.add = AS.bind(null, r, s, a)), (s.add = AS.bind(null, s, r, a)))
+    }
+    get headSegments() {
+      return this.forkContext.head
+    }
+    get parentForkContext() {
+      let t = this.forkContext
+      return t && t.upper
+    }
+    pushForkContext(t) {
+      return ((this.forkContext = Lr.newEmpty(this.forkContext, t)), this.forkContext)
+    }
+    popForkContext() {
+      let t = this.forkContext
+      return ((this.forkContext = t.upper), this.forkContext.replaceHead(t.makeNext(0, -1)), t)
+    }
+    forkPath() {
+      this.forkContext.add(this.parentForkContext.makeNext(-1, -1))
+    }
+    forkBypassPath() {
+      this.forkContext.add(this.parentForkContext.head)
+    }
+    pushChoiceContext(t, n) {
+      this.choiceContext = new rm(this.choiceContext, t, n, this.forkContext)
+    }
+    popChoiceContext() {
+      let t = this.choiceContext,
+        n = this.forkContext,
+        a = n.head
+      switch (((this.choiceContext = t.upper), t.kind)) {
+        case '&&':
+        case '||':
+        case '??':
+          if (
+            (t.processed || (t.trueForkContext.add(a), t.falseForkContext.add(a), t.nullishForkContext.add(a)),
+            t.isForkingAsResult)
+          ) {
+            let s = this.choiceContext
+            return (
+              s.trueForkContext.addAll(t.trueForkContext),
+              s.falseForkContext.addAll(t.falseForkContext),
+              s.nullishForkContext.addAll(t.nullishForkContext),
+              (s.processed = !0),
+              t
+            )
+          }
+          break
+        case 'test':
+          t.processed
+            ? (t.falseForkContext.clear(), t.falseForkContext.add(a))
+            : (t.trueForkContext.clear(), t.trueForkContext.add(a))
+          break
+        case 'loop':
+          return t
+        default:
+          throw new Error('unreachable')
+      }
+      let r = t.trueForkContext
+      return (r.addAll(t.falseForkContext), n.replaceHead(r.makeNext(0, -1)), t)
+    }
+    makeLogicalRight() {
+      let t = this.choiceContext,
+        n = this.forkContext
+      if (t.processed) {
+        let a
+        switch (t.kind) {
+          case '&&':
+            a = t.trueForkContext
+            break
+          case '||':
+            a = t.falseForkContext
+            break
+          case '??':
+            a = t.nullishForkContext
+            break
+          default:
+            throw new Error('unreachable')
+        }
+        ;(n.replaceHead(a.makeNext(0, -1)), a.clear(), (t.processed = !1))
+      } else {
+        switch (t.kind) {
+          case '&&':
+            ;(t.falseForkContext.add(n.head), t.nullishForkContext.add(n.head))
+            break
+          case '||':
+            t.trueForkContext.add(n.head)
+            break
+          case '??':
+            ;(t.trueForkContext.add(n.head), t.falseForkContext.add(n.head))
+            break
+          default:
+            throw new Error('unreachable')
+        }
+        n.replaceHead(n.makeNext(-1, -1))
+      }
+    }
+    makeIfConsequent() {
+      let t = this.choiceContext,
+        n = this.forkContext
+      ;(t.processed ||
+        (t.trueForkContext.add(n.head), t.falseForkContext.add(n.head), t.nullishForkContext.add(n.head)),
+        (t.processed = !1),
+        n.replaceHead(t.trueForkContext.makeNext(0, -1)))
+    }
+    makeIfAlternate() {
+      let t = this.choiceContext,
+        n = this.forkContext
+      ;(t.trueForkContext.clear(),
+        t.trueForkContext.add(n.head),
+        (t.processed = !0),
+        n.replaceHead(t.falseForkContext.makeNext(0, -1)))
+    }
+    pushChainContext() {
+      this.chainContext = new tm(this.chainContext)
+    }
+    popChainContext() {
+      let t = this.chainContext
+      this.chainContext = t.upper
+      for (let n = t.choiceContextCount; n > 0; --n) this.popChoiceContext()
+    }
+    makeOptionalNode() {
+      this.chainContext && ((this.chainContext.choiceContextCount += 1), this.pushChoiceContext('??', !1))
+    }
+    makeOptionalRight() {
+      this.chainContext && this.makeLogicalRight()
+    }
+    pushSwitchContext(t, n) {
+      ;((this.switchContext = new lm(this.switchContext, t)), this.pushBreakContext(!0, n))
+    }
+    popSwitchContext() {
+      let t = this.switchContext
+      this.switchContext = t.upper
+      let n = this.forkContext,
+        a = this.popBreakContext().brokenForkContext
+      if (t.forkCount === 0) {
+        a.empty || (a.add(n.makeNext(-1, -1)), n.replaceHead(a.makeNext(0, -1)))
+        return
+      }
+      let r = n.head
+      this.forkBypassPath()
+      let s = n.head
+      ;(a.add(r),
+        t.lastIsDefault ||
+          (t.defaultBodySegments
+            ? (jF(t.defaultSegments, t.defaultBodySegments), Qa(this, s, t.defaultBodySegments))
+            : a.add(s)))
+      for (let u = 0; u < t.forkCount; ++u) this.forkContext = this.forkContext.upper
+      this.forkContext.replaceHead(a.makeNext(0, -1))
+    }
+    makeSwitchCaseBody(t, n) {
+      let a = this.switchContext
+      if (!a.hasCase) return
+      let r = this.forkContext,
+        s = this.pushForkContext()
+      ;(s.add(r.makeNext(0, -1)),
+        n
+          ? ((a.defaultSegments = r.head), t ? (a.foundEmptyDefault = !0) : (a.defaultBodySegments = s.head))
+          : !t && a.foundEmptyDefault && ((a.foundEmptyDefault = !1), (a.defaultBodySegments = s.head)),
+        (a.lastIsDefault = n),
+        (a.forkCount += 1))
+    }
+    pushTryContext(t) {
+      this.tryContext = new um(this.tryContext, t, this.forkContext)
+    }
+    popTryContext() {
+      let t = this.tryContext
+      if (((this.tryContext = t.upper), t.position === 'catch')) {
+        this.popForkContext()
+        return
+      }
+      let n = t.returnedForkContext,
+        a = t.thrownForkContext
+      if (n.empty && a.empty) return
+      let r = this.forkContext.head
+      this.forkContext = this.forkContext.upper
+      let s = r.slice(0, (r.length / 2) | 0),
+        u = r.slice((r.length / 2) | 0)
+      ;(n.empty || CS(this).returnedForkContext.add(u),
+        a.empty || ZE(this).thrownForkContext.add(u),
+        this.forkContext.replaceHead(s),
+        !t.lastOfTryIsReachable && !t.lastOfCatchIsReachable && this.forkContext.makeUnreachable())
+    }
+    makeCatchBlock() {
+      let t = this.tryContext,
+        n = this.forkContext,
+        a = t.thrownForkContext
+      ;((t.position = 'catch'),
+        (t.thrownForkContext = Lr.newEmpty(n)),
+        (t.lastOfTryIsReachable = n.reachable),
+        a.add(n.head))
+      let r = a.makeNext(0, -1)
+      ;(this.pushForkContext(), this.forkBypassPath(), this.forkContext.add(r))
+    }
+    makeFinallyBlock() {
+      let t = this.tryContext,
+        n = this.forkContext,
+        a = t.returnedForkContext,
+        r = t.thrownForkContext,
+        s = n.head
+      if (
+        (t.position === 'catch'
+          ? (this.popForkContext(), (n = this.forkContext), (t.lastOfCatchIsReachable = n.reachable))
+          : (t.lastOfTryIsReachable = n.reachable),
+        (t.position = 'finally'),
+        a.empty && r.empty)
+      )
+        return
+      let u = n.makeNext(-1, -1)
+      for (let d = 0; d < n.count; ++d) {
+        let P = [s[d]]
+        for (let y = 0; y < a.segmentsList.length; ++y) P.push(a.segmentsList[y][d])
+        for (let y = 0; y < r.segmentsList.length; ++y) P.push(r.segmentsList[y][d])
+        u.push(sf.newNext(this.idGenerator.next(), P))
+      }
+      ;(this.pushForkContext(!0), this.forkContext.add(u))
+    }
+    makeFirstThrowablePathInTryBlock() {
+      let t = this.forkContext
+      if (!t.reachable) return
+      let n = ZE(this)
+      n === this ||
+        n.position !== 'try' ||
+        !n.thrownForkContext.empty ||
+        (n.thrownForkContext.add(t.head), t.replaceHead(t.makeNext(-1, -1)))
+    }
+    pushLoopContext(t, n) {
+      let a = this.forkContext,
+        r = this.pushBreakContext(!0, n)
+      switch (t) {
+        case 'WhileStatement':
+          ;(this.pushChoiceContext('loop', !1), (this.loopContext = new nm(this.loopContext, n, r)))
+          break
+        case 'DoWhileStatement':
+          ;(this.pushChoiceContext('loop', !1), (this.loopContext = new am(this.loopContext, n, r, a)))
+          break
+        case 'ForStatement':
+          ;(this.pushChoiceContext('loop', !1), (this.loopContext = new im(this.loopContext, n, r)))
+          break
+        case 'ForInStatement':
+          this.loopContext = new sm(this.loopContext, n, r)
+          break
+        case 'ForOfStatement':
+          this.loopContext = new om(this.loopContext, n, r)
+          break
+        default:
+          throw new Error(`unknown type: "${t}"`)
+      }
+    }
+    popLoopContext() {
+      let t = this.loopContext
+      this.loopContext = t.upper
+      let n = this.forkContext,
+        a = this.popBreakContext().brokenForkContext
+      switch (t.type) {
+        case 'WhileStatement':
+        case 'ForStatement':
+          ;(this.popChoiceContext(), Qa(this, n.head, t.continueDestSegments))
+          break
+        case 'DoWhileStatement': {
+          let r = this.popChoiceContext()
+          ;(r.processed || (r.trueForkContext.add(n.head), r.falseForkContext.add(n.head)),
+            t.test !== !0 && a.addAll(r.falseForkContext))
+          let s = r.trueForkContext.segmentsList
+          for (let u = 0; u < s.length; ++u) Qa(this, s[u], t.entrySegments)
+          break
+        }
+        case 'ForInStatement':
+        case 'ForOfStatement':
+          ;(a.add(n.head), Qa(this, n.head, t.leftSegments))
+          break
+        default:
+          throw new Error('unreachable')
+      }
+      a.empty ? n.replaceHead(n.makeUnreachable(-1, -1)) : n.replaceHead(a.makeNext(0, -1))
+    }
+    makeWhileTest(t) {
+      let n = this.loopContext,
+        a = this.forkContext,
+        r = a.makeNext(0, -1)
+      ;((n.test = t), (n.continueDestSegments = r), a.replaceHead(r))
+    }
+    makeWhileBody() {
+      let t = this.loopContext,
+        n = this.choiceContext,
+        a = this.forkContext
+      ;(n.processed || (n.trueForkContext.add(a.head), n.falseForkContext.add(a.head)),
+        t.test !== !0 && t.brokenForkContext.addAll(n.falseForkContext),
+        a.replaceHead(n.trueForkContext.makeNext(0, -1)))
+    }
+    makeDoWhileBody() {
+      let t = this.loopContext,
+        n = this.forkContext,
+        a = n.makeNext(-1, -1)
+      ;((t.entrySegments = a), n.replaceHead(a))
+    }
+    makeDoWhileTest(t) {
+      let n = this.loopContext,
+        a = this.forkContext
+      if (((n.test = t), !n.continueForkContext.empty)) {
+        n.continueForkContext.add(a.head)
+        let r = n.continueForkContext.makeNext(0, -1)
+        a.replaceHead(r)
+      }
+    }
+    makeForTest(t) {
+      let n = this.loopContext,
+        a = this.forkContext,
+        r = a.head,
+        s = a.makeNext(-1, -1)
+      ;((n.test = t), (n.endOfInitSegments = r), (n.continueDestSegments = n.testSegments = s), a.replaceHead(s))
+    }
+    makeForUpdate() {
+      let t = this.loopContext,
+        n = this.choiceContext,
+        a = this.forkContext
+      t.testSegments ? YS(t, n, a.head) : (t.endOfInitSegments = a.head)
+      let r = a.makeDisconnected(-1, -1)
+      ;((t.continueDestSegments = t.updateSegments = r), a.replaceHead(r))
+    }
+    makeForBody() {
+      let t = this.loopContext,
+        n = this.choiceContext,
+        a = this.forkContext
+      t.updateSegments
+        ? ((t.endOfUpdateSegments = a.head), t.testSegments && Qa(this, t.endOfUpdateSegments, t.testSegments))
+        : t.testSegments
+          ? YS(t, n, a.head)
+          : (t.endOfInitSegments = a.head)
+      let r = t.endOfTestSegments
+      if (!r) {
+        let s = Lr.newEmpty(a)
+        ;(s.add(t.endOfInitSegments), t.endOfUpdateSegments && s.add(t.endOfUpdateSegments), (r = s.makeNext(0, -1)))
+      }
+      ;((t.continueDestSegments = t.continueDestSegments || r), a.replaceHead(r))
+    }
+    makeForInOfLeft() {
+      let t = this.loopContext,
+        n = this.forkContext,
+        a = n.makeDisconnected(-1, -1)
+      ;((t.prevSegments = n.head), (t.leftSegments = t.continueDestSegments = a), n.replaceHead(a))
+    }
+    makeForInOfRight() {
+      let t = this.loopContext,
+        n = this.forkContext,
+        a = Lr.newEmpty(n)
+      a.add(t.prevSegments)
+      let r = a.makeNext(-1, -1)
+      ;((t.endOfLeftSegments = n.head), n.replaceHead(r))
+    }
+    makeForInOfBody() {
+      let t = this.loopContext,
+        n = this.forkContext,
+        a = Lr.newEmpty(n)
+      a.add(t.endOfLeftSegments)
+      let r = a.makeNext(-1, -1)
+      ;(Qa(this, n.head, t.leftSegments), t.brokenForkContext.add(n.head), n.replaceHead(r))
+    }
+    pushBreakContext(t, n) {
+      return ((this.breakContext = new em(this.breakContext, t, n, this.forkContext)), this.breakContext)
+    }
+    popBreakContext() {
+      let t = this.breakContext,
+        n = this.forkContext
+      if (((this.breakContext = t.upper), !t.breakable)) {
+        let a = t.brokenForkContext
+        a.empty || (a.add(n.head), n.replaceHead(a.makeNext(0, -1)))
+      }
+      return t
+    }
+    makeBreak(t) {
+      let n = this.forkContext
+      if (!n.reachable) return
+      let a = qF(this, t)
+      ;(a && a.brokenForkContext.add(n.head), n.replaceHead(n.makeUnreachable(-1, -1)))
+    }
+    makeContinue(t) {
+      let n = this.forkContext
+      if (!n.reachable) return
+      let a = NF(this, t)
+      ;(a &&
+        (a.continueDestSegments
+          ? (Qa(this, n.head, a.continueDestSegments),
+            (a.type === 'ForInStatement' || a.type === 'ForOfStatement') && a.brokenForkContext.add(n.head))
+          : a.continueForkContext.add(n.head)),
+        n.replaceHead(n.makeUnreachable(-1, -1)))
+    }
+    makeReturn() {
+      let t = this.forkContext
+      t.reachable && (CS(this).returnedForkContext.add(t.head), t.replaceHead(t.makeUnreachable(-1, -1)))
+    }
+    makeThrow() {
+      let t = this.forkContext
+      t.reachable && (ZE(this).thrownForkContext.add(t.head), t.replaceHead(t.makeUnreachable(-1, -1)))
+    }
+    makeFinal() {
+      let t = this.currentSegments
+      t.length > 0 && t[0].reachable && this.returnedForkContext.add(t)
+    }
+  }
+  LS.exports = cm
+})
+var dm = x((kW, IS) => {
+  'use strict'
+  var fm = class {
+    constructor(t) {
+      ;((this.prefix = String(t)), (this.n = 0))
+    }
+    next() {
+      return ((this.n = (1 + this.n) | 0), this.n < 0 && (this.n = 1), this.prefix + this.n)
+    }
+  }
+  IS.exports = fm
+})
+var RS = x((RW, kS) => {
+  'use strict'
+  var zF = US(),
+    WF = dm(),
+    pm = class {
+      constructor({ id: t, origin: n, upper: a, onLooped: r }) {
+        ;((this.id = t),
+          (this.origin = n),
+          (this.upper = a),
+          (this.childCodePaths = []),
+          Object.defineProperty(this, 'internal', { value: new zF(new WF(`${t}_`), r) }),
+          a && a.childCodePaths.push(this))
+      }
+      static getState(t) {
+        return t.internal
+      }
+      get initialSegment() {
+        return this.internal.initialSegment
+      }
+      get finalSegments() {
+        return this.internal.finalSegments
+      }
+      get returnedSegments() {
+        return this.internal.returnedForkContext
+      }
+      get thrownSegments() {
+        return this.internal.thrownForkContext
+      }
+      traverseSegments(t, n) {
+        let a, r
+        typeof t == 'function' ? ((r = t), (a = {})) : ((a = t || {}), (r = n))
+        let s = a.first || this.internal.initialSegment,
+          u = a.last,
+          d,
+          P,
+          y,
+          E = null,
+          m = new Set(),
+          _ = [[s, 0]],
+          T = new Set(),
+          v = !1,
+          C = {
+            skip() {
+              T.add(E)
+            },
+            break() {
+              v = !0
+            },
+          }
+        function L($) {
+          return m.has($) || E.isLoopedPrevSegment($)
+        }
+        function F($) {
+          return T.has($) || E.isLoopedPrevSegment($)
+        }
+        for (; _.length > 0; ) {
+          if (((d = _.at(-1)), (E = d[0]), (P = d[1]), P === 0)) {
+            if (m.has(E)) {
+              _.pop()
+              continue
+            }
+            if (E !== s && E.prevSegments.length > 0 && !E.prevSegments.every(L)) {
+              _.pop()
+              continue
+            }
+            if ((m.add(E), T.size > 0 && E.prevSegments.length > 0 && E.prevSegments.every(F))) T.add(E)
+            else if ((r.call(this, E, C), E === u && C.skip(), v)) break
+          }
+          ;((y = E.nextSegments.length - 1),
+            P < y
+              ? ((d[1] += 1), _.push([E.nextSegments[P], 0]))
+              : P === y
+                ? ((d[0] = E.nextSegments[P]), (d[1] = 0))
+                : _.pop())
+        }
+      }
+    }
+  kS.exports = pm
+})
+var FS = x((VW, OS) => {
+  'use strict'
+  var Em = qE(),
+    { breakableTypePattern: wS } = uS(),
+    _n = RS(),
+    $F = nf(),
+    HF = dm(),
+    dn = $E()
+  function KF(e) {
+    return !!e.test
+  }
+  function MS(e) {
+    let t = e.parent
+    return t && t.type === 'PropertyDefinition' && t.value === e
+  }
+  function of(e) {
+    return e === '&&' || e === '||' || e === '??'
+  }
+  function lf(e) {
+    return e === '&&=' || e === '||=' || e === '??='
+  }
+  function VS(e) {
+    return e.parent.type === 'LabeledStatement' ? e.parent.label.name : null
+  }
+  function DS(e) {
+    let t = e.parent
+    switch (t.type) {
+      case 'ConditionalExpression':
+      case 'IfStatement':
+      case 'WhileStatement':
+      case 'DoWhileStatement':
+      case 'ForStatement':
+        return t.test === e
+      case 'LogicalExpression':
+        return of(t.operator)
+      case 'AssignmentExpression':
+        return lf(t.operator)
+      default:
+        return !1
+    }
+  }
+  function mm(e) {
+    if (e.type === 'Literal') return !!e.value
+  }
+  function JF(e) {
+    let t = e.parent
+    switch (t.type) {
+      case 'LabeledStatement':
+      case 'BreakStatement':
+      case 'ContinueStatement':
+      case 'ArrayPattern':
+      case 'RestElement':
+      case 'ImportSpecifier':
+      case 'ImportDefaultSpecifier':
+      case 'ImportNamespaceSpecifier':
+      case 'CatchClause':
+        return !1
+      case 'FunctionDeclaration':
+      case 'FunctionExpression':
+      case 'ArrowFunctionExpression':
+      case 'ClassDeclaration':
+      case 'ClassExpression':
+      case 'VariableDeclarator':
+        return t.id !== e
+      case 'Property':
+      case 'PropertyDefinition':
+      case 'MethodDefinition':
+        return t.key !== e || t.computed || t.shorthand
+      case 'AssignmentPattern':
+        return t.key !== e
+      default:
+        return !0
+    }
+  }
+  function ei(e, t) {
+    let n = e.codePath,
+      a = _n.getState(n),
+      r = a.currentSegments,
+      s = a.headSegments,
+      u = Math.max(r.length, s.length),
+      d,
+      P,
+      y
+    for (d = 0; d < u; ++d)
+      if (((P = r[d]), (y = s[d]), P !== y && P)) {
+        let E = P.reachable ? 'onCodePathSegmentEnd' : 'onUnreachableCodePathSegmentEnd'
+        ;(dn.dump(`${E} ${P.id}`), e.emit(E, [P, t]))
+      }
+    for (a.currentSegments = s, d = 0; d < u; ++d)
+      if (((P = r[d]), (y = s[d]), P !== y && y)) {
+        let E = y.reachable ? 'onCodePathSegmentStart' : 'onUnreachableCodePathSegmentStart'
+        ;(dn.dump(`${E} ${y.id}`), $F.markUsed(y), e.emit(E, [y, t]))
+      }
+  }
+  function XF(e, t) {
+    let n = _n.getState(e.codePath),
+      a = n.currentSegments
+    for (let r = 0; r < a.length; ++r) {
+      let s = a[r],
+        u = s.reachable ? 'onCodePathSegmentEnd' : 'onUnreachableCodePathSegmentEnd'
+      ;(dn.dump(`${u} ${s.id}`), e.emit(u, [s, t]))
+    }
+    n.currentSegments = []
+  }
+  function QF(e, t) {
+    let n = e.codePath,
+      a = _n.getState(n),
+      r = t.parent
+    switch (r.type) {
+      case 'CallExpression':
+        r.optional === !0 && r.arguments.length >= 1 && r.arguments[0] === t && a.makeOptionalRight()
+        break
+      case 'MemberExpression':
+        r.optional === !0 && r.property === t && a.makeOptionalRight()
+        break
+      case 'LogicalExpression':
+        r.right === t && of(r.operator) && a.makeLogicalRight()
+        break
+      case 'AssignmentExpression':
+        r.right === t && lf(r.operator) && a.makeLogicalRight()
+        break
+      case 'ConditionalExpression':
+      case 'IfStatement':
+        r.consequent === t ? a.makeIfConsequent() : r.alternate === t && a.makeIfAlternate()
+        break
+      case 'SwitchCase':
+        r.consequent[0] === t && a.makeSwitchCaseBody(!1, !r.test)
+        break
+      case 'TryStatement':
+        r.handler === t ? a.makeCatchBlock() : r.finalizer === t && a.makeFinallyBlock()
+        break
+      case 'WhileStatement':
+        r.test === t ? a.makeWhileTest(mm(t)) : (Em(r.body === t), a.makeWhileBody())
+        break
+      case 'DoWhileStatement':
+        r.body === t ? a.makeDoWhileBody() : (Em(r.test === t), a.makeDoWhileTest(mm(t)))
+        break
+      case 'ForStatement':
+        r.test === t ? a.makeForTest(mm(t)) : r.update === t ? a.makeForUpdate() : r.body === t && a.makeForBody()
+        break
+      case 'ForInStatement':
+      case 'ForOfStatement':
+        r.left === t
+          ? a.makeForInOfLeft()
+          : r.right === t
+            ? a.makeForInOfRight()
+            : (Em(r.body === t), a.makeForInOfBody())
+        break
+      case 'AssignmentPattern':
+        r.right === t && (a.pushForkContext(), a.forkBypassPath(), a.forkPath())
+        break
+      default:
+        break
+    }
+  }
+  function ZF(e, t) {
+    let n = e.codePath,
+      a = n && _n.getState(n),
+      r = t.parent
+    function s(u) {
+      ;(n && (ei(e, t), dn.dumpState(t, a, !1)),
+        (n = e.codePath = new _n({ id: e.idGenerator.next(), origin: u, upper: n, onLooped: e.onLooped })),
+        (a = _n.getState(n)),
+        dn.dump(`onCodePathStart ${n.id}`),
+        e.emit('onCodePathStart', [n, t]))
+    }
+    switch ((MS(t) && s('class-field-initializer'), t.type)) {
+      case 'Program':
+        s('program')
+        break
+      case 'FunctionDeclaration':
+      case 'FunctionExpression':
+      case 'ArrowFunctionExpression':
+        s('function')
+        break
+      case 'StaticBlock':
+        s('class-static-block')
+        break
+      case 'ChainExpression':
+        a.pushChainContext()
+        break
+      case 'CallExpression':
+        t.optional === !0 && a.makeOptionalNode()
+        break
+      case 'MemberExpression':
+        t.optional === !0 && a.makeOptionalNode()
+        break
+      case 'LogicalExpression':
+        of(t.operator) && a.pushChoiceContext(t.operator, DS(t))
+        break
+      case 'AssignmentExpression':
+        lf(t.operator) && a.pushChoiceContext(t.operator.slice(0, -1), DS(t))
+        break
+      case 'ConditionalExpression':
+      case 'IfStatement':
+        a.pushChoiceContext('test', !1)
+        break
+      case 'SwitchStatement':
+        a.pushSwitchContext(t.cases.some(KF), VS(t))
+        break
+      case 'TryStatement':
+        a.pushTryContext(!!t.finalizer)
+        break
+      case 'SwitchCase':
+        r.discriminant !== t && r.cases[0] !== t && a.forkPath()
+        break
+      case 'WhileStatement':
+      case 'DoWhileStatement':
+      case 'ForStatement':
+      case 'ForInStatement':
+      case 'ForOfStatement':
+        a.pushLoopContext(t.type, VS(t))
+        break
+      case 'LabeledStatement':
+        wS.test(t.body.type) || a.pushBreakContext(!1, t.label.name)
+        break
+      default:
+        break
+    }
+    ;(ei(e, t), dn.dumpState(t, a, !1))
+  }
+  function eB(e, t) {
+    let n = e.codePath,
+      a = _n.getState(n),
+      r = !1
+    switch (t.type) {
+      case 'ChainExpression':
+        a.popChainContext()
+        break
+      case 'IfStatement':
+      case 'ConditionalExpression':
+        a.popChoiceContext()
+        break
+      case 'LogicalExpression':
+        of(t.operator) && a.popChoiceContext()
+        break
+      case 'AssignmentExpression':
+        lf(t.operator) && a.popChoiceContext()
+        break
+      case 'SwitchStatement':
+        a.popSwitchContext()
+        break
+      case 'SwitchCase':
+        ;(t.consequent.length === 0 && a.makeSwitchCaseBody(!0, !t.test), a.forkContext.reachable && (r = !0))
+        break
+      case 'TryStatement':
+        a.popTryContext()
+        break
+      case 'BreakStatement':
+        ;(ei(e, t), a.makeBreak(t.label && t.label.name), (r = !0))
+        break
+      case 'ContinueStatement':
+        ;(ei(e, t), a.makeContinue(t.label && t.label.name), (r = !0))
+        break
+      case 'ReturnStatement':
+        ;(ei(e, t), a.makeReturn(), (r = !0))
+        break
+      case 'ThrowStatement':
+        ;(ei(e, t), a.makeThrow(), (r = !0))
+        break
+      case 'Identifier':
+        JF(t) && (a.makeFirstThrowablePathInTryBlock(), (r = !0))
+        break
+      case 'CallExpression':
+      case 'ImportExpression':
+      case 'MemberExpression':
+      case 'NewExpression':
+      case 'YieldExpression':
+        a.makeFirstThrowablePathInTryBlock()
+        break
+      case 'WhileStatement':
+      case 'DoWhileStatement':
+      case 'ForStatement':
+      case 'ForInStatement':
+      case 'ForOfStatement':
+        a.popLoopContext()
+        break
+      case 'AssignmentPattern':
+        a.popForkContext()
+        break
+      case 'LabeledStatement':
+        wS.test(t.body.type) || a.popBreakContext()
+        break
+      default:
+        break
+    }
+    ;(r || ei(e, t), dn.dumpState(t, a, !0))
+  }
+  function tB(e, t) {
+    function n() {
+      let a = e.codePath
+      ;(_n.getState(a).makeFinal(),
+        XF(e, t),
+        dn.dump(`onCodePathEnd ${a.id}`),
+        e.emit('onCodePathEnd', [a, t]),
+        dn.dumpDot(a),
+        (a = e.codePath = e.codePath.upper),
+        a && dn.dumpState(t, _n.getState(a), !0))
+    }
+    switch (t.type) {
+      case 'Program':
+      case 'FunctionDeclaration':
+      case 'FunctionExpression':
+      case 'ArrowFunctionExpression':
+      case 'StaticBlock': {
+        n()
+        break
+      }
+      case 'CallExpression':
+        t.optional === !0 && t.arguments.length === 0 && _n.getState(e.codePath).makeOptionalRight()
+        break
+      default:
+        break
+    }
+    MS(t) && n()
+  }
+  var Tm = class {
+    constructor(t) {
+      ;((this.original = t),
+        (this.emit = t.emit),
+        (this.codePath = null),
+        (this.idGenerator = new HF('s')),
+        (this.currentNode = null),
+        (this.onLooped = this.onLooped.bind(this)))
+    }
+    enterNode(t) {
+      ;((this.currentNode = t),
+        t.parent && QF(this, t),
+        ZF(this, t),
+        this.original.enterNode(t),
+        (this.currentNode = null))
+    }
+    leaveNode(t) {
+      ;((this.currentNode = t), eB(this, t), this.original.leaveNode(t), tB(this, t), (this.currentNode = null))
+    }
+    onLooped(t, n) {
+      t.reachable &&
+        n.reachable &&
+        (dn.dump(`onCodePathSegmentLoop ${t.id} -> ${n.id}`),
+        this.emit('onCodePathSegmentLoop', [t, n, this.currentNode]))
+    }
+  }
+  OS.exports = Tm
+})
+var KS = x((uf, HS) => {
+  ;(function (e, t) {
+    typeof uf == 'object' && typeof HS < 'u'
+      ? t(uf)
+      : typeof define == 'function' && define.amd
+        ? define(['exports'], t)
+        : t((e.URI = e.URI || {}))
+  })(uf, function (e) {
+    'use strict'
+    function t() {
+      for (var U = arguments.length, h = Array(U), Y = 0; Y < U; Y++) h[Y] = arguments[Y]
+      if (h.length > 1) {
+        h[0] = h[0].slice(0, -1)
+        for (var M = h.length - 1, G = 1; G < M; ++G) h[G] = h[G].slice(1, -1)
+        return ((h[M] = h[M].slice(1)), h.join(''))
+      } else return h[0]
+    }
+    function n(U) {
+      return '(?:' + U + ')'
+    }
+    function a(U) {
+      return U === void 0
+        ? 'undefined'
+        : U === null
+          ? 'null'
+          : Object.prototype.toString.call(U).split(' ').pop().split(']').shift().toLowerCase()
+    }
+    function r(U) {
+      return U.toUpperCase()
+    }
+    function s(U) {
+      return U != null
+        ? U instanceof Array
+          ? U
+          : typeof U.length != 'number' || U.split || U.setInterval || U.call
+            ? [U]
+            : Array.prototype.slice.call(U)
+        : []
+    }
+    function u(U, h) {
+      var Y = U
+      if (h) for (var M in h) Y[M] = h[M]
+      return Y
+    }
+    function d(U) {
+      var h = '[A-Za-z]',
+        Y = '[\\x0D]',
+        M = '[0-9]',
+        G = '[\\x22]',
+        he = t(M, '[A-Fa-f]'),
+        q = '[\\x0A]',
+        Ge = '[\\x20]',
+        Pe = n(
+          n('%[EFef]' + he + '%' + he + he + '%' + he + he) +
+            '|' +
+            n('%[89A-Fa-f]' + he + '%' + he + he) +
+            '|' +
+            n('%' + he + he),
+        ),
+        Qe = '[\\:\\/\\?\\#\\[\\]\\@]',
+        Fe = "[\\!\\$\\&\\'\\(\\)\\*\\+\\,\\;\\=]",
+        rt = t(Qe, Fe),
+        dt = U ? '[\\xA0-\\u200D\\u2010-\\u2029\\u202F-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFEF]' : '[]',
+        et = U ? '[\\uE000-\\uF8FF]' : '[]',
+        Ne = t(h, M, '[\\-\\.\\_\\~]', dt),
+        st = n(h + t(h, M, '[\\+\\-\\.]') + '*'),
+        Ke = n(n(Pe + '|' + t(Ne, Fe, '[\\:]')) + '*'),
+        mn = n(n('25[0-5]') + '|' + n('2[0-4]' + M) + '|' + n('1' + M + M) + '|' + n('[1-9]' + M) + '|' + M),
+        Mt = n(n('25[0-5]') + '|' + n('2[0-4]' + M) + '|' + n('1' + M + M) + '|' + n('0?[1-9]' + M) + '|0?0?' + M),
+        Zt = n(Mt + '\\.' + Mt + '\\.' + Mt + '\\.' + Mt),
+        Ze = n(he + '{1,4}'),
+        Ht = n(n(Ze + '\\:' + Ze) + '|' + Zt),
+        D = n(n(Ze + '\\:') + '{6}' + Ht),
+        K = n('\\:\\:' + n(Ze + '\\:') + '{5}' + Ht),
+        ne = n(n(Ze) + '?\\:\\:' + n(Ze + '\\:') + '{4}' + Ht),
+        I = n(n(n(Ze + '\\:') + '{0,1}' + Ze) + '?\\:\\:' + n(Ze + '\\:') + '{3}' + Ht),
+        N = n(n(n(Ze + '\\:') + '{0,2}' + Ze) + '?\\:\\:' + n(Ze + '\\:') + '{2}' + Ht),
+        de = n(n(n(Ze + '\\:') + '{0,3}' + Ze) + '?\\:\\:' + Ze + '\\:' + Ht),
+        ue = n(n(n(Ze + '\\:') + '{0,4}' + Ze) + '?\\:\\:' + Ht),
+        Se = n(n(n(Ze + '\\:') + '{0,5}' + Ze) + '?\\:\\:' + Ze),
+        xe = n(n(n(Ze + '\\:') + '{0,6}' + Ze) + '?\\:\\:'),
+        ve = n([D, K, ne, I, N, de, ue, Se, xe].join('|')),
+        tt = n(n(Ne + '|' + Pe) + '+'),
+        Kt = n(ve + '\\%25' + tt),
+        qe = n(ve + n('\\%25|\\%(?!' + he + '{2})') + tt),
+        hr = n('[vV]' + he + '+\\.' + t(Ne, Fe, '[\\:]') + '+'),
+        Gt = n('\\[' + n(qe + '|' + ve + '|' + hr) + '\\]'),
+        le = n(n(Pe + '|' + t(Ne, Fe)) + '*'),
+        ye = n(Gt + '|' + Zt + '(?!' + le + ')|' + le),
+        Ue = n(M + '*'),
+        Z = n(n(Ke + '@') + '?' + ye + n('\\:' + Ue) + '?'),
+        Ie = n(Pe + '|' + t(Ne, Fe, '[\\:\\@]')),
+        nt = n(Ie + '*'),
+        er = n(Ie + '+'),
+        Ur = n(n(Pe + '|' + t(Ne, Fe, '[\\@]')) + '+'),
+        Ut = n(n('\\/' + nt) + '*'),
+        ar = n('\\/' + n(er + Ut) + '?'),
+        si = n(Ur + Ut),
+        Bn = n(er + Ut),
+        oi = '(?!' + Ie + ')',
+        f4 = n(Ut + '|' + ar + '|' + si + '|' + Bn + '|' + oi),
+        li = n(n(Ie + '|' + t('[\\/\\?]', et)) + '*'),
+        wi = n(n(Ie + '|[\\/\\?]') + '*'),
+        mT = n(n('\\/\\/' + Z + Ut) + '|' + ar + '|' + Bn + '|' + oi),
+        xv = n(st + '\\:' + mT + n('\\?' + li) + '?' + n('\\#' + wi) + '?'),
+        Av = n(n('\\/\\/' + Z + Ut) + '|' + ar + '|' + si + '|' + oi),
+        Cv = n(Av + n('\\?' + li) + '?' + n('\\#' + wi) + '?'),
+        d4 = n(xv + '|' + Cv),
+        p4 = n(st + '\\:' + mT + n('\\?' + li) + '?'),
+        E4 =
+          '^(' +
+          st +
+          ')\\:' +
+          n(
+            n('\\/\\/(' + n('(' + Ke + ')@') + '?(' + ye + ')' + n('\\:(' + Ue + ')') + '?)') +
+              '?(' +
+              Ut +
+              '|' +
+              ar +
+              '|' +
+              Bn +
+              '|' +
+              oi +
+              ')',
+          ) +
+          n('\\?(' + li + ')') +
+          '?' +
+          n('\\#(' + wi + ')') +
+          '?$',
+        m4 =
+          '^(){0}' +
+          n(
+            n('\\/\\/(' + n('(' + Ke + ')@') + '?(' + ye + ')' + n('\\:(' + Ue + ')') + '?)') +
+              '?(' +
+              Ut +
+              '|' +
+              ar +
+              '|' +
+              si +
+              '|' +
+              oi +
+              ')',
+          ) +
+          n('\\?(' + li + ')') +
+          '?' +
+          n('\\#(' + wi + ')') +
+          '?$',
+        T4 =
+          '^(' +
+          st +
+          ')\\:' +
+          n(
+            n('\\/\\/(' + n('(' + Ke + ')@') + '?(' + ye + ')' + n('\\:(' + Ue + ')') + '?)') +
+              '?(' +
+              Ut +
+              '|' +
+              ar +
+              '|' +
+              Bn +
+              '|' +
+              oi +
+              ')',
+          ) +
+          n('\\?(' + li + ')') +
+          '?$',
+        h4 = '^' + n('\\#(' + wi + ')') + '?$',
+        P4 = '^' + n('(' + Ke + ')@') + '?(' + ye + ')' + n('\\:(' + Ue + ')') + '?$'
+      return {
+        NOT_SCHEME: new RegExp(t('[^]', h, M, '[\\+\\-\\.]'), 'g'),
+        NOT_USERINFO: new RegExp(t('[^\\%\\:]', Ne, Fe), 'g'),
+        NOT_HOST: new RegExp(t('[^\\%\\[\\]\\:]', Ne, Fe), 'g'),
+        NOT_PATH: new RegExp(t('[^\\%\\/\\:\\@]', Ne, Fe), 'g'),
+        NOT_PATH_NOSCHEME: new RegExp(t('[^\\%\\/\\@]', Ne, Fe), 'g'),
+        NOT_QUERY: new RegExp(t('[^\\%]', Ne, Fe, '[\\:\\@\\/\\?]', et), 'g'),
+        NOT_FRAGMENT: new RegExp(t('[^\\%]', Ne, Fe, '[\\:\\@\\/\\?]'), 'g'),
+        ESCAPE: new RegExp(t('[^]', Ne, Fe), 'g'),
+        UNRESERVED: new RegExp(Ne, 'g'),
+        OTHER_CHARS: new RegExp(t('[^\\%]', Ne, rt), 'g'),
+        PCT_ENCODED: new RegExp(Pe, 'g'),
+        IPV4ADDRESS: new RegExp('^(' + Zt + ')$'),
+        IPV6ADDRESS: new RegExp('^\\[?(' + ve + ')' + n(n('\\%25|\\%(?!' + he + '{2})') + '(' + tt + ')') + '?\\]?$'),
+      }
+    }
+    var P = d(!1),
+      y = d(!0),
+      E = (function () {
+        function U(h, Y) {
+          var M = [],
+            G = !0,
+            he = !1,
+            q = void 0
+          try {
+            for (
+              var Ge = h[Symbol.iterator](), Pe;
+              !(G = (Pe = Ge.next()).done) && (M.push(Pe.value), !(Y && M.length === Y));
+              G = !0
+            );
+          } catch (Qe) {
+            ;((he = !0), (q = Qe))
+          } finally {
+            try {
+              !G && Ge.return && Ge.return()
+            } finally {
+              if (he) throw q
+            }
+          }
+          return M
+        }
+        return function (h, Y) {
+          if (Array.isArray(h)) return h
+          if (Symbol.iterator in Object(h)) return U(h, Y)
+          throw new TypeError('Invalid attempt to destructure non-iterable instance')
+        }
+      })(),
+      m = function (U) {
+        if (Array.isArray(U)) {
+          for (var h = 0, Y = Array(U.length); h < U.length; h++) Y[h] = U[h]
+          return Y
+        } else return Array.from(U)
+      },
+      _ = 2147483647,
+      T = 36,
+      v = 1,
+      C = 26,
+      L = 38,
+      F = 700,
+      $ = 72,
+      j = 128,
+      Q = '-',
+      R = /^xn--/,
+      V = /[^\0-\x7E]/,
+      A = /[\x2E\u3002\uFF0E\uFF61]/g,
+      z = {
+        overflow: 'Overflow: input needs wider integers to process',
+        'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
+        'invalid-input': 'Invalid input',
+      },
+      B = T - v,
+      te = Math.floor,
+      ae = String.fromCharCode
+    function J(U) {
+      throw new RangeError(z[U])
+    }
+    function c(U, h) {
+      for (var Y = [], M = U.length; M--; ) Y[M] = h(U[M])
+      return Y
+    }
+    function w(U, h) {
+      var Y = U.split('@'),
+        M = ''
+      ;(Y.length > 1 && ((M = Y[0] + '@'), (U = Y[1])), (U = U.replace(A, '.')))
+      var G = U.split('.'),
+        he = c(G, h).join('.')
+      return M + he
+    }
+    function W(U) {
+      for (var h = [], Y = 0, M = U.length; Y < M; ) {
+        var G = U.charCodeAt(Y++)
+        if (G >= 55296 && G <= 56319 && Y < M) {
+          var he = U.charCodeAt(Y++)
+          ;(he & 64512) == 56320 ? h.push(((G & 1023) << 10) + (he & 1023) + 65536) : (h.push(G), Y--)
+        } else h.push(G)
+      }
+      return h
+    }
+    var ce = function (h) {
+        return String.fromCodePoint.apply(String, m(h))
+      },
+      me = function (h) {
+        return h - 48 < 10 ? h - 22 : h - 65 < 26 ? h - 65 : h - 97 < 26 ? h - 97 : T
+      },
+      _e = function (h, Y) {
+        return h + 22 + 75 * (h < 26) - ((Y != 0) << 5)
+      },
+      Ye = function (h, Y, M) {
+        var G = 0
+        for (h = M ? te(h / F) : h >> 1, h += te(h / Y); h > (B * C) >> 1; G += T) h = te(h / B)
+        return te(G + ((B + 1) * h) / (h + L))
+      },
+      Le = function (h) {
+        var Y = [],
+          M = h.length,
+          G = 0,
+          he = j,
+          q = $,
+          Ge = h.lastIndexOf(Q)
+        Ge < 0 && (Ge = 0)
+        for (var Pe = 0; Pe < Ge; ++Pe) (h.charCodeAt(Pe) >= 128 && J('not-basic'), Y.push(h.charCodeAt(Pe)))
+        for (var Qe = Ge > 0 ? Ge + 1 : 0; Qe < M; ) {
+          for (var Fe = G, rt = 1, dt = T; ; dt += T) {
+            Qe >= M && J('invalid-input')
+            var et = me(h.charCodeAt(Qe++))
+            ;((et >= T || et > te((_ - G) / rt)) && J('overflow'), (G += et * rt))
+            var Ne = dt <= q ? v : dt >= q + C ? C : dt - q
+            if (et < Ne) break
+            var st = T - Ne
+            ;(rt > te(_ / st) && J('overflow'), (rt *= st))
+          }
+          var Ke = Y.length + 1
+          ;((q = Ye(G - Fe, Ke, Fe == 0)),
+            te(G / Ke) > _ - he && J('overflow'),
+            (he += te(G / Ke)),
+            (G %= Ke),
+            Y.splice(G++, 0, he))
+        }
+        return String.fromCodePoint.apply(String, Y)
+      },
+      Me = function (h) {
+        var Y = []
+        h = W(h)
+        var M = h.length,
+          G = j,
+          he = 0,
+          q = $,
+          Ge = !0,
+          Pe = !1,
+          Qe = void 0
+        try {
+          for (var Fe = h[Symbol.iterator](), rt; !(Ge = (rt = Fe.next()).done); Ge = !0) {
+            var dt = rt.value
+            dt < 128 && Y.push(ae(dt))
+          }
+        } catch (qe) {
+          ;((Pe = !0), (Qe = qe))
+        } finally {
+          try {
+            !Ge && Fe.return && Fe.return()
+          } finally {
+            if (Pe) throw Qe
+          }
+        }
+        var et = Y.length,
+          Ne = et
+        for (et && Y.push(Q); Ne < M; ) {
+          var st = _,
+            Ke = !0,
+            mn = !1,
+            Mt = void 0
+          try {
+            for (var Zt = h[Symbol.iterator](), Ze; !(Ke = (Ze = Zt.next()).done); Ke = !0) {
+              var Ht = Ze.value
+              Ht >= G && Ht < st && (st = Ht)
+            }
+          } catch (qe) {
+            ;((mn = !0), (Mt = qe))
+          } finally {
+            try {
+              !Ke && Zt.return && Zt.return()
+            } finally {
+              if (mn) throw Mt
+            }
+          }
+          var D = Ne + 1
+          ;(st - G > te((_ - he) / D) && J('overflow'), (he += (st - G) * D), (G = st))
+          var K = !0,
+            ne = !1,
+            I = void 0
+          try {
+            for (var N = h[Symbol.iterator](), de; !(K = (de = N.next()).done); K = !0) {
+              var ue = de.value
+              if ((ue < G && ++he > _ && J('overflow'), ue == G)) {
+                for (var Se = he, xe = T; ; xe += T) {
+                  var ve = xe <= q ? v : xe >= q + C ? C : xe - q
+                  if (Se < ve) break
+                  var tt = Se - ve,
+                    Kt = T - ve
+                  ;(Y.push(ae(_e(ve + (tt % Kt), 0))), (Se = te(tt / Kt)))
+                }
+                ;(Y.push(ae(_e(Se, 0))), (q = Ye(he, D, Ne == et)), (he = 0), ++Ne)
+              }
+            }
+          } catch (qe) {
+            ;((ne = !0), (I = qe))
+          } finally {
+            try {
+              !K && N.return && N.return()
+            } finally {
+              if (ne) throw I
+            }
+          }
+          ;(++he, ++G)
+        }
+        return Y.join('')
+      },
+      We = function (h) {
+        return w(h, function (Y) {
+          return R.test(Y) ? Le(Y.slice(4).toLowerCase()) : Y
+        })
+      },
+      ut = function (h) {
+        return w(h, function (Y) {
+          return V.test(Y) ? 'xn--' + Me(Y) : Y
+        })
+      },
+      ie = { version: '2.1.0', ucs2: { decode: W, encode: ce }, decode: Le, encode: Me, toASCII: ut, toUnicode: We },
+      fe = {}
+    function Te(U) {
+      var h = U.charCodeAt(0),
+        Y = void 0
+      return (
+        h < 16
+          ? (Y = '%0' + h.toString(16).toUpperCase())
+          : h < 128
+            ? (Y = '%' + h.toString(16).toUpperCase())
+            : h < 2048
+              ? (Y =
+                  '%' + ((h >> 6) | 192).toString(16).toUpperCase() + '%' + ((h & 63) | 128).toString(16).toUpperCase())
+              : (Y =
+                  '%' +
+                  ((h >> 12) | 224).toString(16).toUpperCase() +
+                  '%' +
+                  (((h >> 6) & 63) | 128).toString(16).toUpperCase() +
+                  '%' +
+                  ((h & 63) | 128).toString(16).toUpperCase()),
+        Y
+      )
+    }
+    function Ae(U) {
+      for (var h = '', Y = 0, M = U.length; Y < M; ) {
+        var G = parseInt(U.substr(Y + 1, 2), 16)
+        if (G < 128) ((h += String.fromCharCode(G)), (Y += 3))
+        else if (G >= 194 && G < 224) {
+          if (M - Y >= 6) {
+            var he = parseInt(U.substr(Y + 4, 2), 16)
+            h += String.fromCharCode(((G & 31) << 6) | (he & 63))
+          } else h += U.substr(Y, 6)
+          Y += 6
+        } else if (G >= 224) {
+          if (M - Y >= 9) {
+            var q = parseInt(U.substr(Y + 4, 2), 16),
+              Ge = parseInt(U.substr(Y + 7, 2), 16)
+            h += String.fromCharCode(((G & 15) << 12) | ((q & 63) << 6) | (Ge & 63))
+          } else h += U.substr(Y, 9)
+          Y += 9
+        } else ((h += U.substr(Y, 3)), (Y += 3))
+      }
+      return h
+    }
+    function X(U, h) {
+      function Y(M) {
+        var G = Ae(M)
+        return G.match(h.UNRESERVED) ? G : M
+      }
+      return (
+        U.scheme && (U.scheme = String(U.scheme).replace(h.PCT_ENCODED, Y).toLowerCase().replace(h.NOT_SCHEME, '')),
+        U.userinfo !== void 0 &&
+          (U.userinfo = String(U.userinfo)
+            .replace(h.PCT_ENCODED, Y)
+            .replace(h.NOT_USERINFO, Te)
+            .replace(h.PCT_ENCODED, r)),
+        U.host !== void 0 &&
+          (U.host = String(U.host)
+            .replace(h.PCT_ENCODED, Y)
+            .toLowerCase()
+            .replace(h.NOT_HOST, Te)
+            .replace(h.PCT_ENCODED, r)),
+        U.path !== void 0 &&
+          (U.path = String(U.path)
+            .replace(h.PCT_ENCODED, Y)
+            .replace(U.scheme ? h.NOT_PATH : h.NOT_PATH_NOSCHEME, Te)
+            .replace(h.PCT_ENCODED, r)),
+        U.query !== void 0 &&
+          (U.query = String(U.query).replace(h.PCT_ENCODED, Y).replace(h.NOT_QUERY, Te).replace(h.PCT_ENCODED, r)),
+        U.fragment !== void 0 &&
+          (U.fragment = String(U.fragment)
+            .replace(h.PCT_ENCODED, Y)
+            .replace(h.NOT_FRAGMENT, Te)
+            .replace(h.PCT_ENCODED, r)),
+        U
+      )
+    }
+    function Ee(U) {
+      return U.replace(/^0*(.*)/, '$1') || '0'
+    }
+    function H(U, h) {
+      var Y = U.match(h.IPV4ADDRESS) || [],
+        M = E(Y, 2),
+        G = M[1]
+      return G ? G.split('.').map(Ee).join('.') : U
+    }
+    function re(U, h) {
+      var Y = U.match(h.IPV6ADDRESS) || [],
+        M = E(Y, 3),
+        G = M[1],
+        he = M[2]
+      if (G) {
+        for (
+          var q = G.toLowerCase().split('::').reverse(),
+            Ge = E(q, 2),
+            Pe = Ge[0],
+            Qe = Ge[1],
+            Fe = Qe ? Qe.split(':').map(Ee) : [],
+            rt = Pe.split(':').map(Ee),
+            dt = h.IPV4ADDRESS.test(rt[rt.length - 1]),
+            et = dt ? 7 : 8,
+            Ne = rt.length - et,
+            st = Array(et),
+            Ke = 0;
+          Ke < et;
+          ++Ke
+        )
+          st[Ke] = Fe[Ke] || rt[Ne + Ke] || ''
+        dt && (st[et - 1] = H(st[et - 1], h))
+        var mn = st.reduce(function (D, K, ne) {
+            if (!K || K === '0') {
+              var I = D[D.length - 1]
+              I && I.index + I.length === ne ? I.length++ : D.push({ index: ne, length: 1 })
+            }
+            return D
+          }, []),
+          Mt = mn.sort(function (D, K) {
+            return K.length - D.length
+          })[0],
+          Zt = void 0
+        if (Mt && Mt.length > 1) {
+          var Ze = st.slice(0, Mt.index),
+            Ht = st.slice(Mt.index + Mt.length)
+          Zt = Ze.join(':') + '::' + Ht.join(':')
+        } else Zt = st.join(':')
+        return (he && (Zt += '%' + he), Zt)
+      } else return U
+    }
+    var De =
+        /^(?:([^:\/?#]+):)?(?:\/\/((?:([^\/?#@]*)@)?(\[[^\/?#\]]+\]|[^\/?#:]*)(?:\:(\d*))?))?([^?#]*)(?:\?([^#]*))?(?:#((?:.|\n|\r)*))?/i,
+      ke = ''.match(/(){0}/)[1] === void 0
+    function Ce(U) {
+      var h = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {},
+        Y = {},
+        M = h.iri !== !1 ? y : P
+      h.reference === 'suffix' && (U = (h.scheme ? h.scheme + ':' : '') + '//' + U)
+      var G = U.match(De)
+      if (G) {
+        ;(ke
+          ? ((Y.scheme = G[1]),
+            (Y.userinfo = G[3]),
+            (Y.host = G[4]),
+            (Y.port = parseInt(G[5], 10)),
+            (Y.path = G[6] || ''),
+            (Y.query = G[7]),
+            (Y.fragment = G[8]),
+            isNaN(Y.port) && (Y.port = G[5]))
+          : ((Y.scheme = G[1] || void 0),
+            (Y.userinfo = U.indexOf('@') !== -1 ? G[3] : void 0),
+            (Y.host = U.indexOf('//') !== -1 ? G[4] : void 0),
+            (Y.port = parseInt(G[5], 10)),
+            (Y.path = G[6] || ''),
+            (Y.query = U.indexOf('?') !== -1 ? G[7] : void 0),
+            (Y.fragment = U.indexOf('#') !== -1 ? G[8] : void 0),
+            isNaN(Y.port) && (Y.port = U.match(/\/\/(?:.|\n)*\:(?:\/|\?|\#|$)/) ? G[4] : void 0)),
+          Y.host && (Y.host = re(H(Y.host, M), M)),
+          Y.scheme === void 0 &&
+          Y.userinfo === void 0 &&
+          Y.host === void 0 &&
+          Y.port === void 0 &&
+          !Y.path &&
+          Y.query === void 0
+            ? (Y.reference = 'same-document')
+            : Y.scheme === void 0
+              ? (Y.reference = 'relative')
+              : Y.fragment === void 0
+                ? (Y.reference = 'absolute')
+                : (Y.reference = 'uri'),
+          h.reference &&
+            h.reference !== 'suffix' &&
+            h.reference !== Y.reference &&
+            (Y.error = Y.error || 'URI is not a ' + h.reference + ' reference.'))
+        var he = fe[(h.scheme || Y.scheme || '').toLowerCase()]
+        if (!h.unicodeSupport && (!he || !he.unicodeSupport)) {
+          if (Y.host && (h.domainHost || (he && he.domainHost)))
+            try {
+              Y.host = ie.toASCII(Y.host.replace(M.PCT_ENCODED, Ae).toLowerCase())
+            } catch (q) {
+              Y.error = Y.error || "Host's domain name can not be converted to ASCII via punycode: " + q
+            }
+          X(Y, P)
+        } else X(Y, M)
+        he && he.parse && he.parse(Y, h)
+      } else Y.error = Y.error || 'URI can not be parsed.'
+      return Y
+    }
+    function we(U, h) {
+      var Y = h.iri !== !1 ? y : P,
+        M = []
+      return (
+        U.userinfo !== void 0 && (M.push(U.userinfo), M.push('@')),
+        U.host !== void 0 &&
+          M.push(
+            re(H(String(U.host), Y), Y).replace(Y.IPV6ADDRESS, function (G, he, q) {
+              return '[' + he + (q ? '%25' + q : '') + ']'
+            }),
+          ),
+        (typeof U.port == 'number' || typeof U.port == 'string') && (M.push(':'), M.push(String(U.port))),
+        M.length ? M.join('') : void 0
+      )
+    }
+    var $e = /^\.\.?\//,
+      ct = /^\/\.(\/|$)/,
+      bt = /^\/\.\.(\/|$)/,
+      pt = /^\/?(?:.|\n)*?(?=\/|$)/
+    function Tt(U) {
+      for (var h = []; U.length; )
+        if (U.match($e)) U = U.replace($e, '')
+        else if (U.match(ct)) U = U.replace(ct, '/')
+        else if (U.match(bt)) ((U = U.replace(bt, '/')), h.pop())
+        else if (U === '.' || U === '..') U = ''
+        else {
+          var Y = U.match(pt)
+          if (Y) {
+            var M = Y[0]
+            ;((U = U.slice(M.length)), h.push(M))
+          } else throw new Error('Unexpected dot segment condition')
+        }
+      return h.join('')
+    }
+    function ft(U) {
+      var h = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {},
+        Y = h.iri ? y : P,
+        M = [],
+        G = fe[(h.scheme || U.scheme || '').toLowerCase()]
+      if ((G && G.serialize && G.serialize(U, h), U.host && !Y.IPV6ADDRESS.test(U.host))) {
+        if (h.domainHost || (G && G.domainHost))
+          try {
+            U.host = h.iri ? ie.toUnicode(U.host) : ie.toASCII(U.host.replace(Y.PCT_ENCODED, Ae).toLowerCase())
+          } catch (Ge) {
+            U.error =
+              U.error ||
+              "Host's domain name can not be converted to " + (h.iri ? 'Unicode' : 'ASCII') + ' via punycode: ' + Ge
+          }
+      }
+      ;(X(U, Y), h.reference !== 'suffix' && U.scheme && (M.push(U.scheme), M.push(':')))
+      var he = we(U, h)
+      if (
+        (he !== void 0 &&
+          (h.reference !== 'suffix' && M.push('//'), M.push(he), U.path && U.path.charAt(0) !== '/' && M.push('/')),
+        U.path !== void 0)
+      ) {
+        var q = U.path
+        ;(!h.absolutePath && (!G || !G.absolutePath) && (q = Tt(q)),
+          he === void 0 && (q = q.replace(/^\/\//, '/%2F')),
+          M.push(q))
+      }
+      return (
+        U.query !== void 0 && (M.push('?'), M.push(U.query)),
+        U.fragment !== void 0 && (M.push('#'), M.push(U.fragment)),
+        M.join('')
+      )
+    }
+    function Et(U, h) {
+      var Y = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {},
+        M = arguments[3],
+        G = {}
+      return (
+        M || ((U = Ce(ft(U, Y), Y)), (h = Ce(ft(h, Y), Y))),
+        (Y = Y || {}),
+        !Y.tolerant && h.scheme
+          ? ((G.scheme = h.scheme),
+            (G.userinfo = h.userinfo),
+            (G.host = h.host),
+            (G.port = h.port),
+            (G.path = Tt(h.path || '')),
+            (G.query = h.query))
+          : (h.userinfo !== void 0 || h.host !== void 0 || h.port !== void 0
+              ? ((G.userinfo = h.userinfo),
+                (G.host = h.host),
+                (G.port = h.port),
+                (G.path = Tt(h.path || '')),
+                (G.query = h.query))
+              : (h.path
+                  ? (h.path.charAt(0) === '/'
+                      ? (G.path = Tt(h.path))
+                      : ((U.userinfo !== void 0 || U.host !== void 0 || U.port !== void 0) && !U.path
+                          ? (G.path = '/' + h.path)
+                          : U.path
+                            ? (G.path = U.path.slice(0, U.path.lastIndexOf('/') + 1) + h.path)
+                            : (G.path = h.path),
+                        (G.path = Tt(G.path))),
+                    (G.query = h.query))
+                  : ((G.path = U.path), h.query !== void 0 ? (G.query = h.query) : (G.query = U.query)),
+                (G.userinfo = U.userinfo),
+                (G.host = U.host),
+                (G.port = U.port)),
+            (G.scheme = U.scheme)),
+        (G.fragment = h.fragment),
+        G
+      )
+    }
+    function wt(U, h, Y) {
+      var M = u({ scheme: 'null' }, Y)
+      return ft(Et(Ce(U, M), Ce(h, M), M, !0), M)
+    }
+    function Lt(U, h) {
+      return (typeof U == 'string' ? (U = ft(Ce(U, h), h)) : a(U) === 'object' && (U = Ce(ft(U, h), h)), U)
+    }
+    function pa(U, h, Y) {
+      return (
+        typeof U == 'string' ? (U = ft(Ce(U, Y), Y)) : a(U) === 'object' && (U = ft(U, Y)),
+        typeof h == 'string' ? (h = ft(Ce(h, Y), Y)) : a(h) === 'object' && (h = ft(h, Y)),
+        U === h
+      )
+    }
+    function ai(U, h) {
+      return U && U.toString().replace(!h || !h.iri ? P.ESCAPE : y.ESCAPE, Te)
+    }
+    function vt(U, h) {
+      return U && U.toString().replace(!h || !h.iri ? P.PCT_ENCODED : y.PCT_ENCODED, Ae)
+    }
+    var nr = {
+        scheme: 'http',
+        domainHost: !0,
+        parse: function (h, Y) {
+          return (h.host || (h.error = h.error || 'HTTP URIs must have a host.'), h)
+        },
+        serialize: function (h, Y) {
+          var M = String(h.scheme).toLowerCase() === 'https'
+          return ((h.port === (M ? 443 : 80) || h.port === '') && (h.port = void 0), h.path || (h.path = '/'), h)
+        },
+      },
+      ds = { scheme: 'https', domainHost: nr.domainHost, parse: nr.parse, serialize: nr.serialize }
+    function Ri(U) {
+      return typeof U.secure == 'boolean' ? U.secure : String(U.scheme).toLowerCase() === 'wss'
+    }
+    var On = {
+        scheme: 'ws',
+        domainHost: !0,
+        parse: function (h, Y) {
+          var M = h
+          return (
+            (M.secure = Ri(M)),
+            (M.resourceName = (M.path || '/') + (M.query ? '?' + M.query : '')),
+            (M.path = void 0),
+            (M.query = void 0),
+            M
+          )
+        },
+        serialize: function (h, Y) {
+          if (
+            ((h.port === (Ri(h) ? 443 : 80) || h.port === '') && (h.port = void 0),
+            typeof h.secure == 'boolean' && ((h.scheme = h.secure ? 'wss' : 'ws'), (h.secure = void 0)),
+            h.resourceName)
+          ) {
+            var M = h.resourceName.split('?'),
+              G = E(M, 2),
+              he = G[0],
+              q = G[1]
+            ;((h.path = he && he !== '/' ? he : void 0), (h.query = q), (h.resourceName = void 0))
+          }
+          return ((h.fragment = void 0), h)
+        },
+      },
+      En = { scheme: 'wss', domainHost: On.domainHost, parse: On.parse, serialize: On.serialize },
+      ps = {},
+      Es = !0,
+      Vi =
+        '[A-Za-z0-9\\-\\.\\_\\~' +
+        (Es ? '\\xA0-\\u200D\\u2010-\\u2029\\u202F-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFEF' : '') +
+        ']',
+      mr = '[0-9A-Fa-f]',
+      ms = n(
+        n('%[EFef]' + mr + '%' + mr + mr + '%' + mr + mr) +
+          '|' +
+          n('%[89A-Fa-f]' + mr + '%' + mr + mr) +
+          '|' +
+          n('%' + mr + mr),
+      ),
+      Ts = "[A-Za-z0-9\\!\\$\\%\\'\\*\\+\\-\\^\\_\\`\\{\\|\\}\\~]",
+      hs = "[\\!\\$\\%\\'\\(\\)\\*\\+\\,\\-\\.0-9\\<\\>A-Z\\x5E-\\x7E]",
+      Of = t(hs, '[\\"\\\\]'),
+      Ff = "[\\!\\$\\'\\(\\)\\*\\+\\,\\;\\:\\@]",
+      Ps = new RegExp(Vi, 'g'),
+      Fn = new RegExp(ms, 'g'),
+      Bf = new RegExp(t('[^]', Ts, '[\\.]', '[\\"]', Of), 'g'),
+      ys = new RegExp(t('[^]', Vi, Ff), 'g'),
+      Gf = ys
+    function Di(U) {
+      var h = Ae(U)
+      return h.match(Ps) ? h : U
+    }
+    var gs = {
+        scheme: 'mailto',
+        parse: function (h, Y) {
+          var M = h,
+            G = (M.to = M.path ? M.path.split(',') : [])
+          if (((M.path = void 0), M.query)) {
+            for (var he = !1, q = {}, Ge = M.query.split('&'), Pe = 0, Qe = Ge.length; Pe < Qe; ++Pe) {
+              var Fe = Ge[Pe].split('=')
+              switch (Fe[0]) {
+                case 'to':
+                  for (var rt = Fe[1].split(','), dt = 0, et = rt.length; dt < et; ++dt) G.push(rt[dt])
+                  break
+                case 'subject':
+                  M.subject = vt(Fe[1], Y)
+                  break
+                case 'body':
+                  M.body = vt(Fe[1], Y)
+                  break
+                default:
+                  ;((he = !0), (q[vt(Fe[0], Y)] = vt(Fe[1], Y)))
+                  break
+              }
+            }
+            he && (M.headers = q)
+          }
+          M.query = void 0
+          for (var Ne = 0, st = G.length; Ne < st; ++Ne) {
+            var Ke = G[Ne].split('@')
+            if (((Ke[0] = vt(Ke[0])), Y.unicodeSupport)) Ke[1] = vt(Ke[1], Y).toLowerCase()
+            else
+              try {
+                Ke[1] = ie.toASCII(vt(Ke[1], Y).toLowerCase())
+              } catch (mn) {
+                M.error = M.error || "Email address's domain name can not be converted to ASCII via punycode: " + mn
+              }
+            G[Ne] = Ke.join('@')
+          }
+          return M
+        },
+        serialize: function (h, Y) {
+          var M = h,
+            G = s(h.to)
+          if (G) {
+            for (var he = 0, q = G.length; he < q; ++he) {
+              var Ge = String(G[he]),
+                Pe = Ge.lastIndexOf('@'),
+                Qe = Ge.slice(0, Pe).replace(Fn, Di).replace(Fn, r).replace(Bf, Te),
+                Fe = Ge.slice(Pe + 1)
+              try {
+                Fe = Y.iri ? ie.toUnicode(Fe) : ie.toASCII(vt(Fe, Y).toLowerCase())
+              } catch (Ne) {
+                M.error =
+                  M.error ||
+                  "Email address's domain name can not be converted to " +
+                    (Y.iri ? 'Unicode' : 'ASCII') +
+                    ' via punycode: ' +
+                    Ne
+              }
+              G[he] = Qe + '@' + Fe
+            }
+            M.path = G.join(',')
+          }
+          var rt = (h.headers = h.headers || {})
+          ;(h.subject && (rt.subject = h.subject), h.body && (rt.body = h.body))
+          var dt = []
+          for (var et in rt)
+            rt[et] !== ps[et] &&
+              dt.push(
+                et.replace(Fn, Di).replace(Fn, r).replace(ys, Te) +
+                  '=' +
+                  rt[et].replace(Fn, Di).replace(Fn, r).replace(Gf, Te),
+              )
+          return (dt.length && (M.query = dt.join('&')), M)
+        },
+      },
+      Nf = /^([^\:]+)\:(.*)/,
+      f = {
+        scheme: 'urn',
+        parse: function (h, Y) {
+          var M = h.path && h.path.match(Nf),
+            G = h
+          if (M) {
+            var he = Y.scheme || G.scheme || 'urn',
+              q = M[1].toLowerCase(),
+              Ge = M[2],
+              Pe = he + ':' + (Y.nid || q),
+              Qe = fe[Pe]
+            ;((G.nid = q), (G.nss = Ge), (G.path = void 0), Qe && (G = Qe.parse(G, Y)))
+          } else G.error = G.error || 'URN can not be parsed.'
+          return G
+        },
+        serialize: function (h, Y) {
+          var M = Y.scheme || h.scheme || 'urn',
+            G = h.nid,
+            he = M + ':' + (Y.nid || G),
+            q = fe[he]
+          q && (h = q.serialize(h, Y))
+          var Ge = h,
+            Pe = h.nss
+          return ((Ge.path = (G || Y.nid) + ':' + Pe), Ge)
+        },
+      },
+      ii = /^[0-9A-Fa-f]{8}(?:\-[0-9A-Fa-f]{4}){3}\-[0-9A-Fa-f]{12}$/,
+      Tr = {
+        scheme: 'urn:uuid',
+        parse: function (h, Y) {
+          var M = h
+          return (
+            (M.uuid = M.nss),
+            (M.nss = void 0),
+            !Y.tolerant && (!M.uuid || !M.uuid.match(ii)) && (M.error = M.error || 'UUID is not valid.'),
+            M
+          )
+        },
+        serialize: function (h, Y) {
+          var M = h
+          return ((M.nss = (h.uuid || '').toLowerCase()), M)
+        },
+      }
+    ;((fe[nr.scheme] = nr),
+      (fe[ds.scheme] = ds),
+      (fe[On.scheme] = On),
+      (fe[En.scheme] = En),
+      (fe[gs.scheme] = gs),
+      (fe[f.scheme] = f),
+      (fe[Tr.scheme] = Tr),
+      (e.SCHEMES = fe),
+      (e.pctEncChar = Te),
+      (e.pctDecChars = Ae),
+      (e.parse = Ce),
+      (e.removeDotSegments = Tt),
+      (e.serialize = ft),
+      (e.resolveComponents = Et),
+      (e.resolve = wt),
+      (e.normalize = Lt),
+      (e.equal = pa),
+      (e.escapeComponent = ai),
+      (e.unescapeComponent = vt),
+      Object.defineProperty(e, '__esModule', { value: !0 }))
+  })
+})
+var cf = x((qW, JS) => {
+  'use strict'
+  JS.exports = function e(t, n) {
+    if (t === n) return !0
+    if (t && n && typeof t == 'object' && typeof n == 'object') {
+      if (t.constructor !== n.constructor) return !1
+      var a, r, s
+      if (Array.isArray(t)) {
+        if (((a = t.length), a != n.length)) return !1
+        for (r = a; r-- !== 0; ) if (!e(t[r], n[r])) return !1
+        return !0
+      }
+      if (t.constructor === RegExp) return t.source === n.source && t.flags === n.flags
+      if (t.valueOf !== Object.prototype.valueOf) return t.valueOf() === n.valueOf()
+      if (t.toString !== Object.prototype.toString) return t.toString() === n.toString()
+      if (((s = Object.keys(t)), (a = s.length), a !== Object.keys(n).length)) return !1
+      for (r = a; r-- !== 0; ) if (!Object.prototype.hasOwnProperty.call(n, s[r])) return !1
+      for (r = a; r-- !== 0; ) {
+        var u = s[r]
+        if (!e(t[u], n[u])) return !1
+      }
+      return !0
+    }
+    return t !== t && n !== n
+  }
+})
+var QS = x((jW, XS) => {
+  'use strict'
+  XS.exports = function (t) {
+    for (var n = 0, a = t.length, r = 0, s; r < a; )
+      (n++,
+        (s = t.charCodeAt(r++)),
+        s >= 55296 && s <= 56319 && r < a && ((s = t.charCodeAt(r)), (s & 64512) == 56320 && r++))
+    return n
+  }
+})
+var ti = x((zW, t_) => {
+  'use strict'
+  t_.exports = {
+    copy: s8,
+    checkDataType: ym,
+    checkDataTypes: o8,
+    coerceToTypes: l8,
+    toHash: Sm,
+    getProperty: _m,
+    escapeQuotes: bm,
+    equal: cf(),
+    ucs2length: QS(),
+    varOccurences: f8,
+    varReplace: d8,
+    schemaHasRules: p8,
+    schemaHasRulesExcept: E8,
+    schemaUnknownRules: m8,
+    toQuotedString: gm,
+    getPathExpr: T8,
+    getPath: h8,
+    getData: g8,
+    unescapeFragment: S8,
+    unescapeJsonPointer: xm,
+    escapeFragment: _8,
+    escapeJsonPointer: vm,
+  }
+  function s8(e, t) {
+    t = t || {}
+    for (var n in e) t[n] = e[n]
+    return t
+  }
+  function ym(e, t, n, a) {
+    var r = a ? ' !== ' : ' === ',
+      s = a ? ' || ' : ' && ',
+      u = a ? '!' : '',
+      d = a ? '' : '!'
+    switch (e) {
+      case 'null':
+        return t + r + 'null'
+      case 'array':
+        return u + 'Array.isArray(' + t + ')'
+      case 'object':
+        return '(' + u + t + s + 'typeof ' + t + r + '"object"' + s + d + 'Array.isArray(' + t + '))'
+      case 'integer':
+        return (
+          '(typeof ' +
+          t +
+          r +
+          '"number"' +
+          s +
+          d +
+          '(' +
+          t +
+          ' % 1)' +
+          s +
+          t +
+          r +
+          t +
+          (n ? s + u + 'isFinite(' + t + ')' : '') +
+          ')'
+        )
+      case 'number':
+        return '(typeof ' + t + r + '"' + e + '"' + (n ? s + u + 'isFinite(' + t + ')' : '') + ')'
+      default:
+        return 'typeof ' + t + r + '"' + e + '"'
+    }
+  }
+  function o8(e, t, n) {
+    switch (e.length) {
+      case 1:
+        return ym(e[0], t, n, !0)
+      default:
+        var a = '',
+          r = Sm(e)
+        ;(r.array &&
+          r.object &&
+          ((a = r.null ? '(' : '(!' + t + ' || '),
+          (a += 'typeof ' + t + ' !== "object")'),
+          delete r.null,
+          delete r.array,
+          delete r.object),
+          r.number && delete r.integer)
+        for (var s in r) a += (a ? ' && ' : '') + ym(s, t, n, !0)
+        return a
+    }
+  }
+  var ZS = Sm(['string', 'number', 'integer', 'boolean', 'null'])
+  function l8(e, t) {
+    if (Array.isArray(t)) {
+      for (var n = [], a = 0; a < t.length; a++) {
+        var r = t[a]
+        ;(ZS[r] || (e === 'array' && r === 'array')) && (n[n.length] = r)
+      }
+      if (n.length) return n
+    } else {
+      if (ZS[t]) return [t]
+      if (e === 'array' && t === 'array') return ['array']
+    }
+  }
+  function Sm(e) {
+    for (var t = {}, n = 0; n < e.length; n++) t[e[n]] = !0
+    return t
+  }
+  var u8 = /^[a-z$_][a-z$_0-9]*$/i,
+    c8 = /'|\\/g
+  function _m(e) {
+    return typeof e == 'number' ? '[' + e + ']' : u8.test(e) ? '.' + e : "['" + bm(e) + "']"
+  }
+  function bm(e) {
+    return e.replace(c8, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\f/g, '\\f').replace(/\t/g, '\\t')
+  }
+  function f8(e, t) {
+    t += '[^0-9]'
+    var n = e.match(new RegExp(t, 'g'))
+    return n ? n.length : 0
+  }
+  function d8(e, t, n) {
+    return ((t += '([^0-9])'), (n = n.replace(/\$/g, '$$$$')), e.replace(new RegExp(t, 'g'), n + '$1'))
+  }
+  function p8(e, t) {
+    if (typeof e == 'boolean') return !e
+    for (var n in e) if (t[n]) return !0
+  }
+  function E8(e, t, n) {
+    if (typeof e == 'boolean') return !e && n != 'not'
+    for (var a in e) if (a != n && t[a]) return !0
+  }
+  function m8(e, t) {
+    if (typeof e != 'boolean') {
+      for (var n in e) if (!t[n]) return n
+    }
+  }
+  function gm(e) {
+    return "'" + bm(e) + "'"
+  }
+  function T8(e, t, n, a) {
+    var r = n
+      ? "'/' + " + t + (a ? '' : ".replace(/~/g, '~0').replace(/\\//g, '~1')")
+      : a
+        ? "'[' + " + t + " + ']'"
+        : "'[\\'' + " + t + " + '\\']'"
+    return e_(e, r)
+  }
+  function h8(e, t, n) {
+    var a = gm(n ? '/' + vm(t) : _m(t))
+    return e_(e, a)
+  }
+  var P8 = /^\/(?:[^~]|~0|~1)*$/,
+    y8 = /^([0-9]+)(#|\/(?:[^~]|~0|~1)*)?$/
+  function g8(e, t, n) {
+    var a, r, s, u
+    if (e === '') return 'rootData'
+    if (e[0] == '/') {
+      if (!P8.test(e)) throw new Error('Invalid JSON-pointer: ' + e)
+      ;((r = e), (s = 'rootData'))
+    } else {
+      if (((u = e.match(y8)), !u)) throw new Error('Invalid JSON-pointer: ' + e)
+      if (((a = +u[1]), (r = u[2]), r == '#')) {
+        if (a >= t) throw new Error('Cannot access property/index ' + a + ' levels up, current level is ' + t)
+        return n[t - a]
+      }
+      if (a > t) throw new Error('Cannot access data ' + a + ' levels up, current level is ' + t)
+      if (((s = 'data' + (t - a || '')), !r)) return s
+    }
+    for (var d = s, P = r.split('/'), y = 0; y < P.length; y++) {
+      var E = P[y]
+      E && ((s += _m(xm(E))), (d += ' && ' + s))
+    }
+    return d
+  }
+  function e_(e, t) {
+    return e == '""' ? t : (e + ' + ' + t).replace(/([^\\])' \+ '/g, '$1')
+  }
+  function S8(e) {
+    return xm(decodeURIComponent(e))
+  }
+  function _8(e) {
+    return encodeURIComponent(vm(e))
+  }
+  function vm(e) {
+    return e.replace(/~/g, '~0').replace(/\//g, '~1')
+  }
+  function xm(e) {
+    return e.replace(/~1/g, '/').replace(/~0/g, '~')
+  }
+})
+var Am = x((WW, r_) => {
+  'use strict'
+  var b8 = ti()
+  r_.exports = v8
+  function v8(e) {
+    b8.copy(e, this)
+  }
+})
+var a_ = x(($W, n_) => {
+  'use strict'
+  var la = (n_.exports = function (e, t, n) {
+    ;(typeof t == 'function' && ((n = t), (t = {})), (n = t.cb || n))
+    var a = typeof n == 'function' ? n : n.pre || function () {},
+      r = n.post || function () {}
+    ff(t, a, r, e, '', e)
+  })
+  la.keywords = { additionalItems: !0, items: !0, contains: !0, additionalProperties: !0, propertyNames: !0, not: !0 }
+  la.arrayKeywords = { items: !0, allOf: !0, anyOf: !0, oneOf: !0 }
+  la.propsKeywords = { definitions: !0, properties: !0, patternProperties: !0, dependencies: !0 }
+  la.skipKeywords = {
+    default: !0,
+    enum: !0,
+    const: !0,
+    required: !0,
+    maximum: !0,
+    minimum: !0,
+    exclusiveMaximum: !0,
+    exclusiveMinimum: !0,
+    multipleOf: !0,
+    maxLength: !0,
+    minLength: !0,
+    pattern: !0,
+    format: !0,
+    maxItems: !0,
+    minItems: !0,
+    uniqueItems: !0,
+    maxProperties: !0,
+    minProperties: !0,
+  }
+  function ff(e, t, n, a, r, s, u, d, P, y) {
+    if (a && typeof a == 'object' && !Array.isArray(a)) {
+      t(a, r, s, u, d, P, y)
+      for (var E in a) {
+        var m = a[E]
+        if (Array.isArray(m)) {
+          if (E in la.arrayKeywords)
+            for (var _ = 0; _ < m.length; _++) ff(e, t, n, m[_], r + '/' + E + '/' + _, s, r, E, a, _)
+        } else if (E in la.propsKeywords) {
+          if (m && typeof m == 'object') for (var T in m) ff(e, t, n, m[T], r + '/' + E + '/' + x8(T), s, r, E, a, T)
+        } else (E in la.keywords || (e.allKeys && !(E in la.skipKeywords))) && ff(e, t, n, m, r + '/' + E, s, r, E, a)
+      }
+      n(a, r, s, u, d, P, y)
+    }
+  }
+  function x8(e) {
+    return e.replace(/~/g, '~0').replace(/\//g, '~1')
+  }
+})
+var hf = x((HW, l_) => {
+  'use strict'
+  var fs = KS(),
+    i_ = cf(),
+    mf = ti(),
+    df = Am(),
+    A8 = a_()
+  l_.exports = ca
+  ca.normalizeId = ua
+  ca.fullPath = pf
+  ca.url = Ef
+  ca.ids = I8
+  ca.inlineRef = Cm
+  ca.schema = Tf
+  function ca(e, t, n) {
+    var a = this._refs[n]
+    if (typeof a == 'string')
+      if (this._refs[a]) a = this._refs[a]
+      else return ca.call(this, e, t, a)
+    if (((a = a || this._schemas[n]), a instanceof df))
+      return Cm(a.schema, this._opts.inlineRefs) ? a.schema : a.validate || this._compile(a)
+    var r = Tf.call(this, t, n),
+      s,
+      u,
+      d
+    return (
+      r && ((s = r.schema), (t = r.root), (d = r.baseId)),
+      s instanceof df
+        ? (u = s.validate || e.call(this, s.schema, t, void 0, d))
+        : s !== void 0 && (u = Cm(s, this._opts.inlineRefs) ? s : e.call(this, s, t, void 0, d)),
+      u
+    )
+  }
+  function Tf(e, t) {
+    var n = fs.parse(t),
+      a = o_(n),
+      r = pf(this._getId(e.schema))
+    if (Object.keys(e.schema).length === 0 || a !== r) {
+      var s = ua(a),
+        u = this._refs[s]
+      if (typeof u == 'string') return C8.call(this, e, u, n)
+      if (u instanceof df) (u.validate || this._compile(u), (e = u))
+      else if (((u = this._schemas[s]), u instanceof df)) {
+        if ((u.validate || this._compile(u), s == ua(t))) return { schema: u, root: e, baseId: r }
+        e = u
+      } else return
+      if (!e.schema) return
+      r = pf(this._getId(e.schema))
+    }
+    return s_.call(this, n, r, e.schema, e)
+  }
+  function C8(e, t, n) {
+    var a = Tf.call(this, e, t)
+    if (a) {
+      var r = a.schema,
+        s = a.baseId
+      e = a.root
+      var u = this._getId(r)
+      return (u && (s = Ef(s, u)), s_.call(this, n, s, r, e))
+    }
+  }
+  var Y8 = mf.toHash(['properties', 'patternProperties', 'enum', 'dependencies', 'definitions'])
+  function s_(e, t, n, a) {
+    if (((e.fragment = e.fragment || ''), e.fragment.slice(0, 1) == '/')) {
+      for (var r = e.fragment.split('/'), s = 1; s < r.length; s++) {
+        var u = r[s]
+        if (u) {
+          if (((u = mf.unescapeFragment(u)), (n = n[u]), n === void 0)) break
+          var d
+          if (!Y8[u] && ((d = this._getId(n)), d && (t = Ef(t, d)), n.$ref)) {
+            var P = Ef(t, n.$ref),
+              y = Tf.call(this, a, P)
+            y && ((n = y.schema), (a = y.root), (t = y.baseId))
+          }
+        }
+      }
+      if (n !== void 0 && n !== a.schema) return { schema: n, root: a, baseId: t }
+    }
+  }
+  var L8 = mf.toHash([
+    'type',
+    'format',
+    'pattern',
+    'maxLength',
+    'minLength',
+    'maxProperties',
+    'minProperties',
+    'maxItems',
+    'minItems',
+    'maximum',
+    'minimum',
+    'uniqueItems',
+    'multipleOf',
+    'required',
+    'enum',
+  ])
+  function Cm(e, t) {
+    if (t === !1) return !1
+    if (t === void 0 || t === !0) return Ym(e)
+    if (t) return Lm(e) <= t
+  }
+  function Ym(e) {
+    var t
+    if (Array.isArray(e)) {
+      for (var n = 0; n < e.length; n++) if (((t = e[n]), typeof t == 'object' && !Ym(t))) return !1
+    } else for (var a in e) if (a == '$ref' || ((t = e[a]), typeof t == 'object' && !Ym(t))) return !1
+    return !0
+  }
+  function Lm(e) {
+    var t = 0,
+      n
+    if (Array.isArray(e)) {
+      for (var a = 0; a < e.length; a++)
+        if (((n = e[a]), typeof n == 'object' && (t += Lm(n)), t == 1 / 0)) return 1 / 0
+    } else
+      for (var r in e) {
+        if (r == '$ref') return 1 / 0
+        if (L8[r]) t++
+        else if (((n = e[r]), typeof n == 'object' && (t += Lm(n) + 1), t == 1 / 0)) return 1 / 0
+      }
+    return t
+  }
+  function pf(e, t) {
+    t !== !1 && (e = ua(e))
+    var n = fs.parse(e)
+    return o_(n)
+  }
+  function o_(e) {
+    return fs.serialize(e).split('#')[0] + '#'
+  }
+  var U8 = /#\/?$/
+  function ua(e) {
+    return e ? e.replace(U8, '') : ''
+  }
+  function Ef(e, t) {
+    return ((t = ua(t)), fs.resolve(e, t))
+  }
+  function I8(e) {
+    var t = ua(this._getId(e)),
+      n = { '': t },
+      a = { '': pf(t, !1) },
+      r = {},
+      s = this
+    return (
+      A8(e, { allKeys: !0 }, function (u, d, P, y, E, m, _) {
+        if (d !== '') {
+          var T = s._getId(u),
+            v = n[y],
+            C = a[y] + '/' + E
+          if ((_ !== void 0 && (C += '/' + (typeof _ == 'number' ? _ : mf.escapeFragment(_))), typeof T == 'string')) {
+            T = v = ua(v ? fs.resolve(v, T) : T)
+            var L = s._refs[T]
+            if ((typeof L == 'string' && (L = s._refs[L]), L && L.schema)) {
+              if (!i_(u, L.schema)) throw new Error('id "' + T + '" resolves to more than one schema')
+            } else if (T != ua(C))
+              if (T[0] == '#') {
+                if (r[T] && !i_(u, r[T])) throw new Error('id "' + T + '" resolves to more than one schema')
+                r[T] = u
+              } else s._refs[T] = C
+          }
+          ;((n[d] = v), (a[d] = C))
+        }
+      }),
+      r
+    )
+  }
+})
+var Pf = x((KW, c_) => {
+  'use strict'
+  var Um = hf()
+  c_.exports = { Validation: u_(k8), MissingRef: u_(Im) }
+  function k8(e) {
+    ;((this.message = 'validation failed'), (this.errors = e), (this.ajv = this.validation = !0))
+  }
+  Im.message = function (e, t) {
+    return "can't resolve reference " + t + ' from id ' + e
+  }
+  function Im(e, t, n) {
+    ;((this.message = n || Im.message(e, t)),
+      (this.missingRef = Um.url(e, t)),
+      (this.missingSchema = Um.normalizeId(Um.fullPath(this.missingRef))))
+  }
+  function u_(e) {
+    return ((e.prototype = Object.create(Error.prototype)), (e.prototype.constructor = e), e)
+  }
+})
+var km = x((JW, f_) => {
+  'use strict'
+  f_.exports = function (e, t) {
+    ;(t || (t = {}), typeof t == 'function' && (t = { cmp: t }))
+    var n = typeof t.cycles == 'boolean' ? t.cycles : !1,
+      a =
+        t.cmp &&
+        (function (s) {
+          return function (u) {
+            return function (d, P) {
+              var y = { key: d, value: u[d] },
+                E = { key: P, value: u[P] }
+              return s(y, E)
+            }
+          }
+        })(t.cmp),
+      r = []
+    return (function s(u) {
+      if ((u && u.toJSON && typeof u.toJSON == 'function' && (u = u.toJSON()), u !== void 0)) {
+        if (typeof u == 'number') return isFinite(u) ? '' + u : 'null'
+        if (typeof u != 'object') return JSON.stringify(u)
+        var d, P
+        if (Array.isArray(u)) {
+          for (P = '[', d = 0; d < u.length; d++) (d && (P += ','), (P += s(u[d]) || 'null'))
+          return P + ']'
+        }
+        if (u === null) return 'null'
+        if (r.indexOf(u) !== -1) {
+          if (n) return JSON.stringify('__cycle__')
+          throw new TypeError('Converting circular structure to JSON')
+        }
+        var y = r.push(u) - 1,
+          E = Object.keys(u).sort(a && a(u))
+        for (P = '', d = 0; d < E.length; d++) {
+          var m = E[d],
+            _ = s(u[m])
+          _ && (P && (P += ','), (P += JSON.stringify(m) + ':' + _))
+        }
+        return (r.splice(y, 1), '{' + P + '}')
+      }
+    })(e)
+  }
+})
+var Rm = x((XW, d_) => {
+  'use strict'
+  d_.exports = function (t, n, a) {
+    var r = '',
+      s = t.schema.$async === !0,
+      u = t.util.schemaHasRulesExcept(t.schema, t.RULES.all, '$ref'),
+      d = t.self._getId(t.schema)
+    if (t.opts.strictKeywords) {
+      var P = t.util.schemaUnknownRules(t.schema, t.RULES.keywords)
+      if (P) {
+        var y = 'unknown keyword: ' + P
+        if (t.opts.strictKeywords === 'log') t.logger.warn(y)
+        else throw new Error(y)
+      }
+    }
+    if (
+      (t.isTop &&
+        ((r += ' var validate = '),
+        s && ((t.async = !0), (r += 'async ')),
+        (r += "function(data, dataPath, parentData, parentDataProperty, rootData) { 'use strict'; "),
+        d && (t.opts.sourceCode || t.opts.processCode) && (r += ' ' + ('/*# sourceURL=' + d + ' */') + ' ')),
+      typeof t.schema == 'boolean' || !(u || t.schema.$ref))
+    ) {
+      var n = 'false schema',
+        E = t.level,
+        m = t.dataLevel,
+        _ = t.schema[n],
+        T = t.schemaPath + t.util.getProperty(n),
+        v = t.errSchemaPath + '/' + n,
+        R = !t.opts.allErrors,
+        z,
+        C = 'data' + (m || ''),
+        Q = 'valid' + E
+      if (t.schema === !1) {
+        t.isTop ? (R = !0) : (r += ' var ' + Q + ' = false; ')
+        var L = L || []
+        ;(L.push(r),
+          (r = ''),
+          t.createErrors !== !1
+            ? ((r +=
+                " { keyword: '" +
+                (z || 'false schema') +
+                "' , dataPath: (dataPath || '') + " +
+                t.errorPath +
+                ' , schemaPath: ' +
+                t.util.toQuotedString(v) +
+                ' , params: {} '),
+              t.opts.messages !== !1 && (r += " , message: 'boolean schema is false' "),
+              t.opts.verbose &&
+                (r += ' , schema: false , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + C + ' '),
+              (r += ' } '))
+            : (r += ' {} '))
+        var F = r
+        ;((r = L.pop()),
+          !t.compositeRule && R
+            ? t.async
+              ? (r += ' throw new ValidationError([' + F + ']); ')
+              : (r += ' validate.errors = [' + F + ']; return false; ')
+            : (r += ' var err = ' + F + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '))
+      } else
+        t.isTop
+          ? s
+            ? (r += ' return data; ')
+            : (r += ' validate.errors = null; return true; ')
+          : (r += ' var ' + Q + ' = true; ')
+      return (t.isTop && (r += ' }; return validate; '), r)
+    }
+    if (t.isTop) {
+      var $ = t.isTop,
+        E = (t.level = 0),
+        m = (t.dataLevel = 0),
+        C = 'data'
+      if (
+        ((t.rootId = t.resolve.fullPath(t.self._getId(t.root.schema))),
+        (t.baseId = t.baseId || t.rootId),
+        delete t.isTop,
+        (t.dataPathArr = ['']),
+        t.schema.default !== void 0 && t.opts.useDefaults && t.opts.strictDefaults)
+      ) {
+        var j = 'default is ignored in the schema root'
+        if (t.opts.strictDefaults === 'log') t.logger.warn(j)
+        else throw new Error(j)
+      }
+      ;((r += ' var vErrors = null; '),
+        (r += ' var errors = 0;     '),
+        (r += ' if (rootData === undefined) rootData = data; '))
+    } else {
+      var E = t.level,
+        m = t.dataLevel,
+        C = 'data' + (m || '')
+      if ((d && (t.baseId = t.resolve.url(t.baseId, d)), s && !t.async)) throw new Error('async schema in sync schema')
+      r += ' var errs_' + E + ' = errors;'
+    }
+    var Q = 'valid' + E,
+      R = !t.opts.allErrors,
+      V = '',
+      A = '',
+      z,
+      B = t.schema.type,
+      te = Array.isArray(B)
+    if (
+      (B &&
+        t.opts.nullable &&
+        t.schema.nullable === !0 &&
+        (te ? B.indexOf('null') == -1 && (B = B.concat('null')) : B != 'null' && ((B = [B, 'null']), (te = !0))),
+      te && B.length == 1 && ((B = B[0]), (te = !1)),
+      t.schema.$ref && u)
+    ) {
+      if (t.opts.extendRefs == 'fail')
+        throw new Error(
+          '$ref: validation keywords used in schema at path "' + t.errSchemaPath + '" (see option extendRefs)',
+        )
+      t.opts.extendRefs !== !0 &&
+        ((u = !1), t.logger.warn('$ref: keywords ignored in schema at path "' + t.errSchemaPath + '"'))
+    }
+    if ((t.schema.$comment && t.opts.$comment && (r += ' ' + t.RULES.all.$comment.code(t, '$comment')), B)) {
+      if (t.opts.coerceTypes) var ae = t.util.coerceToTypes(t.opts.coerceTypes, B)
+      var J = t.RULES.types[B]
+      if (ae || te || J === !0 || (J && !pt(J))) {
+        var T = t.schemaPath + '.type',
+          v = t.errSchemaPath + '/type',
+          T = t.schemaPath + '.type',
+          v = t.errSchemaPath + '/type',
+          c = te ? 'checkDataTypes' : 'checkDataType'
+        if (((r += ' if (' + t.util[c](B, C, t.opts.strictNumbers, !0) + ') { '), ae)) {
+          var w = 'dataType' + E,
+            W = 'coerced' + E
+          ;((r += ' var ' + w + ' = typeof ' + C + '; var ' + W + ' = undefined; '),
+            t.opts.coerceTypes == 'array' &&
+              (r +=
+                ' if (' +
+                w +
+                " == 'object' && Array.isArray(" +
+                C +
+                ') && ' +
+                C +
+                '.length == 1) { ' +
+                C +
+                ' = ' +
+                C +
+                '[0]; ' +
+                w +
+                ' = typeof ' +
+                C +
+                '; if (' +
+                t.util.checkDataType(t.schema.type, C, t.opts.strictNumbers) +
+                ') ' +
+                W +
+                ' = ' +
+                C +
+                '; } '),
+            (r += ' if (' + W + ' !== undefined) ; '))
+          var ce = ae
+          if (ce)
+            for (var me, _e = -1, Ye = ce.length - 1; _e < Ye; )
+              ((me = ce[(_e += 1)]),
+                me == 'string'
+                  ? (r +=
+                      ' else if (' +
+                      w +
+                      " == 'number' || " +
+                      w +
+                      " == 'boolean') " +
+                      W +
+                      " = '' + " +
+                      C +
+                      '; else if (' +
+                      C +
+                      ' === null) ' +
+                      W +
+                      " = ''; ")
+                  : me == 'number' || me == 'integer'
+                    ? ((r +=
+                        ' else if (' +
+                        w +
+                        " == 'boolean' || " +
+                        C +
+                        ' === null || (' +
+                        w +
+                        " == 'string' && " +
+                        C +
+                        ' && ' +
+                        C +
+                        ' == +' +
+                        C +
+                        ' '),
+                      me == 'integer' && (r += ' && !(' + C + ' % 1)'),
+                      (r += ')) ' + W + ' = +' + C + '; '))
+                    : me == 'boolean'
+                      ? (r +=
+                          ' else if (' +
+                          C +
+                          " === 'false' || " +
+                          C +
+                          ' === 0 || ' +
+                          C +
+                          ' === null) ' +
+                          W +
+                          ' = false; else if (' +
+                          C +
+                          " === 'true' || " +
+                          C +
+                          ' === 1) ' +
+                          W +
+                          ' = true; ')
+                      : me == 'null'
+                        ? (r +=
+                            ' else if (' + C + " === '' || " + C + ' === 0 || ' + C + ' === false) ' + W + ' = null; ')
+                        : t.opts.coerceTypes == 'array' &&
+                          me == 'array' &&
+                          (r +=
+                            ' else if (' +
+                            w +
+                            " == 'string' || " +
+                            w +
+                            " == 'number' || " +
+                            w +
+                            " == 'boolean' || " +
+                            C +
+                            ' == null) ' +
+                            W +
+                            ' = [' +
+                            C +
+                            ']; '))
+          r += ' else {   '
+          var L = L || []
+          ;(L.push(r),
+            (r = ''),
+            t.createErrors !== !1
+              ? ((r +=
+                  " { keyword: '" +
+                  (z || 'type') +
+                  "' , dataPath: (dataPath || '') + " +
+                  t.errorPath +
+                  ' , schemaPath: ' +
+                  t.util.toQuotedString(v) +
+                  " , params: { type: '"),
+                te ? (r += '' + B.join(',')) : (r += '' + B),
+                (r += "' } "),
+                t.opts.messages !== !1 &&
+                  ((r += " , message: 'should be "), te ? (r += '' + B.join(',')) : (r += '' + B), (r += "' ")),
+                t.opts.verbose &&
+                  (r +=
+                    ' , schema: validate.schema' +
+                    T +
+                    ' , parentSchema: validate.schema' +
+                    t.schemaPath +
+                    ' , data: ' +
+                    C +
+                    ' '),
+                (r += ' } '))
+              : (r += ' {} '))
+          var F = r
+          ;((r = L.pop()),
+            !t.compositeRule && R
+              ? t.async
+                ? (r += ' throw new ValidationError([' + F + ']); ')
+                : (r += ' validate.errors = [' + F + ']; return false; ')
+              : (r +=
+                  ' var err = ' + F + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+            (r += ' } if (' + W + ' !== undefined) {  '))
+          var Le = m ? 'data' + (m - 1 || '') : 'parentData',
+            Me = m ? t.dataPathArr[m] : 'parentDataProperty'
+          ;((r += ' ' + C + ' = ' + W + '; '),
+            m || (r += 'if (' + Le + ' !== undefined)'),
+            (r += ' ' + Le + '[' + Me + '] = ' + W + '; } '))
+        } else {
+          var L = L || []
+          ;(L.push(r),
+            (r = ''),
+            t.createErrors !== !1
+              ? ((r +=
+                  " { keyword: '" +
+                  (z || 'type') +
+                  "' , dataPath: (dataPath || '') + " +
+                  t.errorPath +
+                  ' , schemaPath: ' +
+                  t.util.toQuotedString(v) +
+                  " , params: { type: '"),
+                te ? (r += '' + B.join(',')) : (r += '' + B),
+                (r += "' } "),
+                t.opts.messages !== !1 &&
+                  ((r += " , message: 'should be "), te ? (r += '' + B.join(',')) : (r += '' + B), (r += "' ")),
+                t.opts.verbose &&
+                  (r +=
+                    ' , schema: validate.schema' +
+                    T +
+                    ' , parentSchema: validate.schema' +
+                    t.schemaPath +
+                    ' , data: ' +
+                    C +
+                    ' '),
+                (r += ' } '))
+              : (r += ' {} '))
+          var F = r
+          ;((r = L.pop()),
+            !t.compositeRule && R
+              ? t.async
+                ? (r += ' throw new ValidationError([' + F + ']); ')
+                : (r += ' validate.errors = [' + F + ']; return false; ')
+              : (r +=
+                  ' var err = ' + F + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '))
+        }
+        r += ' } '
+      }
+    }
+    if (t.schema.$ref && !u)
+      ((r += ' ' + t.RULES.all.$ref.code(t, '$ref') + ' '),
+        R && ((r += ' } if (errors === '), $ ? (r += '0') : (r += 'errs_' + E), (r += ') { '), (A += '}')))
+    else {
+      var We = t.RULES
+      if (We) {
+        for (var J, ut = -1, ie = We.length - 1; ut < ie; )
+          if (((J = We[(ut += 1)]), pt(J))) {
+            if (
+              (J.type && (r += ' if (' + t.util.checkDataType(J.type, C, t.opts.strictNumbers) + ') { '),
+              t.opts.useDefaults)
+            ) {
+              if (J.type == 'object' && t.schema.properties) {
+                var _ = t.schema.properties,
+                  fe = Object.keys(_),
+                  Te = fe
+                if (Te)
+                  for (var Ae, X = -1, Ee = Te.length - 1; X < Ee; ) {
+                    Ae = Te[(X += 1)]
+                    var H = _[Ae]
+                    if (H.default !== void 0) {
+                      var re = C + t.util.getProperty(Ae)
+                      if (t.compositeRule) {
+                        if (t.opts.strictDefaults) {
+                          var j = 'default is ignored for: ' + re
+                          if (t.opts.strictDefaults === 'log') t.logger.warn(j)
+                          else throw new Error(j)
+                        }
+                      } else
+                        ((r += ' if (' + re + ' === undefined '),
+                          t.opts.useDefaults == 'empty' && (r += ' || ' + re + ' === null || ' + re + " === '' "),
+                          (r += ' ) ' + re + ' = '),
+                          t.opts.useDefaults == 'shared'
+                            ? (r += ' ' + t.useDefault(H.default) + ' ')
+                            : (r += ' ' + JSON.stringify(H.default) + ' '),
+                          (r += '; '))
+                    }
+                  }
+              } else if (J.type == 'array' && Array.isArray(t.schema.items)) {
+                var De = t.schema.items
+                if (De) {
+                  for (var H, _e = -1, ke = De.length - 1; _e < ke; )
+                    if (((H = De[(_e += 1)]), H.default !== void 0)) {
+                      var re = C + '[' + _e + ']'
+                      if (t.compositeRule) {
+                        if (t.opts.strictDefaults) {
+                          var j = 'default is ignored for: ' + re
+                          if (t.opts.strictDefaults === 'log') t.logger.warn(j)
+                          else throw new Error(j)
+                        }
+                      } else
+                        ((r += ' if (' + re + ' === undefined '),
+                          t.opts.useDefaults == 'empty' && (r += ' || ' + re + ' === null || ' + re + " === '' "),
+                          (r += ' ) ' + re + ' = '),
+                          t.opts.useDefaults == 'shared'
+                            ? (r += ' ' + t.useDefault(H.default) + ' ')
+                            : (r += ' ' + JSON.stringify(H.default) + ' '),
+                          (r += '; '))
+                    }
+                }
+              }
+            }
+            var Ce = J.rules
+            if (Ce) {
+              for (var we, $e = -1, ct = Ce.length - 1; $e < ct; )
+                if (((we = Ce[($e += 1)]), Tt(we))) {
+                  var bt = we.code(t, we.keyword, J.type)
+                  bt && ((r += ' ' + bt + ' '), R && (V += '}'))
+                }
+            }
+            if ((R && ((r += ' ' + V + ' '), (V = '')), J.type && ((r += ' } '), B && B === J.type && !ae))) {
+              r += ' else { '
+              var T = t.schemaPath + '.type',
+                v = t.errSchemaPath + '/type',
+                L = L || []
+              ;(L.push(r),
+                (r = ''),
+                t.createErrors !== !1
+                  ? ((r +=
+                      " { keyword: '" +
+                      (z || 'type') +
+                      "' , dataPath: (dataPath || '') + " +
+                      t.errorPath +
+                      ' , schemaPath: ' +
+                      t.util.toQuotedString(v) +
+                      " , params: { type: '"),
+                    te ? (r += '' + B.join(',')) : (r += '' + B),
+                    (r += "' } "),
+                    t.opts.messages !== !1 &&
+                      ((r += " , message: 'should be "), te ? (r += '' + B.join(',')) : (r += '' + B), (r += "' ")),
+                    t.opts.verbose &&
+                      (r +=
+                        ' , schema: validate.schema' +
+                        T +
+                        ' , parentSchema: validate.schema' +
+                        t.schemaPath +
+                        ' , data: ' +
+                        C +
+                        ' '),
+                    (r += ' } '))
+                  : (r += ' {} '))
+              var F = r
+              ;((r = L.pop()),
+                !t.compositeRule && R
+                  ? t.async
+                    ? (r += ' throw new ValidationError([' + F + ']); ')
+                    : (r += ' validate.errors = [' + F + ']; return false; ')
+                  : (r +=
+                      ' var err = ' +
+                      F +
+                      ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+                (r += ' } '))
+            }
+            R && ((r += ' if (errors === '), $ ? (r += '0') : (r += 'errs_' + E), (r += ') { '), (A += '}'))
+          }
+      }
+    }
+    ;(R && (r += ' ' + A + ' '),
+      $
+        ? (s
+            ? ((r += ' if (errors === 0) return data;           '), (r += ' else throw new ValidationError(vErrors); '))
+            : ((r += ' validate.errors = vErrors; '), (r += ' return errors === 0;       ')),
+          (r += ' }; return validate;'))
+        : (r += ' var ' + Q + ' = errors === errs_' + E + ';'))
+    function pt(Et) {
+      for (var wt = Et.rules, Lt = 0; Lt < wt.length; Lt++) if (Tt(wt[Lt])) return !0
+    }
+    function Tt(Et) {
+      return t.schema[Et.keyword] !== void 0 || (Et.implements && ft(Et))
+    }
+    function ft(Et) {
+      for (var wt = Et.implements, Lt = 0; Lt < wt.length; Lt++) if (t.schema[wt[Lt]] !== void 0) return !0
+    }
+    return r
+  }
+})
+var h_ = x((QW, T_) => {
+  'use strict'
+  var yf = hf(),
+    Sf = ti(),
+    E_ = Pf(),
+    R8 = km(),
+    p_ = Rm(),
+    V8 = Sf.ucs2length,
+    D8 = cf(),
+    w8 = E_.Validation
+  T_.exports = Vm
+  function Vm(e, t, n, a) {
+    var r = this,
+      s = this._opts,
+      u = [void 0],
+      d = {},
+      P = [],
+      y = {},
+      E = [],
+      m = {},
+      _ = []
+    function T(w, W) {
+      var ce = s.regExp ? 'regExp' : 'new RegExp'
+      return 'var pattern' + w + ' = ' + ce + '(' + Sf.toQuotedString(W[w]) + ');'
+    }
+    t = t || { schema: e, refVal: u, refs: d }
+    var v = M8.call(this, e, t, a),
+      C = this._compilations[v.index]
+    if (v.compiling) return (C.callValidate = Q)
+    var L = this._formats,
+      F = this.RULES
+    try {
+      var $ = R(e, t, n, a)
+      C.validate = $
+      var j = C.callValidate
+      return (
+        j &&
+          ((j.schema = $.schema),
+          (j.errors = null),
+          (j.refs = $.refs),
+          (j.refVal = $.refVal),
+          (j.root = $.root),
+          (j.$async = $.$async),
+          s.sourceCode && (j.source = $.source)),
+        $
+      )
+    } finally {
+      O8.call(this, e, t, a)
+    }
+    function Q() {
+      var w = C.validate,
+        W = w.apply(this, arguments)
+      return ((Q.errors = w.errors), W)
+    }
+    function R(w, W, ce, me) {
+      var _e = !W || (W && W.schema == w)
+      if (W.schema != t.schema) return Vm.call(r, w, W, ce, me)
+      var Ye = w.$async === !0,
+        Le = p_({
+          isTop: !0,
+          schema: w,
+          isRoot: _e,
+          baseId: me,
+          root: W,
+          schemaPath: '',
+          errSchemaPath: '#',
+          errorPath: '""',
+          MissingRefError: E_.MissingRef,
+          RULES: F,
+          validate: p_,
+          util: Sf,
+          resolve: yf,
+          resolveRef: V,
+          usePattern: ae,
+          useDefault: J,
+          useCustomRule: c,
+          opts: s,
+          formats: L,
+          logger: r.logger,
+          self: r,
+        })
+      ;((Le = gf(u, B8) + gf(P, T) + gf(E, F8) + gf(_, G8) + Le), s.processCode && (Le = s.processCode(Le, w)))
+      var Me
+      try {
+        var We = new Function(
+          'self',
+          'RULES',
+          'formats',
+          'root',
+          'refVal',
+          'defaults',
+          'customRules',
+          'equal',
+          'ucs2length',
+          'ValidationError',
+          'regExp',
+          Le,
+        )
+        ;((Me = We(r, F, L, t, u, E, _, D8, V8, w8, s.regExp)), (u[0] = Me))
+      } catch (ut) {
+        throw (r.logger.error('Error compiling schema, function code:', Le), ut)
+      }
+      return (
+        (Me.schema = w),
+        (Me.errors = null),
+        (Me.refs = d),
+        (Me.refVal = u),
+        (Me.root = _e ? Me : W),
+        Ye && (Me.$async = !0),
+        s.sourceCode === !0 && (Me.source = { code: Le, patterns: P, defaults: E }),
+        Me
+      )
+    }
+    function V(w, W, ce) {
+      W = yf.url(w, W)
+      var me = d[W],
+        _e,
+        Ye
+      if (me !== void 0) return ((_e = u[me]), (Ye = 'refVal[' + me + ']'), te(_e, Ye))
+      if (!ce && t.refs) {
+        var Le = t.refs[W]
+        if (Le !== void 0) return ((_e = t.refVal[Le]), (Ye = A(W, _e)), te(_e, Ye))
+      }
+      Ye = A(W)
+      var Me = yf.call(r, R, t, W)
+      if (Me === void 0) {
+        var We = n && n[W]
+        We && (Me = yf.inlineRef(We, s.inlineRefs) ? We : Vm.call(r, We, t, n, w))
+      }
+      if (Me === void 0) z(W)
+      else return (B(W, Me), te(Me, Ye))
+    }
+    function A(w, W) {
+      var ce = u.length
+      return ((u[ce] = W), (d[w] = ce), 'refVal' + ce)
+    }
+    function z(w) {
+      delete d[w]
+    }
+    function B(w, W) {
+      var ce = d[w]
+      u[ce] = W
+    }
+    function te(w, W) {
+      return typeof w == 'object' || typeof w == 'boolean'
+        ? { code: W, schema: w, inline: !0 }
+        : { code: W, $async: w && !!w.$async }
+    }
+    function ae(w) {
+      var W = y[w]
+      return (W === void 0 && ((W = y[w] = P.length), (P[W] = w)), 'pattern' + W)
+    }
+    function J(w) {
+      switch (typeof w) {
+        case 'boolean':
+        case 'number':
+          return '' + w
+        case 'string':
+          return Sf.toQuotedString(w)
+        case 'object':
+          if (w === null) return 'null'
+          var W = R8(w),
+            ce = m[W]
+          return (ce === void 0 && ((ce = m[W] = E.length), (E[ce] = w)), 'default' + ce)
+      }
+    }
+    function c(w, W, ce, me) {
+      if (r._opts.validateSchema !== !1) {
+        var _e = w.definition.dependencies
+        if (
+          _e &&
+          !_e.every(function (Ae) {
+            return Object.prototype.hasOwnProperty.call(ce, Ae)
+          })
+        )
+          throw new Error('parent schema must have all required keywords: ' + _e.join(','))
+        var Ye = w.definition.validateSchema
+        if (Ye) {
+          var Le = Ye(W)
+          if (!Le) {
+            var Me = 'keyword schema is invalid: ' + r.errorsText(Ye.errors)
+            if (r._opts.validateSchema == 'log') r.logger.error(Me)
+            else throw new Error(Me)
+          }
+        }
+      }
+      var We = w.definition.compile,
+        ut = w.definition.inline,
+        ie = w.definition.macro,
+        fe
+      if (We) fe = We.call(r, W, ce, me)
+      else if (ie) ((fe = ie.call(r, W, ce, me)), s.validateSchema !== !1 && r.validateSchema(fe, !0))
+      else if (ut) fe = ut.call(r, me, w.keyword, W, ce)
+      else if (((fe = w.definition.validate), !fe)) return
+      if (fe === void 0) throw new Error('custom keyword "' + w.keyword + '"failed to compile')
+      var Te = _.length
+      return ((_[Te] = fe), { code: 'customRule' + Te, validate: fe })
+    }
+  }
+  function M8(e, t, n) {
+    var a = m_.call(this, e, t, n)
+    return a >= 0
+      ? { index: a, compiling: !0 }
+      : ((a = this._compilations.length),
+        (this._compilations[a] = { schema: e, root: t, baseId: n }),
+        { index: a, compiling: !1 })
+  }
+  function O8(e, t, n) {
+    var a = m_.call(this, e, t, n)
+    a >= 0 && this._compilations.splice(a, 1)
+  }
+  function m_(e, t, n) {
+    for (var a = 0; a < this._compilations.length; a++) {
+      var r = this._compilations[a]
+      if (r.schema == e && r.root == t && r.baseId == n) return a
+    }
+    return -1
+  }
+  function F8(e) {
+    return 'var default' + e + ' = defaults[' + e + '];'
+  }
+  function B8(e, t) {
+    return t[e] === void 0 ? '' : 'var refVal' + e + ' = refVal[' + e + '];'
+  }
+  function G8(e) {
+    return 'var customRule' + e + ' = customRules[' + e + '];'
+  }
+  function gf(e, t) {
+    if (!e.length) return ''
+    for (var n = '', a = 0; a < e.length; a++) n += t(a, e)
+    return n
+  }
+})
+var y_ = x((ZW, P_) => {
+  'use strict'
+  var _f = (P_.exports = function () {
+    this._cache = {}
+  })
+  _f.prototype.put = function (t, n) {
+    this._cache[t] = n
+  }
+  _f.prototype.get = function (t) {
+    return this._cache[t]
+  }
+  _f.prototype.del = function (t) {
+    delete this._cache[t]
+  }
+  _f.prototype.clear = function () {
+    this._cache = {}
+  }
+})
+var I_ = x((e$, U_) => {
+  'use strict'
+  var N8 = ti(),
+    q8 = /^(\d\d\d\d)-(\d\d)-(\d\d)$/,
+    j8 = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+    z8 = /^(\d\d):(\d\d):(\d\d)(\.\d+)?(z|[+-]\d\d(?::?\d\d)?)?$/i,
+    g_ = /^(?=.{1,253}\.?$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[-0-9a-z]{0,61}[0-9a-z])?)*\.?$/i,
+    W8 =
+      /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)(?:\?(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i,
+    $8 =
+      /^(?:[a-z][a-z0-9+\-.]*:)?(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'"()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'"()*+,;=:@]|%[0-9a-f]{2})*)*)?(?:\?(?:[a-z0-9\-._~!$&'"()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'"()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i,
+    S_ =
+      /^(?:(?:[^\x00-\x20"'<>%\\^`{|}]|%[0-9a-f]{2})|\{[+#./;?&=,!@|]?(?:[a-z0-9_]|%[0-9a-f]{2})+(?::[1-9][0-9]{0,3}|\*)?(?:,(?:[a-z0-9_]|%[0-9a-f]{2})+(?::[1-9][0-9]{0,3}|\*)?)*\})*$/i,
+    __ =
+      /^(?:(?:http[s\u017F]?|ftp):\/\/)(?:(?:[\0-\x08\x0E-\x1F!-\x9F\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\uD7FF\uE000-\uFEFE\uFF00-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])+(?::(?:[\0-\x08\x0E-\x1F!-\x9F\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\uD7FF\uE000-\uFEFE\uFF00-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?@)?(?:(?!10(?:\.[0-9]{1,3}){3})(?!127(?:\.[0-9]{1,3}){3})(?!169\.254(?:\.[0-9]{1,3}){2})(?!192\.168(?:\.[0-9]{1,3}){2})(?!172\.(?:1[6-9]|2[0-9]|3[01])(?:\.[0-9]{1,3}){2})(?:[1-9][0-9]?|1[0-9][0-9]|2[01][0-9]|22[0-3])(?:\.(?:1?[0-9]{1,2}|2[0-4][0-9]|25[0-5])){2}(?:\.(?:[1-9][0-9]?|1[0-9][0-9]|2[0-4][0-9]|25[0-4]))|(?:(?:(?:[0-9a-z\xA1-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])+-)*(?:[0-9a-z\xA1-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])+)(?:\.(?:(?:[0-9a-z\xA1-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])+-)*(?:[0-9a-z\xA1-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])+)*(?:\.(?:(?:[a-z\xA1-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]){2,})))(?::[0-9]{2,5})?(?:\/(?:[\0-\x08\x0E-\x1F!-\x9F\xA1-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3001-\uD7FF\uE000-\uFEFE\uFF00-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?$/i,
+    b_ = /^(?:urn:uuid:)?[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i,
+    v_ = /^(?:\/(?:[^~/]|~0|~1)*)*$/,
+    x_ = /^#(?:\/(?:[a-z0-9_\-.!$&'()*+,;:=@]|%[0-9a-f]{2}|~0|~1)*)*$/i,
+    A_ = /^(?:0|[1-9][0-9]*)(?:#|(?:\/(?:[^~/]|~0|~1)*)*)$/
+  U_.exports = bf
+  function bf(e) {
+    return ((e = e == 'full' ? 'full' : 'fast'), N8.copy(bf[e]))
+  }
+  bf.fast = {
+    date: /^\d\d\d\d-[0-1]\d-[0-3]\d$/,
+    time: /^(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)?$/i,
+    'date-time':
+      /^\d\d\d\d-[0-1]\d-[0-3]\d[t\s](?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i,
+    uri: /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/)?[^\s]*$/i,
+    'uri-reference': /^(?:(?:[a-z][a-z0-9+\-.]*:)?\/?\/)?(?:[^\\\s#][^\s#]*)?(?:#[^\\\s]*)?$/i,
+    'uri-template': S_,
+    url: __,
+    email:
+      /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i,
+    hostname: g_,
+    ipv4: /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/,
+    ipv6: /^\s*(?:(?:(?:[0-9a-f]{1,4}:){7}(?:[0-9a-f]{1,4}|:))|(?:(?:[0-9a-f]{1,4}:){6}(?::[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9a-f]{1,4}:){5}(?:(?:(?::[0-9a-f]{1,4}){1,2})|:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9a-f]{1,4}:){4}(?:(?:(?::[0-9a-f]{1,4}){1,3})|(?:(?::[0-9a-f]{1,4})?:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){3}(?:(?:(?::[0-9a-f]{1,4}){1,4})|(?:(?::[0-9a-f]{1,4}){0,2}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){2}(?:(?:(?::[0-9a-f]{1,4}){1,5})|(?:(?::[0-9a-f]{1,4}){0,3}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){1}(?:(?:(?::[0-9a-f]{1,4}){1,6})|(?:(?::[0-9a-f]{1,4}){0,4}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?::(?:(?:(?::[0-9a-f]{1,4}){1,7})|(?:(?::[0-9a-f]{1,4}){0,5}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(?:%.+)?\s*$/i,
+    regex: L_,
+    uuid: b_,
+    'json-pointer': v_,
+    'json-pointer-uri-fragment': x_,
+    'relative-json-pointer': A_,
+  }
+  bf.full = {
+    date: C_,
+    time: Y_,
+    'date-time': J8,
+    uri: Q8,
+    'uri-reference': $8,
+    'uri-template': S_,
+    url: __,
+    email:
+      /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i,
+    hostname: g_,
+    ipv4: /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/,
+    ipv6: /^\s*(?:(?:(?:[0-9a-f]{1,4}:){7}(?:[0-9a-f]{1,4}|:))|(?:(?:[0-9a-f]{1,4}:){6}(?::[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9a-f]{1,4}:){5}(?:(?:(?::[0-9a-f]{1,4}){1,2})|:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9a-f]{1,4}:){4}(?:(?:(?::[0-9a-f]{1,4}){1,3})|(?:(?::[0-9a-f]{1,4})?:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){3}(?:(?:(?::[0-9a-f]{1,4}){1,4})|(?:(?::[0-9a-f]{1,4}){0,2}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){2}(?:(?:(?::[0-9a-f]{1,4}){1,5})|(?:(?::[0-9a-f]{1,4}){0,3}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){1}(?:(?:(?::[0-9a-f]{1,4}){1,6})|(?:(?::[0-9a-f]{1,4}){0,4}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?::(?:(?:(?::[0-9a-f]{1,4}){1,7})|(?:(?::[0-9a-f]{1,4}){0,5}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(?:%.+)?\s*$/i,
+    regex: L_,
+    uuid: b_,
+    'json-pointer': v_,
+    'json-pointer-uri-fragment': x_,
+    'relative-json-pointer': A_,
+  }
+  function H8(e) {
+    return e % 4 === 0 && (e % 100 !== 0 || e % 400 === 0)
+  }
+  function C_(e) {
+    var t = e.match(q8)
+    if (!t) return !1
+    var n = +t[1],
+      a = +t[2],
+      r = +t[3]
+    return a >= 1 && a <= 12 && r >= 1 && r <= (a == 2 && H8(n) ? 29 : j8[a])
+  }
+  function Y_(e, t) {
+    var n = e.match(z8)
+    if (!n) return !1
+    var a = n[1],
+      r = n[2],
+      s = n[3],
+      u = n[5]
+    return ((a <= 23 && r <= 59 && s <= 59) || (a == 23 && r == 59 && s == 60)) && (!t || u)
+  }
+  var K8 = /t|\s/i
+  function J8(e) {
+    var t = e.split(K8)
+    return t.length == 2 && C_(t[0]) && Y_(t[1], !0)
+  }
+  var X8 = /\/|:/
+  function Q8(e) {
+    return X8.test(e) && W8.test(e)
+  }
+  var Z8 = /[^\\]\\Z/
+  function L_(e) {
+    if (Z8.test(e)) return !1
+    try {
+      return (new RegExp(e), !0)
+    } catch {
+      return !1
+    }
+  }
+})
+var R_ = x((t$, k_) => {
+  'use strict'
+  k_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.errSchemaPath + '/' + n,
+      y = !t.opts.allErrors,
+      E = 'data' + (u || ''),
+      m = 'valid' + s,
+      _,
+      T
+    if (d == '#' || d == '#/')
+      t.isRoot ? ((_ = t.async), (T = 'validate')) : ((_ = t.root.schema.$async === !0), (T = 'root.refVal[0]'))
+    else {
+      var v = t.resolveRef(t.baseId, d, t.isRoot)
+      if (v === void 0) {
+        var C = t.MissingRefError.message(t.baseId, d)
+        if (t.opts.missingRefs == 'fail') {
+          t.logger.error(C)
+          var L = L || []
+          ;(L.push(r),
+            (r = ''),
+            t.createErrors !== !1
+              ? ((r +=
+                  " { keyword: '$ref' , dataPath: (dataPath || '') + " +
+                  t.errorPath +
+                  ' , schemaPath: ' +
+                  t.util.toQuotedString(P) +
+                  " , params: { ref: '" +
+                  t.util.escapeQuotes(d) +
+                  "' } "),
+                t.opts.messages !== !1 &&
+                  (r += " , message: 'can\\'t resolve reference " + t.util.escapeQuotes(d) + "' "),
+                t.opts.verbose &&
+                  (r +=
+                    ' , schema: ' +
+                    t.util.toQuotedString(d) +
+                    ' , parentSchema: validate.schema' +
+                    t.schemaPath +
+                    ' , data: ' +
+                    E +
+                    ' '),
+                (r += ' } '))
+              : (r += ' {} '))
+          var F = r
+          ;((r = L.pop()),
+            !t.compositeRule && y
+              ? t.async
+                ? (r += ' throw new ValidationError([' + F + ']); ')
+                : (r += ' validate.errors = [' + F + ']; return false; ')
+              : (r +=
+                  ' var err = ' + F + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+            y && (r += ' if (false) { '))
+        } else if (t.opts.missingRefs == 'ignore') (t.logger.warn(C), y && (r += ' if (true) { '))
+        else throw new t.MissingRefError(t.baseId, d, C)
+      } else if (v.inline) {
+        var $ = t.util.copy(t)
+        $.level++
+        var j = 'valid' + $.level
+        ;(($.schema = v.schema), ($.schemaPath = ''), ($.errSchemaPath = d))
+        var Q = t.validate($).replace(/validate\.schema/g, v.code)
+        ;((r += ' ' + Q + ' '), y && (r += ' if (' + j + ') { '))
+      } else ((_ = v.$async === !0 || (t.async && v.$async !== !1)), (T = v.code))
+    }
+    if (T) {
+      var L = L || []
+      ;(L.push(r),
+        (r = ''),
+        t.opts.passContext ? (r += ' ' + T + '.call(this, ') : (r += ' ' + T + '( '),
+        (r += ' ' + E + ", (dataPath || '')"),
+        t.errorPath != '""' && (r += ' + ' + t.errorPath))
+      var R = u ? 'data' + (u - 1 || '') : 'parentData',
+        V = u ? t.dataPathArr[u] : 'parentDataProperty'
+      r += ' , ' + R + ' , ' + V + ', rootData)  '
+      var A = r
+      if (((r = L.pop()), _)) {
+        if (!t.async) throw new Error('async schema referenced by sync schema')
+        ;(y && (r += ' var ' + m + '; '),
+          (r += ' try { await ' + A + '; '),
+          y && (r += ' ' + m + ' = true; '),
+          (r +=
+            ' } catch (e) { if (!(e instanceof ValidationError)) throw e; if (vErrors === null) vErrors = e.errors; else vErrors = vErrors.concat(e.errors); errors = vErrors.length; '),
+          y && (r += ' ' + m + ' = false; '),
+          (r += ' } '),
+          y && (r += ' if (' + m + ') { '))
+      } else
+        ((r +=
+          ' if (!' +
+          A +
+          ') { if (vErrors === null) vErrors = ' +
+          T +
+          '.errors; else vErrors = vErrors.concat(' +
+          T +
+          '.errors); errors = vErrors.length; } '),
+          y && (r += ' else { '))
+    }
+    return r
+  }
+})
+var D_ = x((r$, V_) => {
+  'use strict'
+  V_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.schema[n],
+      u = t.schemaPath + t.util.getProperty(n),
+      d = t.errSchemaPath + '/' + n,
+      P = !t.opts.allErrors,
+      y = t.util.copy(t),
+      E = ''
+    y.level++
+    var m = 'valid' + y.level,
+      _ = y.baseId,
+      T = !0,
+      v = s
+    if (v)
+      for (var C, L = -1, F = v.length - 1; L < F; )
+        ((C = v[(L += 1)]),
+          (t.opts.strictKeywords
+            ? (typeof C == 'object' && Object.keys(C).length > 0) || C === !1
+            : t.util.schemaHasRules(C, t.RULES.all)) &&
+            ((T = !1),
+            (y.schema = C),
+            (y.schemaPath = u + '[' + L + ']'),
+            (y.errSchemaPath = d + '/' + L),
+            (r += '  ' + t.validate(y) + ' '),
+            (y.baseId = _),
+            P && ((r += ' if (' + m + ') { '), (E += '}'))))
+    return (P && (T ? (r += ' if (true) { ') : (r += ' ' + E.slice(0, -1) + ' ')), r)
+  }
+})
+var M_ = x((n$, w_) => {
+  'use strict'
+  w_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = 'errs__' + s,
+      v = t.util.copy(t),
+      C = ''
+    v.level++
+    var L = 'valid' + v.level,
+      F = d.every(function (z) {
+        return t.opts.strictKeywords
+          ? (typeof z == 'object' && Object.keys(z).length > 0) || z === !1
+          : t.util.schemaHasRules(z, t.RULES.all)
+      })
+    if (F) {
+      var $ = v.baseId
+      r += ' var ' + T + ' = errors; var ' + _ + ' = false;  '
+      var j = t.compositeRule
+      t.compositeRule = v.compositeRule = !0
+      var Q = d
+      if (Q)
+        for (var R, V = -1, A = Q.length - 1; V < A; )
+          ((R = Q[(V += 1)]),
+            (v.schema = R),
+            (v.schemaPath = P + '[' + V + ']'),
+            (v.errSchemaPath = y + '/' + V),
+            (r += '  ' + t.validate(v) + ' '),
+            (v.baseId = $),
+            (r += ' ' + _ + ' = ' + _ + ' || ' + L + '; if (!' + _ + ') { '),
+            (C += '}'))
+      ;((t.compositeRule = v.compositeRule = j),
+        (r += ' ' + C + ' if (!' + _ + ') {   var err =   '),
+        t.createErrors !== !1
+          ? ((r +=
+              " { keyword: 'anyOf' , dataPath: (dataPath || '') + " +
+              t.errorPath +
+              ' , schemaPath: ' +
+              t.util.toQuotedString(y) +
+              ' , params: {} '),
+            t.opts.messages !== !1 && (r += " , message: 'should match some schema in anyOf' "),
+            t.opts.verbose &&
+              (r +=
+                ' , schema: validate.schema' +
+                P +
+                ' , parentSchema: validate.schema' +
+                t.schemaPath +
+                ' , data: ' +
+                m +
+                ' '),
+            (r += ' } '))
+          : (r += ' {} '),
+        (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+        !t.compositeRule &&
+          E &&
+          (t.async
+            ? (r += ' throw new ValidationError(vErrors); ')
+            : (r += ' validate.errors = vErrors; return false; ')),
+        (r +=
+          ' } else {  errors = ' +
+          T +
+          '; if (vErrors !== null) { if (' +
+          T +
+          ') vErrors.length = ' +
+          T +
+          '; else vErrors = null; } '),
+        t.opts.allErrors && (r += ' } '))
+    } else E && (r += ' if (true) { ')
+    return r
+  }
+})
+var F_ = x((a$, O_) => {
+  'use strict'
+  O_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.schema[n],
+      u = t.errSchemaPath + '/' + n,
+      d = !t.opts.allErrors,
+      P = t.util.toQuotedString(s)
+    return (
+      t.opts.$comment === !0
+        ? (r += ' console.log(' + P + ');')
+        : typeof t.opts.$comment == 'function' &&
+          (r += ' self._opts.$comment(' + P + ', ' + t.util.toQuotedString(u) + ', validate.root.schema);'),
+      r
+    )
+  }
+})
+var G_ = x((i$, B_) => {
+  'use strict'
+  B_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = t.opts.$data && d && d.$data,
+      v
+    ;(T
+      ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (v = 'schema' + s))
+      : (v = d),
+      T || (r += ' var schema' + s + ' = validate.schema' + P + ';'),
+      (r += 'var ' + _ + ' = equal(' + m + ', schema' + s + '); if (!' + _ + ') {   '))
+    var C = C || []
+    ;(C.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: 'const' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { allowedValue: schema' +
+            s +
+            ' } '),
+          t.opts.messages !== !1 && (r += " , message: 'should be equal to constant' "),
+          t.opts.verbose &&
+            (r +=
+              ' , schema: validate.schema' +
+              P +
+              ' , parentSchema: validate.schema' +
+              t.schemaPath +
+              ' , data: ' +
+              m +
+              ' '),
+          (r += ' } '))
+        : (r += ' {} '))
+    var L = r
+    return (
+      (r = C.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + L + ']); ')
+          : (r += ' validate.errors = [' + L + ']; return false; ')
+        : (r += ' var err = ' + L + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += ' }'),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var q_ = x((s$, N_) => {
+  'use strict'
+  N_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = 'errs__' + s,
+      v = t.util.copy(t),
+      C = ''
+    v.level++
+    var L = 'valid' + v.level,
+      F = 'i' + s,
+      $ = (v.dataLevel = t.dataLevel + 1),
+      j = 'data' + $,
+      Q = t.baseId,
+      R = t.opts.strictKeywords
+        ? (typeof d == 'object' && Object.keys(d).length > 0) || d === !1
+        : t.util.schemaHasRules(d, t.RULES.all)
+    if (((r += 'var ' + T + ' = errors;var ' + _ + ';'), R)) {
+      var V = t.compositeRule
+      ;((t.compositeRule = v.compositeRule = !0),
+        (v.schema = d),
+        (v.schemaPath = P),
+        (v.errSchemaPath = y),
+        (r += ' var ' + L + ' = false; for (var ' + F + ' = 0; ' + F + ' < ' + m + '.length; ' + F + '++) { '),
+        (v.errorPath = t.util.getPathExpr(t.errorPath, F, t.opts.jsonPointers, !0)))
+      var A = m + '[' + F + ']'
+      v.dataPathArr[$] = F
+      var z = t.validate(v)
+      ;((v.baseId = Q),
+        t.util.varOccurences(z, j) < 2
+          ? (r += ' ' + t.util.varReplace(z, j, A) + ' ')
+          : (r += ' var ' + j + ' = ' + A + '; ' + z + ' '),
+        (r += ' if (' + L + ') break; }  '),
+        (t.compositeRule = v.compositeRule = V),
+        (r += ' ' + C + ' if (!' + L + ') {'))
+    } else r += ' if (' + m + '.length == 0) {'
+    var B = B || []
+    ;(B.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: 'contains' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: {} '),
+          t.opts.messages !== !1 && (r += " , message: 'should contain a valid item' "),
+          t.opts.verbose &&
+            (r +=
+              ' , schema: validate.schema' +
+              P +
+              ' , parentSchema: validate.schema' +
+              t.schemaPath +
+              ' , data: ' +
+              m +
+              ' '),
+          (r += ' } '))
+        : (r += ' {} '))
+    var te = r
+    return (
+      (r = B.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + te + ']); ')
+          : (r += ' validate.errors = [' + te + ']; return false; ')
+        : (r += ' var err = ' + te + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += ' } else { '),
+      R &&
+        (r +=
+          '  errors = ' +
+          T +
+          '; if (vErrors !== null) { if (' +
+          T +
+          ') vErrors.length = ' +
+          T +
+          '; else vErrors = null; } '),
+      t.opts.allErrors && (r += ' } '),
+      r
+    )
+  }
+})
+var z_ = x((o$, j_) => {
+  'use strict'
+  j_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'errs__' + s,
+      T = t.util.copy(t),
+      v = ''
+    T.level++
+    var C = 'valid' + T.level,
+      L = {},
+      F = {},
+      $ = t.opts.ownProperties
+    for (V in d)
+      if (V != '__proto__') {
+        var j = d[V],
+          Q = Array.isArray(j) ? F : L
+        Q[V] = j
+      }
+    r += 'var ' + _ + ' = errors;'
+    var R = t.errorPath
+    r += 'var missing' + s + ';'
+    for (var V in F)
+      if (((Q = F[V]), Q.length)) {
+        if (
+          ((r += ' if ( ' + m + t.util.getProperty(V) + ' !== undefined '),
+          $ && (r += ' && Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(V) + "') "),
+          E)
+        ) {
+          r += ' && ( '
+          var A = Q
+          if (A)
+            for (var z, B = -1, te = A.length - 1; B < te; ) {
+              ;((z = A[(B += 1)]), B && (r += ' || '))
+              var ae = t.util.getProperty(z),
+                J = m + ae
+              ;((r += ' ( ( ' + J + ' === undefined '),
+                $ && (r += ' || ! Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(z) + "') "),
+                (r += ') && (missing' + s + ' = ' + t.util.toQuotedString(t.opts.jsonPointers ? z : ae) + ') ) '))
+            }
+          r += ')) {  '
+          var c = 'missing' + s,
+            w = "' + " + c + " + '"
+          t.opts._errorDataPathProperty &&
+            (t.errorPath = t.opts.jsonPointers ? t.util.getPathExpr(R, c, !0) : R + ' + ' + c)
+          var W = W || []
+          ;(W.push(r),
+            (r = ''),
+            t.createErrors !== !1
+              ? ((r +=
+                  " { keyword: 'dependencies' , dataPath: (dataPath || '') + " +
+                  t.errorPath +
+                  ' , schemaPath: ' +
+                  t.util.toQuotedString(y) +
+                  " , params: { property: '" +
+                  t.util.escapeQuotes(V) +
+                  "', missingProperty: '" +
+                  w +
+                  "', depsCount: " +
+                  Q.length +
+                  ", deps: '" +
+                  t.util.escapeQuotes(Q.length == 1 ? Q[0] : Q.join(', ')) +
+                  "' } "),
+                t.opts.messages !== !1 &&
+                  ((r += " , message: 'should have "),
+                  Q.length == 1
+                    ? (r += 'property ' + t.util.escapeQuotes(Q[0]))
+                    : (r += 'properties ' + t.util.escapeQuotes(Q.join(', '))),
+                  (r += ' when property ' + t.util.escapeQuotes(V) + " is present' ")),
+                t.opts.verbose &&
+                  (r +=
+                    ' , schema: validate.schema' +
+                    P +
+                    ' , parentSchema: validate.schema' +
+                    t.schemaPath +
+                    ' , data: ' +
+                    m +
+                    ' '),
+                (r += ' } '))
+              : (r += ' {} '))
+          var ce = r
+          ;((r = W.pop()),
+            !t.compositeRule && E
+              ? t.async
+                ? (r += ' throw new ValidationError([' + ce + ']); ')
+                : (r += ' validate.errors = [' + ce + ']; return false; ')
+              : (r +=
+                  ' var err = ' + ce + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '))
+        } else {
+          r += ' ) { '
+          var me = Q
+          if (me)
+            for (var z, _e = -1, Ye = me.length - 1; _e < Ye; ) {
+              z = me[(_e += 1)]
+              var ae = t.util.getProperty(z),
+                w = t.util.escapeQuotes(z),
+                J = m + ae
+              ;(t.opts._errorDataPathProperty && (t.errorPath = t.util.getPath(R, z, t.opts.jsonPointers)),
+                (r += ' if ( ' + J + ' === undefined '),
+                $ && (r += ' || ! Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(z) + "') "),
+                (r += ') {  var err =   '),
+                t.createErrors !== !1
+                  ? ((r +=
+                      " { keyword: 'dependencies' , dataPath: (dataPath || '') + " +
+                      t.errorPath +
+                      ' , schemaPath: ' +
+                      t.util.toQuotedString(y) +
+                      " , params: { property: '" +
+                      t.util.escapeQuotes(V) +
+                      "', missingProperty: '" +
+                      w +
+                      "', depsCount: " +
+                      Q.length +
+                      ", deps: '" +
+                      t.util.escapeQuotes(Q.length == 1 ? Q[0] : Q.join(', ')) +
+                      "' } "),
+                    t.opts.messages !== !1 &&
+                      ((r += " , message: 'should have "),
+                      Q.length == 1
+                        ? (r += 'property ' + t.util.escapeQuotes(Q[0]))
+                        : (r += 'properties ' + t.util.escapeQuotes(Q.join(', '))),
+                      (r += ' when property ' + t.util.escapeQuotes(V) + " is present' ")),
+                    t.opts.verbose &&
+                      (r +=
+                        ' , schema: validate.schema' +
+                        P +
+                        ' , parentSchema: validate.schema' +
+                        t.schemaPath +
+                        ' , data: ' +
+                        m +
+                        ' '),
+                    (r += ' } '))
+                  : (r += ' {} '),
+                (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; } '))
+            }
+        }
+        ;((r += ' }   '), E && ((v += '}'), (r += ' else { ')))
+      }
+    t.errorPath = R
+    var Le = T.baseId
+    for (var V in L) {
+      var j = L[V]
+      ;(t.opts.strictKeywords
+        ? (typeof j == 'object' && Object.keys(j).length > 0) || j === !1
+        : t.util.schemaHasRules(j, t.RULES.all)) &&
+        ((r += ' ' + C + ' = true; if ( ' + m + t.util.getProperty(V) + ' !== undefined '),
+        $ && (r += ' && Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(V) + "') "),
+        (r += ') { '),
+        (T.schema = j),
+        (T.schemaPath = P + t.util.getProperty(V)),
+        (T.errSchemaPath = y + '/' + t.util.escapeFragment(V)),
+        (r += '  ' + t.validate(T) + ' '),
+        (T.baseId = Le),
+        (r += ' }  '),
+        E && ((r += ' if (' + C + ') { '), (v += '}')))
+    }
+    return (E && (r += '   ' + v + ' if (' + _ + ' == errors) {'), r)
+  }
+})
+var $_ = x((l$, W_) => {
+  'use strict'
+  W_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = t.opts.$data && d && d.$data,
+      v
+    T
+      ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (v = 'schema' + s))
+      : (v = d)
+    var C = 'i' + s,
+      L = 'schema' + s
+    ;(T || (r += ' var ' + L + ' = validate.schema' + P + ';'),
+      (r += 'var ' + _ + ';'),
+      T &&
+        (r +=
+          ' if (schema' +
+          s +
+          ' === undefined) ' +
+          _ +
+          ' = true; else if (!Array.isArray(schema' +
+          s +
+          ')) ' +
+          _ +
+          ' = false; else {'),
+      (r +=
+        '' +
+        _ +
+        ' = false;for (var ' +
+        C +
+        '=0; ' +
+        C +
+        '<' +
+        L +
+        '.length; ' +
+        C +
+        '++) if (equal(' +
+        m +
+        ', ' +
+        L +
+        '[' +
+        C +
+        '])) { ' +
+        _ +
+        ' = true; break; }'),
+      T && (r += '  }  '),
+      (r += ' if (!' + _ + ') {   '))
+    var F = F || []
+    ;(F.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: 'enum' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { allowedValues: schema' +
+            s +
+            ' } '),
+          t.opts.messages !== !1 && (r += " , message: 'should be equal to one of the allowed values' "),
+          t.opts.verbose &&
+            (r +=
+              ' , schema: validate.schema' +
+              P +
+              ' , parentSchema: validate.schema' +
+              t.schemaPath +
+              ' , data: ' +
+              m +
+              ' '),
+          (r += ' } '))
+        : (r += ' {} '))
+    var $ = r
+    return (
+      (r = F.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + $ + ']); ')
+          : (r += ' validate.errors = [' + $ + ']; return false; ')
+        : (r += ' var err = ' + $ + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += ' }'),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var K_ = x((u$, H_) => {
+  'use strict'
+  H_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || '')
+    if (t.opts.format === !1) return (E && (r += ' if (true) { '), r)
+    var _ = t.opts.$data && d && d.$data,
+      T
+    _
+      ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (T = 'schema' + s))
+      : (T = d)
+    var v = t.opts.unknownFormats,
+      C = Array.isArray(v)
+    if (_) {
+      var L = 'format' + s,
+        F = 'isObject' + s,
+        $ = 'formatType' + s
+      ;((r +=
+        ' var ' +
+        L +
+        ' = formats[' +
+        T +
+        ']; var ' +
+        F +
+        ' = typeof ' +
+        L +
+        " == 'object' && !(" +
+        L +
+        ' instanceof RegExp) && ' +
+        L +
+        '.validate; var ' +
+        $ +
+        ' = ' +
+        F +
+        ' && ' +
+        L +
+        ".type || 'string'; if (" +
+        F +
+        ') { '),
+        t.async && (r += ' var async' + s + ' = ' + L + '.async; '),
+        (r += ' ' + L + ' = ' + L + '.validate; } if (  '),
+        _ && (r += ' (' + T + ' !== undefined && typeof ' + T + " != 'string') || "),
+        (r += ' ('),
+        v != 'ignore' &&
+          ((r += ' (' + T + ' && !' + L + ' '),
+          C && (r += ' && self._opts.unknownFormats.indexOf(' + T + ') == -1 '),
+          (r += ') || ')),
+        (r += ' (' + L + ' && ' + $ + " == '" + a + "' && !(typeof " + L + " == 'function' ? "),
+        t.async
+          ? (r += ' (async' + s + ' ? await ' + L + '(' + m + ') : ' + L + '(' + m + ')) ')
+          : (r += ' ' + L + '(' + m + ') '),
+        (r += ' : ' + L + '.test(' + m + '))))) {'))
+    } else {
+      var L = t.formats[d]
+      if (!L) {
+        if (v == 'ignore')
+          return (
+            t.logger.warn('unknown format "' + d + '" ignored in schema at path "' + t.errSchemaPath + '"'),
+            E && (r += ' if (true) { '),
+            r
+          )
+        if (C && v.indexOf(d) >= 0) return (E && (r += ' if (true) { '), r)
+        throw new Error('unknown format "' + d + '" is used in schema at path "' + t.errSchemaPath + '"')
+      }
+      var F = typeof L == 'object' && !(L instanceof RegExp) && L.validate,
+        $ = (F && L.type) || 'string'
+      if (F) {
+        var j = L.async === !0
+        L = L.validate
+      }
+      if ($ != a) return (E && (r += ' if (true) { '), r)
+      if (j) {
+        if (!t.async) throw new Error('async format in sync schema')
+        var Q = 'formats' + t.util.getProperty(d) + '.validate'
+        r += ' if (!(await ' + Q + '(' + m + '))) { '
+      } else {
+        r += ' if (! '
+        var Q = 'formats' + t.util.getProperty(d)
+        ;(F && (Q += '.validate'),
+          typeof L == 'function' ? (r += ' ' + Q + '(' + m + ') ') : (r += ' ' + Q + '.test(' + m + ') '),
+          (r += ') { '))
+      }
+    }
+    var R = R || []
+    ;(R.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: 'format' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { format:  '),
+          _ ? (r += '' + T) : (r += '' + t.util.toQuotedString(d)),
+          (r += '  } '),
+          t.opts.messages !== !1 &&
+            ((r += ` , message: 'should match format "`),
+            _ ? (r += "' + " + T + " + '") : (r += '' + t.util.escapeQuotes(d)),
+            (r += `"' `)),
+          t.opts.verbose &&
+            ((r += ' , schema:  '),
+            _ ? (r += 'validate.schema' + P) : (r += '' + t.util.toQuotedString(d)),
+            (r += '         , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' ')),
+          (r += ' } '))
+        : (r += ' {} '))
+    var V = r
+    return (
+      (r = R.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + V + ']); ')
+          : (r += ' validate.errors = [' + V + ']; return false; ')
+        : (r += ' var err = ' + V + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += ' } '),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var X_ = x((c$, J_) => {
+  'use strict'
+  J_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = 'errs__' + s,
+      v = t.util.copy(t)
+    v.level++
+    var C = 'valid' + v.level,
+      L = t.schema.then,
+      F = t.schema.else,
+      $ =
+        L !== void 0 &&
+        (t.opts.strictKeywords
+          ? (typeof L == 'object' && Object.keys(L).length > 0) || L === !1
+          : t.util.schemaHasRules(L, t.RULES.all)),
+      j =
+        F !== void 0 &&
+        (t.opts.strictKeywords
+          ? (typeof F == 'object' && Object.keys(F).length > 0) || F === !1
+          : t.util.schemaHasRules(F, t.RULES.all)),
+      Q = v.baseId
+    if ($ || j) {
+      var R
+      ;((v.createErrors = !1),
+        (v.schema = d),
+        (v.schemaPath = P),
+        (v.errSchemaPath = y),
+        (r += ' var ' + T + ' = errors; var ' + _ + ' = true;  '))
+      var V = t.compositeRule
+      ;((t.compositeRule = v.compositeRule = !0),
+        (r += '  ' + t.validate(v) + ' '),
+        (v.baseId = Q),
+        (v.createErrors = !0),
+        (r +=
+          '  errors = ' +
+          T +
+          '; if (vErrors !== null) { if (' +
+          T +
+          ') vErrors.length = ' +
+          T +
+          '; else vErrors = null; }  '),
+        (t.compositeRule = v.compositeRule = V),
+        $
+          ? ((r += ' if (' + C + ') {  '),
+            (v.schema = t.schema.then),
+            (v.schemaPath = t.schemaPath + '.then'),
+            (v.errSchemaPath = t.errSchemaPath + '/then'),
+            (r += '  ' + t.validate(v) + ' '),
+            (v.baseId = Q),
+            (r += ' ' + _ + ' = ' + C + '; '),
+            $ && j ? ((R = 'ifClause' + s), (r += ' var ' + R + " = 'then'; ")) : (R = "'then'"),
+            (r += ' } '),
+            j && (r += ' else { '))
+          : (r += ' if (!' + C + ') { '),
+        j &&
+          ((v.schema = t.schema.else),
+          (v.schemaPath = t.schemaPath + '.else'),
+          (v.errSchemaPath = t.errSchemaPath + '/else'),
+          (r += '  ' + t.validate(v) + ' '),
+          (v.baseId = Q),
+          (r += ' ' + _ + ' = ' + C + '; '),
+          $ && j ? ((R = 'ifClause' + s), (r += ' var ' + R + " = 'else'; ")) : (R = "'else'"),
+          (r += ' } ')),
+        (r += ' if (!' + _ + ') {   var err =   '),
+        t.createErrors !== !1
+          ? ((r +=
+              " { keyword: 'if' , dataPath: (dataPath || '') + " +
+              t.errorPath +
+              ' , schemaPath: ' +
+              t.util.toQuotedString(y) +
+              ' , params: { failingKeyword: ' +
+              R +
+              ' } '),
+            t.opts.messages !== !1 && (r += ` , message: 'should match "' + ` + R + ` + '" schema' `),
+            t.opts.verbose &&
+              (r +=
+                ' , schema: validate.schema' +
+                P +
+                ' , parentSchema: validate.schema' +
+                t.schemaPath +
+                ' , data: ' +
+                m +
+                ' '),
+            (r += ' } '))
+          : (r += ' {} '),
+        (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+        !t.compositeRule &&
+          E &&
+          (t.async
+            ? (r += ' throw new ValidationError(vErrors); ')
+            : (r += ' validate.errors = vErrors; return false; ')),
+        (r += ' }   '),
+        E && (r += ' else { '))
+    } else E && (r += ' if (true) { ')
+    return r
+  }
+})
+var Z_ = x((f$, Q_) => {
+  'use strict'
+  Q_.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = 'errs__' + s,
+      v = t.util.copy(t),
+      C = ''
+    v.level++
+    var L = 'valid' + v.level,
+      F = 'i' + s,
+      $ = (v.dataLevel = t.dataLevel + 1),
+      j = 'data' + $,
+      Q = t.baseId
+    if (((r += 'var ' + T + ' = errors;var ' + _ + ';'), Array.isArray(d))) {
+      var R = t.schema.additionalItems
+      if (R === !1) {
+        r += ' ' + _ + ' = ' + m + '.length <= ' + d.length + '; '
+        var V = y
+        ;((y = t.errSchemaPath + '/additionalItems'), (r += '  if (!' + _ + ') {   '))
+        var A = A || []
+        ;(A.push(r),
+          (r = ''),
+          t.createErrors !== !1
+            ? ((r +=
+                " { keyword: 'additionalItems' , dataPath: (dataPath || '') + " +
+                t.errorPath +
+                ' , schemaPath: ' +
+                t.util.toQuotedString(y) +
+                ' , params: { limit: ' +
+                d.length +
+                ' } '),
+              t.opts.messages !== !1 && (r += " , message: 'should NOT have more than " + d.length + " items' "),
+              t.opts.verbose &&
+                (r += ' , schema: false , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' '),
+              (r += ' } '))
+            : (r += ' {} '))
+        var z = r
+        ;((r = A.pop()),
+          !t.compositeRule && E
+            ? t.async
+              ? (r += ' throw new ValidationError([' + z + ']); ')
+              : (r += ' validate.errors = [' + z + ']; return false; ')
+            : (r += ' var err = ' + z + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+          (r += ' } '),
+          (y = V),
+          E && ((C += '}'), (r += ' else { ')))
+      }
+      var B = d
+      if (B) {
+        for (var te, ae = -1, J = B.length - 1; ae < J; )
+          if (
+            ((te = B[(ae += 1)]),
+            t.opts.strictKeywords
+              ? (typeof te == 'object' && Object.keys(te).length > 0) || te === !1
+              : t.util.schemaHasRules(te, t.RULES.all))
+          ) {
+            r += ' ' + L + ' = true; if (' + m + '.length > ' + ae + ') { '
+            var c = m + '[' + ae + ']'
+            ;((v.schema = te),
+              (v.schemaPath = P + '[' + ae + ']'),
+              (v.errSchemaPath = y + '/' + ae),
+              (v.errorPath = t.util.getPathExpr(t.errorPath, ae, t.opts.jsonPointers, !0)),
+              (v.dataPathArr[$] = ae))
+            var w = t.validate(v)
+            ;((v.baseId = Q),
+              t.util.varOccurences(w, j) < 2
+                ? (r += ' ' + t.util.varReplace(w, j, c) + ' ')
+                : (r += ' var ' + j + ' = ' + c + '; ' + w + ' '),
+              (r += ' }  '),
+              E && ((r += ' if (' + L + ') { '), (C += '}')))
+          }
+      }
+      if (
+        typeof R == 'object' &&
+        (t.opts.strictKeywords
+          ? (typeof R == 'object' && Object.keys(R).length > 0) || R === !1
+          : t.util.schemaHasRules(R, t.RULES.all))
+      ) {
+        ;((v.schema = R),
+          (v.schemaPath = t.schemaPath + '.additionalItems'),
+          (v.errSchemaPath = t.errSchemaPath + '/additionalItems'),
+          (r +=
+            ' ' +
+            L +
+            ' = true; if (' +
+            m +
+            '.length > ' +
+            d.length +
+            ') {  for (var ' +
+            F +
+            ' = ' +
+            d.length +
+            '; ' +
+            F +
+            ' < ' +
+            m +
+            '.length; ' +
+            F +
+            '++) { '),
+          (v.errorPath = t.util.getPathExpr(t.errorPath, F, t.opts.jsonPointers, !0)))
+        var c = m + '[' + F + ']'
+        v.dataPathArr[$] = F
+        var w = t.validate(v)
+        ;((v.baseId = Q),
+          t.util.varOccurences(w, j) < 2
+            ? (r += ' ' + t.util.varReplace(w, j, c) + ' ')
+            : (r += ' var ' + j + ' = ' + c + '; ' + w + ' '),
+          E && (r += ' if (!' + L + ') break; '),
+          (r += ' } }  '),
+          E && ((r += ' if (' + L + ') { '), (C += '}')))
+      }
+    } else if (
+      t.opts.strictKeywords
+        ? (typeof d == 'object' && Object.keys(d).length > 0) || d === !1
+        : t.util.schemaHasRules(d, t.RULES.all)
+    ) {
+      ;((v.schema = d),
+        (v.schemaPath = P),
+        (v.errSchemaPath = y),
+        (r += '  for (var ' + F + ' = 0; ' + F + ' < ' + m + '.length; ' + F + '++) { '),
+        (v.errorPath = t.util.getPathExpr(t.errorPath, F, t.opts.jsonPointers, !0)))
+      var c = m + '[' + F + ']'
+      v.dataPathArr[$] = F
+      var w = t.validate(v)
+      ;((v.baseId = Q),
+        t.util.varOccurences(w, j) < 2
+          ? (r += ' ' + t.util.varReplace(w, j, c) + ' ')
+          : (r += ' var ' + j + ' = ' + c + '; ' + w + ' '),
+        E && (r += ' if (!' + L + ') break; '),
+        (r += ' }'))
+    }
+    return (E && (r += ' ' + C + ' if (' + T + ' == errors) {'), r)
+  }
+})
+var Dm = x((d$, eb) => {
+  'use strict'
+  eb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      Q,
+      m = 'data' + (u || ''),
+      _ = t.opts.$data && d && d.$data,
+      T
+    _
+      ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (T = 'schema' + s))
+      : (T = d)
+    var v = n == 'maximum',
+      C = v ? 'exclusiveMaximum' : 'exclusiveMinimum',
+      L = t.schema[C],
+      F = t.opts.$data && L && L.$data,
+      $ = v ? '<' : '>',
+      j = v ? '>' : '<',
+      Q = void 0
+    if (!(_ || typeof d == 'number' || d === void 0)) throw new Error(n + ' must be number')
+    if (!(F || L === void 0 || typeof L == 'number' || typeof L == 'boolean'))
+      throw new Error(C + ' must be number or boolean')
+    if (F) {
+      var R = t.util.getData(L.$data, u, t.dataPathArr),
+        V = 'exclusive' + s,
+        A = 'exclType' + s,
+        z = 'exclIsNumber' + s,
+        B = 'op' + s,
+        te = "' + " + B + " + '"
+      ;((r += ' var schemaExcl' + s + ' = ' + R + '; '),
+        (R = 'schemaExcl' + s),
+        (r +=
+          ' var ' +
+          V +
+          '; var ' +
+          A +
+          ' = typeof ' +
+          R +
+          '; if (' +
+          A +
+          " != 'boolean' && " +
+          A +
+          " != 'undefined' && " +
+          A +
+          " != 'number') { "))
+      var Q = C,
+        ae = ae || []
+      ;(ae.push(r),
+        (r = ''),
+        t.createErrors !== !1
+          ? ((r +=
+              " { keyword: '" +
+              (Q || '_exclusiveLimit') +
+              "' , dataPath: (dataPath || '') + " +
+              t.errorPath +
+              ' , schemaPath: ' +
+              t.util.toQuotedString(y) +
+              ' , params: {} '),
+            t.opts.messages !== !1 && (r += " , message: '" + C + " should be boolean' "),
+            t.opts.verbose &&
+              (r +=
+                ' , schema: validate.schema' +
+                P +
+                ' , parentSchema: validate.schema' +
+                t.schemaPath +
+                ' , data: ' +
+                m +
+                ' '),
+            (r += ' } '))
+          : (r += ' {} '))
+      var J = r
+      ;((r = ae.pop()),
+        !t.compositeRule && E
+          ? t.async
+            ? (r += ' throw new ValidationError([' + J + ']); ')
+            : (r += ' validate.errors = [' + J + ']; return false; ')
+          : (r += ' var err = ' + J + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+        (r += ' } else if ( '),
+        _ && (r += ' (' + T + ' !== undefined && typeof ' + T + " != 'number') || "),
+        (r +=
+          ' ' +
+          A +
+          " == 'number' ? ( (" +
+          V +
+          ' = ' +
+          T +
+          ' === undefined || ' +
+          R +
+          ' ' +
+          $ +
+          '= ' +
+          T +
+          ') ? ' +
+          m +
+          ' ' +
+          j +
+          '= ' +
+          R +
+          ' : ' +
+          m +
+          ' ' +
+          j +
+          ' ' +
+          T +
+          ' ) : ( (' +
+          V +
+          ' = ' +
+          R +
+          ' === true) ? ' +
+          m +
+          ' ' +
+          j +
+          '= ' +
+          T +
+          ' : ' +
+          m +
+          ' ' +
+          j +
+          ' ' +
+          T +
+          ' ) || ' +
+          m +
+          ' !== ' +
+          m +
+          ') { var op' +
+          s +
+          ' = ' +
+          V +
+          " ? '" +
+          $ +
+          "' : '" +
+          $ +
+          "='; "),
+        d === void 0 && ((Q = C), (y = t.errSchemaPath + '/' + C), (T = R), (_ = F)))
+    } else {
+      var z = typeof L == 'number',
+        te = $
+      if (z && _) {
+        var B = "'" + te + "'"
+        ;((r += ' if ( '),
+          _ && (r += ' (' + T + ' !== undefined && typeof ' + T + " != 'number') || "),
+          (r +=
+            ' ( ' +
+            T +
+            ' === undefined || ' +
+            L +
+            ' ' +
+            $ +
+            '= ' +
+            T +
+            ' ? ' +
+            m +
+            ' ' +
+            j +
+            '= ' +
+            L +
+            ' : ' +
+            m +
+            ' ' +
+            j +
+            ' ' +
+            T +
+            ' ) || ' +
+            m +
+            ' !== ' +
+            m +
+            ') { '))
+      } else {
+        z && d === void 0
+          ? ((V = !0), (Q = C), (y = t.errSchemaPath + '/' + C), (T = L), (j += '='))
+          : (z && (T = Math[v ? 'min' : 'max'](L, d)),
+            L === (z ? T : !0)
+              ? ((V = !0), (Q = C), (y = t.errSchemaPath + '/' + C), (j += '='))
+              : ((V = !1), (te += '=')))
+        var B = "'" + te + "'"
+        ;((r += ' if ( '),
+          _ && (r += ' (' + T + ' !== undefined && typeof ' + T + " != 'number') || "),
+          (r += ' ' + m + ' ' + j + ' ' + T + ' || ' + m + ' !== ' + m + ') { '))
+      }
+    }
+    Q = Q || n
+    var ae = ae || []
+    ;(ae.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: '" +
+            (Q || '_limit') +
+            "' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { comparison: ' +
+            B +
+            ', limit: ' +
+            T +
+            ', exclusive: ' +
+            V +
+            ' } '),
+          t.opts.messages !== !1 &&
+            ((r += " , message: 'should be " + te + ' '), _ ? (r += "' + " + T) : (r += '' + T + "'")),
+          t.opts.verbose &&
+            ((r += ' , schema:  '),
+            _ ? (r += 'validate.schema' + P) : (r += '' + d),
+            (r += '         , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' ')),
+          (r += ' } '))
+        : (r += ' {} '))
+    var J = r
+    return (
+      (r = ae.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + J + ']); ')
+          : (r += ' validate.errors = [' + J + ']; return false; ')
+        : (r += ' var err = ' + J + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += ' } '),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var wm = x((p$, tb) => {
+  'use strict'
+  tb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      C,
+      m = 'data' + (u || ''),
+      _ = t.opts.$data && d && d.$data,
+      T
+    if (
+      (_
+        ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (T = 'schema' + s))
+        : (T = d),
+      !(_ || typeof d == 'number'))
+    )
+      throw new Error(n + ' must be number')
+    var v = n == 'maxItems' ? '>' : '<'
+    ;((r += 'if ( '),
+      _ && (r += ' (' + T + ' !== undefined && typeof ' + T + " != 'number') || "),
+      (r += ' ' + m + '.length ' + v + ' ' + T + ') { '))
+    var C = n,
+      L = L || []
+    ;(L.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: '" +
+            (C || '_limitItems') +
+            "' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { limit: ' +
+            T +
+            ' } '),
+          t.opts.messages !== !1 &&
+            ((r += " , message: 'should NOT have "),
+            n == 'maxItems' ? (r += 'more') : (r += 'fewer'),
+            (r += ' than '),
+            _ ? (r += "' + " + T + " + '") : (r += '' + d),
+            (r += " items' ")),
+          t.opts.verbose &&
+            ((r += ' , schema:  '),
+            _ ? (r += 'validate.schema' + P) : (r += '' + d),
+            (r += '         , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' ')),
+          (r += ' } '))
+        : (r += ' {} '))
+    var F = r
+    return (
+      (r = L.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + F + ']); ')
+          : (r += ' validate.errors = [' + F + ']; return false; ')
+        : (r += ' var err = ' + F + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += '} '),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var Mm = x((E$, rb) => {
+  'use strict'
+  rb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      C,
+      m = 'data' + (u || ''),
+      _ = t.opts.$data && d && d.$data,
+      T
+    if (
+      (_
+        ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (T = 'schema' + s))
+        : (T = d),
+      !(_ || typeof d == 'number'))
+    )
+      throw new Error(n + ' must be number')
+    var v = n == 'maxLength' ? '>' : '<'
+    ;((r += 'if ( '),
+      _ && (r += ' (' + T + ' !== undefined && typeof ' + T + " != 'number') || "),
+      t.opts.unicode === !1 ? (r += ' ' + m + '.length ') : (r += ' ucs2length(' + m + ') '),
+      (r += ' ' + v + ' ' + T + ') { '))
+    var C = n,
+      L = L || []
+    ;(L.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: '" +
+            (C || '_limitLength') +
+            "' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { limit: ' +
+            T +
+            ' } '),
+          t.opts.messages !== !1 &&
+            ((r += " , message: 'should NOT be "),
+            n == 'maxLength' ? (r += 'longer') : (r += 'shorter'),
+            (r += ' than '),
+            _ ? (r += "' + " + T + " + '") : (r += '' + d),
+            (r += " characters' ")),
+          t.opts.verbose &&
+            ((r += ' , schema:  '),
+            _ ? (r += 'validate.schema' + P) : (r += '' + d),
+            (r += '         , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' ')),
+          (r += ' } '))
+        : (r += ' {} '))
+    var F = r
+    return (
+      (r = L.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + F + ']); ')
+          : (r += ' validate.errors = [' + F + ']; return false; ')
+        : (r += ' var err = ' + F + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += '} '),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var Om = x((m$, nb) => {
+  'use strict'
+  nb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      C,
+      m = 'data' + (u || ''),
+      _ = t.opts.$data && d && d.$data,
+      T
+    if (
+      (_
+        ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (T = 'schema' + s))
+        : (T = d),
+      !(_ || typeof d == 'number'))
+    )
+      throw new Error(n + ' must be number')
+    var v = n == 'maxProperties' ? '>' : '<'
+    ;((r += 'if ( '),
+      _ && (r += ' (' + T + ' !== undefined && typeof ' + T + " != 'number') || "),
+      (r += ' Object.keys(' + m + ').length ' + v + ' ' + T + ') { '))
+    var C = n,
+      L = L || []
+    ;(L.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: '" +
+            (C || '_limitProperties') +
+            "' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { limit: ' +
+            T +
+            ' } '),
+          t.opts.messages !== !1 &&
+            ((r += " , message: 'should NOT have "),
+            n == 'maxProperties' ? (r += 'more') : (r += 'fewer'),
+            (r += ' than '),
+            _ ? (r += "' + " + T + " + '") : (r += '' + d),
+            (r += " properties' ")),
+          t.opts.verbose &&
+            ((r += ' , schema:  '),
+            _ ? (r += 'validate.schema' + P) : (r += '' + d),
+            (r += '         , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' ')),
+          (r += ' } '))
+        : (r += ' {} '))
+    var F = r
+    return (
+      (r = L.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + F + ']); ')
+          : (r += ' validate.errors = [' + F + ']; return false; ')
+        : (r += ' var err = ' + F + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += '} '),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var ib = x((T$, ab) => {
+  'use strict'
+  ab.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = t.opts.$data && d && d.$data,
+      T
+    if (
+      (_
+        ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (T = 'schema' + s))
+        : (T = d),
+      !(_ || typeof d == 'number'))
+    )
+      throw new Error(n + ' must be number')
+    ;((r += 'var division' + s + ';if ('),
+      _ && (r += ' ' + T + ' !== undefined && ( typeof ' + T + " != 'number' || "),
+      (r += ' (division' + s + ' = ' + m + ' / ' + T + ', '),
+      t.opts.multipleOfPrecision
+        ? (r += ' Math.abs(Math.round(division' + s + ') - division' + s + ') > 1e-' + t.opts.multipleOfPrecision + ' ')
+        : (r += ' division' + s + ' !== parseInt(division' + s + ') '),
+      (r += ' ) '),
+      _ && (r += '  )  '),
+      (r += ' ) {   '))
+    var v = v || []
+    ;(v.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: 'multipleOf' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { multipleOf: ' +
+            T +
+            ' } '),
+          t.opts.messages !== !1 &&
+            ((r += " , message: 'should be multiple of "), _ ? (r += "' + " + T) : (r += '' + T + "'")),
+          t.opts.verbose &&
+            ((r += ' , schema:  '),
+            _ ? (r += 'validate.schema' + P) : (r += '' + d),
+            (r += '         , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' ')),
+          (r += ' } '))
+        : (r += ' {} '))
+    var C = r
+    return (
+      (r = v.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + C + ']); ')
+          : (r += ' validate.errors = [' + C + ']; return false; ')
+        : (r += ' var err = ' + C + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += '} '),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var ob = x((h$, sb) => {
+  'use strict'
+  sb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'errs__' + s,
+      T = t.util.copy(t)
+    T.level++
+    var v = 'valid' + T.level
+    if (
+      t.opts.strictKeywords
+        ? (typeof d == 'object' && Object.keys(d).length > 0) || d === !1
+        : t.util.schemaHasRules(d, t.RULES.all)
+    ) {
+      ;((T.schema = d), (T.schemaPath = P), (T.errSchemaPath = y), (r += ' var ' + _ + ' = errors;  '))
+      var C = t.compositeRule
+      ;((t.compositeRule = T.compositeRule = !0), (T.createErrors = !1))
+      var L
+      ;(T.opts.allErrors && ((L = T.opts.allErrors), (T.opts.allErrors = !1)),
+        (r += ' ' + t.validate(T) + ' '),
+        (T.createErrors = !0),
+        L && (T.opts.allErrors = L),
+        (t.compositeRule = T.compositeRule = C),
+        (r += ' if (' + v + ') {   '))
+      var F = F || []
+      ;(F.push(r),
+        (r = ''),
+        t.createErrors !== !1
+          ? ((r +=
+              " { keyword: 'not' , dataPath: (dataPath || '') + " +
+              t.errorPath +
+              ' , schemaPath: ' +
+              t.util.toQuotedString(y) +
+              ' , params: {} '),
+            t.opts.messages !== !1 && (r += " , message: 'should NOT be valid' "),
+            t.opts.verbose &&
+              (r +=
+                ' , schema: validate.schema' +
+                P +
+                ' , parentSchema: validate.schema' +
+                t.schemaPath +
+                ' , data: ' +
+                m +
+                ' '),
+            (r += ' } '))
+          : (r += ' {} '))
+      var $ = r
+      ;((r = F.pop()),
+        !t.compositeRule && E
+          ? t.async
+            ? (r += ' throw new ValidationError([' + $ + ']); ')
+            : (r += ' validate.errors = [' + $ + ']; return false; ')
+          : (r += ' var err = ' + $ + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+        (r +=
+          ' } else {  errors = ' +
+          _ +
+          '; if (vErrors !== null) { if (' +
+          _ +
+          ') vErrors.length = ' +
+          _ +
+          '; else vErrors = null; } '),
+        t.opts.allErrors && (r += ' } '))
+    } else
+      ((r += '  var err =   '),
+        t.createErrors !== !1
+          ? ((r +=
+              " { keyword: 'not' , dataPath: (dataPath || '') + " +
+              t.errorPath +
+              ' , schemaPath: ' +
+              t.util.toQuotedString(y) +
+              ' , params: {} '),
+            t.opts.messages !== !1 && (r += " , message: 'should NOT be valid' "),
+            t.opts.verbose &&
+              (r +=
+                ' , schema: validate.schema' +
+                P +
+                ' , parentSchema: validate.schema' +
+                t.schemaPath +
+                ' , data: ' +
+                m +
+                ' '),
+            (r += ' } '))
+          : (r += ' {} '),
+        (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+        E && (r += ' if (false) { '))
+    return r
+  }
+})
+var ub = x((P$, lb) => {
+  'use strict'
+  lb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = 'errs__' + s,
+      v = t.util.copy(t),
+      C = ''
+    v.level++
+    var L = 'valid' + v.level,
+      F = v.baseId,
+      $ = 'prevValid' + s,
+      j = 'passingSchemas' + s
+    r += 'var ' + T + ' = errors , ' + $ + ' = false , ' + _ + ' = false , ' + j + ' = null; '
+    var Q = t.compositeRule
+    t.compositeRule = v.compositeRule = !0
+    var R = d
+    if (R)
+      for (var V, A = -1, z = R.length - 1; A < z; )
+        ((V = R[(A += 1)]),
+          (
+            t.opts.strictKeywords
+              ? (typeof V == 'object' && Object.keys(V).length > 0) || V === !1
+              : t.util.schemaHasRules(V, t.RULES.all)
+          )
+            ? ((v.schema = V),
+              (v.schemaPath = P + '[' + A + ']'),
+              (v.errSchemaPath = y + '/' + A),
+              (r += '  ' + t.validate(v) + ' '),
+              (v.baseId = F))
+            : (r += ' var ' + L + ' = true; '),
+          A &&
+            ((r += ' if (' + L + ' && ' + $ + ') { ' + _ + ' = false; ' + j + ' = [' + j + ', ' + A + ']; } else { '),
+            (C += '}')),
+          (r += ' if (' + L + ') { ' + _ + ' = ' + $ + ' = true; ' + j + ' = ' + A + '; }'))
+    return (
+      (t.compositeRule = v.compositeRule = Q),
+      (r += '' + C + 'if (!' + _ + ') {   var err =   '),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: 'oneOf' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { passingSchemas: ' +
+            j +
+            ' } '),
+          t.opts.messages !== !1 && (r += " , message: 'should match exactly one schema in oneOf' "),
+          t.opts.verbose &&
+            (r +=
+              ' , schema: validate.schema' +
+              P +
+              ' , parentSchema: validate.schema' +
+              t.schemaPath +
+              ' , data: ' +
+              m +
+              ' '),
+          (r += ' } '))
+        : (r += ' {} '),
+      (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      !t.compositeRule &&
+        E &&
+        (t.async
+          ? (r += ' throw new ValidationError(vErrors); ')
+          : (r += ' validate.errors = vErrors; return false; ')),
+      (r +=
+        '} else {  errors = ' +
+        T +
+        '; if (vErrors !== null) { if (' +
+        T +
+        ') vErrors.length = ' +
+        T +
+        '; else vErrors = null; }'),
+      t.opts.allErrors && (r += ' } '),
+      r
+    )
+  }
+})
+var fb = x((y$, cb) => {
+  'use strict'
+  cb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = t.opts.$data && d && d.$data,
+      v
+    T
+      ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (v = 'schema' + s))
+      : (v = d)
+    var C = t.opts.regExp ? 'regExp' : 'new RegExp'
+    if (T)
+      ((r +=
+        ' var ' +
+        _ +
+        ' = true; try { ' +
+        _ +
+        ' = ' +
+        C +
+        '(' +
+        v +
+        ').test(' +
+        m +
+        '); } catch(e) { ' +
+        _ +
+        ' = false; } if ( '),
+        T && (r += ' (' + v + ' !== undefined && typeof ' + v + " != 'string') || "),
+        (r += ' !' + _ + ') {'))
+    else {
+      var L = t.usePattern(d)
+      ;((r += ' if ( '),
+        T && (r += ' (' + v + ' !== undefined && typeof ' + v + " != 'string') || "),
+        (r += ' !' + L + '.test(' + m + ') ) {'))
+    }
+    var F = F || []
+    ;(F.push(r),
+      (r = ''),
+      t.createErrors !== !1
+        ? ((r +=
+            " { keyword: 'pattern' , dataPath: (dataPath || '') + " +
+            t.errorPath +
+            ' , schemaPath: ' +
+            t.util.toQuotedString(y) +
+            ' , params: { pattern:  '),
+          T ? (r += '' + v) : (r += '' + t.util.toQuotedString(d)),
+          (r += '  } '),
+          t.opts.messages !== !1 &&
+            ((r += ` , message: 'should match pattern "`),
+            T ? (r += "' + " + v + " + '") : (r += '' + t.util.escapeQuotes(d)),
+            (r += `"' `)),
+          t.opts.verbose &&
+            ((r += ' , schema:  '),
+            T ? (r += 'validate.schema' + P) : (r += '' + t.util.toQuotedString(d)),
+            (r += '         , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' ')),
+          (r += ' } '))
+        : (r += ' {} '))
+    var $ = r
+    return (
+      (r = F.pop()),
+      !t.compositeRule && E
+        ? t.async
+          ? (r += ' throw new ValidationError([' + $ + ']); ')
+          : (r += ' validate.errors = [' + $ + ']; return false; ')
+        : (r += ' var err = ' + $ + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+      (r += '} '),
+      E && (r += ' else { '),
+      r
+    )
+  }
+})
+var pb = x((g$, db) => {
+  'use strict'
+  db.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'errs__' + s,
+      T = t.util.copy(t),
+      v = ''
+    T.level++
+    var C = 'valid' + T.level,
+      L = 'key' + s,
+      F = 'idx' + s,
+      $ = (T.dataLevel = t.dataLevel + 1),
+      j = 'data' + $,
+      Q = 'dataProperties' + s,
+      R = Object.keys(d || {}).filter(_e),
+      V = t.schema.patternProperties || {},
+      A = Object.keys(V).filter(_e),
+      z = t.schema.additionalProperties,
+      B = R.length || A.length,
+      te = z === !1,
+      ae = typeof z == 'object' && Object.keys(z).length,
+      J = t.opts.removeAdditional,
+      c = te || ae || J,
+      w = t.opts.ownProperties,
+      W = t.baseId,
+      ce = t.schema.required
+    if (ce && !(t.opts.$data && ce.$data) && ce.length < t.opts.loopRequired) var me = t.util.toHash(ce)
+    function _e(vt) {
+      return vt !== '__proto__'
+    }
+    if (((r += 'var ' + _ + ' = errors;var ' + C + ' = true;'), w && (r += ' var ' + Q + ' = undefined;'), c)) {
+      if (
+        (w
+          ? (r +=
+              ' ' +
+              Q +
+              ' = ' +
+              Q +
+              ' || Object.keys(' +
+              m +
+              '); for (var ' +
+              F +
+              '=0; ' +
+              F +
+              '<' +
+              Q +
+              '.length; ' +
+              F +
+              '++) { var ' +
+              L +
+              ' = ' +
+              Q +
+              '[' +
+              F +
+              ']; ')
+          : (r += ' for (var ' + L + ' in ' + m + ') { '),
+        B)
+      ) {
+        if (((r += ' var isAdditional' + s + ' = !(false '), R.length))
+          if (R.length > 8) r += ' || validate.schema' + P + '.hasOwnProperty(' + L + ') '
+          else {
+            var Ye = R
+            if (Ye)
+              for (var Le, Me = -1, We = Ye.length - 1; Me < We; )
+                ((Le = Ye[(Me += 1)]), (r += ' || ' + L + ' == ' + t.util.toQuotedString(Le) + ' '))
+          }
+        if (A.length) {
+          var ut = A
+          if (ut)
+            for (var ie, fe = -1, Te = ut.length - 1; fe < Te; )
+              ((ie = ut[(fe += 1)]), (r += ' || ' + t.usePattern(ie) + '.test(' + L + ') '))
+        }
+        r += ' ); if (isAdditional' + s + ') { '
+      }
+      if (J == 'all') r += ' delete ' + m + '[' + L + ']; '
+      else {
+        var Ae = t.errorPath,
+          X = "' + " + L + " + '"
+        if (
+          (t.opts._errorDataPathProperty && (t.errorPath = t.util.getPathExpr(t.errorPath, L, t.opts.jsonPointers)), te)
+        )
+          if (J) r += ' delete ' + m + '[' + L + ']; '
+          else {
+            r += ' ' + C + ' = false; '
+            var Ee = y
+            y = t.errSchemaPath + '/additionalProperties'
+            var H = H || []
+            ;(H.push(r),
+              (r = ''),
+              t.createErrors !== !1
+                ? ((r +=
+                    " { keyword: 'additionalProperties' , dataPath: (dataPath || '') + " +
+                    t.errorPath +
+                    ' , schemaPath: ' +
+                    t.util.toQuotedString(y) +
+                    " , params: { additionalProperty: '" +
+                    X +
+                    "' } "),
+                  t.opts.messages !== !1 &&
+                    ((r += " , message: '"),
+                    t.opts._errorDataPathProperty
+                      ? (r += 'is an invalid additional property')
+                      : (r += 'should NOT have additional properties'),
+                    (r += "' ")),
+                  t.opts.verbose &&
+                    (r += ' , schema: false , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' '),
+                  (r += ' } '))
+                : (r += ' {} '))
+            var re = r
+            ;((r = H.pop()),
+              !t.compositeRule && E
+                ? t.async
+                  ? (r += ' throw new ValidationError([' + re + ']); ')
+                  : (r += ' validate.errors = [' + re + ']; return false; ')
+                : (r +=
+                    ' var err = ' +
+                    re +
+                    ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+              (y = Ee),
+              E && (r += ' break; '))
+          }
+        else if (ae)
+          if (J == 'failing') {
+            r += ' var ' + _ + ' = errors;  '
+            var De = t.compositeRule
+            ;((t.compositeRule = T.compositeRule = !0),
+              (T.schema = z),
+              (T.schemaPath = t.schemaPath + '.additionalProperties'),
+              (T.errSchemaPath = t.errSchemaPath + '/additionalProperties'),
+              (T.errorPath = t.opts._errorDataPathProperty
+                ? t.errorPath
+                : t.util.getPathExpr(t.errorPath, L, t.opts.jsonPointers)))
+            var ke = m + '[' + L + ']'
+            T.dataPathArr[$] = L
+            var Ce = t.validate(T)
+            ;((T.baseId = W),
+              t.util.varOccurences(Ce, j) < 2
+                ? (r += ' ' + t.util.varReplace(Ce, j, ke) + ' ')
+                : (r += ' var ' + j + ' = ' + ke + '; ' + Ce + ' '),
+              (r +=
+                ' if (!' +
+                C +
+                ') { errors = ' +
+                _ +
+                '; if (validate.errors !== null) { if (errors) validate.errors.length = errors; else validate.errors = null; } delete ' +
+                m +
+                '[' +
+                L +
+                ']; }  '),
+              (t.compositeRule = T.compositeRule = De))
+          } else {
+            ;((T.schema = z),
+              (T.schemaPath = t.schemaPath + '.additionalProperties'),
+              (T.errSchemaPath = t.errSchemaPath + '/additionalProperties'),
+              (T.errorPath = t.opts._errorDataPathProperty
+                ? t.errorPath
+                : t.util.getPathExpr(t.errorPath, L, t.opts.jsonPointers)))
+            var ke = m + '[' + L + ']'
+            T.dataPathArr[$] = L
+            var Ce = t.validate(T)
+            ;((T.baseId = W),
+              t.util.varOccurences(Ce, j) < 2
+                ? (r += ' ' + t.util.varReplace(Ce, j, ke) + ' ')
+                : (r += ' var ' + j + ' = ' + ke + '; ' + Ce + ' '),
+              E && (r += ' if (!' + C + ') break; '))
+          }
+        t.errorPath = Ae
+      }
+      ;(B && (r += ' } '), (r += ' }  '), E && ((r += ' if (' + C + ') { '), (v += '}')))
+    }
+    var we = t.opts.useDefaults && !t.compositeRule
+    if (R.length) {
+      var $e = R
+      if ($e)
+        for (var Le, ct = -1, bt = $e.length - 1; ct < bt; ) {
+          Le = $e[(ct += 1)]
+          var pt = d[Le]
+          if (
+            t.opts.strictKeywords
+              ? (typeof pt == 'object' && Object.keys(pt).length > 0) || pt === !1
+              : t.util.schemaHasRules(pt, t.RULES.all)
+          ) {
+            var Tt = t.util.getProperty(Le),
+              ke = m + Tt,
+              ft = we && pt.default !== void 0
+            ;((T.schema = pt),
+              (T.schemaPath = P + Tt),
+              (T.errSchemaPath = y + '/' + t.util.escapeFragment(Le)),
+              (T.errorPath = t.util.getPath(t.errorPath, Le, t.opts.jsonPointers)),
+              (T.dataPathArr[$] = t.util.toQuotedString(Le)))
+            var Ce = t.validate(T)
+            if (((T.baseId = W), t.util.varOccurences(Ce, j) < 2)) {
+              Ce = t.util.varReplace(Ce, j, ke)
+              var Et = ke
+            } else {
+              var Et = j
+              r += ' var ' + j + ' = ' + ke + '; '
+            }
+            if (ft) r += ' ' + Ce + ' '
+            else {
+              if (me && me[Le]) {
+                ;((r += ' if ( ' + Et + ' === undefined '),
+                  w &&
+                    (r += ' || ! Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(Le) + "') "),
+                  (r += ') { ' + C + ' = false; '))
+                var Ae = t.errorPath,
+                  Ee = y,
+                  wt = t.util.escapeQuotes(Le)
+                ;(t.opts._errorDataPathProperty && (t.errorPath = t.util.getPath(Ae, Le, t.opts.jsonPointers)),
+                  (y = t.errSchemaPath + '/required'))
+                var H = H || []
+                ;(H.push(r),
+                  (r = ''),
+                  t.createErrors !== !1
+                    ? ((r +=
+                        " { keyword: 'required' , dataPath: (dataPath || '') + " +
+                        t.errorPath +
+                        ' , schemaPath: ' +
+                        t.util.toQuotedString(y) +
+                        " , params: { missingProperty: '" +
+                        wt +
+                        "' } "),
+                      t.opts.messages !== !1 &&
+                        ((r += " , message: '"),
+                        t.opts._errorDataPathProperty
+                          ? (r += 'is a required property')
+                          : (r += "should have required property \\'" + wt + "\\'"),
+                        (r += "' ")),
+                      t.opts.verbose &&
+                        (r +=
+                          ' , schema: validate.schema' +
+                          P +
+                          ' , parentSchema: validate.schema' +
+                          t.schemaPath +
+                          ' , data: ' +
+                          m +
+                          ' '),
+                      (r += ' } '))
+                    : (r += ' {} '))
+                var re = r
+                ;((r = H.pop()),
+                  !t.compositeRule && E
+                    ? t.async
+                      ? (r += ' throw new ValidationError([' + re + ']); ')
+                      : (r += ' validate.errors = [' + re + ']; return false; ')
+                    : (r +=
+                        ' var err = ' +
+                        re +
+                        ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+                  (y = Ee),
+                  (t.errorPath = Ae),
+                  (r += ' } else { '))
+              } else
+                E
+                  ? ((r += ' if ( ' + Et + ' === undefined '),
+                    w &&
+                      (r +=
+                        ' || ! Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(Le) + "') "),
+                    (r += ') { ' + C + ' = true; } else { '))
+                  : ((r += ' if (' + Et + ' !== undefined '),
+                    w &&
+                      (r +=
+                        ' &&   Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(Le) + "') "),
+                    (r += ' ) { '))
+              r += ' ' + Ce + ' } '
+            }
+          }
+          E && ((r += ' if (' + C + ') { '), (v += '}'))
+        }
+    }
+    if (A.length) {
+      var Lt = A
+      if (Lt)
+        for (var ie, pa = -1, ai = Lt.length - 1; pa < ai; ) {
+          ie = Lt[(pa += 1)]
+          var pt = V[ie]
+          if (
+            t.opts.strictKeywords
+              ? (typeof pt == 'object' && Object.keys(pt).length > 0) || pt === !1
+              : t.util.schemaHasRules(pt, t.RULES.all)
+          ) {
+            ;((T.schema = pt),
+              (T.schemaPath = t.schemaPath + '.patternProperties' + t.util.getProperty(ie)),
+              (T.errSchemaPath = t.errSchemaPath + '/patternProperties/' + t.util.escapeFragment(ie)),
+              w
+                ? (r +=
+                    ' ' +
+                    Q +
+                    ' = ' +
+                    Q +
+                    ' || Object.keys(' +
+                    m +
+                    '); for (var ' +
+                    F +
+                    '=0; ' +
+                    F +
+                    '<' +
+                    Q +
+                    '.length; ' +
+                    F +
+                    '++) { var ' +
+                    L +
+                    ' = ' +
+                    Q +
+                    '[' +
+                    F +
+                    ']; ')
+                : (r += ' for (var ' + L + ' in ' + m + ') { '),
+              (r += ' if (' + t.usePattern(ie) + '.test(' + L + ')) { '),
+              (T.errorPath = t.util.getPathExpr(t.errorPath, L, t.opts.jsonPointers)))
+            var ke = m + '[' + L + ']'
+            T.dataPathArr[$] = L
+            var Ce = t.validate(T)
+            ;((T.baseId = W),
+              t.util.varOccurences(Ce, j) < 2
+                ? (r += ' ' + t.util.varReplace(Ce, j, ke) + ' ')
+                : (r += ' var ' + j + ' = ' + ke + '; ' + Ce + ' '),
+              E && (r += ' if (!' + C + ') break; '),
+              (r += ' } '),
+              E && (r += ' else ' + C + ' = true; '),
+              (r += ' }  '),
+              E && ((r += ' if (' + C + ') { '), (v += '}')))
+          }
+        }
+    }
+    return (E && (r += ' ' + v + ' if (' + _ + ' == errors) {'), r)
+  }
+})
+var mb = x((S$, Eb) => {
+  'use strict'
+  Eb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'errs__' + s,
+      T = t.util.copy(t),
+      v = ''
+    T.level++
+    var C = 'valid' + T.level
+    if (
+      ((r += 'var ' + _ + ' = errors;'),
+      t.opts.strictKeywords
+        ? (typeof d == 'object' && Object.keys(d).length > 0) || d === !1
+        : t.util.schemaHasRules(d, t.RULES.all))
+    ) {
+      ;((T.schema = d), (T.schemaPath = P), (T.errSchemaPath = y))
+      var L = 'key' + s,
+        F = 'idx' + s,
+        $ = 'i' + s,
+        j = "' + " + L + " + '",
+        Q = (T.dataLevel = t.dataLevel + 1),
+        R = 'data' + Q,
+        V = 'dataProperties' + s,
+        A = t.opts.ownProperties,
+        z = t.baseId
+      ;(A && (r += ' var ' + V + ' = undefined; '),
+        A
+          ? (r +=
+              ' ' +
+              V +
+              ' = ' +
+              V +
+              ' || Object.keys(' +
+              m +
+              '); for (var ' +
+              F +
+              '=0; ' +
+              F +
+              '<' +
+              V +
+              '.length; ' +
+              F +
+              '++) { var ' +
+              L +
+              ' = ' +
+              V +
+              '[' +
+              F +
+              ']; ')
+          : (r += ' for (var ' + L + ' in ' + m + ') { '),
+        (r += ' var startErrs' + s + ' = errors; '))
+      var B = L,
+        te = t.compositeRule
+      t.compositeRule = T.compositeRule = !0
+      var ae = t.validate(T)
+      ;((T.baseId = z),
+        t.util.varOccurences(ae, R) < 2
+          ? (r += ' ' + t.util.varReplace(ae, R, B) + ' ')
+          : (r += ' var ' + R + ' = ' + B + '; ' + ae + ' '),
+        (t.compositeRule = T.compositeRule = te),
+        (r +=
+          ' if (!' +
+          C +
+          ') { for (var ' +
+          $ +
+          '=startErrs' +
+          s +
+          '; ' +
+          $ +
+          '<errors; ' +
+          $ +
+          '++) { vErrors[' +
+          $ +
+          '].propertyName = ' +
+          L +
+          '; }   var err =   '),
+        t.createErrors !== !1
+          ? ((r +=
+              " { keyword: 'propertyNames' , dataPath: (dataPath || '') + " +
+              t.errorPath +
+              ' , schemaPath: ' +
+              t.util.toQuotedString(y) +
+              " , params: { propertyName: '" +
+              j +
+              "' } "),
+            t.opts.messages !== !1 && (r += " , message: 'property name \\'" + j + "\\' is invalid' "),
+            t.opts.verbose &&
+              (r +=
+                ' , schema: validate.schema' +
+                P +
+                ' , parentSchema: validate.schema' +
+                t.schemaPath +
+                ' , data: ' +
+                m +
+                ' '),
+            (r += ' } '))
+          : (r += ' {} '),
+        (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+        !t.compositeRule &&
+          E &&
+          (t.async
+            ? (r += ' throw new ValidationError(vErrors); ')
+            : (r += ' validate.errors = vErrors; return false; ')),
+        E && (r += ' break; '),
+        (r += ' } }'))
+    }
+    return (E && (r += ' ' + v + ' if (' + _ + ' == errors) {'), r)
+  }
+})
+var hb = x((_$, Tb) => {
+  'use strict'
+  Tb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = t.opts.$data && d && d.$data,
+      v
+    T
+      ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (v = 'schema' + s))
+      : (v = d)
+    var C = 'schema' + s
+    if (!T)
+      if (d.length < t.opts.loopRequired && t.schema.properties && Object.keys(t.schema.properties).length) {
+        var L = [],
+          F = d
+        if (F)
+          for (var $, j = -1, Q = F.length - 1; j < Q; ) {
+            $ = F[(j += 1)]
+            var R = t.schema.properties[$]
+            ;(R &&
+              (t.opts.strictKeywords
+                ? (typeof R == 'object' && Object.keys(R).length > 0) || R === !1
+                : t.util.schemaHasRules(R, t.RULES.all))) ||
+              (L[L.length] = $)
+          }
+      } else var L = d
+    if (T || L.length) {
+      var V = t.errorPath,
+        A = T || L.length >= t.opts.loopRequired,
+        z = t.opts.ownProperties
+      if (E)
+        if (((r += ' var missing' + s + '; '), A)) {
+          T || (r += ' var ' + C + ' = validate.schema' + P + '; ')
+          var B = 'i' + s,
+            te = 'schema' + s + '[' + B + ']',
+            ae = "' + " + te + " + '"
+          ;(t.opts._errorDataPathProperty && (t.errorPath = t.util.getPathExpr(V, te, t.opts.jsonPointers)),
+            (r += ' var ' + _ + ' = true; '),
+            T &&
+              (r +=
+                ' if (schema' +
+                s +
+                ' === undefined) ' +
+                _ +
+                ' = true; else if (!Array.isArray(schema' +
+                s +
+                ')) ' +
+                _ +
+                ' = false; else {'),
+            (r +=
+              ' for (var ' +
+              B +
+              ' = 0; ' +
+              B +
+              ' < ' +
+              C +
+              '.length; ' +
+              B +
+              '++) { ' +
+              _ +
+              ' = ' +
+              m +
+              '[' +
+              C +
+              '[' +
+              B +
+              ']] !== undefined '),
+            z && (r += ' &&   Object.prototype.hasOwnProperty.call(' + m + ', ' + C + '[' + B + ']) '),
+            (r += '; if (!' + _ + ') break; } '),
+            T && (r += '  }  '),
+            (r += '  if (!' + _ + ') {   '))
+          var J = J || []
+          ;(J.push(r),
+            (r = ''),
+            t.createErrors !== !1
+              ? ((r +=
+                  " { keyword: 'required' , dataPath: (dataPath || '') + " +
+                  t.errorPath +
+                  ' , schemaPath: ' +
+                  t.util.toQuotedString(y) +
+                  " , params: { missingProperty: '" +
+                  ae +
+                  "' } "),
+                t.opts.messages !== !1 &&
+                  ((r += " , message: '"),
+                  t.opts._errorDataPathProperty
+                    ? (r += 'is a required property')
+                    : (r += "should have required property \\'" + ae + "\\'"),
+                  (r += "' ")),
+                t.opts.verbose &&
+                  (r +=
+                    ' , schema: validate.schema' +
+                    P +
+                    ' , parentSchema: validate.schema' +
+                    t.schemaPath +
+                    ' , data: ' +
+                    m +
+                    ' '),
+                (r += ' } '))
+              : (r += ' {} '))
+          var c = r
+          ;((r = J.pop()),
+            !t.compositeRule && E
+              ? t.async
+                ? (r += ' throw new ValidationError([' + c + ']); ')
+                : (r += ' validate.errors = [' + c + ']; return false; ')
+              : (r +=
+                  ' var err = ' + c + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+            (r += ' } else { '))
+        } else {
+          r += ' if ( '
+          var w = L
+          if (w)
+            for (var W, B = -1, ce = w.length - 1; B < ce; ) {
+              ;((W = w[(B += 1)]), B && (r += ' || '))
+              var me = t.util.getProperty(W),
+                _e = m + me
+              ;((r += ' ( ( ' + _e + ' === undefined '),
+                z && (r += ' || ! Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(W) + "') "),
+                (r += ') && (missing' + s + ' = ' + t.util.toQuotedString(t.opts.jsonPointers ? W : me) + ') ) '))
+            }
+          r += ') {  '
+          var te = 'missing' + s,
+            ae = "' + " + te + " + '"
+          t.opts._errorDataPathProperty &&
+            (t.errorPath = t.opts.jsonPointers ? t.util.getPathExpr(V, te, !0) : V + ' + ' + te)
+          var J = J || []
+          ;(J.push(r),
+            (r = ''),
+            t.createErrors !== !1
+              ? ((r +=
+                  " { keyword: 'required' , dataPath: (dataPath || '') + " +
+                  t.errorPath +
+                  ' , schemaPath: ' +
+                  t.util.toQuotedString(y) +
+                  " , params: { missingProperty: '" +
+                  ae +
+                  "' } "),
+                t.opts.messages !== !1 &&
+                  ((r += " , message: '"),
+                  t.opts._errorDataPathProperty
+                    ? (r += 'is a required property')
+                    : (r += "should have required property \\'" + ae + "\\'"),
+                  (r += "' ")),
+                t.opts.verbose &&
+                  (r +=
+                    ' , schema: validate.schema' +
+                    P +
+                    ' , parentSchema: validate.schema' +
+                    t.schemaPath +
+                    ' , data: ' +
+                    m +
+                    ' '),
+                (r += ' } '))
+              : (r += ' {} '))
+          var c = r
+          ;((r = J.pop()),
+            !t.compositeRule && E
+              ? t.async
+                ? (r += ' throw new ValidationError([' + c + ']); ')
+                : (r += ' validate.errors = [' + c + ']; return false; ')
+              : (r +=
+                  ' var err = ' + c + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+            (r += ' } else { '))
+        }
+      else if (A) {
+        T || (r += ' var ' + C + ' = validate.schema' + P + '; ')
+        var B = 'i' + s,
+          te = 'schema' + s + '[' + B + ']',
+          ae = "' + " + te + " + '"
+        ;(t.opts._errorDataPathProperty && (t.errorPath = t.util.getPathExpr(V, te, t.opts.jsonPointers)),
+          T &&
+            ((r += ' if (' + C + ' && !Array.isArray(' + C + ')) {  var err =   '),
+            t.createErrors !== !1
+              ? ((r +=
+                  " { keyword: 'required' , dataPath: (dataPath || '') + " +
+                  t.errorPath +
+                  ' , schemaPath: ' +
+                  t.util.toQuotedString(y) +
+                  " , params: { missingProperty: '" +
+                  ae +
+                  "' } "),
+                t.opts.messages !== !1 &&
+                  ((r += " , message: '"),
+                  t.opts._errorDataPathProperty
+                    ? (r += 'is a required property')
+                    : (r += "should have required property \\'" + ae + "\\'"),
+                  (r += "' ")),
+                t.opts.verbose &&
+                  (r +=
+                    ' , schema: validate.schema' +
+                    P +
+                    ' , parentSchema: validate.schema' +
+                    t.schemaPath +
+                    ' , data: ' +
+                    m +
+                    ' '),
+                (r += ' } '))
+              : (r += ' {} '),
+            (r +=
+              ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; } else if (' +
+              C +
+              ' !== undefined) { ')),
+          (r +=
+            ' for (var ' +
+            B +
+            ' = 0; ' +
+            B +
+            ' < ' +
+            C +
+            '.length; ' +
+            B +
+            '++) { if (' +
+            m +
+            '[' +
+            C +
+            '[' +
+            B +
+            ']] === undefined '),
+          z && (r += ' || ! Object.prototype.hasOwnProperty.call(' + m + ', ' + C + '[' + B + ']) '),
+          (r += ') {  var err =   '),
+          t.createErrors !== !1
+            ? ((r +=
+                " { keyword: 'required' , dataPath: (dataPath || '') + " +
+                t.errorPath +
+                ' , schemaPath: ' +
+                t.util.toQuotedString(y) +
+                " , params: { missingProperty: '" +
+                ae +
+                "' } "),
+              t.opts.messages !== !1 &&
+                ((r += " , message: '"),
+                t.opts._errorDataPathProperty
+                  ? (r += 'is a required property')
+                  : (r += "should have required property \\'" + ae + "\\'"),
+                (r += "' ")),
+              t.opts.verbose &&
+                (r +=
+                  ' , schema: validate.schema' +
+                  P +
+                  ' , parentSchema: validate.schema' +
+                  t.schemaPath +
+                  ' , data: ' +
+                  m +
+                  ' '),
+              (r += ' } '))
+            : (r += ' {} '),
+          (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; } } '),
+          T && (r += '  }  '))
+      } else {
+        var Ye = L
+        if (Ye)
+          for (var W, Le = -1, Me = Ye.length - 1; Le < Me; ) {
+            W = Ye[(Le += 1)]
+            var me = t.util.getProperty(W),
+              ae = t.util.escapeQuotes(W),
+              _e = m + me
+            ;(t.opts._errorDataPathProperty && (t.errorPath = t.util.getPath(V, W, t.opts.jsonPointers)),
+              (r += ' if ( ' + _e + ' === undefined '),
+              z && (r += ' || ! Object.prototype.hasOwnProperty.call(' + m + ", '" + t.util.escapeQuotes(W) + "') "),
+              (r += ') {  var err =   '),
+              t.createErrors !== !1
+                ? ((r +=
+                    " { keyword: 'required' , dataPath: (dataPath || '') + " +
+                    t.errorPath +
+                    ' , schemaPath: ' +
+                    t.util.toQuotedString(y) +
+                    " , params: { missingProperty: '" +
+                    ae +
+                    "' } "),
+                  t.opts.messages !== !1 &&
+                    ((r += " , message: '"),
+                    t.opts._errorDataPathProperty
+                      ? (r += 'is a required property')
+                      : (r += "should have required property \\'" + ae + "\\'"),
+                    (r += "' ")),
+                  t.opts.verbose &&
+                    (r +=
+                      ' , schema: validate.schema' +
+                      P +
+                      ' , parentSchema: validate.schema' +
+                      t.schemaPath +
+                      ' , data: ' +
+                      m +
+                      ' '),
+                  (r += ' } '))
+                : (r += ' {} '),
+              (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; } '))
+          }
+      }
+      t.errorPath = V
+    } else E && (r += ' if (true) {')
+    return r
+  }
+})
+var yb = x((b$, Pb) => {
+  'use strict'
+  Pb.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m = 'data' + (u || ''),
+      _ = 'valid' + s,
+      T = t.opts.$data && d && d.$data,
+      v
+    if (
+      (T
+        ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (v = 'schema' + s))
+        : (v = d),
+      (d || T) && t.opts.uniqueItems !== !1)
+    ) {
+      ;(T &&
+        (r +=
+          ' var ' +
+          _ +
+          '; if (' +
+          v +
+          ' === false || ' +
+          v +
+          ' === undefined) ' +
+          _ +
+          ' = true; else if (typeof ' +
+          v +
+          " != 'boolean') " +
+          _ +
+          ' = false; else { '),
+        (r += ' var i = ' + m + '.length , ' + _ + ' = true , j; if (i > 1) { '))
+      var C = t.schema.items && t.schema.items.type,
+        L = Array.isArray(C)
+      if (!C || C == 'object' || C == 'array' || (L && (C.indexOf('object') >= 0 || C.indexOf('array') >= 0)))
+        r +=
+          ' outer: for (;i--;) { for (j = i; j--;) { if (equal(' +
+          m +
+          '[i], ' +
+          m +
+          '[j])) { ' +
+          _ +
+          ' = false; break outer; } } } '
+      else {
+        r += ' var itemIndices = {}, item; for (;i--;) { var item = ' + m + '[i]; '
+        var F = 'checkDataType' + (L ? 's' : '')
+        ;((r += ' if (' + t.util[F](C, 'item', t.opts.strictNumbers, !0) + ') continue; '),
+          L && (r += ` if (typeof item == 'string') item = '"' + item; `),
+          (r +=
+            " if (typeof itemIndices[item] == 'number') { " +
+            _ +
+            ' = false; j = itemIndices[item]; break; } itemIndices[item] = i; } '))
+      }
+      ;((r += ' } '), T && (r += '  }  '), (r += ' if (!' + _ + ') {   '))
+      var $ = $ || []
+      ;($.push(r),
+        (r = ''),
+        t.createErrors !== !1
+          ? ((r +=
+              " { keyword: 'uniqueItems' , dataPath: (dataPath || '') + " +
+              t.errorPath +
+              ' , schemaPath: ' +
+              t.util.toQuotedString(y) +
+              ' , params: { i: i, j: j } '),
+            t.opts.messages !== !1 &&
+              (r += " , message: 'should NOT have duplicate items (items ## ' + j + ' and ' + i + ' are identical)' "),
+            t.opts.verbose &&
+              ((r += ' , schema:  '),
+              T ? (r += 'validate.schema' + P) : (r += '' + d),
+              (r += '         , parentSchema: validate.schema' + t.schemaPath + ' , data: ' + m + ' ')),
+            (r += ' } '))
+          : (r += ' {} '))
+      var j = r
+      ;((r = $.pop()),
+        !t.compositeRule && E
+          ? t.async
+            ? (r += ' throw new ValidationError([' + j + ']); ')
+            : (r += ' validate.errors = [' + j + ']; return false; ')
+          : (r += ' var err = ' + j + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+        (r += ' } '),
+        E && (r += ' else { '))
+    } else E && (r += ' if (true) { ')
+    return r
+  }
+})
+var Sb = x((v$, gb) => {
+  'use strict'
+  gb.exports = {
+    $ref: R_(),
+    allOf: D_(),
+    anyOf: M_(),
+    $comment: F_(),
+    const: G_(),
+    contains: q_(),
+    dependencies: z_(),
+    enum: $_(),
+    format: K_(),
+    if: X_(),
+    items: Z_(),
+    maximum: Dm(),
+    minimum: Dm(),
+    maxItems: wm(),
+    minItems: wm(),
+    maxLength: Mm(),
+    minLength: Mm(),
+    maxProperties: Om(),
+    minProperties: Om(),
+    multipleOf: ib(),
+    not: ob(),
+    oneOf: ub(),
+    pattern: fb(),
+    properties: pb(),
+    propertyNames: mb(),
+    required: hb(),
+    uniqueItems: yb(),
+    validate: Rm(),
+  }
+})
+var vb = x((x$, bb) => {
+  'use strict'
+  var _b = Sb(),
+    Fm = ti().toHash
+  bb.exports = function () {
+    var t = [
+        {
+          type: 'number',
+          rules: [{ maximum: ['exclusiveMaximum'] }, { minimum: ['exclusiveMinimum'] }, 'multipleOf', 'format'],
+        },
+        { type: 'string', rules: ['maxLength', 'minLength', 'pattern', 'format'] },
+        { type: 'array', rules: ['maxItems', 'minItems', 'items', 'contains', 'uniqueItems'] },
+        {
+          type: 'object',
+          rules: [
+            'maxProperties',
+            'minProperties',
+            'required',
+            'dependencies',
+            'propertyNames',
+            { properties: ['additionalProperties', 'patternProperties'] },
+          ],
+        },
+        { rules: ['$ref', 'const', 'enum', 'not', 'anyOf', 'oneOf', 'allOf', 'if'] },
+      ],
+      n = ['type', '$comment'],
+      a = [
+        '$schema',
+        '$id',
+        'id',
+        '$data',
+        '$async',
+        'title',
+        'description',
+        'default',
+        'definitions',
+        'examples',
+        'readOnly',
+        'writeOnly',
+        'contentMediaType',
+        'contentEncoding',
+        'additionalItems',
+        'then',
+        'else',
+      ],
+      r = ['number', 'integer', 'string', 'array', 'object', 'boolean', 'null']
+    return (
+      (t.all = Fm(n)),
+      (t.types = Fm(r)),
+      t.forEach(function (s) {
+        ;((s.rules = s.rules.map(function (u) {
+          var d
+          if (typeof u == 'object') {
+            var P = Object.keys(u)[0]
+            ;((d = u[P]),
+              (u = P),
+              d.forEach(function (E) {
+                ;(n.push(E), (t.all[E] = !0))
+              }))
+          }
+          n.push(u)
+          var y = (t.all[u] = { keyword: u, code: _b[u], implements: d })
+          return y
+        })),
+          (t.all.$comment = { keyword: '$comment', code: _b.$comment }),
+          s.type && (t.types[s.type] = s))
+      }),
+      (t.keywords = Fm(n.concat(a))),
+      (t.custom = {}),
+      t
+    )
+  }
+})
+var Cb = x((A$, Ab) => {
+  'use strict'
+  var xb = [
+    'multipleOf',
+    'maximum',
+    'exclusiveMaximum',
+    'minimum',
+    'exclusiveMinimum',
+    'maxLength',
+    'minLength',
+    'pattern',
+    'additionalItems',
+    'maxItems',
+    'minItems',
+    'uniqueItems',
+    'maxProperties',
+    'minProperties',
+    'required',
+    'additionalProperties',
+    'enum',
+    'format',
+    'const',
+  ]
+  Ab.exports = function (e, t) {
+    for (var n = 0; n < t.length; n++) {
+      e = JSON.parse(JSON.stringify(e))
+      var a = t[n].split('/'),
+        r = e,
+        s
+      for (s = 1; s < a.length; s++) r = r[a[s]]
+      for (s = 0; s < xb.length; s++) {
+        var u = xb[s],
+          d = r[u]
+        d &&
+          (r[u] = {
+            anyOf: [d, { $ref: 'https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#' }],
+          })
+      }
+    }
+    return e
+  }
+})
+var Ub = x((C$, Lb) => {
+  'use strict'
+  var eq = Pf().MissingRef
+  Lb.exports = Yb
+  function Yb(e, t, n) {
+    var a = this
+    if (typeof this._opts.loadSchema != 'function') throw new Error('options.loadSchema should be a function')
+    typeof t == 'function' && ((n = t), (t = void 0))
+    var r = s(e).then(function () {
+      var d = a._addSchema(e, void 0, t)
+      return d.validate || u(d)
+    })
+    return (
+      n &&
+        r.then(function (d) {
+          n(null, d)
+        }, n),
+      r
+    )
+    function s(d) {
+      var P = d.$schema
+      return P && !a.getSchema(P) ? Yb.call(a, { $ref: P }, !0) : Promise.resolve()
+    }
+    function u(d) {
+      try {
+        return a._compile(d)
+      } catch (y) {
+        if (y instanceof eq) return P(y)
+        throw y
+      }
+      function P(y) {
+        var E = y.missingSchema
+        if (T(E)) throw new Error('Schema ' + E + ' is loaded but ' + y.missingRef + ' cannot be resolved')
+        var m = a._loadingSchemas[E]
+        return (
+          m || ((m = a._loadingSchemas[E] = a._opts.loadSchema(E)), m.then(_, _)),
+          m
+            .then(function (v) {
+              if (!T(E))
+                return s(v).then(function () {
+                  T(E) || a.addSchema(v, E, void 0, t)
+                })
+            })
+            .then(function () {
+              return u(d)
+            })
+        )
+        function _() {
+          delete a._loadingSchemas[E]
+        }
+        function T(v) {
+          return a._refs[v] || a._schemas[v]
+        }
+      }
+    }
+  }
+})
+var kb = x((Y$, Ib) => {
+  'use strict'
+  Ib.exports = function (t, n, a) {
+    var r = ' ',
+      s = t.level,
+      u = t.dataLevel,
+      d = t.schema[n],
+      P = t.schemaPath + t.util.getProperty(n),
+      y = t.errSchemaPath + '/' + n,
+      E = !t.opts.allErrors,
+      m,
+      _ = 'data' + (u || ''),
+      T = 'valid' + s,
+      v = 'errs__' + s,
+      C = t.opts.$data && d && d.$data,
+      L
+    C
+      ? ((r += ' var schema' + s + ' = ' + t.util.getData(d.$data, u, t.dataPathArr) + '; '), (L = 'schema' + s))
+      : (L = d)
+    var F = this,
+      $ = 'definition' + s,
+      j = F.definition,
+      Q = '',
+      R,
+      V,
+      A,
+      z,
+      B
+    if (C && j.$data) {
+      B = 'keywordValidate' + s
+      var te = j.validateSchema
+      r += ' var ' + $ + " = RULES.custom['" + n + "'].definition; var " + B + ' = ' + $ + '.validate;'
+    } else {
+      if (((z = t.useCustomRule(F, d, t.schema, t)), !z)) return
+      ;((L = 'validate.schema' + P), (B = z.code), (R = j.compile), (V = j.inline), (A = j.macro))
+    }
+    var ae = B + '.errors',
+      J = 'i' + s,
+      c = 'ruleErr' + s,
+      w = j.async
+    if (w && !t.async) throw new Error('async keyword in sync schema')
+    if (
+      (V || A || (r += '' + ae + ' = null;'),
+      (r += 'var ' + v + ' = errors;var ' + T + ';'),
+      C &&
+        j.$data &&
+        ((Q += '}'),
+        (r += ' if (' + L + ' === undefined) { ' + T + ' = true; } else { '),
+        te && ((Q += '}'), (r += ' ' + T + ' = ' + $ + '.validateSchema(' + L + '); if (' + T + ') { '))),
+      V)
+    )
+      j.statements ? (r += ' ' + z.validate + ' ') : (r += ' ' + T + ' = ' + z.validate + '; ')
+    else if (A) {
+      var W = t.util.copy(t),
+        Q = ''
+      W.level++
+      var ce = 'valid' + W.level
+      ;((W.schema = z.validate), (W.schemaPath = ''))
+      var me = t.compositeRule
+      t.compositeRule = W.compositeRule = !0
+      var _e = t.validate(W).replace(/validate\.schema/g, B)
+      ;((t.compositeRule = W.compositeRule = me), (r += ' ' + _e))
+    } else {
+      var Ye = Ye || []
+      ;(Ye.push(r),
+        (r = ''),
+        (r += '  ' + B + '.call( '),
+        t.opts.passContext ? (r += 'this') : (r += 'self'),
+        R || j.schema === !1
+          ? (r += ' , ' + _ + ' ')
+          : (r += ' , ' + L + ' , ' + _ + ' , validate.schema' + t.schemaPath + ' '),
+        (r += " , (dataPath || '')"),
+        t.errorPath != '""' && (r += ' + ' + t.errorPath))
+      var Le = u ? 'data' + (u - 1 || '') : 'parentData',
+        Me = u ? t.dataPathArr[u] : 'parentDataProperty'
+      r += ' , ' + Le + ' , ' + Me + ' , rootData )  '
+      var We = r
+      ;((r = Ye.pop()),
+        j.errors === !1
+          ? ((r += ' ' + T + ' = '), w && (r += 'await '), (r += '' + We + '; '))
+          : w
+            ? ((ae = 'customErrors' + s),
+              (r +=
+                ' var ' +
+                ae +
+                ' = null; try { ' +
+                T +
+                ' = await ' +
+                We +
+                '; } catch (e) { ' +
+                T +
+                ' = false; if (e instanceof ValidationError) ' +
+                ae +
+                ' = e.errors; else throw e; } '))
+            : (r += ' ' + ae + ' = null; ' + T + ' = ' + We + '; '))
+    }
+    if ((j.modifying && (r += ' if (' + Le + ') ' + _ + ' = ' + Le + '[' + Me + '];'), (r += '' + Q), j.valid))
+      E && (r += ' if (true) { ')
+    else {
+      ;((r += ' if ( '),
+        j.valid === void 0 ? ((r += ' !'), A ? (r += '' + ce) : (r += '' + T)) : (r += ' ' + !j.valid + ' '),
+        (r += ') { '),
+        (m = F.keyword))
+      var Ye = Ye || []
+      ;(Ye.push(r), (r = ''))
+      var Ye = Ye || []
+      ;(Ye.push(r),
+        (r = ''),
+        t.createErrors !== !1
+          ? ((r +=
+              " { keyword: '" +
+              (m || 'custom') +
+              "' , dataPath: (dataPath || '') + " +
+              t.errorPath +
+              ' , schemaPath: ' +
+              t.util.toQuotedString(y) +
+              " , params: { keyword: '" +
+              F.keyword +
+              "' } "),
+            t.opts.messages !== !1 && (r += ` , message: 'should pass "` + F.keyword + `" keyword validation' `),
+            t.opts.verbose &&
+              (r +=
+                ' , schema: validate.schema' +
+                P +
+                ' , parentSchema: validate.schema' +
+                t.schemaPath +
+                ' , data: ' +
+                _ +
+                ' '),
+            (r += ' } '))
+          : (r += ' {} '))
+      var ut = r
+      ;((r = Ye.pop()),
+        !t.compositeRule && E
+          ? t.async
+            ? (r += ' throw new ValidationError([' + ut + ']); ')
+            : (r += ' validate.errors = [' + ut + ']; return false; ')
+          : (r += ' var err = ' + ut + ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '))
+      var ie = r
+      ;((r = Ye.pop()),
+        V
+          ? j.errors
+            ? j.errors != 'full' &&
+              ((r +=
+                '  for (var ' +
+                J +
+                '=' +
+                v +
+                '; ' +
+                J +
+                '<errors; ' +
+                J +
+                '++) { var ' +
+                c +
+                ' = vErrors[' +
+                J +
+                ']; if (' +
+                c +
+                '.dataPath === undefined) ' +
+                c +
+                ".dataPath = (dataPath || '') + " +
+                t.errorPath +
+                '; if (' +
+                c +
+                '.schemaPath === undefined) { ' +
+                c +
+                '.schemaPath = "' +
+                y +
+                '"; } '),
+              t.opts.verbose && (r += ' ' + c + '.schema = ' + L + '; ' + c + '.data = ' + _ + '; '),
+              (r += ' } '))
+            : j.errors === !1
+              ? (r += ' ' + ie + ' ')
+              : ((r +=
+                  ' if (' +
+                  v +
+                  ' == errors) { ' +
+                  ie +
+                  ' } else {  for (var ' +
+                  J +
+                  '=' +
+                  v +
+                  '; ' +
+                  J +
+                  '<errors; ' +
+                  J +
+                  '++) { var ' +
+                  c +
+                  ' = vErrors[' +
+                  J +
+                  ']; if (' +
+                  c +
+                  '.dataPath === undefined) ' +
+                  c +
+                  ".dataPath = (dataPath || '') + " +
+                  t.errorPath +
+                  '; if (' +
+                  c +
+                  '.schemaPath === undefined) { ' +
+                  c +
+                  '.schemaPath = "' +
+                  y +
+                  '"; } '),
+                t.opts.verbose && (r += ' ' + c + '.schema = ' + L + '; ' + c + '.data = ' + _ + '; '),
+                (r += ' } } '))
+          : A
+            ? ((r += '   var err =   '),
+              t.createErrors !== !1
+                ? ((r +=
+                    " { keyword: '" +
+                    (m || 'custom') +
+                    "' , dataPath: (dataPath || '') + " +
+                    t.errorPath +
+                    ' , schemaPath: ' +
+                    t.util.toQuotedString(y) +
+                    " , params: { keyword: '" +
+                    F.keyword +
+                    "' } "),
+                  t.opts.messages !== !1 && (r += ` , message: 'should pass "` + F.keyword + `" keyword validation' `),
+                  t.opts.verbose &&
+                    (r +=
+                      ' , schema: validate.schema' +
+                      P +
+                      ' , parentSchema: validate.schema' +
+                      t.schemaPath +
+                      ' , data: ' +
+                      _ +
+                      ' '),
+                  (r += ' } '))
+                : (r += ' {} '),
+              (r += ';  if (vErrors === null) vErrors = [err]; else vErrors.push(err); errors++; '),
+              !t.compositeRule &&
+                E &&
+                (t.async
+                  ? (r += ' throw new ValidationError(vErrors); ')
+                  : (r += ' validate.errors = vErrors; return false; ')))
+            : j.errors === !1
+              ? (r += ' ' + ie + ' ')
+              : ((r +=
+                  ' if (Array.isArray(' +
+                  ae +
+                  ')) { if (vErrors === null) vErrors = ' +
+                  ae +
+                  '; else vErrors = vErrors.concat(' +
+                  ae +
+                  '); errors = vErrors.length;  for (var ' +
+                  J +
+                  '=' +
+                  v +
+                  '; ' +
+                  J +
+                  '<errors; ' +
+                  J +
+                  '++) { var ' +
+                  c +
+                  ' = vErrors[' +
+                  J +
+                  ']; if (' +
+                  c +
+                  '.dataPath === undefined) ' +
+                  c +
+                  ".dataPath = (dataPath || '') + " +
+                  t.errorPath +
+                  ';  ' +
+                  c +
+                  '.schemaPath = "' +
+                  y +
+                  '";  '),
+                t.opts.verbose && (r += ' ' + c + '.schema = ' + L + '; ' + c + '.data = ' + _ + '; '),
+                (r += ' } } else { ' + ie + ' } ')),
+        (r += ' } '),
+        E && (r += ' else { '))
+    }
+    return r
+  }
+})
+var Bm = x((L$, tq) => {
+  tq.exports = {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'http://json-schema.org/draft-07/schema#',
+    title: 'Core schema meta-schema',
+    definitions: {
+      schemaArray: { type: 'array', minItems: 1, items: { $ref: '#' } },
+      nonNegativeInteger: { type: 'integer', minimum: 0 },
+      nonNegativeIntegerDefault0: { allOf: [{ $ref: '#/definitions/nonNegativeInteger' }, { default: 0 }] },
+      simpleTypes: { enum: ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] },
+      stringArray: { type: 'array', items: { type: 'string' }, uniqueItems: !0, default: [] },
+    },
+    type: ['object', 'boolean'],
+    properties: {
+      $id: { type: 'string', format: 'uri-reference' },
+      $schema: { type: 'string', format: 'uri' },
+      $ref: { type: 'string', format: 'uri-reference' },
+      $comment: { type: 'string' },
+      title: { type: 'string' },
+      description: { type: 'string' },
+      default: !0,
+      readOnly: { type: 'boolean', default: !1 },
+      examples: { type: 'array', items: !0 },
+      multipleOf: { type: 'number', exclusiveMinimum: 0 },
+      maximum: { type: 'number' },
+      exclusiveMaximum: { type: 'number' },
+      minimum: { type: 'number' },
+      exclusiveMinimum: { type: 'number' },
+      maxLength: { $ref: '#/definitions/nonNegativeInteger' },
+      minLength: { $ref: '#/definitions/nonNegativeIntegerDefault0' },
+      pattern: { type: 'string', format: 'regex' },
+      additionalItems: { $ref: '#' },
+      items: { anyOf: [{ $ref: '#' }, { $ref: '#/definitions/schemaArray' }], default: !0 },
+      maxItems: { $ref: '#/definitions/nonNegativeInteger' },
+      minItems: { $ref: '#/definitions/nonNegativeIntegerDefault0' },
+      uniqueItems: { type: 'boolean', default: !1 },
+      contains: { $ref: '#' },
+      maxProperties: { $ref: '#/definitions/nonNegativeInteger' },
+      minProperties: { $ref: '#/definitions/nonNegativeIntegerDefault0' },
+      required: { $ref: '#/definitions/stringArray' },
+      additionalProperties: { $ref: '#' },
+      definitions: { type: 'object', additionalProperties: { $ref: '#' }, default: {} },
+      properties: { type: 'object', additionalProperties: { $ref: '#' }, default: {} },
+      patternProperties: {
+        type: 'object',
+        additionalProperties: { $ref: '#' },
+        propertyNames: { format: 'regex' },
+        default: {},
+      },
+      dependencies: {
+        type: 'object',
+        additionalProperties: { anyOf: [{ $ref: '#' }, { $ref: '#/definitions/stringArray' }] },
+      },
+      propertyNames: { $ref: '#' },
+      const: !0,
+      enum: { type: 'array', items: !0, minItems: 1, uniqueItems: !0 },
+      type: {
+        anyOf: [
+          { $ref: '#/definitions/simpleTypes' },
+          { type: 'array', items: { $ref: '#/definitions/simpleTypes' }, minItems: 1, uniqueItems: !0 },
+        ],
+      },
+      format: { type: 'string' },
+      contentMediaType: { type: 'string' },
+      contentEncoding: { type: 'string' },
+      if: { $ref: '#' },
+      then: { $ref: '#' },
+      else: { $ref: '#' },
+      allOf: { $ref: '#/definitions/schemaArray' },
+      anyOf: { $ref: '#/definitions/schemaArray' },
+      oneOf: { $ref: '#/definitions/schemaArray' },
+      not: { $ref: '#' },
+    },
+    default: !0,
+  }
+})
+var Db = x((U$, Vb) => {
+  'use strict'
+  var Rb = Bm()
+  Vb.exports = {
+    $id: 'https://github.com/ajv-validator/ajv/blob/master/lib/definition_schema.js',
+    definitions: { simpleTypes: Rb.definitions.simpleTypes },
+    type: 'object',
+    dependencies: {
+      schema: ['validate'],
+      $data: ['validate'],
+      statements: ['inline'],
+      valid: { not: { required: ['macro'] } },
+    },
+    properties: {
+      type: Rb.properties.type,
+      schema: { type: 'boolean' },
+      statements: { type: 'boolean' },
+      dependencies: { type: 'array', items: { type: 'string' } },
+      metaSchema: { type: 'object' },
+      modifying: { type: 'boolean' },
+      valid: { type: 'boolean' },
+      $data: { type: 'boolean' },
+      async: { type: 'boolean' },
+      errors: { anyOf: [{ type: 'boolean' }, { const: 'full' }] },
+    },
+  }
+})
+var Mb = x((I$, wb) => {
+  'use strict'
+  var rq = /^[a-z_$][a-z0-9_$-]*$/i,
+    nq = kb(),
+    aq = Db()
+  wb.exports = { add: iq, get: sq, remove: oq, validate: Gm }
+  function iq(e, t) {
+    var n = this.RULES
+    if (n.keywords[e]) throw new Error('Keyword ' + e + ' is already defined')
+    if (!rq.test(e)) throw new Error('Keyword ' + e + ' is not a valid identifier')
+    if (t) {
+      this.validateKeyword(t, !0)
+      var a = t.type
+      if (Array.isArray(a)) for (var r = 0; r < a.length; r++) u(e, a[r], t)
+      else u(e, a, t)
+      var s = t.metaSchema
+      s &&
+        (t.$data &&
+          this._opts.$data &&
+          (s = {
+            anyOf: [s, { $ref: 'https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#' }],
+          }),
+        (t.validateSchema = this.compile(s, !0)))
+    }
+    n.keywords[e] = n.all[e] = !0
+    function u(d, P, y) {
+      for (var E, m = 0; m < n.length; m++) {
+        var _ = n[m]
+        if (_.type == P) {
+          E = _
+          break
+        }
+      }
+      E || ((E = { type: P, rules: [] }), n.push(E))
+      var T = { keyword: d, definition: y, custom: !0, code: nq, implements: y.implements }
+      ;(E.rules.push(T), (n.custom[d] = T))
+    }
+    return this
+  }
+  function sq(e) {
+    var t = this.RULES.custom[e]
+    return t ? t.definition : this.RULES.keywords[e] || !1
+  }
+  function oq(e) {
+    var t = this.RULES
+    ;(delete t.keywords[e], delete t.all[e], delete t.custom[e])
+    for (var n = 0; n < t.length; n++)
+      for (var a = t[n].rules, r = 0; r < a.length; r++)
+        if (a[r].keyword == e) {
+          a.splice(r, 1)
+          break
+        }
+    return this
+  }
+  function Gm(e, t) {
+    Gm.errors = null
+    var n = (this._validateKeyword = this._validateKeyword || this.compile(aq, !0))
+    if (n(e)) return !0
+    if (((Gm.errors = n.errors), t))
+      throw new Error('custom keyword definition is invalid: ' + this.errorsText(n.errors))
+    return !1
+  }
+})
+var Ob = x((k$, lq) => {
+  lq.exports = {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    $id: 'https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#',
+    description: 'Meta-schema for $data reference (JSON Schema extension proposal)',
+    type: 'object',
+    required: ['$data'],
+    properties: { $data: { type: 'string', anyOf: [{ format: 'relative-json-pointer' }, { format: 'json-pointer' }] } },
+    additionalProperties: !1,
+  }
+})
+var Hb = x((R$, $b) => {
+  'use strict'
+  var Bb = h_(),
+    ri = hf(),
+    uq = y_(),
+    Gb = Am(),
+    cq = km(),
+    fq = I_(),
+    dq = vb(),
+    Nb = Cb(),
+    qb = ti()
+  $b.exports = yt
+  yt.prototype.validate = Eq
+  yt.prototype.compile = mq
+  yt.prototype.addSchema = Tq
+  yt.prototype.addMetaSchema = hq
+  yt.prototype.validateSchema = Pq
+  yt.prototype.getSchema = gq
+  yt.prototype.removeSchema = _q
+  yt.prototype.addFormat = Uq
+  yt.prototype.errorsText = Lq
+  yt.prototype._addSchema = bq
+  yt.prototype._compile = vq
+  yt.prototype.compileAsync = Ub()
+  var Af = Mb()
+  yt.prototype.addKeyword = Af.add
+  yt.prototype.getKeyword = Af.get
+  yt.prototype.removeKeyword = Af.remove
+  yt.prototype.validateKeyword = Af.validate
+  var jb = Pf()
+  yt.ValidationError = jb.Validation
+  yt.MissingRefError = jb.MissingRef
+  yt.$dataMetaSchema = Nb
+  var xf = 'http://json-schema.org/draft-07/schema',
+    Fb = ['removeAdditional', 'useDefaults', 'coerceTypes', 'strictDefaults'],
+    pq = ['/properties']
+  function yt(e) {
+    if (!(this instanceof yt)) return new yt(e)
+    ;((e = this._opts = qb.copy(e) || {}),
+      wq(this),
+      (this._schemas = {}),
+      (this._refs = {}),
+      (this._fragments = {}),
+      (this._formats = fq(e.format)),
+      (this._cache = e.cache || new uq()),
+      (this._loadingSchemas = {}),
+      (this._compilations = []),
+      (this.RULES = dq()),
+      (this._getId = xq(e)),
+      (e.loopRequired = e.loopRequired || 1 / 0),
+      e.errorDataPath == 'property' && (e._errorDataPathProperty = !0),
+      e.serialize === void 0 && (e.serialize = cq),
+      (this._metaOpts = Dq(this)),
+      e.formats && Rq(this),
+      e.keywords && Vq(this),
+      Iq(this),
+      typeof e.meta == 'object' && this.addMetaSchema(e.meta),
+      e.nullable && this.addKeyword('nullable', { metaSchema: { type: 'boolean' } }),
+      kq(this))
+  }
+  function Eq(e, t) {
+    var n
+    if (typeof e == 'string') {
+      if (((n = this.getSchema(e)), !n)) throw new Error('no schema with key or ref "' + e + '"')
+    } else {
+      var a = this._addSchema(e)
+      n = a.validate || this._compile(a)
+    }
+    var r = n(t)
+    return (n.$async !== !0 && (this.errors = n.errors), r)
+  }
+  function mq(e, t) {
+    var n = this._addSchema(e, void 0, t)
+    return n.validate || this._compile(n)
+  }
+  function Tq(e, t, n, a) {
+    if (Array.isArray(e)) {
+      for (var r = 0; r < e.length; r++) this.addSchema(e[r], void 0, n, a)
+      return this
+    }
+    var s = this._getId(e)
+    if (s !== void 0 && typeof s != 'string') throw new Error('schema id must be string')
+    return ((t = ri.normalizeId(t || s)), Wb(this, t), (this._schemas[t] = this._addSchema(e, n, a, !0)), this)
+  }
+  function hq(e, t, n) {
+    return (this.addSchema(e, t, n, !0), this)
+  }
+  function Pq(e, t) {
+    var n = e.$schema
+    if (n !== void 0 && typeof n != 'string') throw new Error('$schema must be a string')
+    if (((n = n || this._opts.defaultMeta || yq(this)), !n))
+      return (this.logger.warn('meta-schema not available'), (this.errors = null), !0)
+    var a = this.validate(n, e)
+    if (!a && t) {
+      var r = 'schema is invalid: ' + this.errorsText()
+      if (this._opts.validateSchema == 'log') this.logger.error(r)
+      else throw new Error(r)
+    }
+    return a
+  }
+  function yq(e) {
+    var t = e._opts.meta
+    return (
+      (e._opts.defaultMeta = typeof t == 'object' ? e._getId(t) || t : e.getSchema(xf) ? xf : void 0),
+      e._opts.defaultMeta
+    )
+  }
+  function gq(e) {
+    var t = zb(this, e)
+    switch (typeof t) {
+      case 'object':
+        return t.validate || this._compile(t)
+      case 'string':
+        return this.getSchema(t)
+      case 'undefined':
+        return Sq(this, e)
+    }
+  }
+  function Sq(e, t) {
+    var n = ri.schema.call(e, { schema: {} }, t)
+    if (n) {
+      var a = n.schema,
+        r = n.root,
+        s = n.baseId,
+        u = Bb.call(e, a, r, void 0, s)
+      return ((e._fragments[t] = new Gb({ ref: t, fragment: !0, schema: a, root: r, baseId: s, validate: u })), u)
+    }
+  }
+  function zb(e, t) {
+    return ((t = ri.normalizeId(t)), e._schemas[t] || e._refs[t] || e._fragments[t])
+  }
+  function _q(e) {
+    if (e instanceof RegExp) return (vf(this, this._schemas, e), vf(this, this._refs, e), this)
+    switch (typeof e) {
+      case 'undefined':
+        return (vf(this, this._schemas), vf(this, this._refs), this._cache.clear(), this)
+      case 'string':
+        var t = zb(this, e)
+        return (t && this._cache.del(t.cacheKey), delete this._schemas[e], delete this._refs[e], this)
+      case 'object':
+        var n = this._opts.serialize,
+          a = n ? n(e) : e
+        this._cache.del(a)
+        var r = this._getId(e)
+        r && ((r = ri.normalizeId(r)), delete this._schemas[r], delete this._refs[r])
+    }
+    return this
+  }
+  function vf(e, t, n) {
+    for (var a in t) {
+      var r = t[a]
+      !r.meta && (!n || n.test(a)) && (e._cache.del(r.cacheKey), delete t[a])
+    }
+  }
+  function bq(e, t, n, a) {
+    if (typeof e != 'object' && typeof e != 'boolean') throw new Error('schema should be object or boolean')
+    var r = this._opts.serialize,
+      s = r ? r(e) : e,
+      u = this._cache.get(s)
+    if (u) return u
+    a = a || this._opts.addUsedSchema !== !1
+    var d = ri.normalizeId(this._getId(e))
+    d && a && Wb(this, d)
+    var P = this._opts.validateSchema !== !1 && !t,
+      y
+    P && !(y = d && d == ri.normalizeId(e.$schema)) && this.validateSchema(e, !0)
+    var E = ri.ids.call(this, e),
+      m = new Gb({ id: d, schema: e, localRefs: E, cacheKey: s, meta: n })
+    return (d[0] != '#' && a && (this._refs[d] = m), this._cache.put(s, m), P && y && this.validateSchema(e, !0), m)
+  }
+  function vq(e, t) {
+    if (e.compiling)
+      return (
+        (e.validate = r),
+        (r.schema = e.schema),
+        (r.errors = null),
+        (r.root = t || r),
+        e.schema.$async === !0 && (r.$async = !0),
+        r
+      )
+    e.compiling = !0
+    var n
+    e.meta && ((n = this._opts), (this._opts = this._metaOpts))
+    var a
+    try {
+      a = Bb.call(this, e.schema, t, e.localRefs)
+    } catch (s) {
+      throw (delete e.validate, s)
+    } finally {
+      ;((e.compiling = !1), e.meta && (this._opts = n))
+    }
+    return ((e.validate = a), (e.refs = a.refs), (e.refVal = a.refVal), (e.root = a.root), a)
+    function r() {
+      var s = e.validate,
+        u = s.apply(this, arguments)
+      return ((r.errors = s.errors), u)
+    }
+  }
+  function xq(e) {
+    switch (e.schemaId) {
+      case 'auto':
+        return Yq
+      case 'id':
+        return Aq
+      default:
+        return Cq
+    }
+  }
+  function Aq(e) {
+    return (e.$id && this.logger.warn('schema $id ignored', e.$id), e.id)
+  }
+  function Cq(e) {
+    return (e.id && this.logger.warn('schema id ignored', e.id), e.$id)
+  }
+  function Yq(e) {
+    if (e.$id && e.id && e.$id != e.id) throw new Error('schema $id is different from id')
+    return e.$id || e.id
+  }
+  function Lq(e, t) {
+    if (((e = e || this.errors), !e)) return 'No errors'
+    t = t || {}
+    for (
+      var n = t.separator === void 0 ? ', ' : t.separator, a = t.dataVar === void 0 ? 'data' : t.dataVar, r = '', s = 0;
+      s < e.length;
+      s++
+    ) {
+      var u = e[s]
+      u && (r += a + u.dataPath + ' ' + u.message + n)
+    }
+    return r.slice(0, -n.length)
+  }
+  function Uq(e, t) {
+    return (typeof t == 'string' && (t = new RegExp(t)), (this._formats[e] = t), this)
+  }
+  function Iq(e) {
+    var t
+    if ((e._opts.$data && ((t = Ob()), e.addMetaSchema(t, t.$id, !0)), e._opts.meta !== !1)) {
+      var n = Bm()
+      ;(e._opts.$data && (n = Nb(n, pq)), e.addMetaSchema(n, xf, !0), (e._refs['http://json-schema.org/schema'] = xf))
+    }
+  }
+  function kq(e) {
+    var t = e._opts.schemas
+    if (t)
+      if (Array.isArray(t)) e.addSchema(t)
+      else for (var n in t) e.addSchema(t[n], n)
+  }
+  function Rq(e) {
+    for (var t in e._opts.formats) {
+      var n = e._opts.formats[t]
+      e.addFormat(t, n)
+    }
+  }
+  function Vq(e) {
+    for (var t in e._opts.keywords) {
+      var n = e._opts.keywords[t]
+      e.addKeyword(t, n)
+    }
+  }
+  function Wb(e, t) {
+    if (e._schemas[t] || e._refs[t]) throw new Error('schema with key or id "' + t + '" already exists')
+  }
+  function Dq(e) {
+    for (var t = qb.copy(e._opts), n = 0; n < Fb.length; n++) delete t[Fb[n]]
+    return t
+  }
+  function wq(e) {
+    var t = e._opts.logger
+    if (t === !1) e.logger = { log: Nm, warn: Nm, error: Nm }
+    else {
+      if ((t === void 0 && (t = console), !(typeof t == 'object' && t.log && t.warn && t.error)))
+        throw new Error('logger must implement log, warn and error methods')
+      e.logger = t
+    }
+  }
+  function Nm() {}
+})
+var iv = x((Km, Jm) => {
+  ;(function (e, t) {
+    typeof Km == 'object' && typeof Jm < 'u'
+      ? (Jm.exports = t())
+      : typeof define == 'function' && define.amd
+        ? define(t)
+        : ((e = e || self).esquery = t())
+  })(Km, function () {
+    'use strict'
+    function e(R, V) {
+      ;(V == null || V > R.length) && (V = R.length)
+      for (var A = 0, z = Array(V); A < V; A++) z[A] = R[A]
+      return z
+    }
+    function t(R, V) {
+      return (
+        (function (A) {
+          if (Array.isArray(A)) return A
+        })(R) ||
+        (function (A, z) {
+          var B = A == null ? null : (typeof Symbol < 'u' && A[Symbol.iterator]) || A['@@iterator']
+          if (B != null) {
+            var te,
+              ae,
+              J,
+              c,
+              w = [],
+              W = !0,
+              ce = !1
+            try {
+              if (((J = (B = B.call(A)).next), z === 0)) {
+                if (Object(B) !== B) return
+                W = !1
+              } else for (; !(W = (te = J.call(B)).done) && (w.push(te.value), w.length !== z); W = !0);
+            } catch (me) {
+              ;((ce = !0), (ae = me))
+            } finally {
+              try {
+                if (!W && B.return != null && ((c = B.return()), Object(c) !== c)) return
+              } finally {
+                if (ce) throw ae
+              }
+            }
+            return w
+          }
+        })(R, V) ||
+        r(R, V) ||
+        (function () {
+          throw new TypeError(`Invalid attempt to destructure non-iterable instance.
+In order to be iterable, non-array objects must have a [Symbol.iterator]() method.`)
+        })()
+      )
+    }
+    function n(R) {
+      return (
+        (function (V) {
+          if (Array.isArray(V)) return e(V)
+        })(R) ||
+        (function (V) {
+          if ((typeof Symbol < 'u' && V[Symbol.iterator] != null) || V['@@iterator'] != null) return Array.from(V)
+        })(R) ||
+        r(R) ||
+        (function () {
+          throw new TypeError(`Invalid attempt to spread non-iterable instance.
+In order to be iterable, non-array objects must have a [Symbol.iterator]() method.`)
+        })()
+      )
+    }
+    function a(R) {
+      return (a =
+        typeof Symbol == 'function' && typeof Symbol.iterator == 'symbol'
+          ? function (V) {
+              return typeof V
+            }
+          : function (V) {
+              return V && typeof Symbol == 'function' && V.constructor === Symbol && V !== Symbol.prototype
+                ? 'symbol'
+                : typeof V
+            })(R)
+    }
+    function r(R, V) {
+      if (R) {
+        if (typeof R == 'string') return e(R, V)
+        var A = {}.toString.call(R).slice(8, -1)
+        return (
+          A === 'Object' && R.constructor && (A = R.constructor.name),
+          A === 'Map' || A === 'Set'
+            ? Array.from(R)
+            : A === 'Arguments' || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(A)
+              ? e(R, V)
+              : void 0
+        )
+      }
+    }
+    typeof globalThis < 'u' || typeof window < 'u' || (typeof global < 'u' ? global : typeof self < 'u')
+    function s(R, V) {
+      return (R((V = { exports: {} }), V.exports), V.exports)
+    }
+    var u = s(function (R, V) {
+        ;(function A(z) {
+          var B, te, ae, J, c, w
+          function W(ie) {
+            var fe,
+              Te,
+              Ae = {}
+            for (fe in ie)
+              ie.hasOwnProperty(fe) && ((Te = ie[fe]), (Ae[fe] = typeof Te == 'object' && Te !== null ? W(Te) : Te))
+            return Ae
+          }
+          function ce(ie, fe) {
+            ;((this.parent = ie), (this.key = fe))
+          }
+          function me(ie, fe, Te, Ae) {
+            ;((this.node = ie), (this.path = fe), (this.wrap = Te), (this.ref = Ae))
+          }
+          function _e() {}
+          function Ye(ie) {
+            return ie != null && typeof ie == 'object' && typeof ie.type == 'string'
+          }
+          function Le(ie, fe) {
+            return (ie === B.ObjectExpression || ie === B.ObjectPattern) && fe === 'properties'
+          }
+          function Me(ie, fe) {
+            for (var Te = ie.length - 1; Te >= 0; --Te) if (ie[Te].node === fe) return !0
+            return !1
+          }
+          function We(ie, fe) {
+            return new _e().traverse(ie, fe)
+          }
+          function ut(ie, fe) {
+            var Te
+            return (
+              (Te = (function (Ae, X) {
+                var Ee, H, re, De
+                for (H = Ae.length, re = 0; H; )
+                  X(Ae[(De = re + (Ee = H >>> 1))]) ? (H = Ee) : ((re = De + 1), (H -= Ee + 1))
+                return re
+              })(fe, function (Ae) {
+                return Ae.range[0] > ie.range[0]
+              })),
+              (ie.extendedRange = [ie.range[0], ie.range[1]]),
+              Te !== fe.length && (ie.extendedRange[1] = fe[Te].range[0]),
+              (Te -= 1) >= 0 && (ie.extendedRange[0] = fe[Te].range[1]),
+              ie
+            )
+          }
+          return (
+            (B = {
+              AssignmentExpression: 'AssignmentExpression',
+              AssignmentPattern: 'AssignmentPattern',
+              ArrayExpression: 'ArrayExpression',
+              ArrayPattern: 'ArrayPattern',
+              ArrowFunctionExpression: 'ArrowFunctionExpression',
+              AwaitExpression: 'AwaitExpression',
+              BlockStatement: 'BlockStatement',
+              BinaryExpression: 'BinaryExpression',
+              BreakStatement: 'BreakStatement',
+              CallExpression: 'CallExpression',
+              CatchClause: 'CatchClause',
+              ChainExpression: 'ChainExpression',
+              ClassBody: 'ClassBody',
+              ClassDeclaration: 'ClassDeclaration',
+              ClassExpression: 'ClassExpression',
+              ComprehensionBlock: 'ComprehensionBlock',
+              ComprehensionExpression: 'ComprehensionExpression',
+              ConditionalExpression: 'ConditionalExpression',
+              ContinueStatement: 'ContinueStatement',
+              DebuggerStatement: 'DebuggerStatement',
+              DirectiveStatement: 'DirectiveStatement',
+              DoWhileStatement: 'DoWhileStatement',
+              EmptyStatement: 'EmptyStatement',
+              ExportAllDeclaration: 'ExportAllDeclaration',
+              ExportDefaultDeclaration: 'ExportDefaultDeclaration',
+              ExportNamedDeclaration: 'ExportNamedDeclaration',
+              ExportSpecifier: 'ExportSpecifier',
+              ExpressionStatement: 'ExpressionStatement',
+              ForStatement: 'ForStatement',
+              ForInStatement: 'ForInStatement',
+              ForOfStatement: 'ForOfStatement',
+              FunctionDeclaration: 'FunctionDeclaration',
+              FunctionExpression: 'FunctionExpression',
+              GeneratorExpression: 'GeneratorExpression',
+              Identifier: 'Identifier',
+              IfStatement: 'IfStatement',
+              ImportExpression: 'ImportExpression',
+              ImportDeclaration: 'ImportDeclaration',
+              ImportDefaultSpecifier: 'ImportDefaultSpecifier',
+              ImportNamespaceSpecifier: 'ImportNamespaceSpecifier',
+              ImportSpecifier: 'ImportSpecifier',
+              Literal: 'Literal',
+              LabeledStatement: 'LabeledStatement',
+              LogicalExpression: 'LogicalExpression',
+              MemberExpression: 'MemberExpression',
+              MetaProperty: 'MetaProperty',
+              MethodDefinition: 'MethodDefinition',
+              ModuleSpecifier: 'ModuleSpecifier',
+              NewExpression: 'NewExpression',
+              ObjectExpression: 'ObjectExpression',
+              ObjectPattern: 'ObjectPattern',
+              PrivateIdentifier: 'PrivateIdentifier',
+              Program: 'Program',
+              Property: 'Property',
+              PropertyDefinition: 'PropertyDefinition',
+              RestElement: 'RestElement',
+              ReturnStatement: 'ReturnStatement',
+              SequenceExpression: 'SequenceExpression',
+              SpreadElement: 'SpreadElement',
+              Super: 'Super',
+              SwitchStatement: 'SwitchStatement',
+              SwitchCase: 'SwitchCase',
+              TaggedTemplateExpression: 'TaggedTemplateExpression',
+              TemplateElement: 'TemplateElement',
+              TemplateLiteral: 'TemplateLiteral',
+              ThisExpression: 'ThisExpression',
+              ThrowStatement: 'ThrowStatement',
+              TryStatement: 'TryStatement',
+              UnaryExpression: 'UnaryExpression',
+              UpdateExpression: 'UpdateExpression',
+              VariableDeclaration: 'VariableDeclaration',
+              VariableDeclarator: 'VariableDeclarator',
+              WhileStatement: 'WhileStatement',
+              WithStatement: 'WithStatement',
+              YieldExpression: 'YieldExpression',
+            }),
+            (ae = {
+              AssignmentExpression: ['left', 'right'],
+              AssignmentPattern: ['left', 'right'],
+              ArrayExpression: ['elements'],
+              ArrayPattern: ['elements'],
+              ArrowFunctionExpression: ['params', 'body'],
+              AwaitExpression: ['argument'],
+              BlockStatement: ['body'],
+              BinaryExpression: ['left', 'right'],
+              BreakStatement: ['label'],
+              CallExpression: ['callee', 'arguments'],
+              CatchClause: ['param', 'body'],
+              ChainExpression: ['expression'],
+              ClassBody: ['body'],
+              ClassDeclaration: ['id', 'superClass', 'body'],
+              ClassExpression: ['id', 'superClass', 'body'],
+              ComprehensionBlock: ['left', 'right'],
+              ComprehensionExpression: ['blocks', 'filter', 'body'],
+              ConditionalExpression: ['test', 'consequent', 'alternate'],
+              ContinueStatement: ['label'],
+              DebuggerStatement: [],
+              DirectiveStatement: [],
+              DoWhileStatement: ['body', 'test'],
+              EmptyStatement: [],
+              ExportAllDeclaration: ['source'],
+              ExportDefaultDeclaration: ['declaration'],
+              ExportNamedDeclaration: ['declaration', 'specifiers', 'source'],
+              ExportSpecifier: ['exported', 'local'],
+              ExpressionStatement: ['expression'],
+              ForStatement: ['init', 'test', 'update', 'body'],
+              ForInStatement: ['left', 'right', 'body'],
+              ForOfStatement: ['left', 'right', 'body'],
+              FunctionDeclaration: ['id', 'params', 'body'],
+              FunctionExpression: ['id', 'params', 'body'],
+              GeneratorExpression: ['blocks', 'filter', 'body'],
+              Identifier: [],
+              IfStatement: ['test', 'consequent', 'alternate'],
+              ImportExpression: ['source'],
+              ImportDeclaration: ['specifiers', 'source'],
+              ImportDefaultSpecifier: ['local'],
+              ImportNamespaceSpecifier: ['local'],
+              ImportSpecifier: ['imported', 'local'],
+              Literal: [],
+              LabeledStatement: ['label', 'body'],
+              LogicalExpression: ['left', 'right'],
+              MemberExpression: ['object', 'property'],
+              MetaProperty: ['meta', 'property'],
+              MethodDefinition: ['key', 'value'],
+              ModuleSpecifier: [],
+              NewExpression: ['callee', 'arguments'],
+              ObjectExpression: ['properties'],
+              ObjectPattern: ['properties'],
+              PrivateIdentifier: [],
+              Program: ['body'],
+              Property: ['key', 'value'],
+              PropertyDefinition: ['key', 'value'],
+              RestElement: ['argument'],
+              ReturnStatement: ['argument'],
+              SequenceExpression: ['expressions'],
+              SpreadElement: ['argument'],
+              Super: [],
+              SwitchStatement: ['discriminant', 'cases'],
+              SwitchCase: ['test', 'consequent'],
+              TaggedTemplateExpression: ['tag', 'quasi'],
+              TemplateElement: [],
+              TemplateLiteral: ['quasis', 'expressions'],
+              ThisExpression: [],
+              ThrowStatement: ['argument'],
+              TryStatement: ['block', 'handler', 'finalizer'],
+              UnaryExpression: ['argument'],
+              UpdateExpression: ['argument'],
+              VariableDeclaration: ['declarations'],
+              VariableDeclarator: ['id', 'init'],
+              WhileStatement: ['test', 'body'],
+              WithStatement: ['object', 'body'],
+              YieldExpression: ['argument'],
+            }),
+            (te = { Break: (J = {}), Skip: (c = {}), Remove: (w = {}) }),
+            (ce.prototype.replace = function (ie) {
+              this.parent[this.key] = ie
+            }),
+            (ce.prototype.remove = function () {
+              return Array.isArray(this.parent) ? (this.parent.splice(this.key, 1), !0) : (this.replace(null), !1)
+            }),
+            (_e.prototype.path = function () {
+              var ie, fe, Te, Ae, X
+              function Ee(H, re) {
+                if (Array.isArray(re)) for (Te = 0, Ae = re.length; Te < Ae; ++Te) H.push(re[Te])
+                else H.push(re)
+              }
+              if (!this.__current.path) return null
+              for (X = [], ie = 2, fe = this.__leavelist.length; ie < fe; ++ie) Ee(X, this.__leavelist[ie].path)
+              return (Ee(X, this.__current.path), X)
+            }),
+            (_e.prototype.type = function () {
+              return this.current().type || this.__current.wrap
+            }),
+            (_e.prototype.parents = function () {
+              var ie, fe, Te
+              for (Te = [], ie = 1, fe = this.__leavelist.length; ie < fe; ++ie) Te.push(this.__leavelist[ie].node)
+              return Te
+            }),
+            (_e.prototype.current = function () {
+              return this.__current.node
+            }),
+            (_e.prototype.__execute = function (ie, fe) {
+              var Te, Ae
+              return (
+                (Ae = void 0),
+                (Te = this.__current),
+                (this.__current = fe),
+                (this.__state = null),
+                ie && (Ae = ie.call(this, fe.node, this.__leavelist[this.__leavelist.length - 1].node)),
+                (this.__current = Te),
+                Ae
+              )
+            }),
+            (_e.prototype.notify = function (ie) {
+              this.__state = ie
+            }),
+            (_e.prototype.skip = function () {
+              this.notify(c)
+            }),
+            (_e.prototype.break = function () {
+              this.notify(J)
+            }),
+            (_e.prototype.remove = function () {
+              this.notify(w)
+            }),
+            (_e.prototype.__initialize = function (ie, fe) {
+              ;((this.visitor = fe),
+                (this.root = ie),
+                (this.__worklist = []),
+                (this.__leavelist = []),
+                (this.__current = null),
+                (this.__state = null),
+                (this.__fallback = null),
+                fe.fallback === 'iteration'
+                  ? (this.__fallback = Object.keys)
+                  : typeof fe.fallback == 'function' && (this.__fallback = fe.fallback),
+                (this.__keys = ae),
+                fe.keys && (this.__keys = Object.assign(Object.create(this.__keys), fe.keys)))
+            }),
+            (_e.prototype.traverse = function (ie, fe) {
+              var Te, Ae, X, Ee, H, re, De, ke, Ce, we, $e, ct
+              for (
+                this.__initialize(ie, fe),
+                  ct = {},
+                  Te = this.__worklist,
+                  Ae = this.__leavelist,
+                  Te.push(new me(ie, null, null, null)),
+                  Ae.push(new me(null, null, null, null));
+                Te.length;
+              )
+                if ((X = Te.pop()) !== ct) {
+                  if (X.node) {
+                    if (((re = this.__execute(fe.enter, X)), this.__state === J || re === J)) return
+                    if ((Te.push(ct), Ae.push(X), this.__state === c || re === c)) continue
+                    if (((H = (Ee = X.node).type || X.wrap), !(we = this.__keys[H]))) {
+                      if (!this.__fallback) throw new Error('Unknown node type ' + H + '.')
+                      we = this.__fallback(Ee)
+                    }
+                    for (ke = we.length; (ke -= 1) >= 0; )
+                      if (($e = Ee[(De = we[ke])])) {
+                        if (Array.isArray($e)) {
+                          for (Ce = $e.length; (Ce -= 1) >= 0; )
+                            if ($e[Ce] && !Me(Ae, $e[Ce])) {
+                              if (Le(H, we[ke])) X = new me($e[Ce], [De, Ce], 'Property', null)
+                              else {
+                                if (!Ye($e[Ce])) continue
+                                X = new me($e[Ce], [De, Ce], null, null)
+                              }
+                              Te.push(X)
+                            }
+                        } else if (Ye($e)) {
+                          if (Me(Ae, $e)) continue
+                          Te.push(new me($e, De, null, null))
+                        }
+                      }
+                  }
+                } else if (((X = Ae.pop()), (re = this.__execute(fe.leave, X)), this.__state === J || re === J)) return
+            }),
+            (_e.prototype.replace = function (ie, fe) {
+              var Te, Ae, X, Ee, H, re, De, ke, Ce, we, $e, ct, bt
+              function pt(Tt) {
+                var ft, Et, wt, Lt
+                if (Tt.ref.remove()) {
+                  for (Et = Tt.ref.key, Lt = Tt.ref.parent, ft = Te.length; ft--; )
+                    if ((wt = Te[ft]).ref && wt.ref.parent === Lt) {
+                      if (wt.ref.key < Et) break
+                      --wt.ref.key
+                    }
+                }
+              }
+              for (
+                this.__initialize(ie, fe),
+                  $e = {},
+                  Te = this.__worklist,
+                  Ae = this.__leavelist,
+                  re = new me(ie, null, null, new ce((ct = { root: ie }), 'root')),
+                  Te.push(re),
+                  Ae.push(re);
+                Te.length;
+              )
+                if ((re = Te.pop()) !== $e) {
+                  if (
+                    ((H = this.__execute(fe.enter, re)) !== void 0 &&
+                      H !== J &&
+                      H !== c &&
+                      H !== w &&
+                      (re.ref.replace(H), (re.node = H)),
+                    (this.__state !== w && H !== w) || (pt(re), (re.node = null)),
+                    this.__state === J || H === J)
+                  )
+                    return ct.root
+                  if ((X = re.node) && (Te.push($e), Ae.push(re), this.__state !== c && H !== c)) {
+                    if (((Ee = X.type || re.wrap), !(Ce = this.__keys[Ee]))) {
+                      if (!this.__fallback) throw new Error('Unknown node type ' + Ee + '.')
+                      Ce = this.__fallback(X)
+                    }
+                    for (De = Ce.length; (De -= 1) >= 0; )
+                      if ((we = X[(bt = Ce[De])]))
+                        if (Array.isArray(we)) {
+                          for (ke = we.length; (ke -= 1) >= 0; )
+                            if (we[ke]) {
+                              if (Le(Ee, Ce[De])) re = new me(we[ke], [bt, ke], 'Property', new ce(we, ke))
+                              else {
+                                if (!Ye(we[ke])) continue
+                                re = new me(we[ke], [bt, ke], null, new ce(we, ke))
+                              }
+                              Te.push(re)
+                            }
+                        } else Ye(we) && Te.push(new me(we, bt, null, new ce(X, bt)))
+                  }
+                } else if (
+                  ((re = Ae.pop()),
+                  (H = this.__execute(fe.leave, re)) !== void 0 && H !== J && H !== c && H !== w && re.ref.replace(H),
+                  (this.__state !== w && H !== w) || pt(re),
+                  this.__state === J || H === J)
+                )
+                  return ct.root
+              return ct.root
+            }),
+            (z.Syntax = B),
+            (z.traverse = We),
+            (z.replace = function (ie, fe) {
+              return new _e().replace(ie, fe)
+            }),
+            (z.attachComments = function (ie, fe, Te) {
+              var Ae,
+                X,
+                Ee,
+                H,
+                re = []
+              if (!ie.range) throw new Error('attachComments needs range information')
+              if (!Te.length) {
+                if (fe.length) {
+                  for (Ee = 0, X = fe.length; Ee < X; Ee += 1)
+                    (((Ae = W(fe[Ee])).extendedRange = [0, ie.range[0]]), re.push(Ae))
+                  ie.leadingComments = re
+                }
+                return ie
+              }
+              for (Ee = 0, X = fe.length; Ee < X; Ee += 1) re.push(ut(W(fe[Ee]), Te))
+              return (
+                (H = 0),
+                We(ie, {
+                  enter: function (De) {
+                    for (var ke; H < re.length && !((ke = re[H]).extendedRange[1] > De.range[0]); )
+                      ke.extendedRange[1] === De.range[0]
+                        ? (De.leadingComments || (De.leadingComments = []),
+                          De.leadingComments.push(ke),
+                          re.splice(H, 1))
+                        : (H += 1)
+                    return H === re.length ? te.Break : re[H].extendedRange[0] > De.range[1] ? te.Skip : void 0
+                  },
+                }),
+                (H = 0),
+                We(ie, {
+                  leave: function (De) {
+                    for (var ke; H < re.length && ((ke = re[H]), !(De.range[1] < ke.extendedRange[0])); )
+                      De.range[1] === ke.extendedRange[0]
+                        ? (De.trailingComments || (De.trailingComments = []),
+                          De.trailingComments.push(ke),
+                          re.splice(H, 1))
+                        : (H += 1)
+                    return H === re.length ? te.Break : re[H].extendedRange[0] > De.range[1] ? te.Skip : void 0
+                  },
+                }),
+                ie
+              )
+            }),
+            (z.VisitorKeys = ae),
+            (z.VisitorOption = te),
+            (z.Controller = _e),
+            (z.cloneEnvironment = function () {
+              return A({})
+            }),
+            z
+          )
+        })(V)
+      }),
+      d = s(function (R) {
+        R.exports &&
+          (R.exports = (function () {
+            function V(A, z, B, te) {
+              ;((this.message = A),
+                (this.expected = z),
+                (this.found = B),
+                (this.location = te),
+                (this.name = 'SyntaxError'),
+                typeof Error.captureStackTrace == 'function' && Error.captureStackTrace(this, V))
+            }
+            return (
+              (function (A, z) {
+                function B() {
+                  this.constructor = A
+                }
+                ;((B.prototype = z.prototype), (A.prototype = new B()))
+              })(V, Error),
+              (V.buildMessage = function (A, z) {
+                var B = {
+                  literal: function (c) {
+                    return '"' + ae(c.text) + '"'
+                  },
+                  class: function (c) {
+                    var w,
+                      W = ''
+                    for (w = 0; w < c.parts.length; w++)
+                      W += c.parts[w] instanceof Array ? J(c.parts[w][0]) + '-' + J(c.parts[w][1]) : J(c.parts[w])
+                    return '[' + (c.inverted ? '^' : '') + W + ']'
+                  },
+                  any: function (c) {
+                    return 'any character'
+                  },
+                  end: function (c) {
+                    return 'end of input'
+                  },
+                  other: function (c) {
+                    return c.description
+                  },
+                }
+                function te(c) {
+                  return c.charCodeAt(0).toString(16).toUpperCase()
+                }
+                function ae(c) {
+                  return c
+                    .replace(/\\/g, '\\\\')
+                    .replace(/"/g, '\\"')
+                    .replace(/\0/g, '\\0')
+                    .replace(/\t/g, '\\t')
+                    .replace(/\n/g, '\\n')
+                    .replace(/\r/g, '\\r')
+                    .replace(/[\x00-\x0F]/g, function (w) {
+                      return '\\x0' + te(w)
+                    })
+                    .replace(/[\x10-\x1F\x7F-\x9F]/g, function (w) {
+                      return '\\x' + te(w)
+                    })
+                }
+                function J(c) {
+                  return c
+                    .replace(/\\/g, '\\\\')
+                    .replace(/\]/g, '\\]')
+                    .replace(/\^/g, '\\^')
+                    .replace(/-/g, '\\-')
+                    .replace(/\0/g, '\\0')
+                    .replace(/\t/g, '\\t')
+                    .replace(/\n/g, '\\n')
+                    .replace(/\r/g, '\\r')
+                    .replace(/[\x00-\x0F]/g, function (w) {
+                      return '\\x0' + te(w)
+                    })
+                    .replace(/[\x10-\x1F\x7F-\x9F]/g, function (w) {
+                      return '\\x' + te(w)
+                    })
+                }
+                return (
+                  'Expected ' +
+                  (function (c) {
+                    var w,
+                      W,
+                      ce,
+                      me = new Array(c.length)
+                    for (w = 0; w < c.length; w++) me[w] = ((ce = c[w]), B[ce.type](ce))
+                    if ((me.sort(), me.length > 0)) {
+                      for (w = 1, W = 1; w < me.length; w++) me[w - 1] !== me[w] && ((me[W] = me[w]), W++)
+                      me.length = W
+                    }
+                    switch (me.length) {
+                      case 1:
+                        return me[0]
+                      case 2:
+                        return me[0] + ' or ' + me[1]
+                      default:
+                        return me.slice(0, -1).join(', ') + ', or ' + me[me.length - 1]
+                    }
+                  })(A) +
+                  ' but ' +
+                  (function (c) {
+                    return c ? '"' + ae(c) + '"' : 'end of input'
+                  })(z) +
+                  ' found.'
+                )
+              }),
+              {
+                SyntaxError: V,
+                parse: function (A, z) {
+                  z = z !== void 0 ? z : {}
+                  var B,
+                    te,
+                    ae,
+                    J,
+                    c = {},
+                    w = { start: Ge },
+                    W = Ge,
+                    ce = Y(' ', !1),
+                    me = /^[^ [\],():#!=><~+.]/,
+                    _e = M([' ', '[', ']', ',', '(', ')', ':', '#', '!', '=', '>', '<', '~', '+', '.'], !0, !1),
+                    Ye = Y('>', !1),
+                    Le = Y('~', !1),
+                    Me = Y('+', !1),
+                    We = Y(',', !1),
+                    ut = function (D, K) {
+                      return [D].concat(
+                        K.map(function (ne) {
+                          return ne[3]
+                        }),
+                      )
+                    },
+                    ie = Y('!', !1),
+                    fe = Y('*', !1),
+                    Te = Y('#', !1),
+                    Ae = Y('[', !1),
+                    X = Y(']', !1),
+                    Ee = /^[><!]/,
+                    H = M(['>', '<', '!'], !1, !1),
+                    re = Y('=', !1),
+                    De = function (D) {
+                      return (D || '') + '='
+                    },
+                    ke = /^[><]/,
+                    Ce = M(['>', '<'], !1, !1),
+                    we = Y('.', !1),
+                    $e = function (D, K, ne) {
+                      return { type: 'attribute', name: D, operator: K, value: ne }
+                    },
+                    ct = Y('"', !1),
+                    bt = /^[^\\"]/,
+                    pt = M(['\\', '"'], !0, !1),
+                    Tt = Y('\\', !1),
+                    ft = { type: 'any' },
+                    Et = function (D, K) {
+                      return D + K
+                    },
+                    wt = function (D) {
+                      return {
+                        type: 'literal',
+                        value:
+                          ((K = D.join('')),
+                          K.replace(/\\(.)/g, function (ne, I) {
+                            switch (I) {
+                              case 'b':
+                                return '\b'
+                              case 'f':
+                                return '\f'
+                              case 'n':
+                                return `
+`
+                              case 'r':
+                                return '\r'
+                              case 't':
+                                return '	'
+                              case 'v':
+                                return '\v'
+                              default:
+                                return I
+                            }
+                          })),
+                      }
+                      var K
+                    },
+                    Lt = Y("'", !1),
+                    pa = /^[^\\']/,
+                    ai = M(['\\', "'"], !0, !1),
+                    vt = /^[0-9]/,
+                    nr = M([['0', '9']], !1, !1),
+                    ds = Y('type(', !1),
+                    Ri = /^[^ )]/,
+                    On = M([' ', ')'], !0, !1),
+                    En = Y(')', !1),
+                    ps = /^[imsu]/,
+                    Es = M(['i', 'm', 's', 'u'], !1, !1),
+                    Vi = Y('/', !1),
+                    mr = /^[^\]\\]/,
+                    ms = M([']', '\\'], !0, !1),
+                    Ts = /^[^\/\\[]/,
+                    hs = M(['/', '\\', '['], !0, !1),
+                    Of = Y(':not(', !1),
+                    Ff = Y(':matches(', !1),
+                    Ps = function (D) {
+                      return { type: 'matches', selectors: D }
+                    },
+                    Fn = Y(':is(', !1),
+                    Bf = Y(':has(', !1),
+                    ys = Y(':first-child', !1),
+                    Gf = Y(':last-child', !1),
+                    Di = Y(':nth-child(', !1),
+                    gs = Y(':nth-last-child(', !1),
+                    Nf = Y(':', !1),
+                    f = 0,
+                    ii = [{ line: 1, column: 1 }],
+                    Tr = 0,
+                    U = [],
+                    h = {}
+                  if ('startRule' in z) {
+                    if (!(z.startRule in w)) throw new Error(`Can't start parsing from rule "` + z.startRule + '".')
+                    W = w[z.startRule]
+                  }
+                  function Y(D, K) {
+                    return { type: 'literal', text: D, ignoreCase: K }
+                  }
+                  function M(D, K, ne) {
+                    return { type: 'class', parts: D, inverted: K, ignoreCase: ne }
+                  }
+                  function G(D) {
+                    var K,
+                      ne = ii[D]
+                    if (ne) return ne
+                    for (K = D - 1; !ii[K]; ) K--
+                    for (ne = { line: (ne = ii[K]).line, column: ne.column }; K < D; )
+                      (A.charCodeAt(K) === 10 ? (ne.line++, (ne.column = 1)) : ne.column++, K++)
+                    return ((ii[D] = ne), ne)
+                  }
+                  function he(D, K) {
+                    var ne = G(D),
+                      I = G(K)
+                    return {
+                      start: { offset: D, line: ne.line, column: ne.column },
+                      end: { offset: K, line: I.line, column: I.column },
+                    }
+                  }
+                  function q(D) {
+                    f < Tr || (f > Tr && ((Tr = f), (U = [])), U.push(D))
+                  }
+                  function Ge() {
+                    var D,
+                      K,
+                      ne,
+                      I,
+                      N = 36 * f + 0,
+                      de = h[N]
+                    return de
+                      ? ((f = de.nextPos), de.result)
+                      : ((D = f),
+                        (K = Pe()) !== c && (ne = rt()) !== c && Pe() !== c
+                          ? (D = K = (I = ne).length === 1 ? I[0] : { type: 'matches', selectors: I })
+                          : ((f = D), (D = c)),
+                        D === c && ((D = f), (K = Pe()) !== c && (K = void 0), (D = K)),
+                        (h[N] = { nextPos: f, result: D }),
+                        D)
+                  }
+                  function Pe() {
+                    var D,
+                      K,
+                      ne = 36 * f + 1,
+                      I = h[ne]
+                    if (I) return ((f = I.nextPos), I.result)
+                    for (D = [], A.charCodeAt(f) === 32 ? ((K = ' '), f++) : ((K = c), q(ce)); K !== c; )
+                      (D.push(K), A.charCodeAt(f) === 32 ? ((K = ' '), f++) : ((K = c), q(ce)))
+                    return ((h[ne] = { nextPos: f, result: D }), D)
+                  }
+                  function Qe() {
+                    var D,
+                      K,
+                      ne,
+                      I = 36 * f + 2,
+                      N = h[I]
+                    if (N) return ((f = N.nextPos), N.result)
+                    if (((K = []), me.test(A.charAt(f)) ? ((ne = A.charAt(f)), f++) : ((ne = c), q(_e)), ne !== c))
+                      for (; ne !== c; )
+                        (K.push(ne), me.test(A.charAt(f)) ? ((ne = A.charAt(f)), f++) : ((ne = c), q(_e)))
+                    else K = c
+                    return (K !== c && (K = K.join('')), (D = K), (h[I] = { nextPos: f, result: D }), D)
+                  }
+                  function Fe() {
+                    var D,
+                      K,
+                      ne,
+                      I = 36 * f + 3,
+                      N = h[I]
+                    return N
+                      ? ((f = N.nextPos), N.result)
+                      : ((D = f),
+                        (K = Pe()) !== c
+                          ? (A.charCodeAt(f) === 62 ? ((ne = '>'), f++) : ((ne = c), q(Ye)),
+                            ne !== c && Pe() !== c ? (D = K = 'child') : ((f = D), (D = c)))
+                          : ((f = D), (D = c)),
+                        D === c &&
+                          ((D = f),
+                          (K = Pe()) !== c
+                            ? (A.charCodeAt(f) === 126 ? ((ne = '~'), f++) : ((ne = c), q(Le)),
+                              ne !== c && Pe() !== c ? (D = K = 'sibling') : ((f = D), (D = c)))
+                            : ((f = D), (D = c)),
+                          D === c &&
+                            ((D = f),
+                            (K = Pe()) !== c
+                              ? (A.charCodeAt(f) === 43 ? ((ne = '+'), f++) : ((ne = c), q(Me)),
+                                ne !== c && Pe() !== c ? (D = K = 'adjacent') : ((f = D), (D = c)))
+                              : ((f = D), (D = c)),
+                            D === c &&
+                              ((D = f),
+                              A.charCodeAt(f) === 32 ? ((K = ' '), f++) : ((K = c), q(ce)),
+                              K !== c && (ne = Pe()) !== c ? (D = K = 'descendant') : ((f = D), (D = c))))),
+                        (h[I] = { nextPos: f, result: D }),
+                        D)
+                  }
+                  function rt() {
+                    var D,
+                      K,
+                      ne,
+                      I,
+                      N,
+                      de,
+                      ue,
+                      Se,
+                      xe = 36 * f + 5,
+                      ve = h[xe]
+                    if (ve) return ((f = ve.nextPos), ve.result)
+                    if (((D = f), (K = et()) !== c)) {
+                      for (
+                        ne = [],
+                          I = f,
+                          (N = Pe()) !== c
+                            ? (A.charCodeAt(f) === 44 ? ((de = ','), f++) : ((de = c), q(We)),
+                              de !== c && (ue = Pe()) !== c && (Se = et()) !== c
+                                ? (I = N = [N, de, ue, Se])
+                                : ((f = I), (I = c)))
+                            : ((f = I), (I = c));
+                        I !== c;
+                      )
+                        (ne.push(I),
+                          (I = f),
+                          (N = Pe()) !== c
+                            ? (A.charCodeAt(f) === 44 ? ((de = ','), f++) : ((de = c), q(We)),
+                              de !== c && (ue = Pe()) !== c && (Se = et()) !== c
+                                ? (I = N = [N, de, ue, Se])
+                                : ((f = I), (I = c)))
+                            : ((f = I), (I = c)))
+                      ne !== c ? (D = K = ut(K, ne)) : ((f = D), (D = c))
+                    } else ((f = D), (D = c))
+                    return ((h[xe] = { nextPos: f, result: D }), D)
+                  }
+                  function dt() {
+                    var D,
+                      K,
+                      ne,
+                      I,
+                      N,
+                      de = 36 * f + 6,
+                      ue = h[de]
+                    return ue
+                      ? ((f = ue.nextPos), ue.result)
+                      : ((D = f),
+                        (K = Fe()) === c && (K = null),
+                        K !== c && (ne = et()) !== c
+                          ? ((N = ne), (D = K = (I = K) ? { type: I, left: { type: 'exactNode' }, right: N } : N))
+                          : ((f = D), (D = c)),
+                        (h[de] = { nextPos: f, result: D }),
+                        D)
+                  }
+                  function et() {
+                    var D,
+                      K,
+                      ne,
+                      I,
+                      N,
+                      de,
+                      ue,
+                      Se = 36 * f + 7,
+                      xe = h[Se]
+                    if (xe) return ((f = xe.nextPos), xe.result)
+                    if (((D = f), (K = Ne()) !== c)) {
+                      for (
+                        ne = [], I = f, (N = Fe()) !== c && (de = Ne()) !== c ? (I = N = [N, de]) : ((f = I), (I = c));
+                        I !== c;
+                      )
+                        (ne.push(I),
+                          (I = f),
+                          (N = Fe()) !== c && (de = Ne()) !== c ? (I = N = [N, de]) : ((f = I), (I = c)))
+                      ne !== c
+                        ? ((ue = K),
+                          (D = K =
+                            ne.reduce(function (ve, tt) {
+                              return { type: tt[0], left: ve, right: tt[1] }
+                            }, ue)))
+                        : ((f = D), (D = c))
+                    } else ((f = D), (D = c))
+                    return ((h[Se] = { nextPos: f, result: D }), D)
+                  }
+                  function Ne() {
+                    var D,
+                      K,
+                      ne,
+                      I,
+                      N,
+                      de,
+                      ue,
+                      Se = 36 * f + 8,
+                      xe = h[Se]
+                    if (xe) return ((f = xe.nextPos), xe.result)
+                    if (
+                      ((D = f),
+                      A.charCodeAt(f) === 33 ? ((K = '!'), f++) : ((K = c), q(ie)),
+                      K === c && (K = null),
+                      K !== c)
+                    ) {
+                      if (((ne = []), (I = st()) !== c)) for (; I !== c; ) (ne.push(I), (I = st()))
+                      else ne = c
+                      ne !== c
+                        ? ((N = K),
+                          (ue = (de = ne).length === 1 ? de[0] : { type: 'compound', selectors: de }),
+                          N && (ue.subject = !0),
+                          (D = K = ue))
+                        : ((f = D), (D = c))
+                    } else ((f = D), (D = c))
+                    return ((h[Se] = { nextPos: f, result: D }), D)
+                  }
+                  function st() {
+                    var D,
+                      K = 36 * f + 9,
+                      ne = h[K]
+                    return ne
+                      ? ((f = ne.nextPos), ne.result)
+                      : ((D = (function () {
+                          var I,
+                            N,
+                            de = 36 * f + 10,
+                            ue = h[de]
+                          return ue
+                            ? ((f = ue.nextPos), ue.result)
+                            : (A.charCodeAt(f) === 42 ? ((N = '*'), f++) : ((N = c), q(fe)),
+                              N !== c && (N = { type: 'wildcard', value: N }),
+                              (I = N),
+                              (h[de] = { nextPos: f, result: I }),
+                              I)
+                        })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue = 36 * f + 11,
+                              Se = h[ue]
+                            return Se
+                              ? ((f = Se.nextPos), Se.result)
+                              : ((I = f),
+                                A.charCodeAt(f) === 35 ? ((N = '#'), f++) : ((N = c), q(Te)),
+                                N === c && (N = null),
+                                N !== c && (de = Qe()) !== c
+                                  ? (I = N = { type: 'identifier', value: de })
+                                  : ((f = I), (I = c)),
+                                (h[ue] = { nextPos: f, result: I }),
+                                I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue,
+                              Se = 36 * f + 12,
+                              xe = h[Se]
+                            return xe
+                              ? ((f = xe.nextPos), xe.result)
+                              : ((I = f),
+                                A.charCodeAt(f) === 91 ? ((N = '['), f++) : ((N = c), q(Ae)),
+                                N !== c &&
+                                Pe() !== c &&
+                                (de = (function () {
+                                  var ve,
+                                    tt,
+                                    Kt,
+                                    qe,
+                                    hr = 36 * f + 16,
+                                    Gt = h[hr]
+                                  return Gt
+                                    ? ((f = Gt.nextPos), Gt.result)
+                                    : ((ve = f),
+                                      (tt = Ke()) !== c &&
+                                      Pe() !== c &&
+                                      (Kt = (function () {
+                                        var le,
+                                          ye,
+                                          Ue,
+                                          Z = 36 * f + 14,
+                                          Ie = h[Z]
+                                        return Ie
+                                          ? ((f = Ie.nextPos), Ie.result)
+                                          : ((le = f),
+                                            A.charCodeAt(f) === 33 ? ((ye = '!'), f++) : ((ye = c), q(ie)),
+                                            ye === c && (ye = null),
+                                            ye !== c
+                                              ? (A.charCodeAt(f) === 61 ? ((Ue = '='), f++) : ((Ue = c), q(re)),
+                                                Ue !== c ? ((ye = De(ye)), (le = ye)) : ((f = le), (le = c)))
+                                              : ((f = le), (le = c)),
+                                            (h[Z] = { nextPos: f, result: le }),
+                                            le)
+                                      })()) !== c &&
+                                      Pe() !== c
+                                        ? ((qe = (function () {
+                                            var le,
+                                              ye,
+                                              Ue,
+                                              Z,
+                                              Ie,
+                                              nt = 36 * f + 20,
+                                              er = h[nt]
+                                            if (er) return ((f = er.nextPos), er.result)
+                                            if (
+                                              ((le = f),
+                                              A.substr(f, 5) === 'type('
+                                                ? ((ye = 'type('), (f += 5))
+                                                : ((ye = c), q(ds)),
+                                              ye !== c)
+                                            )
+                                              if (Pe() !== c) {
+                                                if (
+                                                  ((Ue = []),
+                                                  Ri.test(A.charAt(f)) ? ((Z = A.charAt(f)), f++) : ((Z = c), q(On)),
+                                                  Z !== c)
+                                                )
+                                                  for (; Z !== c; )
+                                                    (Ue.push(Z),
+                                                      Ri.test(A.charAt(f))
+                                                        ? ((Z = A.charAt(f)), f++)
+                                                        : ((Z = c), q(On)))
+                                                else Ue = c
+                                                Ue !== c && (Z = Pe()) !== c
+                                                  ? (A.charCodeAt(f) === 41 ? ((Ie = ')'), f++) : ((Ie = c), q(En)),
+                                                    Ie !== c
+                                                      ? ((ye = { type: 'type', value: Ue.join('') }), (le = ye))
+                                                      : ((f = le), (le = c)))
+                                                  : ((f = le), (le = c))
+                                              } else ((f = le), (le = c))
+                                            else ((f = le), (le = c))
+                                            return ((h[nt] = { nextPos: f, result: le }), le)
+                                          })()) === c &&
+                                            (qe = (function () {
+                                              var le,
+                                                ye,
+                                                Ue,
+                                                Z,
+                                                Ie,
+                                                nt,
+                                                er = 36 * f + 22,
+                                                Ur = h[er]
+                                              if (Ur) return ((f = Ur.nextPos), Ur.result)
+                                              if (
+                                                ((le = f),
+                                                A.charCodeAt(f) === 47 ? ((ye = '/'), f++) : ((ye = c), q(Vi)),
+                                                ye !== c)
+                                              ) {
+                                                if (
+                                                  ((Ue = []),
+                                                  (Z = mn()) === c && (Z = Mt()) === c && (Z = Zt()),
+                                                  Z !== c)
+                                                )
+                                                  for (; Z !== c; )
+                                                    (Ue.push(Z), (Z = mn()) === c && (Z = Mt()) === c && (Z = Zt()))
+                                                else Ue = c
+                                                Ue !== c
+                                                  ? (A.charCodeAt(f) === 47 ? ((Z = '/'), f++) : ((Z = c), q(Vi)),
+                                                    Z !== c
+                                                      ? ((Ie = (function () {
+                                                          var Ut,
+                                                            ar,
+                                                            si = 36 * f + 21,
+                                                            Bn = h[si]
+                                                          if (Bn) return ((f = Bn.nextPos), Bn.result)
+                                                          if (
+                                                            ((Ut = []),
+                                                            ps.test(A.charAt(f))
+                                                              ? ((ar = A.charAt(f)), f++)
+                                                              : ((ar = c), q(Es)),
+                                                            ar !== c)
+                                                          )
+                                                            for (; ar !== c; )
+                                                              (Ut.push(ar),
+                                                                ps.test(A.charAt(f))
+                                                                  ? ((ar = A.charAt(f)), f++)
+                                                                  : ((ar = c), q(Es)))
+                                                          else Ut = c
+                                                          return ((h[si] = { nextPos: f, result: Ut }), Ut)
+                                                        })()) === c && (Ie = null),
+                                                        Ie !== c
+                                                          ? ((nt = Ie),
+                                                            (ye = {
+                                                              type: 'regexp',
+                                                              value: new RegExp(Ue.join(''), nt ? nt.join('') : ''),
+                                                            }),
+                                                            (le = ye))
+                                                          : ((f = le), (le = c)))
+                                                      : ((f = le), (le = c)))
+                                                  : ((f = le), (le = c))
+                                              } else ((f = le), (le = c))
+                                              return ((h[er] = { nextPos: f, result: le }), le)
+                                            })()),
+                                          qe !== c ? ((tt = $e(tt, Kt, qe)), (ve = tt)) : ((f = ve), (ve = c)))
+                                        : ((f = ve), (ve = c)),
+                                      ve === c &&
+                                        ((ve = f),
+                                        (tt = Ke()) !== c &&
+                                        Pe() !== c &&
+                                        (Kt = (function () {
+                                          var le,
+                                            ye,
+                                            Ue,
+                                            Z = 36 * f + 13,
+                                            Ie = h[Z]
+                                          return Ie
+                                            ? ((f = Ie.nextPos), Ie.result)
+                                            : ((le = f),
+                                              Ee.test(A.charAt(f)) ? ((ye = A.charAt(f)), f++) : ((ye = c), q(H)),
+                                              ye === c && (ye = null),
+                                              ye !== c
+                                                ? (A.charCodeAt(f) === 61 ? ((Ue = '='), f++) : ((Ue = c), q(re)),
+                                                  Ue !== c ? ((ye = De(ye)), (le = ye)) : ((f = le), (le = c)))
+                                                : ((f = le), (le = c)),
+                                              le === c &&
+                                                (ke.test(A.charAt(f)) ? ((le = A.charAt(f)), f++) : ((le = c), q(Ce))),
+                                              (h[Z] = { nextPos: f, result: le }),
+                                              le)
+                                        })()) !== c &&
+                                        Pe() !== c
+                                          ? ((qe = (function () {
+                                              var le,
+                                                ye,
+                                                Ue,
+                                                Z,
+                                                Ie,
+                                                nt,
+                                                er = 36 * f + 17,
+                                                Ur = h[er]
+                                              if (Ur) return ((f = Ur.nextPos), Ur.result)
+                                              if (
+                                                ((le = f),
+                                                A.charCodeAt(f) === 34 ? ((ye = '"'), f++) : ((ye = c), q(ct)),
+                                                ye !== c)
+                                              ) {
+                                                for (
+                                                  Ue = [],
+                                                    bt.test(A.charAt(f)) ? ((Z = A.charAt(f)), f++) : ((Z = c), q(pt)),
+                                                    Z === c &&
+                                                      ((Z = f),
+                                                      A.charCodeAt(f) === 92 ? ((Ie = '\\'), f++) : ((Ie = c), q(Tt)),
+                                                      Ie !== c
+                                                        ? (A.length > f ? ((nt = A.charAt(f)), f++) : ((nt = c), q(ft)),
+                                                          nt !== c ? ((Ie = Et(Ie, nt)), (Z = Ie)) : ((f = Z), (Z = c)))
+                                                        : ((f = Z), (Z = c)));
+                                                  Z !== c;
+                                                )
+                                                  (Ue.push(Z),
+                                                    bt.test(A.charAt(f)) ? ((Z = A.charAt(f)), f++) : ((Z = c), q(pt)),
+                                                    Z === c &&
+                                                      ((Z = f),
+                                                      A.charCodeAt(f) === 92 ? ((Ie = '\\'), f++) : ((Ie = c), q(Tt)),
+                                                      Ie !== c
+                                                        ? (A.length > f ? ((nt = A.charAt(f)), f++) : ((nt = c), q(ft)),
+                                                          nt !== c ? ((Ie = Et(Ie, nt)), (Z = Ie)) : ((f = Z), (Z = c)))
+                                                        : ((f = Z), (Z = c))))
+                                                Ue !== c
+                                                  ? (A.charCodeAt(f) === 34 ? ((Z = '"'), f++) : ((Z = c), q(ct)),
+                                                    Z !== c ? ((ye = wt(Ue)), (le = ye)) : ((f = le), (le = c)))
+                                                  : ((f = le), (le = c))
+                                              } else ((f = le), (le = c))
+                                              if (le === c)
+                                                if (
+                                                  ((le = f),
+                                                  A.charCodeAt(f) === 39 ? ((ye = "'"), f++) : ((ye = c), q(Lt)),
+                                                  ye !== c)
+                                                ) {
+                                                  for (
+                                                    Ue = [],
+                                                      pa.test(A.charAt(f))
+                                                        ? ((Z = A.charAt(f)), f++)
+                                                        : ((Z = c), q(ai)),
+                                                      Z === c &&
+                                                        ((Z = f),
+                                                        A.charCodeAt(f) === 92 ? ((Ie = '\\'), f++) : ((Ie = c), q(Tt)),
+                                                        Ie !== c
+                                                          ? (A.length > f
+                                                              ? ((nt = A.charAt(f)), f++)
+                                                              : ((nt = c), q(ft)),
+                                                            nt !== c
+                                                              ? ((Ie = Et(Ie, nt)), (Z = Ie))
+                                                              : ((f = Z), (Z = c)))
+                                                          : ((f = Z), (Z = c)));
+                                                    Z !== c;
+                                                  )
+                                                    (Ue.push(Z),
+                                                      pa.test(A.charAt(f))
+                                                        ? ((Z = A.charAt(f)), f++)
+                                                        : ((Z = c), q(ai)),
+                                                      Z === c &&
+                                                        ((Z = f),
+                                                        A.charCodeAt(f) === 92 ? ((Ie = '\\'), f++) : ((Ie = c), q(Tt)),
+                                                        Ie !== c
+                                                          ? (A.length > f
+                                                              ? ((nt = A.charAt(f)), f++)
+                                                              : ((nt = c), q(ft)),
+                                                            nt !== c
+                                                              ? ((Ie = Et(Ie, nt)), (Z = Ie))
+                                                              : ((f = Z), (Z = c)))
+                                                          : ((f = Z), (Z = c))))
+                                                  Ue !== c
+                                                    ? (A.charCodeAt(f) === 39 ? ((Z = "'"), f++) : ((Z = c), q(Lt)),
+                                                      Z !== c ? ((ye = wt(Ue)), (le = ye)) : ((f = le), (le = c)))
+                                                    : ((f = le), (le = c))
+                                                } else ((f = le), (le = c))
+                                              return ((h[er] = { nextPos: f, result: le }), le)
+                                            })()) === c &&
+                                              (qe = (function () {
+                                                var le,
+                                                  ye,
+                                                  Ue,
+                                                  Z,
+                                                  Ie,
+                                                  nt,
+                                                  er,
+                                                  Ur = 36 * f + 18,
+                                                  Ut = h[Ur]
+                                                if (Ut) return ((f = Ut.nextPos), Ut.result)
+                                                for (
+                                                  le = f,
+                                                    ye = f,
+                                                    Ue = [],
+                                                    vt.test(A.charAt(f)) ? ((Z = A.charAt(f)), f++) : ((Z = c), q(nr));
+                                                  Z !== c;
+                                                )
+                                                  (Ue.push(Z),
+                                                    vt.test(A.charAt(f)) ? ((Z = A.charAt(f)), f++) : ((Z = c), q(nr)))
+                                                if (
+                                                  (Ue !== c
+                                                    ? (A.charCodeAt(f) === 46 ? ((Z = '.'), f++) : ((Z = c), q(we)),
+                                                      Z !== c ? (ye = Ue = [Ue, Z]) : ((f = ye), (ye = c)))
+                                                    : ((f = ye), (ye = c)),
+                                                  ye === c && (ye = null),
+                                                  ye !== c)
+                                                ) {
+                                                  if (
+                                                    ((Ue = []),
+                                                    vt.test(A.charAt(f)) ? ((Z = A.charAt(f)), f++) : ((Z = c), q(nr)),
+                                                    Z !== c)
+                                                  )
+                                                    for (; Z !== c; )
+                                                      (Ue.push(Z),
+                                                        vt.test(A.charAt(f))
+                                                          ? ((Z = A.charAt(f)), f++)
+                                                          : ((Z = c), q(nr)))
+                                                  else Ue = c
+                                                  Ue !== c
+                                                    ? ((nt = Ue),
+                                                      (er = (Ie = ye) ? [].concat.apply([], Ie).join('') : ''),
+                                                      (ye = { type: 'literal', value: parseFloat(er + nt.join('')) }),
+                                                      (le = ye))
+                                                    : ((f = le), (le = c))
+                                                } else ((f = le), (le = c))
+                                                return ((h[Ur] = { nextPos: f, result: le }), le)
+                                              })()) === c &&
+                                              (qe = (function () {
+                                                var le,
+                                                  ye,
+                                                  Ue = 36 * f + 19,
+                                                  Z = h[Ue]
+                                                return Z
+                                                  ? ((f = Z.nextPos), Z.result)
+                                                  : ((ye = Qe()) !== c && (ye = { type: 'literal', value: ye }),
+                                                    (le = ye),
+                                                    (h[Ue] = { nextPos: f, result: le }),
+                                                    le)
+                                              })()),
+                                            qe !== c ? ((tt = $e(tt, Kt, qe)), (ve = tt)) : ((f = ve), (ve = c)))
+                                          : ((f = ve), (ve = c)),
+                                        ve === c &&
+                                          ((ve = f),
+                                          (tt = Ke()) !== c && (tt = { type: 'attribute', name: tt }),
+                                          (ve = tt))),
+                                      (h[hr] = { nextPos: f, result: ve }),
+                                      ve)
+                                })()) !== c &&
+                                Pe() !== c
+                                  ? (A.charCodeAt(f) === 93 ? ((ue = ']'), f++) : ((ue = c), q(X)),
+                                    ue !== c ? (I = N = de) : ((f = I), (I = c)))
+                                  : ((f = I), (I = c)),
+                                (h[Se] = { nextPos: f, result: I }),
+                                I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue,
+                              Se,
+                              xe,
+                              ve,
+                              tt,
+                              Kt = 36 * f + 26,
+                              qe = h[Kt]
+                            if (qe) return ((f = qe.nextPos), qe.result)
+                            if (((I = f), A.charCodeAt(f) === 46 ? ((N = '.'), f++) : ((N = c), q(we)), N !== c))
+                              if ((de = Qe()) !== c) {
+                                for (
+                                  ue = [],
+                                    Se = f,
+                                    A.charCodeAt(f) === 46 ? ((xe = '.'), f++) : ((xe = c), q(we)),
+                                    xe !== c && (ve = Qe()) !== c ? (Se = xe = [xe, ve]) : ((f = Se), (Se = c));
+                                  Se !== c;
+                                )
+                                  (ue.push(Se),
+                                    (Se = f),
+                                    A.charCodeAt(f) === 46 ? ((xe = '.'), f++) : ((xe = c), q(we)),
+                                    xe !== c && (ve = Qe()) !== c ? (Se = xe = [xe, ve]) : ((f = Se), (Se = c)))
+                                ue !== c
+                                  ? ((tt = de),
+                                    (N = {
+                                      type: 'field',
+                                      name: ue.reduce(function (hr, Gt) {
+                                        return hr + Gt[0] + Gt[1]
+                                      }, tt),
+                                    }),
+                                    (I = N))
+                                  : ((f = I), (I = c))
+                              } else ((f = I), (I = c))
+                            else ((f = I), (I = c))
+                            return ((h[Kt] = { nextPos: f, result: I }), I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue,
+                              Se = 36 * f + 27,
+                              xe = h[Se]
+                            return xe
+                              ? ((f = xe.nextPos), xe.result)
+                              : ((I = f),
+                                A.substr(f, 5) === ':not(' ? ((N = ':not('), (f += 5)) : ((N = c), q(Of)),
+                                N !== c && Pe() !== c && (de = rt()) !== c && Pe() !== c
+                                  ? (A.charCodeAt(f) === 41 ? ((ue = ')'), f++) : ((ue = c), q(En)),
+                                    ue !== c ? (I = N = { type: 'not', selectors: de }) : ((f = I), (I = c)))
+                                  : ((f = I), (I = c)),
+                                (h[Se] = { nextPos: f, result: I }),
+                                I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue,
+                              Se = 36 * f + 28,
+                              xe = h[Se]
+                            return xe
+                              ? ((f = xe.nextPos), xe.result)
+                              : ((I = f),
+                                A.substr(f, 9) === ':matches(' ? ((N = ':matches('), (f += 9)) : ((N = c), q(Ff)),
+                                N !== c && Pe() !== c && (de = rt()) !== c && Pe() !== c
+                                  ? (A.charCodeAt(f) === 41 ? ((ue = ')'), f++) : ((ue = c), q(En)),
+                                    ue !== c ? ((N = Ps(de)), (I = N)) : ((f = I), (I = c)))
+                                  : ((f = I), (I = c)),
+                                (h[Se] = { nextPos: f, result: I }),
+                                I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue,
+                              Se = 36 * f + 29,
+                              xe = h[Se]
+                            return xe
+                              ? ((f = xe.nextPos), xe.result)
+                              : ((I = f),
+                                A.substr(f, 4) === ':is(' ? ((N = ':is('), (f += 4)) : ((N = c), q(Fn)),
+                                N !== c && Pe() !== c && (de = rt()) !== c && Pe() !== c
+                                  ? (A.charCodeAt(f) === 41 ? ((ue = ')'), f++) : ((ue = c), q(En)),
+                                    ue !== c ? ((N = Ps(de)), (I = N)) : ((f = I), (I = c)))
+                                  : ((f = I), (I = c)),
+                                (h[Se] = { nextPos: f, result: I }),
+                                I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue,
+                              Se = 36 * f + 30,
+                              xe = h[Se]
+                            return xe
+                              ? ((f = xe.nextPos), xe.result)
+                              : ((I = f),
+                                A.substr(f, 5) === ':has(' ? ((N = ':has('), (f += 5)) : ((N = c), q(Bf)),
+                                N !== c &&
+                                Pe() !== c &&
+                                (de = (function () {
+                                  var ve,
+                                    tt,
+                                    Kt,
+                                    qe,
+                                    hr,
+                                    Gt,
+                                    le,
+                                    ye,
+                                    Ue = 36 * f + 4,
+                                    Z = h[Ue]
+                                  if (Z) return ((f = Z.nextPos), Z.result)
+                                  if (((ve = f), (tt = dt()) !== c)) {
+                                    for (
+                                      Kt = [],
+                                        qe = f,
+                                        (hr = Pe()) !== c
+                                          ? (A.charCodeAt(f) === 44 ? ((Gt = ','), f++) : ((Gt = c), q(We)),
+                                            Gt !== c && (le = Pe()) !== c && (ye = dt()) !== c
+                                              ? (qe = hr = [hr, Gt, le, ye])
+                                              : ((f = qe), (qe = c)))
+                                          : ((f = qe), (qe = c));
+                                      qe !== c;
+                                    )
+                                      (Kt.push(qe),
+                                        (qe = f),
+                                        (hr = Pe()) !== c
+                                          ? (A.charCodeAt(f) === 44 ? ((Gt = ','), f++) : ((Gt = c), q(We)),
+                                            Gt !== c && (le = Pe()) !== c && (ye = dt()) !== c
+                                              ? (qe = hr = [hr, Gt, le, ye])
+                                              : ((f = qe), (qe = c)))
+                                          : ((f = qe), (qe = c)))
+                                    Kt !== c ? (ve = tt = ut(tt, Kt)) : ((f = ve), (ve = c))
+                                  } else ((f = ve), (ve = c))
+                                  return ((h[Ue] = { nextPos: f, result: ve }), ve)
+                                })()) !== c &&
+                                Pe() !== c
+                                  ? (A.charCodeAt(f) === 41 ? ((ue = ')'), f++) : ((ue = c), q(En)),
+                                    ue !== c ? (I = N = { type: 'has', selectors: de }) : ((f = I), (I = c)))
+                                  : ((f = I), (I = c)),
+                                (h[Se] = { nextPos: f, result: I }),
+                                I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de = 36 * f + 31,
+                              ue = h[de]
+                            return ue
+                              ? ((f = ue.nextPos), ue.result)
+                              : (A.substr(f, 12) === ':first-child'
+                                  ? ((N = ':first-child'), (f += 12))
+                                  : ((N = c), q(ys)),
+                                N !== c && (N = Ze(1)),
+                                (I = N),
+                                (h[de] = { nextPos: f, result: I }),
+                                I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de = 36 * f + 32,
+                              ue = h[de]
+                            return ue
+                              ? ((f = ue.nextPos), ue.result)
+                              : (A.substr(f, 11) === ':last-child'
+                                  ? ((N = ':last-child'), (f += 11))
+                                  : ((N = c), q(Gf)),
+                                N !== c && (N = Ht(1)),
+                                (I = N),
+                                (h[de] = { nextPos: f, result: I }),
+                                I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue,
+                              Se,
+                              xe = 36 * f + 33,
+                              ve = h[xe]
+                            if (ve) return ((f = ve.nextPos), ve.result)
+                            if (
+                              ((I = f),
+                              A.substr(f, 11) === ':nth-child(' ? ((N = ':nth-child('), (f += 11)) : ((N = c), q(Di)),
+                              N !== c)
+                            )
+                              if (Pe() !== c) {
+                                if (
+                                  ((de = []),
+                                  vt.test(A.charAt(f)) ? ((ue = A.charAt(f)), f++) : ((ue = c), q(nr)),
+                                  ue !== c)
+                                )
+                                  for (; ue !== c; )
+                                    (de.push(ue), vt.test(A.charAt(f)) ? ((ue = A.charAt(f)), f++) : ((ue = c), q(nr)))
+                                else de = c
+                                de !== c && (ue = Pe()) !== c
+                                  ? (A.charCodeAt(f) === 41 ? ((Se = ')'), f++) : ((Se = c), q(En)),
+                                    Se !== c ? ((N = Ze(parseInt(de.join(''), 10))), (I = N)) : ((f = I), (I = c)))
+                                  : ((f = I), (I = c))
+                              } else ((f = I), (I = c))
+                            else ((f = I), (I = c))
+                            return ((h[xe] = { nextPos: f, result: I }), I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue,
+                              Se,
+                              xe = 36 * f + 34,
+                              ve = h[xe]
+                            if (ve) return ((f = ve.nextPos), ve.result)
+                            if (
+                              ((I = f),
+                              A.substr(f, 16) === ':nth-last-child('
+                                ? ((N = ':nth-last-child('), (f += 16))
+                                : ((N = c), q(gs)),
+                              N !== c)
+                            )
+                              if (Pe() !== c) {
+                                if (
+                                  ((de = []),
+                                  vt.test(A.charAt(f)) ? ((ue = A.charAt(f)), f++) : ((ue = c), q(nr)),
+                                  ue !== c)
+                                )
+                                  for (; ue !== c; )
+                                    (de.push(ue), vt.test(A.charAt(f)) ? ((ue = A.charAt(f)), f++) : ((ue = c), q(nr)))
+                                else de = c
+                                de !== c && (ue = Pe()) !== c
+                                  ? (A.charCodeAt(f) === 41 ? ((Se = ')'), f++) : ((Se = c), q(En)),
+                                    Se !== c ? ((N = Ht(parseInt(de.join(''), 10))), (I = N)) : ((f = I), (I = c)))
+                                  : ((f = I), (I = c))
+                              } else ((f = I), (I = c))
+                            else ((f = I), (I = c))
+                            return ((h[xe] = { nextPos: f, result: I }), I)
+                          })()) === c &&
+                          (D = (function () {
+                            var I,
+                              N,
+                              de,
+                              ue = 36 * f + 35,
+                              Se = h[ue]
+                            return Se
+                              ? ((f = Se.nextPos), Se.result)
+                              : ((I = f),
+                                A.charCodeAt(f) === 58 ? ((N = ':'), f++) : ((N = c), q(Nf)),
+                                N !== c && (de = Qe()) !== c
+                                  ? (I = N = { type: 'class', name: de })
+                                  : ((f = I), (I = c)),
+                                (h[ue] = { nextPos: f, result: I }),
+                                I)
+                          })()),
+                        (h[K] = { nextPos: f, result: D }),
+                        D)
+                  }
+                  function Ke() {
+                    var D,
+                      K,
+                      ne,
+                      I,
+                      N,
+                      de,
+                      ue,
+                      Se,
+                      xe = 36 * f + 15,
+                      ve = h[xe]
+                    if (ve) return ((f = ve.nextPos), ve.result)
+                    if (((D = f), (K = Qe()) !== c)) {
+                      for (
+                        ne = [],
+                          I = f,
+                          A.charCodeAt(f) === 46 ? ((N = '.'), f++) : ((N = c), q(we)),
+                          N !== c && (de = Qe()) !== c ? (I = N = [N, de]) : ((f = I), (I = c));
+                        I !== c;
+                      )
+                        (ne.push(I),
+                          (I = f),
+                          A.charCodeAt(f) === 46 ? ((N = '.'), f++) : ((N = c), q(we)),
+                          N !== c && (de = Qe()) !== c ? (I = N = [N, de]) : ((f = I), (I = c)))
+                      ne !== c
+                        ? ((ue = K), (Se = ne), (D = K = [].concat.apply([ue], Se).join('')))
+                        : ((f = D), (D = c))
+                    } else ((f = D), (D = c))
+                    return ((h[xe] = { nextPos: f, result: D }), D)
+                  }
+                  function mn() {
+                    var D,
+                      K,
+                      ne,
+                      I,
+                      N = 36 * f + 23,
+                      de = h[N]
+                    if (de) return ((f = de.nextPos), de.result)
+                    if (((D = f), A.charCodeAt(f) === 91 ? ((K = '['), f++) : ((K = c), q(Ae)), K !== c)) {
+                      if (
+                        ((ne = []),
+                        mr.test(A.charAt(f)) ? ((I = A.charAt(f)), f++) : ((I = c), q(ms)),
+                        I === c && (I = Mt()),
+                        I !== c)
+                      )
+                        for (; I !== c; )
+                          (ne.push(I),
+                            mr.test(A.charAt(f)) ? ((I = A.charAt(f)), f++) : ((I = c), q(ms)),
+                            I === c && (I = Mt()))
+                      else ne = c
+                      ne !== c
+                        ? (A.charCodeAt(f) === 93 ? ((I = ']'), f++) : ((I = c), q(X)),
+                          I !== c ? (D = K = '[' + ne.join('') + ']') : ((f = D), (D = c)))
+                        : ((f = D), (D = c))
+                    } else ((f = D), (D = c))
+                    return ((h[N] = { nextPos: f, result: D }), D)
+                  }
+                  function Mt() {
+                    var D,
+                      K,
+                      ne,
+                      I = 36 * f + 24,
+                      N = h[I]
+                    return N
+                      ? ((f = N.nextPos), N.result)
+                      : ((D = f),
+                        A.charCodeAt(f) === 92 ? ((K = '\\'), f++) : ((K = c), q(Tt)),
+                        K !== c
+                          ? (A.length > f ? ((ne = A.charAt(f)), f++) : ((ne = c), q(ft)),
+                            ne !== c ? (D = K = '\\' + ne) : ((f = D), (D = c)))
+                          : ((f = D), (D = c)),
+                        (h[I] = { nextPos: f, result: D }),
+                        D)
+                  }
+                  function Zt() {
+                    var D,
+                      K,
+                      ne,
+                      I = 36 * f + 25,
+                      N = h[I]
+                    if (N) return ((f = N.nextPos), N.result)
+                    if (((K = []), Ts.test(A.charAt(f)) ? ((ne = A.charAt(f)), f++) : ((ne = c), q(hs)), ne !== c))
+                      for (; ne !== c; )
+                        (K.push(ne), Ts.test(A.charAt(f)) ? ((ne = A.charAt(f)), f++) : ((ne = c), q(hs)))
+                    else K = c
+                    return (K !== c && (K = K.join('')), (D = K), (h[I] = { nextPos: f, result: D }), D)
+                  }
+                  function Ze(D) {
+                    return { type: 'nth-child', index: { type: 'literal', value: D } }
+                  }
+                  function Ht(D) {
+                    return { type: 'nth-last-child', index: { type: 'literal', value: D } }
+                  }
+                  if ((B = W()) !== c && f === A.length) return B
+                  throw (
+                    B !== c && f < A.length && q({ type: 'end' }),
+                    (te = U),
+                    (ae = Tr < A.length ? A.charAt(Tr) : null),
+                    (J = Tr < A.length ? he(Tr, Tr + 1) : he(Tr, Tr)),
+                    new V(V.buildMessage(te, ae), te, ae, J)
+                  )
+                },
+              }
+            )
+          })())
+      })
+    function P(R, V) {
+      for (var A = 0; A < V.length; ++A) {
+        if (R == null) return R
+        R = R[V[A]]
+      }
+      return R
+    }
+    var y = typeof WeakMap == 'function' ? new WeakMap() : null
+    function E(R) {
+      if (R == null)
+        return function () {
+          return !0
+        }
+      if (y != null) {
+        var V = y.get(R)
+        return (V != null || ((V = m(R)), y.set(R, V)), V)
+      }
+      return m(R)
+    }
+    function m(R) {
+      switch (R.type) {
+        case 'wildcard':
+          return function () {
+            return !0
+          }
+        case 'identifier':
+          var V = R.value.toLowerCase()
+          return function (X, Ee, H) {
+            var re = (H && H.nodeTypeKey) || 'type'
+            return V === X[re].toLowerCase()
+          }
+        case 'exactNode':
+          return function (X, Ee) {
+            return Ee.length === 0
+          }
+        case 'field':
+          var A = R.name.split('.')
+          return function (X, Ee) {
+            return (function H(re, De, ke, Ce) {
+              for (var we = De, $e = Ce; $e < ke.length; ++$e) {
+                if (we == null) return !1
+                var ct = we[ke[$e]]
+                if (Array.isArray(ct)) {
+                  for (var bt = 0; bt < ct.length; ++bt) if (H(re, ct[bt], ke, $e + 1)) return !0
+                  return !1
+                }
+                we = ct
+              }
+              return re === we
+            })(X, Ee[A.length - 1], A, 0)
+          }
+        case 'matches':
+          var z = R.selectors.map(E)
+          return function (X, Ee, H) {
+            for (var re = 0; re < z.length; ++re) if (z[re](X, Ee, H)) return !0
+            return !1
+          }
+        case 'compound':
+          var B = R.selectors.map(E)
+          return function (X, Ee, H) {
+            for (var re = 0; re < B.length; ++re) if (!B[re](X, Ee, H)) return !1
+            return !0
+          }
+        case 'not':
+          var te = R.selectors.map(E)
+          return function (X, Ee, H) {
+            for (var re = 0; re < te.length; ++re) if (te[re](X, Ee, H)) return !1
+            return !0
+          }
+        case 'has':
+          var ae = R.selectors.map(E)
+          return function (X, Ee, H) {
+            var re = !1,
+              De = []
+            return (
+              u.traverse(X, {
+                enter: function (ke, Ce) {
+                  Ce != null && De.unshift(Ce)
+                  for (var we = 0; we < ae.length; ++we) if (ae[we](ke, De, H)) return ((re = !0), void this.break())
+                },
+                leave: function () {
+                  De.shift()
+                },
+                keys: H && H.visitorKeys,
+                fallback: (H && H.fallback) || 'iteration',
+              }),
+              re
+            )
+          }
+        case 'child':
+          var J = E(R.left),
+            c = E(R.right)
+          return function (X, Ee, H) {
+            return !!(Ee.length > 0 && c(X, Ee, H)) && J(Ee[0], Ee.slice(1), H)
+          }
+        case 'descendant':
+          var w = E(R.left),
+            W = E(R.right)
+          return function (X, Ee, H) {
+            if (W(X, Ee, H)) {
+              for (var re = 0, De = Ee.length; re < De; ++re) if (w(Ee[re], Ee.slice(re + 1), H)) return !0
+            }
+            return !1
+          }
+        case 'attribute':
+          var ce = R.name.split('.')
+          switch (R.operator) {
+            case void 0:
+              return function (X) {
+                return P(X, ce) != null
+              }
+            case '=':
+              switch (R.value.type) {
+                case 'regexp':
+                  return function (X) {
+                    var Ee = P(X, ce)
+                    return typeof Ee == 'string' && R.value.value.test(Ee)
+                  }
+                case 'literal':
+                  var me = ''.concat(R.value.value)
+                  return function (X) {
+                    return me === ''.concat(P(X, ce))
+                  }
+                case 'type':
+                  return function (X) {
+                    return R.value.value === a(P(X, ce))
+                  }
+              }
+              throw new Error('Unknown selector value type: '.concat(R.value.type))
+            case '!=':
+              switch (R.value.type) {
+                case 'regexp':
+                  return function (X) {
+                    return !R.value.value.test(P(X, ce))
+                  }
+                case 'literal':
+                  var _e = ''.concat(R.value.value)
+                  return function (X) {
+                    return _e !== ''.concat(P(X, ce))
+                  }
+                case 'type':
+                  return function (X) {
+                    return R.value.value !== a(P(X, ce))
+                  }
+              }
+              throw new Error('Unknown selector value type: '.concat(R.value.type))
+            case '<=':
+              return function (X) {
+                return P(X, ce) <= R.value.value
+              }
+            case '<':
+              return function (X) {
+                return P(X, ce) < R.value.value
+              }
+            case '>':
+              return function (X) {
+                return P(X, ce) > R.value.value
+              }
+            case '>=':
+              return function (X) {
+                return P(X, ce) >= R.value.value
+              }
+          }
+          throw new Error('Unknown operator: '.concat(R.operator))
+        case 'sibling':
+          var Ye = E(R.left),
+            Le = E(R.right)
+          return function (X, Ee, H) {
+            return (
+              (Le(X, Ee, H) && v(X, Ye, Ee, 'LEFT_SIDE', H)) ||
+              (R.left.subject && Ye(X, Ee, H) && v(X, Le, Ee, 'RIGHT_SIDE', H))
+            )
+          }
+        case 'adjacent':
+          var Me = E(R.left),
+            We = E(R.right)
+          return function (X, Ee, H) {
+            return (
+              (We(X, Ee, H) && C(X, Me, Ee, 'LEFT_SIDE', H)) ||
+              (R.right.subject && Me(X, Ee, H) && C(X, We, Ee, 'RIGHT_SIDE', H))
+            )
+          }
+        case 'nth-child':
+          var ut = R.index.value,
+            ie = E(R.right)
+          return function (X, Ee, H) {
+            return ie(X, Ee, H) && L(X, Ee, ut, H)
+          }
+        case 'nth-last-child':
+          var fe = -R.index.value,
+            Te = E(R.right)
+          return function (X, Ee, H) {
+            return Te(X, Ee, H) && L(X, Ee, fe, H)
+          }
+        case 'class':
+          var Ae = R.name.toLowerCase()
+          return function (X, Ee, H) {
+            if (H && H.matchClass) return H.matchClass(R.name, X, Ee)
+            if (H && H.nodeTypeKey) return !1
+            switch (Ae) {
+              case 'statement':
+                if (X.type.slice(-9) === 'Statement') return !0
+              case 'declaration':
+                return X.type.slice(-11) === 'Declaration'
+              case 'pattern':
+                if (X.type.slice(-7) === 'Pattern') return !0
+              case 'expression':
+                return (
+                  X.type.slice(-10) === 'Expression' ||
+                  X.type.slice(-7) === 'Literal' ||
+                  (X.type === 'Identifier' && (Ee.length === 0 || Ee[0].type !== 'MetaProperty')) ||
+                  X.type === 'MetaProperty'
+                )
+              case 'function':
+                return (
+                  X.type === 'FunctionDeclaration' ||
+                  X.type === 'FunctionExpression' ||
+                  X.type === 'ArrowFunctionExpression'
+                )
+            }
+            throw new Error('Unknown class name: '.concat(R.name))
+          }
+      }
+      throw new Error('Unknown selector type: '.concat(R.type))
+    }
+    function _(R, V) {
+      var A = (V && V.nodeTypeKey) || 'type',
+        z = R[A]
+      return V && V.visitorKeys && V.visitorKeys[z]
+        ? V.visitorKeys[z]
+        : u.VisitorKeys[z]
+          ? u.VisitorKeys[z]
+          : V && typeof V.fallback == 'function'
+            ? V.fallback(R)
+            : Object.keys(R).filter(function (B) {
+                return B !== A
+              })
+    }
+    function T(R, V) {
+      var A = (V && V.nodeTypeKey) || 'type'
+      return R !== null && a(R) === 'object' && typeof R[A] == 'string'
+    }
+    function v(R, V, A, z, B) {
+      var te = t(A, 1)[0]
+      if (!te) return !1
+      for (var ae = _(te, B), J = 0; J < ae.length; ++J) {
+        var c = te[ae[J]]
+        if (Array.isArray(c)) {
+          var w = c.indexOf(R)
+          if (w < 0) continue
+          var W = void 0,
+            ce = void 0
+          z === 'LEFT_SIDE' ? ((W = 0), (ce = w)) : ((W = w + 1), (ce = c.length))
+          for (var me = W; me < ce; ++me) if (T(c[me], B) && V(c[me], A, B)) return !0
+        }
+      }
+      return !1
+    }
+    function C(R, V, A, z, B) {
+      var te = t(A, 1)[0]
+      if (!te) return !1
+      for (var ae = _(te, B), J = 0; J < ae.length; ++J) {
+        var c = te[ae[J]]
+        if (Array.isArray(c)) {
+          var w = c.indexOf(R)
+          if (w < 0) continue
+          if (
+            (z === 'LEFT_SIDE' && w > 0 && T(c[w - 1], B) && V(c[w - 1], A, B)) ||
+            (z === 'RIGHT_SIDE' && w < c.length - 1 && T(c[w + 1], B) && V(c[w + 1], A, B))
+          )
+            return !0
+        }
+      }
+      return !1
+    }
+    function L(R, V, A, z) {
+      if (A === 0) return !1
+      var B = t(V, 1)[0]
+      if (!B) return !1
+      for (var te = _(B, z), ae = 0; ae < te.length; ++ae) {
+        var J = B[te[ae]]
+        if (Array.isArray(J)) {
+          var c = A < 0 ? J.length + A : A - 1
+          if (c >= 0 && c < J.length && J[c] === R) return !0
+        }
+      }
+      return !1
+    }
+    function F(R, V, A, z) {
+      if (V) {
+        var B = [],
+          te = E(V),
+          ae = (function J(c, w) {
+            if (c == null || a(c) != 'object') return []
+            w == null && (w = c)
+            for (var W = c.subject ? [w] : [], ce = Object.keys(c), me = 0; me < ce.length; ++me) {
+              var _e = ce[me],
+                Ye = c[_e]
+              W.push.apply(W, n(J(Ye, _e === 'left' ? Ye : w)))
+            }
+            return W
+          })(V).map(E)
+        u.traverse(R, {
+          enter: function (J, c) {
+            if ((c != null && B.unshift(c), te(J, B, z)))
+              if (ae.length)
+                for (var w = 0, W = ae.length; w < W; ++w) {
+                  ae[w](J, B, z) && A(J, c, B)
+                  for (var ce = 0, me = B.length; ce < me; ++ce) {
+                    var _e = B.slice(ce + 1)
+                    ae[w](B[ce], _e, z) && A(B[ce], c, _e)
+                  }
+                }
+              else A(J, c, B)
+          },
+          leave: function () {
+            B.shift()
+          },
+          keys: z && z.visitorKeys,
+          fallback: (z && z.fallback) || 'iteration',
+        })
+      }
+    }
+    function $(R, V, A) {
+      var z = []
+      return (
+        F(
+          R,
+          V,
+          function (B) {
+            z.push(B)
+          },
+          A,
+        ),
+        z
+      )
+    }
+    function j(R) {
+      return d.parse(R)
+    }
+    function Q(R, V, A) {
+      return $(R, j(V), A)
+    }
+    return (
+      (Q.parse = j),
+      (Q.match = $),
+      (Q.traverse = F),
+      (Q.matches = function (R, V, A, z) {
+        return !V || (!!R && (A || (A = []), E(V)(R, A, z)))
+      }),
+      (Q.query = Q),
+      Q
+    )
+  })
+})
+var c4 = {}
+Rv(c4, { lintFile: () => pT, loadPlugin: () => Hm, setupRuleConfigs: () => ET })
+module.exports = Vv(c4)
+var { freeze: oe } = Object,
+  it = oe([]),
+  hT = oe(['decorators', 'key', 'typeAnnotation', 'value']),
+  bs = oe(['left', 'right']),
+  Gn = oe(['argument']),
+  ui = oe(['body']),
+  PT = oe(['label']),
+  yT = oe(['callee', 'typeArguments', 'arguments']),
+  bn = oe(['expression']),
+  gT = oe(['decorators', 'id', 'typeParameters', 'superClass', 'superTypeArguments', 'implements', 'body']),
+  ST = oe(['test', 'consequent', 'alternate']),
+  _T = oe(['left', 'right', 'body']),
+  qf = oe(['id', 'typeParameters', 'params', 'returnType', 'body']),
+  jf = oe(['key', 'value']),
+  bT = oe(['local']),
+  vT = oe(['object', 'property']),
+  xT = oe(['decorators', 'key', 'typeAnnotation']),
+  AT = oe(['expression', 'typeAnnotation']),
+  vs = oe(['typeParameters', 'params', 'returnType']),
+  zf = oe(['expression', 'typeArguments']),
+  CT = oe(['members']),
+  YT = oe(['id', 'body']),
+  LT = oe(['types']),
+  Ea = oe(['typeAnnotation']),
+  UT = oe(['params']),
+  jr = oe({
+    DebuggerStatement: it,
+    EmptyStatement: it,
+    Literal: it,
+    PrivateIdentifier: it,
+    Super: it,
+    TemplateElement: it,
+    ThisExpression: it,
+    JSXClosingFragment: it,
+    JSXEmptyExpression: it,
+    JSXIdentifier: it,
+    JSXOpeningFragment: it,
+    JSXText: it,
+    TSAnyKeyword: it,
+    TSBigIntKeyword: it,
+    TSBooleanKeyword: it,
+    TSIntrinsicKeyword: it,
+    TSJSDocUnknownType: it,
+    TSNeverKeyword: it,
+    TSNullKeyword: it,
+    TSNumberKeyword: it,
+    TSObjectKeyword: it,
+    TSStringKeyword: it,
+    TSSymbolKeyword: it,
+    TSThisType: it,
+    TSUndefinedKeyword: it,
+    TSUnknownKeyword: it,
+    TSVoidKeyword: it,
+    AccessorProperty: hT,
+    ArrayExpression: oe(['elements']),
+    ArrayPattern: oe(['decorators', 'elements', 'typeAnnotation']),
+    ArrowFunctionExpression: oe(['typeParameters', 'params', 'returnType', 'body']),
+    AssignmentExpression: bs,
+    AssignmentPattern: oe(['decorators', 'left', 'right', 'typeAnnotation']),
+    AwaitExpression: Gn,
+    BinaryExpression: bs,
+    BlockStatement: ui,
+    BreakStatement: PT,
+    CallExpression: yT,
+    CatchClause: oe(['param', 'body']),
+    ChainExpression: bn,
+    ClassBody: ui,
+    ClassDeclaration: gT,
+    ClassExpression: gT,
+    ConditionalExpression: ST,
+    ContinueStatement: PT,
+    Decorator: bn,
+    DoWhileStatement: oe(['body', 'test']),
+    ExportAllDeclaration: oe(['exported', 'source', 'attributes']),
+    ExportDefaultDeclaration: oe(['declaration']),
+    ExportNamedDeclaration: oe(['declaration', 'specifiers', 'source', 'attributes']),
+    ExportSpecifier: oe(['local', 'exported']),
+    ExpressionStatement: bn,
+    ForInStatement: _T,
+    ForOfStatement: _T,
+    ForStatement: oe(['init', 'test', 'update', 'body']),
+    FunctionDeclaration: qf,
+    FunctionExpression: qf,
+    Identifier: oe(['decorators', 'typeAnnotation']),
+    IfStatement: ST,
+    ImportAttribute: jf,
+    ImportDeclaration: oe(['specifiers', 'source', 'attributes']),
+    ImportDefaultSpecifier: bT,
+    ImportExpression: oe(['source', 'options']),
+    ImportNamespaceSpecifier: bT,
+    ImportSpecifier: oe(['imported', 'local']),
+    LabeledStatement: oe(['label', 'body']),
+    LogicalExpression: bs,
+    MemberExpression: vT,
+    MetaProperty: oe(['meta', 'property']),
+    MethodDefinition: oe(['decorators', 'key', 'value']),
+    NewExpression: yT,
+    ObjectExpression: oe(['properties']),
+    ObjectPattern: oe(['decorators', 'properties', 'typeAnnotation']),
+    ParenthesizedExpression: bn,
+    Program: ui,
+    Property: jf,
+    PropertyDefinition: hT,
+    RestElement: oe(['decorators', 'argument', 'typeAnnotation']),
+    ReturnStatement: Gn,
+    SequenceExpression: oe(['expressions']),
+    SpreadElement: Gn,
+    StaticBlock: ui,
+    SwitchCase: oe(['test', 'consequent']),
+    SwitchStatement: oe(['discriminant', 'cases']),
+    TaggedTemplateExpression: oe(['tag', 'typeArguments', 'quasi']),
+    TemplateLiteral: oe(['quasis', 'expressions']),
+    ThrowStatement: Gn,
+    TryStatement: oe(['block', 'handler', 'finalizer']),
+    UnaryExpression: Gn,
+    UpdateExpression: Gn,
+    V8IntrinsicExpression: oe(['name', 'arguments']),
+    VariableDeclaration: oe(['declarations']),
+    VariableDeclarator: oe(['id', 'init']),
+    WhileStatement: oe(['test', 'body']),
+    WithStatement: oe(['object', 'body']),
+    YieldExpression: Gn,
+    JSXAttribute: oe(['name', 'value']),
+    JSXClosingElement: oe(['name']),
+    JSXElement: oe(['openingElement', 'children', 'closingElement']),
+    JSXExpressionContainer: bn,
+    JSXFragment: oe(['openingFragment', 'children', 'closingFragment']),
+    JSXMemberExpression: vT,
+    JSXNamespacedName: oe(['namespace', 'name']),
+    JSXOpeningElement: oe(['name', 'typeArguments', 'attributes']),
+    JSXSpreadAttribute: Gn,
+    JSXSpreadChild: bn,
+    TSAbstractAccessorProperty: xT,
+    TSAbstractMethodDefinition: jf,
+    TSAbstractPropertyDefinition: xT,
+    TSArrayType: oe(['elementType']),
+    TSAsExpression: AT,
+    TSCallSignatureDeclaration: vs,
+    TSClassImplements: zf,
+    TSConditionalType: oe(['checkType', 'extendsType', 'trueType', 'falseType']),
+    TSConstructSignatureDeclaration: vs,
+    TSConstructorType: vs,
+    TSDeclareFunction: qf,
+    TSEmptyBodyFunctionExpression: oe(['id', 'typeParameters', 'params', 'returnType']),
+    TSEnumBody: CT,
+    TSEnumDeclaration: YT,
+    TSEnumMember: oe(['id', 'initializer']),
+    TSExportAssignment: bn,
+    TSExternalModuleReference: bn,
+    TSFunctionType: vs,
+    TSImportEqualsDeclaration: oe(['id', 'moduleReference']),
+    TSImportType: oe(['source', 'options', 'qualifier', 'typeArguments']),
+    TSIndexSignature: oe(['parameters', 'typeAnnotation']),
+    TSIndexedAccessType: oe(['objectType', 'indexType']),
+    TSInferType: oe(['typeParameter']),
+    TSInstantiationExpression: zf,
+    TSInterfaceBody: ui,
+    TSInterfaceDeclaration: oe(['id', 'typeParameters', 'extends', 'body']),
+    TSInterfaceHeritage: zf,
+    TSIntersectionType: LT,
+    TSJSDocNonNullableType: Ea,
+    TSJSDocNullableType: Ea,
+    TSLiteralType: oe(['literal']),
+    TSMappedType: oe(['key', 'constraint', 'nameType', 'typeAnnotation']),
+    TSMethodSignature: oe(['key', 'typeParameters', 'params', 'returnType']),
+    TSModuleBlock: ui,
+    TSModuleDeclaration: YT,
+    TSNamedTupleMember: oe(['label', 'elementType']),
+    TSNamespaceExportDeclaration: oe(['id']),
+    TSNonNullExpression: bn,
+    TSOptionalType: Ea,
+    TSParameterProperty: oe(['decorators', 'parameter']),
+    TSParenthesizedType: Ea,
+    TSPropertySignature: oe(['key', 'typeAnnotation']),
+    TSQualifiedName: bs,
+    TSRestType: Ea,
+    TSSatisfiesExpression: AT,
+    TSTemplateLiteralType: oe(['quasis', 'types']),
+    TSTupleType: oe(['elementTypes']),
+    TSTypeAliasDeclaration: oe(['id', 'typeParameters', 'typeAnnotation']),
+    TSTypeAnnotation: Ea,
+    TSTypeAssertion: oe(['typeAnnotation', 'expression']),
+    TSTypeLiteral: CT,
+    TSTypeOperator: Ea,
+    TSTypeParameter: oe(['name', 'constraint', 'default']),
+    TSTypeParameterDeclaration: UT,
+    TSTypeParameterInstantiation: UT,
+    TSTypePredicate: oe(['parameterName', 'typeAnnotation']),
+    TSTypeQuery: oe(['exprName', 'typeArguments']),
+    TSTypeReference: oe(['typeName', 'typeArguments']),
+    TSUnionType: LT,
+  })
+var Dv = /\r\n|[\r\n\u2028\u2029]/gu,
+  Nt = [],
+  mt = [0],
+  Wf = [],
+  xs = 0
+function vn() {
+  ;(je === null && xn(), je, Nt.length, mt.length)
+  let e = 0,
+    t,
+    n
+  for (; (n = Dv.exec(je)) !== null; ) ((t = n.index), Nt.push(je.slice(e, t)), mt.push((e = t + n[0].length)))
+  ;(Nt.push(je.slice(e)), ci())
+}
+function ci() {
+  ;(Nt.length > 0, Nt.length, mt.length)
+}
+function kT() {
+  ;((Nt.length = 0), (mt.length = 1), (xs = 0))
+}
+function RT(e) {
+  if (typeof e != 'number' || e < 0 || (e | 0) !== e)
+    throw new TypeError('Expected `offset` to be a non-negative integer.')
+  if ((Nt.length === 0 && vn(), je, ci(), e > je.length))
+    throw new RangeError(`Index out of range (requested index ${e}, but source text has length ${je.length}).`)
+  let t = 0,
+    n = mt.length,
+    a
+  do ((a = (t + n) >> 1), e < mt[a] ? (n = a) : (t = a + 1))
+  while (t < n)
+  return { line: t, column: e - mt[t - 1] }
+}
+function VT(e) {
+  if (e !== null && typeof e == 'object') {
+    let { line: t, column: n } = e
+    if (typeof t == 'number' && typeof n == 'number' && (t | 0) === t && (n | 0) === n) {
+      ;(Nt.length === 0 && vn(), je, ci())
+      let a = mt.length
+      if (t <= 0 || t > a)
+        throw new RangeError(
+          `Line number out of range (line ${t} requested). Line numbers should be 1-based, and less than or equal to number of lines in file (${a}).`,
+        )
+      if (n < 0) throw new RangeError(`Invalid column number (column ${n} requested).`)
+      let r = mt[t - 1],
+        s = r + n,
+        u
+      if (t === a) {
+        if (((u = je.length), s <= u)) return s
+      } else if (((u = mt[t]), s < u)) return s
+      throw new RangeError(
+        `Column number out of range (column ${n} requested, but the length of line ${t} is ${u - r}).`,
+      )
+    }
+  }
+  throw new TypeError('Expected `loc` to be an object with integer `line` and `column` properties')
+}
+function DT(e) {
+  return e.range
+}
+function wT(e) {
+  return e.loc
+}
+function MT(e) {
+  let t = Oi(e.start, e.end)
+  return ((IT.value = t), Object.defineProperty(e, 'loc', IT), t)
+}
+var IT = { value: null, writable: !0, enumerable: !1, configurable: !1 }
+function Oi(e, t) {
+  ;(e <= t, Nt.length === 0 && vn(), ci())
+  let n
+  ;(xs < Wf.length ? (n = Wf[xs]) : Wf.push((n = { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } })), xs++)
+  let a = mt.length,
+    r = 0,
+    s = a,
+    u
+  do ((u = (r + s) >> 1), e < mt[u] ? (s = u) : (r = u + 1))
+  while (r < s)
+  let d = mt[r - 1],
+    P = n.start
+  ;((P.line = r), (P.column = e - d))
+  let y = n.end
+  if (r === a || t < mt[r]) ((y.line = r), (y.column = t - d))
+  else {
+    for (r++, s = a; r < s; ) ((u = (r + s) >> 1), t < mt[u] ? (s = u) : (r = u + 1))
+    ;((y.line = r), (y.column = t - mt[r - 1]))
+  }
+  return n
+}
+function OT(e) {
+  return (Oe === null && yr(), Oe, e < Oe.start || e >= Oe.end ? null : ((Mi = e), $f(Oe)))
+}
+var Mi = 0
+function $f(e) {
+  let t = jr[e.type]
+  for (let n = 0, a = t.length; n < a; n++) {
+    let r = e[t[n]]
+    if (Array.isArray(r))
+      for (let s = 0, u = r.length; s < u; s++) {
+        let d = r[s]
+        if (d !== null) {
+          if (d.start > Mi) break
+          if (d.end > Mi) return $f(d)
+        }
+      }
+    else if (r !== null) {
+      if (r.start > Mi) break
+      if (r.end > Mi) return $f(r)
+    }
+  }
+  return e
+}
+var FT = new Uint8Array(0),
+  Nn = new Int32Array(0)
+var zr = null,
+  ma = null,
+  be = null,
+  Be = 0,
+  qn = !1,
+  gr = [],
+  As = [],
+  Cs = [],
+  Bi = 0,
+  Hf = [],
+  Fi = Nn,
+  fi = 0,
+  Fv = 16,
+  Ys = Nn,
+  Gi = 0,
+  Bv = 16,
+  GT
+var Ls = class {
+  type = null
+  value = null
+  regex
+  start = 0
+  end = 0
+  range = [0, 0]
+  #e = null
+  get loc() {
+    let t = this.#e
+    return t !== null
+      ? t
+      : (Bi < Cs.length ? (Cs[Bi] = this) : Cs.push(this), Bi++, (this.#e = Oi(this.start, this.end)))
+  }
+  toJSON() {
+    return { ...this, loc: this.loc }
+  }
+  static {
+    GT = (t) => {
+      t.#e = null
+    }
+  }
+}
+Object.defineProperty(Ls.prototype, 'loc', { enumerable: !0 })
+var BT = 2,
+  Gv = 8,
+  Nv = [
+    'Identifier',
+    'Keyword',
+    'PrivateIdentifier',
+    'Punctuator',
+    'Numeric',
+    'String',
+    'Boolean',
+    'Null',
+    'RegularExpression',
+    'Template',
+    'JSXText',
+    'JSXIdentifier',
+  ],
+  NT = 16
+16
+var Us = 4
+1 << Us
+var qv = 8,
+  jv = 10,
+  Jf = 0,
+  Xf = 1
+function Is() {
+  ;(qn || Qf(), As.length >= Be ? ((As.length = Be), (zr = As)) : (zr = As = gr.slice(0, Be)))
+}
+function Qf() {
+  be === null && xt()
+  for (let e = 0; e < Be; e++) qT(e)
+  ;((qn = !0), (Gi = 0))
+}
+function xt() {
+  ;(It, je === null && xn(), je)
+  let { int32: e } = It,
+    t = e[536870891]
+  Be = e[536870892]
+  let n = It.buffer,
+    a = It.byteOffset + t
+  if (((ma = new Uint8Array(n, a, Be << Us)), (be = new Int32Array(n, a, Be << (Us - 2))), gr.length < Be)) {
+    do gr.push(new Ls())
+    while (gr.length < Be)
+    let r = Ys.length
+    r < Be && (Ys = new Int32Array(Math.max(Be, r === 0 ? Bv : r << 1)))
+  }
+}
+function Ni(e) {
+  if (!qn) {
+    let t = qT(e)
+    if (t !== null) return ((Ys[Gi++] = e), t)
+  }
+  return gr[e]
+}
+function qT(e) {
+  let t = e << Us,
+    n = t + 15
+  if (ma[n] !== Jf) return null
+  ma[n] = Xf
+  let a = gr[e],
+    r = ma[t + qv],
+    s = t >> 2,
+    u = be[s],
+    d = be[s + 1],
+    P = je.slice(u + +(r === BT), d)
+  if (r <= BT) ma[t + jv] === 1 && (P = zv(P))
+  else if (r === Gv) {
+    let y
+    if (fi < Hf.length) y = Hf[fi]
+    else {
+      Hf.push((y = { pattern: null, flags: null }))
+      let m = Fi.length
+      if (m === fi) {
+        let _ = new Int32Array(m === 0 ? Fv : m << 1)
+        ;(_.set(Fi, 0), (Fi = _))
+      }
+    }
+    ;((a.regex = y), (Fi[fi++] = e))
+    let E = P.lastIndexOf('/')
+    ;((y.pattern = P.slice(1, E)), (y.flags = P.slice(E + 1)))
+  }
+  return ((a.type = Nv[r]), (a.value = P), (a.range[0] = a.start = u), (a.range[1] = a.end = d), a)
+}
+function zv(e) {
+  return e.replace(/\\u(?:\{([0-9a-fA-F]+)\}|([0-9a-fA-F]{4}))/g, (t, n, a) =>
+    String.fromCodePoint(parseInt(n ?? a, 16)),
+  )
+}
+function jT() {
+  if (be === null) {
+    return
+  }
+  if (qn === !1) {
+    for (let e = 0; e < Gi; e++) gr[Ys[e]].value = null
+    Gi = 0
+  } else {
+    for (let e = 0; e < Be; e++) gr[e].value = null
+    qn = !1
+  }
+  for (let e = 0; e < Bi; e++) GT(Cs[e])
+  Bi = 0
+  for (let e = 0; e < fi; e++) {
+    let t = gr[Fi[e]],
+      n = t.regex
+    ;((n.pattern = null), (n.flags = null), (t.regex = void 0))
+  }
+  ;((fi = 0), (zr = null), (ma = null), (be = null), (Be = 0))
+}
+var jt = null,
+  ha = null,
+  ot = null,
+  Je = 0,
+  An = !1,
+  ir = [],
+  ks = [],
+  Rs = [],
+  qi = 0,
+  Vs = Nn,
+  ji = 0,
+  Jv = 16,
+  Xv = Object.freeze([]),
+  zT = 4
+;(16, 1 << zT)
+var WT
+var Ds = class {
+  type = null
+  value = null
+  start = 0
+  end = 0
+  range = [0, 0]
+  #e = null
+  get loc() {
+    let t = this.#e
+    return t !== null
+      ? t
+      : (qi < Rs.length ? (Rs[qi] = this) : Rs.push(this), qi++, (this.#e = Oi(this.start, this.end)))
+  }
+  toJSON() {
+    return { ...this, loc: this.loc }
+  }
+  static {
+    WT = (t) => {
+      t.#e = null
+    }
+  }
+}
+Object.defineProperty(Ds.prototype, 'loc', { enumerable: !0 })
+function di() {
+  ;(An || ed(), jt === null && (ks.length >= Je ? ((ks.length = Je), (jt = ks)) : (jt = ks = ir.slice(0, Je))))
+}
+function ed() {
+  ot === null && Pa()
+  for (let e = 0; e < Je; e++) $T(e)
+  ;((An = !0), (ji = 0))
+}
+function Pa() {
+  ;(It, je === null && xn(), je)
+  let { int32: e } = It,
+    t = e[536870890] >> 2,
+    n = e[t + 8]
+  if (((Je = e[t + 10]), Je === 0)) {
+    ;((jt = Xv), (ha = FT), (ot = Nn), (An = !0))
+    return
+  }
+  let a = It.buffer,
+    r = It.byteOffset + n
+  if (((ha = new Uint8Array(a, r, Je * 16)), (ot = new Int32Array(a, r, Je * 4)), ir.length < Je)) {
+    do ir.push(new Ds())
+    while (ir.length < Je)
+    let s = Vs.length
+    s < Je && (Vs = new Int32Array(Math.max(Je, s === 0 ? Jv : s << 1)))
+  }
+  ot[0] === 0 && je.startsWith('#!') && (ya(0).type = 'Shebang')
+}
+function ya(e) {
+  if (!An) {
+    let t = $T(e)
+    if (t !== null) return ((Vs[ji++] = e), t)
+  }
+  return ir[e]
+}
+function $T(e) {
+  let t = e << zT,
+    n = t + 15
+  if (ha[n] !== Jf) return null
+  ha[n] = Xf
+  let a = ir[e],
+    r = ha[t + 12] !== 0,
+    s = t >> 2,
+    u = ot[s],
+    d = ot[s + 1]
+  return (
+    (a.type = r ? 'Block' : 'Line'),
+    (a.value = je.slice(u + 2, d - (+r << 1))),
+    (a.range[0] = a.start = u),
+    (a.range[1] = a.end = d),
+    a
+  )
+}
+function HT() {
+  if (ot === null) {
+    return
+  }
+  if (An === !1) {
+    for (let e = 0; e < ji; e++) ir[Vs[e]].value = null
+    ji = 0
+  } else {
+    for (let e = 0; e < Je; e++) ir[e].value = null
+    An = !1
+  }
+  for (let e = 0; e < qi; e++) WT(Rs[e])
+  ;((qi = 0), (jt = null), (ha = null), (ot = null), (Je = 0))
+}
+var O,
+  g,
+  nd,
+  Cn,
+  zi,
+  jn = 0,
+  rd = 0,
+  l = null,
+  { fromCharCode: Qv } = String,
+  { utf8Slice: td, latin1Slice: Zv } = Buffer.prototype,
+  QT = Array(65).fill(null)
+for (let e = 0; e <= 64; e++) QT[e] = Array(e).fill(0)
+var k = Object.create(Object.prototype, {
+  loc: {
+    get() {
+      return MT(this)
+    },
+    enumerable: !0,
+  },
+})
+function ZT(e, t, n, a) {
+  return ((jn = n), ex(e, t, a, tx))
+}
+function ex(e, t, n, a) {
+  if (((O = e), (g = e.int32), (nd = e.float64), (Cn = t), Cn.length === n)) ((rd = jn + n), (zi = Cn))
+  else {
+    let s = jn,
+      u = jn + n
+    for (; s < u && O[s] < 128; s++);
+    ;((rd = s), (zi = Zv.call(O, jn, u)))
+  }
+  let r = a(g[536870890])
+  return (ad(), r)
+}
+function ad() {
+  O = g = nd = Cn = zi = void 0
+}
+function tx(e) {
+  let t = p(e + 4),
+    n = (l = {
+      __proto__: k,
+      type: 'Program',
+      body: null,
+      sourceType: d0(e + 137),
+      get comments() {
+        return (jt === null && di(), jt)
+      },
+      get tokens() {
+        return (zr === null && Is(), zr)
+      },
+      start: 0,
+      end: t,
+      range: [0, t],
+      parent: null,
+    }),
+    a = (n.body = ud(e + 88))
+  a.push(...Ei(e + 112))
+  {
+    let r
+    if (a.length > 0) {
+      let s = a[0]
+      if (((r = s.start), s.type === 'ExportNamedDeclaration' || s.type === 'ExportDefaultDeclaration')) {
+        let { declaration: u } = s
+        if (u !== null && u.type === 'ClassDeclaration' && u.decorators.length > 0) {
+          let d = u.decorators[0].start
+          d < r && (r = d)
+        }
+      }
+    } else r = t
+    n.start = n.range[0] = r
+  }
+  return ((l = null), n)
+}
+function Re(e) {
+  switch (O[e]) {
+    case 0:
+      return Wn(e + 8)
+    case 1:
+      return ga(e + 8)
+    case 2:
+      return $n(e + 8)
+    case 3:
+      return Hn(e + 8)
+    case 4:
+      return Sa(e + 8)
+    case 5:
+      return Kr(e + 8)
+    case 6:
+      return Yn(e + 8)
+    case 7:
+      return Jt(e + 8)
+    case 8:
+      return _a(e + 8)
+    case 9:
+      return ba(e + 8)
+    case 10:
+      return va(e + 8)
+    case 11:
+      return xa(e + 8)
+    case 12:
+      return Aa(e + 8)
+    case 13:
+      return Ca(e + 8)
+    case 14:
+      return Ya(e + 8)
+    case 15:
+      return Kn(e + 8)
+    case 16:
+      return La(e + 8)
+    case 17:
+      return Tn(e + 8)
+    case 18:
+      return Ua(e + 8)
+    case 19:
+      return Jr(e + 8)
+    case 20:
+      return Ia(e + 8)
+    case 21:
+      return ka(e + 8)
+    case 22:
+      return Ra(e + 8)
+    case 23:
+      return Jn(e + 8)
+    case 24:
+      return Va(e + 8)
+    case 25:
+      return Da(e + 8)
+    case 26:
+      return wa(e + 8)
+    case 27:
+      return Qr(e + 8)
+    case 28:
+      return Xn(e + 8)
+    case 29:
+      return Ma(e + 8)
+    case 30:
+      return Oa(e + 8)
+    case 31:
+      return Fa(e + 8)
+    case 32:
+      return Ln(e + 8)
+    case 33:
+      return Un(e + 8)
+    case 34:
+      return Zr(e + 8)
+    case 35:
+      return en(e + 8)
+    case 36:
+      return tn(e + 8)
+    case 37:
+      return Rr(e + 8)
+    case 38:
+      return Ba(e + 8)
+    case 39:
+      return Ga(e + 8)
+    case 40:
+      return Qn(e + 8)
+    case 41:
+      return Na(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for Expression`)
+  }
+}
+function Hr(e) {
+  let t, n
+  return {
+    __proto__: k,
+    type: 'Identifier',
+    decorators: [],
+    name: or(e + 16),
+    optional: !1,
+    typeAnnotation: null,
+    start: (t = p(e)),
+    end: (n = p(e + 4)),
+    range: [t, n],
+    parent: l,
+  }
+}
+function id(e) {
+  let t, n
+  return {
+    __proto__: k,
+    type: 'Identifier',
+    decorators: [],
+    name: or(e + 16),
+    optional: !1,
+    typeAnnotation: null,
+    start: (t = p(e)),
+    end: (n = p(e + 4)),
+    range: [t, n],
+    parent: l,
+  }
+}
+function sr(e) {
+  let t, n
+  return {
+    __proto__: k,
+    type: 'Identifier',
+    decorators: [],
+    name: or(e + 16),
+    optional: !1,
+    typeAnnotation: null,
+    start: (t = p(e)),
+    end: (n = p(e + 4)),
+    range: [t, n],
+    parent: l,
+  }
+}
+function eh(e) {
+  let t, n
+  return {
+    __proto__: k,
+    type: 'Identifier',
+    decorators: [],
+    name: or(e + 16),
+    optional: !1,
+    typeAnnotation: null,
+    start: (t = p(e)),
+    end: (n = p(e + 4)),
+    range: [t, n],
+    parent: l,
+  }
+}
+function rx(e) {
+  let t, n
+  return { __proto__: k, type: 'ThisExpression', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function nx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ArrayExpression',
+      elements: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.elements = P0(e + 16)), (l = a), r)
+}
+function ax(e) {
+  switch (O[e]) {
+    case 0:
+      return Wn(e + 8)
+    case 1:
+      return ga(e + 8)
+    case 2:
+      return $n(e + 8)
+    case 3:
+      return Hn(e + 8)
+    case 4:
+      return Sa(e + 8)
+    case 5:
+      return Kr(e + 8)
+    case 6:
+      return Yn(e + 8)
+    case 7:
+      return Jt(e + 8)
+    case 8:
+      return _a(e + 8)
+    case 9:
+      return ba(e + 8)
+    case 10:
+      return va(e + 8)
+    case 11:
+      return xa(e + 8)
+    case 12:
+      return Aa(e + 8)
+    case 13:
+      return Ca(e + 8)
+    case 14:
+      return Ya(e + 8)
+    case 15:
+      return Kn(e + 8)
+    case 16:
+      return La(e + 8)
+    case 17:
+      return Tn(e + 8)
+    case 18:
+      return Ua(e + 8)
+    case 19:
+      return Jr(e + 8)
+    case 20:
+      return Ia(e + 8)
+    case 21:
+      return ka(e + 8)
+    case 22:
+      return Ra(e + 8)
+    case 23:
+      return Jn(e + 8)
+    case 24:
+      return Va(e + 8)
+    case 25:
+      return Da(e + 8)
+    case 26:
+      return wa(e + 8)
+    case 27:
+      return Qr(e + 8)
+    case 28:
+      return Xn(e + 8)
+    case 29:
+      return Ma(e + 8)
+    case 30:
+      return Oa(e + 8)
+    case 31:
+      return Fa(e + 8)
+    case 32:
+      return Ln(e + 8)
+    case 33:
+      return Un(e + 8)
+    case 34:
+      return Zr(e + 8)
+    case 35:
+      return en(e + 8)
+    case 36:
+      return tn(e + 8)
+    case 37:
+      return Rr(e + 8)
+    case 38:
+      return Ba(e + 8)
+    case 39:
+      return Ga(e + 8)
+    case 40:
+      return Qn(e + 8)
+    case 41:
+      return Na(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    case 64:
+      return cd(e + 8)
+    case 65:
+      return y0(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ArrayExpressionElement`)
+  }
+}
+function ix(e) {
+  return null
+}
+function sx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ObjectExpression',
+      properties: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.properties = g0(e + 16)), (l = a), r)
+}
+function ox(e) {
+  switch (O[e]) {
+    case 0:
+      return S0(e + 8)
+    case 1:
+      return cd(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ObjectPropertyKind`)
+  }
+}
+function lx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Property',
+      kind: ux(e + 12),
+      key: null,
+      value: null,
+      method: ge(e + 13),
+      shorthand: ge(e + 14),
+      computed: ge(e + 15),
+      optional: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.key = zn(e + 16)), (r.value = Re(e + 32)), (l = a), r)
+}
+function zn(e) {
+  switch (O[e]) {
+    case 0:
+      return Wn(e + 8)
+    case 1:
+      return ga(e + 8)
+    case 2:
+      return $n(e + 8)
+    case 3:
+      return Hn(e + 8)
+    case 4:
+      return Sa(e + 8)
+    case 5:
+      return Kr(e + 8)
+    case 6:
+      return Yn(e + 8)
+    case 7:
+      return Jt(e + 8)
+    case 8:
+      return _a(e + 8)
+    case 9:
+      return ba(e + 8)
+    case 10:
+      return va(e + 8)
+    case 11:
+      return xa(e + 8)
+    case 12:
+      return Aa(e + 8)
+    case 13:
+      return Ca(e + 8)
+    case 14:
+      return Ya(e + 8)
+    case 15:
+      return Kn(e + 8)
+    case 16:
+      return La(e + 8)
+    case 17:
+      return Tn(e + 8)
+    case 18:
+      return Ua(e + 8)
+    case 19:
+      return Jr(e + 8)
+    case 20:
+      return Ia(e + 8)
+    case 21:
+      return ka(e + 8)
+    case 22:
+      return Ra(e + 8)
+    case 23:
+      return Jn(e + 8)
+    case 24:
+      return Va(e + 8)
+    case 25:
+      return Da(e + 8)
+    case 26:
+      return wa(e + 8)
+    case 27:
+      return Qr(e + 8)
+    case 28:
+      return Xn(e + 8)
+    case 29:
+      return Ma(e + 8)
+    case 30:
+      return Oa(e + 8)
+    case 31:
+      return Fa(e + 8)
+    case 32:
+      return Ln(e + 8)
+    case 33:
+      return Un(e + 8)
+    case 34:
+      return Zr(e + 8)
+    case 35:
+      return en(e + 8)
+    case 36:
+      return tn(e + 8)
+    case 37:
+      return Rr(e + 8)
+    case 38:
+      return Ba(e + 8)
+    case 39:
+      return Ga(e + 8)
+    case 40:
+      return Qn(e + 8)
+    case 41:
+      return Na(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    case 64:
+      return Fs(e + 8)
+    case 65:
+      return _0(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for PropertyKey`)
+  }
+}
+function ux(e) {
+  switch (O[e]) {
+    case 0:
+      return 'init'
+    case 1:
+      return 'get'
+    case 2:
+      return 'set'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for PropertyKind`)
+  }
+}
+function th(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TemplateLiteral',
+      quasis: null,
+      expressions: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.quasis = ch(e + 16)), (r.expressions = fh(e + 40)), (l = a), r)
+}
+function cx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TaggedTemplateExpression',
+      tag: null,
+      typeArguments: null,
+      quasi: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.tag = Re(e + 16)), (r.typeArguments = Vr(e + 32)), (r.quasi = th(e + 40)), (l = a), r)
+}
+function fx(e) {
+  let t = ge(e + 12),
+    n = p(e) - 1,
+    a = p(e + 4) + 2 - t,
+    r = dx(e + 16)
+  return (
+    r.cooked !== null &&
+      ge(e + 13) &&
+      (r.cooked = r.cooked.replace(/\uFFFD(.{4})/g, (s, u) => String.fromCodePoint(parseInt(u, 16)))),
+    { __proto__: k, type: 'TemplateElement', value: r, tail: t, start: n, end: a, range: [n, a], parent: l }
+  )
+}
+function dx(e) {
+  return { raw: or(e), cooked: b0(e + 16) }
+}
+function px(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'MemberExpression',
+      object: null,
+      property: null,
+      optional: ge(e + 12),
+      computed: !0,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.object = Re(e + 16)), (r.property = Re(e + 32)), (l = a), r)
+}
+function Ex(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'MemberExpression',
+      object: null,
+      property: null,
+      optional: ge(e + 12),
+      computed: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.object = Re(e + 16)), (r.property = Hr(e + 32)), (l = a), r)
+}
+function mx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'MemberExpression',
+      object: null,
+      property: null,
+      optional: ge(e + 12),
+      computed: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.object = Re(e + 16)), (r.property = od(e + 32)), (l = a), r)
+}
+function Tx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'LeadingDotExpression',
+      optional: ge(e + 12),
+      typeArguments: null,
+      arguments: null,
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeArguments = Vr(e + 16)), (r.arguments = Wi(e + 24)), (r.expression = Re(e + 48)), (l = a), r)
+}
+function rh(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'CallExpression',
+      callee: null,
+      typeArguments: null,
+      arguments: null,
+      optional: ge(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.callee = Re(e + 16)), (r.typeArguments = Vr(e + 32)), (r.arguments = Wi(e + 40)), (l = a), r)
+}
+function hx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'NewExpression',
+      callee: null,
+      typeArguments: null,
+      arguments: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.callee = Re(e + 16)), (r.typeArguments = Vr(e + 32)), (r.arguments = Wi(e + 40)), (l = a), r)
+}
+function Px(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'MetaProperty',
+      meta: null,
+      property: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.meta = Hr(e + 16)), (r.property = Hr(e + 48)), (l = a), r)
+}
+function yx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'SpreadElement',
+      argument: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Re(e + 16)), (l = a), r)
+}
+function gx(e) {
+  switch (O[e]) {
+    case 0:
+      return Wn(e + 8)
+    case 1:
+      return ga(e + 8)
+    case 2:
+      return $n(e + 8)
+    case 3:
+      return Hn(e + 8)
+    case 4:
+      return Sa(e + 8)
+    case 5:
+      return Kr(e + 8)
+    case 6:
+      return Yn(e + 8)
+    case 7:
+      return Jt(e + 8)
+    case 8:
+      return _a(e + 8)
+    case 9:
+      return ba(e + 8)
+    case 10:
+      return va(e + 8)
+    case 11:
+      return xa(e + 8)
+    case 12:
+      return Aa(e + 8)
+    case 13:
+      return Ca(e + 8)
+    case 14:
+      return Ya(e + 8)
+    case 15:
+      return Kn(e + 8)
+    case 16:
+      return La(e + 8)
+    case 17:
+      return Tn(e + 8)
+    case 18:
+      return Ua(e + 8)
+    case 19:
+      return Jr(e + 8)
+    case 20:
+      return Ia(e + 8)
+    case 21:
+      return ka(e + 8)
+    case 22:
+      return Ra(e + 8)
+    case 23:
+      return Jn(e + 8)
+    case 24:
+      return Va(e + 8)
+    case 25:
+      return Da(e + 8)
+    case 26:
+      return wa(e + 8)
+    case 27:
+      return Qr(e + 8)
+    case 28:
+      return Xn(e + 8)
+    case 29:
+      return Ma(e + 8)
+    case 30:
+      return Oa(e + 8)
+    case 31:
+      return Fa(e + 8)
+    case 32:
+      return Ln(e + 8)
+    case 33:
+      return Un(e + 8)
+    case 34:
+      return Zr(e + 8)
+    case 35:
+      return en(e + 8)
+    case 36:
+      return tn(e + 8)
+    case 37:
+      return Rr(e + 8)
+    case 38:
+      return Ba(e + 8)
+    case 39:
+      return Ga(e + 8)
+    case 40:
+      return Qn(e + 8)
+    case 41:
+      return Na(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    case 64:
+      return cd(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for Argument`)
+  }
+}
+function Sx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'UpdateExpression',
+      operator: h0(e + 12),
+      prefix: ge(e + 13),
+      argument: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Yx(e + 16)), (l = a), r)
+}
+function _x(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'UnaryExpression',
+      operator: T0(e + 12),
+      argument: null,
+      prefix: !0,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Re(e + 16)), (l = a), r)
+}
+function bx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'BinaryExpression',
+      left: null,
+      operator: E0(e + 12),
+      right: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = Re(e + 16)), (r.right = Re(e + 32)), (l = a), r)
+}
+function vx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'BinaryExpression',
+      left: null,
+      operator: 'in',
+      right: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = od(e + 16)), (r.right = Re(e + 48)), (l = a), r)
+}
+function xx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'LogicalExpression',
+      left: null,
+      operator: m0(e + 12),
+      right: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = Re(e + 16)), (r.right = Re(e + 32)), (l = a), r)
+}
+function Ax(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ConditionalExpression',
+      test: null,
+      consequent: null,
+      alternate: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.test = Re(e + 16)), (r.consequent = Re(e + 32)), (r.alternate = Re(e + 48)), (l = a), r)
+}
+function Cx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'AssignmentExpression',
+      operator: p0(e + 12),
+      left: null,
+      right: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = sd(e + 16)), (r.right = Re(e + 32)), (l = a), r)
+}
+function sd(e) {
+  switch (O[e]) {
+    case 0:
+      return Jt(e + 8)
+    case 1:
+      return Zr(e + 8)
+    case 2:
+      return en(e + 8)
+    case 3:
+      return Rr(e + 8)
+    case 4:
+      return tn(e + 8)
+    case 8:
+      return fd(e + 8)
+    case 9:
+      return dd(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for AssignmentTarget`)
+  }
+}
+function Yx(e) {
+  switch (O[e]) {
+    case 0:
+      return Jt(e + 8)
+    case 1:
+      return Zr(e + 8)
+    case 2:
+      return en(e + 8)
+    case 3:
+      return Rr(e + 8)
+    case 4:
+      return tn(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for SimpleAssignmentTarget`)
+  }
+}
+function Lx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ArrayPattern',
+      decorators: [],
+      elements: null,
+      optional: !1,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = x0(e + 16),
+    u = ph(e + 40)
+  return (u !== null && s.push(u), (r.elements = s), (l = a), r)
+}
+function Ux(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ObjectPattern',
+      decorators: [],
+      properties: null,
+      optional: !1,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = C0(e + 16),
+    u = ph(e + 40)
+  return (u !== null && s.push(u), (r.properties = s), (l = a), r)
+}
+function Ix(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'RestElement',
+      decorators: [],
+      argument: null,
+      optional: !1,
+      typeAnnotation: null,
+      value: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = sd(e + 16)), (l = a), r)
+}
+function nh(e) {
+  switch (O[e]) {
+    case 0:
+      return Jt(e + 8)
+    case 1:
+      return Zr(e + 8)
+    case 2:
+      return en(e + 8)
+    case 3:
+      return Rr(e + 8)
+    case 4:
+      return tn(e + 8)
+    case 8:
+      return fd(e + 8)
+    case 9:
+      return dd(e + 8)
+    case 16:
+      return Y0(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for AssignmentTargetMaybeDefault`)
+  }
+}
+function kx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'AssignmentPattern',
+      decorators: [],
+      left: null,
+      right: null,
+      optional: !1,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = sd(e + 16)), (r.right = Re(e + 32)), (l = a), r)
+}
+function Rx(e) {
+  switch (O[e]) {
+    case 0:
+      return L0(e + 8)
+    case 1:
+      return U0(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for AssignmentTargetProperty`)
+  }
+}
+function Vx(e) {
+  let t = p(e),
+    n = p(e + 4),
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Property',
+      kind: 'init',
+      key: null,
+      value: null,
+      method: !1,
+      shorthand: !0,
+      computed: !1,
+      optional: !1,
+      start: t,
+      end: n,
+      range: [t, n],
+      parent: l,
+    }),
+    s = id(e + 16),
+    u,
+    d,
+    P = {
+      __proto__: k,
+      type: 'Identifier',
+      decorators: [],
+      name: s.name,
+      optional: !1,
+      typeAnnotation: null,
+      start: (u = s.start),
+      end: (d = s.end),
+      range: [u, d],
+      parent: l,
+    },
+    y = Ir(e + 48)
+  if (y !== null) {
+    let E = P
+    ;((P = {
+      __proto__: k,
+      type: 'AssignmentPattern',
+      decorators: [],
+      left: E,
+      right: y,
+      optional: !1,
+      typeAnnotation: null,
+      start: t,
+      end: n,
+      range: [t, n],
+      parent: l,
+    }),
+      (E.parent = P),
+      (y.parent = P))
+  }
+  return ((r.key = s), (r.value = P), (l = a), r)
+}
+function Dx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Property',
+      kind: 'init',
+      key: null,
+      value: null,
+      method: !1,
+      shorthand: !1,
+      computed: ge(e + 12),
+      optional: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.key = zn(e + 16)), (r.value = nh(e + 32)), (l = a), r)
+}
+function wx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'SequenceExpression',
+      expressions: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expressions = fh(e + 16)), (l = a), r)
+}
+function Mx(e) {
+  let t, n
+  return { __proto__: k, type: 'Super', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function Ox(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'AwaitExpression',
+      argument: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Re(e + 16)), (l = a), r)
+}
+function Fx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ChainExpression',
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Bx(e + 16)), (l = a), r)
+}
+function Bx(e) {
+  switch (O[e]) {
+    case 0:
+      return Kn(e + 8)
+    case 1:
+      return Rr(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ChainElement`)
+  }
+}
+function Gx(e) {
+  let t
+  return ((t = Re(e + 16)), t)
+}
+function Xr(e) {
+  switch (O[e]) {
+    case 0:
+      return Bs(e + 8)
+    case 1:
+      return I0(e + 8)
+    case 2:
+      return k0(e + 8)
+    case 3:
+      return R0(e + 8)
+    case 4:
+      return V0(e + 8)
+    case 5:
+      return D0(e + 8)
+    case 6:
+      return w0(e + 8)
+    case 7:
+      return M0(e + 8)
+    case 8:
+      return O0(e + 8)
+    case 9:
+      return F0(e + 8)
+    case 10:
+      return B0(e + 8)
+    case 11:
+      return G0(e + 8)
+    case 12:
+      return N0(e + 8)
+    case 13:
+      return q0(e + 8)
+    case 14:
+      return j0(e + 8)
+    case 15:
+      return z0(e + 8)
+    case 17:
+      return W0(e + 8)
+    case 18:
+      return $0(e + 8)
+    case 19:
+      return md(e + 8)
+    case 20:
+      return Ph(e + 8)
+    case 32:
+      return Gs(e + 8)
+    case 33:
+      return Jr(e + 8)
+    case 34:
+      return Tn(e + 8)
+    case 35:
+      return Eh(e + 8)
+    case 36:
+      return pd(e + 8)
+    case 37:
+      return mh(e + 8)
+    case 38:
+      return Ed(e + 8)
+    case 39:
+      return Th(e + 8)
+    case 40:
+      return hh(e + 8)
+    case 64:
+      return y1(e + 8)
+    case 65:
+      return S1(e + 8)
+    case 66:
+      return _1(e + 8)
+    case 67:
+      return b1(e + 8)
+    case 68:
+      return v1(e + 8)
+    case 69:
+      return x1(e + 8)
+    case 70:
+      return g1(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for Statement`)
+  }
+}
+function Nx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ExpressionStatement',
+      expression: null,
+      directive: or(e + 64),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = kr(e + 16)), (l = a), r)
+}
+function qx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'BlockStatement',
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.body = Ei(e + 16)), (l = a), r)
+}
+function jx(e) {
+  switch (O[e]) {
+    case 19:
+      return md(e + 8)
+    case 20:
+      return Ph(e + 8)
+    case 32:
+      return Gs(e + 8)
+    case 33:
+      return Jr(e + 8)
+    case 34:
+      return Tn(e + 8)
+    case 35:
+      return Eh(e + 8)
+    case 36:
+      return pd(e + 8)
+    case 37:
+      return mh(e + 8)
+    case 38:
+      return Ed(e + 8)
+    case 39:
+      return Th(e + 8)
+    case 40:
+      return hh(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for Declaration`)
+  }
+}
+function zx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'VariableDeclaration',
+      kind: Wx(e + 12),
+      declarations: null,
+      declare: ge(e + 13),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.declarations = H0(e + 16)), (l = a), r)
+}
+function Wx(e) {
+  switch (O[e]) {
+    case 0:
+      return 'var'
+    case 1:
+      return 'let'
+    case 2:
+      return 'const'
+    case 3:
+      return 'using'
+    case 4:
+      return 'await using'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for VariableDeclarationKind`)
+  }
+}
+function $x(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'VariableDeclarator',
+      id: null,
+      init: null,
+      definite: ge(e + 13),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = Wr(e + 16)
+  {
+    let u = l
+    l = s
+    let d = zt(e + 32)
+    ;(d !== null && ((s.typeAnnotation = d), (s.range[1] = s.end = d.end)), (l = u))
+  }
+  return ((r.id = s), (r.init = Ir(e + 40)), (l = a), r)
+}
+function Hx(e) {
+  let t, n
+  return { __proto__: k, type: 'EmptyStatement', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function Kx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ExpressionStatement',
+      expression: null,
+      directive: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (l = a), r)
+}
+function Jx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'IfStatement',
+      test: null,
+      consequent: null,
+      alternate: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.test = Re(e + 16)), (r.consequent = Xr(e + 32)), (r.alternate = K0(e + 48)), (l = a), r)
+}
+function Xx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'DoWhileStatement',
+      body: null,
+      test: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.body = Xr(e + 16)), (r.test = Re(e + 32)), (l = a), r)
+}
+function Qx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'WhileStatement',
+      test: null,
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.test = Re(e + 16)), (r.body = Xr(e + 32)), (l = a), r)
+}
+function Zx(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ForStatement',
+      init: null,
+      test: null,
+      update: null,
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.init = J0(e + 16)), (r.test = Ir(e + 32)), (r.update = Ir(e + 48)), (r.body = Xr(e + 64)), (l = a), r)
+}
+function eA(e) {
+  switch (O[e]) {
+    case 0:
+      return Wn(e + 8)
+    case 1:
+      return ga(e + 8)
+    case 2:
+      return $n(e + 8)
+    case 3:
+      return Hn(e + 8)
+    case 4:
+      return Sa(e + 8)
+    case 5:
+      return Kr(e + 8)
+    case 6:
+      return Yn(e + 8)
+    case 7:
+      return Jt(e + 8)
+    case 8:
+      return _a(e + 8)
+    case 9:
+      return ba(e + 8)
+    case 10:
+      return va(e + 8)
+    case 11:
+      return xa(e + 8)
+    case 12:
+      return Aa(e + 8)
+    case 13:
+      return Ca(e + 8)
+    case 14:
+      return Ya(e + 8)
+    case 15:
+      return Kn(e + 8)
+    case 16:
+      return La(e + 8)
+    case 17:
+      return Tn(e + 8)
+    case 18:
+      return Ua(e + 8)
+    case 19:
+      return Jr(e + 8)
+    case 20:
+      return Ia(e + 8)
+    case 21:
+      return ka(e + 8)
+    case 22:
+      return Ra(e + 8)
+    case 23:
+      return Jn(e + 8)
+    case 24:
+      return Va(e + 8)
+    case 25:
+      return Da(e + 8)
+    case 26:
+      return wa(e + 8)
+    case 27:
+      return Qr(e + 8)
+    case 28:
+      return Xn(e + 8)
+    case 29:
+      return Ma(e + 8)
+    case 30:
+      return Oa(e + 8)
+    case 31:
+      return Fa(e + 8)
+    case 32:
+      return Ln(e + 8)
+    case 33:
+      return Un(e + 8)
+    case 34:
+      return Zr(e + 8)
+    case 35:
+      return en(e + 8)
+    case 36:
+      return tn(e + 8)
+    case 37:
+      return Rr(e + 8)
+    case 38:
+      return Ba(e + 8)
+    case 39:
+      return Ga(e + 8)
+    case 40:
+      return Qn(e + 8)
+    case 41:
+      return Na(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    case 64:
+      return Gs(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ForStatementInit`)
+  }
+}
+function tA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ForInStatement',
+      left: null,
+      right: null,
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = ah(e + 16)), (r.right = Re(e + 32)), (r.body = Xr(e + 48)), (l = a), r)
+}
+function ah(e) {
+  switch (O[e]) {
+    case 0:
+      return Jt(e + 8)
+    case 1:
+      return Zr(e + 8)
+    case 2:
+      return en(e + 8)
+    case 3:
+      return Rr(e + 8)
+    case 4:
+      return tn(e + 8)
+    case 8:
+      return fd(e + 8)
+    case 9:
+      return dd(e + 8)
+    case 16:
+      return Gs(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ForStatementLeft`)
+  }
+}
+function rA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ForOfStatement',
+      await: ge(e + 64),
+      left: null,
+      right: null,
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = ah(e + 16)), (r.right = Re(e + 32)), (r.body = Xr(e + 48)), (l = a), r)
+}
+function nA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ContinueStatement',
+      label: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.label = yh(e + 16)), (l = a), r)
+}
+function aA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'BreakStatement',
+      label: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.label = yh(e + 16)), (l = a), r)
+}
+function iA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ReturnStatement',
+      argument: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Ir(e + 16)), (l = a), r)
+}
+function sA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'WithStatement',
+      object: null,
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.object = Re(e + 16)), (r.body = Xr(e + 32)), (l = a), r)
+}
+function oA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'SwitchStatement',
+      discriminant: null,
+      cases: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.discriminant = Re(e + 16)), (r.cases = X0(e + 32)), (l = a), r)
+}
+function lA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'SwitchCase',
+      test: null,
+      consequent: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.test = Ir(e + 16)), (r.consequent = Ei(e + 32)), (l = a), r)
+}
+function uA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'LabeledStatement',
+      label: null,
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.label = eh(e + 16)), (r.body = Xr(e + 48)), (l = a), r)
+}
+function cA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ThrowStatement',
+      argument: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Re(e + 16)), (l = a), r)
+}
+function fA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TryStatement',
+      block: null,
+      handler: null,
+      finalizer: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.block = Bs(e + 16)), (r.handler = Z0(e + 24)), (r.finalizer = e1(e + 32)), (l = a), r)
+}
+function dA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'CatchClause',
+      param: null,
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.param = t1(e + 16)), (r.body = Bs(e + 56)), (l = a), r)
+}
+function pA(e) {
+  let t = l,
+    n = Wr(e + 16)
+  {
+    l = n
+    let a = zt(e + 32)
+    ;((n.typeAnnotation = a), a !== null && ((n.end = a.end), (n.range[1] = a.end)), (l = t))
+  }
+  return n
+}
+function EA(e) {
+  let t, n
+  return { __proto__: k, type: 'DebuggerStatement', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function Wr(e) {
+  switch (O[e]) {
+    case 0:
+      return r1(e + 8)
+    case 1:
+      return n1(e + 8)
+    case 2:
+      return a1(e + 8)
+    case 3:
+      return i1(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for BindingPattern`)
+  }
+}
+function mA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'AssignmentPattern',
+      decorators: [],
+      left: null,
+      right: null,
+      optional: !1,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = Wr(e + 16)), (r.right = Re(e + 32)), (l = a), r)
+}
+function TA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ObjectPattern',
+      decorators: [],
+      properties: null,
+      optional: !1,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = s1(e + 16),
+    u = gh(e + 40)
+  return (u !== null && s.push(u), (r.properties = s), (l = a), r)
+}
+function hA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Property',
+      kind: 'init',
+      key: null,
+      value: null,
+      method: !1,
+      shorthand: ge(e + 12),
+      computed: ge(e + 13),
+      optional: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.key = zn(e + 16)), (r.value = Wr(e + 32)), (l = a), r)
+}
+function PA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ArrayPattern',
+      decorators: [],
+      elements: null,
+      optional: !1,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = u1(e + 16),
+    u = gh(e + 40)
+  return (u !== null && s.push(u), (r.elements = s), (l = a), r)
+}
+function yA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'RestElement',
+      decorators: [],
+      argument: null,
+      optional: !1,
+      typeAnnotation: null,
+      value: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Wr(e + 16)), (l = a), r)
+}
+function gA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: SA(e + 112),
+      decorators: null,
+      id: null,
+      generator: ge(e + 113),
+      async: ge(e + 114),
+      declare: ge(e + 115),
+      typeParameters: null,
+      params: null,
+      returnType: null,
+      body: null,
+      expression: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = qa(e + 88)
+  {
+    let u = Ns(e + 80)
+    u !== null && s.unshift(u)
+  }
+  return (
+    (r.decorators = $r(e + 16)),
+    (r.id = Sh(e + 40)),
+    (r.typeParameters = rn(e + 72)),
+    (r.params = s),
+    (r.returnType = zt(e + 96)),
+    (r.body = d1(e + 104)),
+    (l = a),
+    r
+  )
+}
+function SA(e) {
+  switch (O[e]) {
+    case 0:
+      return 'FunctionDeclaration'
+    case 1:
+      return 'FunctionExpression'
+    case 2:
+      return 'TSDeclareFunction'
+    case 3:
+      return 'TSEmptyBodyFunctionExpression'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for FunctionType`)
+  }
+}
+function _A(e) {
+  let t = p1(e + 16),
+    n = (e >> 2) + 10
+  if (g[n] !== 0 && g[n + 1] !== 0) {
+    e = g[n]
+    let a,
+      r,
+      s = l,
+      u = (l = {
+        __proto__: k,
+        type: 'RestElement',
+        decorators: [],
+        argument: null,
+        optional: !1,
+        typeAnnotation: null,
+        value: null,
+        start: (a = p(e + 40)),
+        end: (r = p(e + 44)),
+        range: [a, r],
+        parent: s,
+      })
+    ;((u.argument = Wr(e + 56)),
+      (u.typeAnnotation = zt(e + 72)),
+      u.typeAnnotation !== null && ((r = u.typeAnnotation.end), (u.end = r), (u.range[1] = r)),
+      t.push(u),
+      (l = s))
+  }
+  return t
+}
+function bA(e) {
+  let t,
+    n = l,
+    a = (e >> 2) + 16,
+    r = g[a] !== 0 && g[a + 1] !== 0
+  {
+    let s = qs(e + 13),
+      u = ge(e + 14),
+      d = ge(e + 15)
+    if (s === null && !u && !d) {
+      let P = ge(e + 12)
+      if (r) {
+        let y, E
+        ;((t = l =
+          {
+            __proto__: k,
+            type: 'AssignmentPattern',
+            decorators: null,
+            left: null,
+            right: null,
+            optional: P,
+            typeAnnotation: null,
+            start: (y = p(e)),
+            end: (E = p(e + 4)),
+            range: [y, E],
+            parent: n,
+          }),
+          (t.decorators = $r(e + 16)),
+          (t.left = Wr(e + 40)),
+          (t.left.decorators = []),
+          (t.left.optional = !1),
+          (l = t.left))
+        let m = zt(e + 56)
+        ;((t.left.typeAnnotation = m),
+          m !== null && ((t.left.end = m.end), (t.left.range[1] = m.end)),
+          (l = t),
+          (t.right = JT(e + 64)))
+      } else {
+        ;((t = Wr(e + 40)), (t.parent = n), (l = t), (t.decorators = $r(e + 16)), (t.optional = P))
+        let y = zt(e + 56)
+        ;((t.typeAnnotation = y),
+          y !== null ? ((t.end = y.end), (t.range[1] = y.end)) : P && ((t.end = p(e + 4)), (t.range[1] = p(e + 4))),
+          (l = n))
+      }
+    } else {
+      let P, y
+      if (
+        ((t = l =
+          {
+            __proto__: k,
+            type: 'TSParameterProperty',
+            accessibility: s,
+            decorators: null,
+            override: d,
+            parameter: null,
+            readonly: u,
+            static: !1,
+            start: (P = p(e)),
+            end: (y = p(e + 4)),
+            range: [P, y],
+            parent: n,
+          }),
+        (t.decorators = $r(e + 16)),
+        r)
+      ) {
+        let E = Wr(e + 40),
+          m = JT(e + 64),
+          _,
+          T,
+          v = (l = {
+            __proto__: k,
+            type: 'AssignmentPattern',
+            decorators: [],
+            left: null,
+            right: null,
+            optional: !1,
+            typeAnnotation: null,
+            start: (_ = E.start),
+            end: (T = m.end),
+            range: [_, T],
+            parent: t,
+          })
+        ;((v.left = E), (E.parent = v), (E.decorators = []), (E.optional = !1), (l = E))
+        let C = zt(e + 56)
+        ;((E.typeAnnotation = C),
+          C !== null && ((E.end = C.end), (E.range[1] = C.end)),
+          (l = v),
+          (v.right = m),
+          m !== null && (m.parent = v),
+          (t.parameter = v))
+      } else {
+        ;((t.parameter = Wr(e + 40)), (t.parameter.decorators = []))
+        let E = ge(e + 12)
+        ;((t.parameter.optional = E), (l = t.parameter))
+        let m = zt(e + 56)
+        if (((t.parameter.typeAnnotation = m), m !== null)) ((t.parameter.end = m.end), (t.parameter.range[1] = m.end))
+        else if (E) {
+          let _ = p(e + 4)
+          ;((t.parameter.end = _), (t.parameter.range[1] = _))
+        }
+        l = t
+      }
+    }
+  }
+  return ((l = n), t)
+}
+function vA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'BlockStatement',
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = ud(e + 16)
+  return (s.push(...Ei(e + 40)), (r.body = s), (l = a), r)
+}
+function xA(e) {
+  let t = ge(e + 48),
+    n,
+    a,
+    r = l,
+    s = (l = {
+      __proto__: k,
+      type: 'ArrowFunctionExpression',
+      expression: t,
+      async: ge(e + 49),
+      typeParameters: null,
+      params: null,
+      returnType: null,
+      body: null,
+      id: null,
+      generator: !1,
+      start: (n = p(e)),
+      end: (a = p(e + 4)),
+      range: [n, a],
+      parent: l,
+    }),
+    u = _h(e + 40)
+  return (
+    t === !0 && ((u = u.body[0].expression), (u.parent = l)),
+    (s.typeParameters = rn(e + 16)),
+    (s.params = qa(e + 24)),
+    (s.returnType = zt(e + 32)),
+    (s.body = u),
+    (l = r),
+    s
+  )
+}
+function AA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'YieldExpression',
+      delegate: ge(e + 12),
+      argument: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Ir(e + 16)), (l = a), r)
+}
+function CA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: YA(e + 136),
+      decorators: null,
+      id: null,
+      typeParameters: null,
+      superClass: null,
+      superTypeArguments: null,
+      implements: null,
+      body: null,
+      abstract: ge(e + 137),
+      declare: ge(e + 138),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return (
+    (r.decorators = $r(e + 16)),
+    (r.id = Sh(e + 40)),
+    (r.typeParameters = rn(e + 72)),
+    (r.superClass = Ir(e + 80)),
+    (r.superTypeArguments = Vr(e + 96)),
+    (r.implements = E1(e + 104)),
+    (r.body = m1(e + 128)),
+    (l = a),
+    r
+  )
+}
+function YA(e) {
+  switch (O[e]) {
+    case 0:
+      return 'ClassDeclaration'
+    case 1:
+      return 'ClassExpression'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ClassType`)
+  }
+}
+function LA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ClassBody',
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.body = T1(e + 16)), (l = a), r)
+}
+function UA(e) {
+  switch (O[e]) {
+    case 0:
+      return h1(e + 8)
+    case 1:
+      return vh(e + 8)
+    case 2:
+      return Td(e + 8)
+    case 3:
+      return P1(e + 8)
+    case 4:
+      return xh(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ClassElement`)
+  }
+}
+function IA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: kA(e + 12),
+      decorators: null,
+      key: null,
+      value: null,
+      kind: DA(e + 13),
+      computed: ge(e + 14),
+      static: ge(e + 15),
+      override: ge(e + 64),
+      optional: ge(e + 65),
+      accessibility: qs(e + 66),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.decorators = $r(e + 16)), (r.key = zn(e + 40)), (r.value = Jr(e + 56)), (l = a), r)
+}
+function kA(e) {
+  switch (O[e]) {
+    case 0:
+      return 'MethodDefinition'
+    case 1:
+      return 'TSAbstractMethodDefinition'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for MethodDefinitionType`)
+  }
+}
+function RA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: VA(e + 12),
+      decorators: null,
+      key: null,
+      typeAnnotation: null,
+      value: null,
+      computed: ge(e + 13),
+      static: ge(e + 14),
+      declare: ge(e + 15),
+      override: ge(e + 80),
+      optional: ge(e + 81),
+      definite: ge(e + 82),
+      readonly: ge(e + 83),
+      accessibility: qs(e + 84),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return (
+    (r.decorators = $r(e + 16)),
+    (r.key = zn(e + 40)),
+    (r.typeAnnotation = zt(e + 56)),
+    (r.value = Ir(e + 64)),
+    (l = a),
+    r
+  )
+}
+function VA(e) {
+  switch (O[e]) {
+    case 0:
+      return 'PropertyDefinition'
+    case 1:
+      return 'TSAbstractPropertyDefinition'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for PropertyDefinitionType`)
+  }
+}
+function DA(e) {
+  switch (O[e]) {
+    case 0:
+      return 'constructor'
+    case 1:
+      return 'method'
+    case 2:
+      return 'get'
+    case 3:
+      return 'set'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for MethodDefinitionKind`)
+  }
+}
+function od(e) {
+  let t, n
+  return {
+    __proto__: k,
+    type: 'PrivateIdentifier',
+    name: or(e + 16),
+    start: (t = p(e)),
+    end: (n = p(e + 4)),
+    range: [t, n],
+    parent: l,
+  }
+}
+function wA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'StaticBlock',
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.body = Ei(e + 16)), (l = a), r)
+}
+function MA(e) {
+  switch (O[e]) {
+    case 0:
+      return 'AccessorProperty'
+    case 1:
+      return 'TSAbstractAccessorProperty'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for AccessorPropertyType`)
+  }
+}
+function OA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: MA(e + 12),
+      decorators: null,
+      key: null,
+      typeAnnotation: null,
+      value: null,
+      computed: ge(e + 13),
+      static: ge(e + 14),
+      override: ge(e + 15),
+      definite: ge(e + 80),
+      accessibility: qs(e + 81),
+      declare: !1,
+      optional: !1,
+      readonly: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return (
+    (r.decorators = $r(e + 16)),
+    (r.key = zn(e + 40)),
+    (r.typeAnnotation = zt(e + 56)),
+    (r.value = Ir(e + 64)),
+    (l = a),
+    r
+  )
+}
+function FA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ImportExpression',
+      source: null,
+      options: null,
+      phase: Ah(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.source = Re(e + 16)), (r.options = Ir(e + 32)), (l = a), r)
+}
+function BA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ImportDeclaration',
+      specifiers: null,
+      source: null,
+      phase: Ah(e + 12),
+      attributes: null,
+      importKind: pi(e + 13),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = Ch(e + 16)
+  s === null && (s = [])
+  let u = js(e + 88)
+  return ((r.specifiers = s), (r.source = kr(e + 40)), (r.attributes = u === null ? [] : u.attributes), (l = a), r)
+}
+function GA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'LazyImportDeclaration',
+      specifiers: null,
+      source: null,
+      attributes: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = Ch(e + 16),
+    u = js(e + 88)
+  return (
+    (r.specifiers = s === null ? null : s),
+    (r.source = kr(e + 40)),
+    (r.attributes = u === null ? [] : u.attributes),
+    (l = a),
+    r
+  )
+}
+function NA(e) {
+  switch (O[e]) {
+    case 0:
+      return 'source'
+    case 1:
+      return 'defer'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ImportPhase`)
+  }
+}
+function qA(e) {
+  switch (O[e]) {
+    case 0:
+      return Y1(e + 8)
+    case 1:
+      return L1(e + 8)
+    case 2:
+      return U1(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ImportDeclarationSpecifier`)
+  }
+}
+function jA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ImportSpecifier',
+      imported: null,
+      local: null,
+      importKind: pi(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.imported = ws(e + 16)), (r.local = sr(e + 72)), (l = a), r)
+}
+function zA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ImportDefaultSpecifier',
+      local: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.local = sr(e + 16)), (l = a), r)
+}
+function WA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ImportNamespaceSpecifier',
+      local: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.local = sr(e + 16)), (l = a), r)
+}
+function $A(e) {
+  return { attributes: I1(e + 16) }
+}
+function HA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ImportAttribute',
+      key: null,
+      value: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.key = KA(e + 16)), (r.value = kr(e + 72)), (l = a), r)
+}
+function KA(e) {
+  switch (O[e]) {
+    case 0:
+      return Hr(e + 8)
+    case 1:
+      return kr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ImportAttributeKey`)
+  }
+}
+function JA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ExportNamedDeclaration',
+      decorators: null,
+      declaration: null,
+      specifiers: null,
+      source: null,
+      exportKind: pi(e + 12),
+      attributes: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = js(e + 128)
+  return (
+    (r.decorators = $r(e + 16)),
+    (r.declaration = k1(e + 40)),
+    (r.specifiers = R1(e + 56)),
+    (r.source = V1(e + 80)),
+    (r.attributes = s === null ? [] : s.attributes),
+    (l = a),
+    r
+  )
+}
+function XA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ExportDefaultDeclaration',
+      declaration: null,
+      exportKind: 'value',
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.declaration = eC(e + 16)), (l = a), r)
+}
+function QA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ExportAllDeclaration',
+      exported: null,
+      source: null,
+      attributes: null,
+      exportKind: pi(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = js(e + 120)
+  return (
+    (r.exported = D1(e + 16)),
+    (r.source = kr(e + 72)),
+    (r.attributes = s === null ? [] : s.attributes),
+    (l = a),
+    r
+  )
+}
+function ZA(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ExportSpecifier',
+      local: null,
+      exported: null,
+      exportKind: pi(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.local = ws(e + 16)), (r.exported = ws(e + 72)), (l = a), r)
+}
+function eC(e) {
+  switch (O[e]) {
+    case 0:
+      return Wn(e + 8)
+    case 1:
+      return ga(e + 8)
+    case 2:
+      return $n(e + 8)
+    case 3:
+      return Hn(e + 8)
+    case 4:
+      return Sa(e + 8)
+    case 5:
+      return Kr(e + 8)
+    case 6:
+      return Yn(e + 8)
+    case 7:
+      return Jt(e + 8)
+    case 8:
+      return _a(e + 8)
+    case 9:
+      return ba(e + 8)
+    case 10:
+      return va(e + 8)
+    case 11:
+      return xa(e + 8)
+    case 12:
+      return Aa(e + 8)
+    case 13:
+      return Ca(e + 8)
+    case 14:
+      return Ya(e + 8)
+    case 15:
+      return Kn(e + 8)
+    case 16:
+      return La(e + 8)
+    case 17:
+      return Tn(e + 8)
+    case 18:
+      return Ua(e + 8)
+    case 19:
+      return Jr(e + 8)
+    case 20:
+      return Ia(e + 8)
+    case 21:
+      return ka(e + 8)
+    case 22:
+      return Ra(e + 8)
+    case 23:
+      return Jn(e + 8)
+    case 24:
+      return Va(e + 8)
+    case 25:
+      return Da(e + 8)
+    case 26:
+      return wa(e + 8)
+    case 27:
+      return Qr(e + 8)
+    case 28:
+      return Xn(e + 8)
+    case 29:
+      return Ma(e + 8)
+    case 30:
+      return Oa(e + 8)
+    case 31:
+      return Fa(e + 8)
+    case 32:
+      return Ln(e + 8)
+    case 33:
+      return Un(e + 8)
+    case 34:
+      return Zr(e + 8)
+    case 35:
+      return en(e + 8)
+    case 36:
+      return tn(e + 8)
+    case 37:
+      return Rr(e + 8)
+    case 38:
+      return Ba(e + 8)
+    case 39:
+      return Ga(e + 8)
+    case 40:
+      return Qn(e + 8)
+    case 41:
+      return Na(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    case 64:
+      return Jr(e + 8)
+    case 65:
+      return Tn(e + 8)
+    case 66:
+      return pd(e + 8)
+    case 67:
+      return md(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ExportDefaultDeclarationKind`)
+  }
+}
+function ws(e) {
+  switch (O[e]) {
+    case 0:
+      return Hr(e + 8)
+    case 1:
+      return id(e + 8)
+    case 2:
+      return kr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ModuleExportName`)
+  }
+}
+function tC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'V8IntrinsicExpression',
+      name: null,
+      arguments: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.name = Hr(e + 16)), (r.arguments = Wi(e + 48)), (l = a), r)
+}
+function rC(e) {
+  let t = ge(e + 12),
+    n = p(e),
+    a = p(e + 4),
+    r = l,
+    s = (l = { __proto__: k, type: 'Literal', value: t, raw: null, start: n, end: a, range: [n, a], parent: l })
+  return ((s.raw = n === 0 && a === 0 ? null : t + ''), (l = r), s)
+}
+function nC(e) {
+  let t = p(e),
+    n = p(e + 4)
+  return {
+    __proto__: k,
+    type: 'Literal',
+    value: null,
+    raw: t === 0 && n === 0 ? null : 'null',
+    start: t,
+    end: n,
+    range: [t, n],
+    parent: l,
+  }
+}
+function aC(e) {
+  let t = p(e),
+    n = p(e + 4)
+  return {
+    __proto__: k,
+    type: 'Literal',
+    value: w1(e + 32),
+    raw: g[(e >> 2) + 4] === 0 && g[(e >> 2) + 5] === 0 ? null : Cn.slice(t, n),
+    start: t,
+    end: n,
+    range: [t, n],
+    parent: l,
+  }
+}
+function kr(e) {
+  let t = p(e),
+    n = p(e + 4),
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Literal',
+      value: null,
+      raw: g[(e >> 2) + 8] === 0 && g[(e >> 2) + 9] === 0 ? null : Cn.slice(t, n),
+      start: t,
+      end: n,
+      range: [t, n],
+      parent: l,
+    }),
+    s = or(e + 16)
+  return (
+    ge(e + 12) && (s = s.replace(/\uFFFD(.{4})/g, (u, d) => String.fromCodePoint(parseInt(d, 16)))),
+    (r.value = s),
+    (l = a),
+    r
+  )
+}
+function iC(e) {
+  let t = p(e),
+    n = p(e + 4),
+    a = or(e + 16)
+  return {
+    __proto__: k,
+    type: 'Literal',
+    value: BigInt(a),
+    raw: g[(e >> 2) + 8] === 0 && g[(e >> 2) + 9] === 0 ? null : Cn.slice(t, n),
+    bigint: a,
+    start: t,
+    end: n,
+    range: [t, n],
+    parent: l,
+  }
+}
+function sC(e) {
+  let t = p(e),
+    n = p(e + 4),
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Literal',
+      value: null,
+      raw: g[(e >> 2) + 12] === 0 && g[(e >> 2) + 13] === 0 ? null : Cn.slice(t, n),
+      regex: null,
+      start: t,
+      end: n,
+      range: [t, n],
+      parent: l,
+    }),
+    s = oC(e + 16),
+    u = null
+  try {
+    u = new RegExp(s.pattern, s.flags)
+  } catch {}
+  return ((r.value = u), (r.regex = s), (l = a), r)
+}
+function oC(e) {
+  return { pattern: or(e), flags: lC(e + 24) }
+}
+function lC(e) {
+  let t = Yh(e),
+    n = ''
+  return (
+    t & 64 && (n += 'd'),
+    t & 1 && (n += 'g'),
+    t & 2 && (n += 'i'),
+    t & 4 && (n += 'm'),
+    t & 8 && (n += 's'),
+    t & 16 && (n += 'u'),
+    t & 128 && (n += 'v'),
+    t & 32 && (n += 'y'),
+    n
+  )
+}
+function uC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXElement',
+      openingElement: null,
+      children: null,
+      closingElement: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = F1(e + 48),
+    u = M1(e + 16)
+  return (
+    s === null && (u.selfClosing = !0),
+    (r.openingElement = u),
+    (r.children = Lh(e + 24)),
+    (r.closingElement = s),
+    (l = a),
+    r
+  )
+}
+function cC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXOpeningElement',
+      name: null,
+      typeArguments: null,
+      attributes: null,
+      selfClosing: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.name = ih(e + 16)), (r.typeArguments = Vr(e + 32)), (r.attributes = B1(e + 40)), (l = a), r)
+}
+function fC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXClosingElement',
+      name: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.name = ih(e + 16)), (l = a), r)
+}
+function dC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXFragment',
+      openingFragment: null,
+      children: null,
+      closingFragment: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.openingFragment = pC(e + 16)), (r.children = Lh(e + 32)), (r.closingFragment = EC(e + 56)), (l = a), r)
+}
+function pC(e) {
+  let t, n
+  return { __proto__: k, type: 'JSXOpeningFragment', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function EC(e) {
+  let t, n
+  return { __proto__: k, type: 'JSXClosingFragment', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function ih(e) {
+  switch (O[e]) {
+    case 0:
+      return Uh(e + 8)
+    case 1:
+      let t = Jt(e + 8)
+      return {
+        __proto__: k,
+        type: 'JSXIdentifier',
+        name: t.name,
+        start: t.start,
+        end: t.end,
+        range: t.range,
+        parent: l,
+      }
+    case 2:
+      return Ih(e + 8)
+    case 3:
+      return kh(e + 8)
+    case 4:
+      let n = Qr(e + 8)
+      return {
+        __proto__: k,
+        type: 'JSXIdentifier',
+        name: 'this',
+        start: n.start,
+        end: n.end,
+        range: n.range,
+        parent: l,
+      }
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for JSXElementName`)
+  }
+}
+function mC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXNamespacedName',
+      namespace: null,
+      name: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.namespace = Ms(e + 16)), (r.name = Ms(e + 48)), (l = a), r)
+}
+function TC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXMemberExpression',
+      object: null,
+      property: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.object = hC(e + 16)), (r.property = Ms(e + 32)), (l = a), r)
+}
+function hC(e) {
+  switch (O[e]) {
+    case 0:
+      let t = Jt(e + 8)
+      return {
+        __proto__: k,
+        type: 'JSXIdentifier',
+        name: t.name,
+        start: t.start,
+        end: t.end,
+        range: t.range,
+        parent: l,
+      }
+    case 1:
+      return kh(e + 8)
+    case 2:
+      let n = Qr(e + 8)
+      return {
+        __proto__: k,
+        type: 'JSXIdentifier',
+        name: 'this',
+        start: n.start,
+        end: n.end,
+        range: n.range,
+        parent: l,
+      }
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for JSXMemberExpressionObject`)
+  }
+}
+function PC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXExpressionContainer',
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = yC(e + 16)), (l = a), r)
+}
+function yC(e) {
+  switch (O[e]) {
+    case 0:
+      return Wn(e + 8)
+    case 1:
+      return ga(e + 8)
+    case 2:
+      return $n(e + 8)
+    case 3:
+      return Hn(e + 8)
+    case 4:
+      return Sa(e + 8)
+    case 5:
+      return Kr(e + 8)
+    case 6:
+      return Yn(e + 8)
+    case 7:
+      return Jt(e + 8)
+    case 8:
+      return _a(e + 8)
+    case 9:
+      return ba(e + 8)
+    case 10:
+      return va(e + 8)
+    case 11:
+      return xa(e + 8)
+    case 12:
+      return Aa(e + 8)
+    case 13:
+      return Ca(e + 8)
+    case 14:
+      return Ya(e + 8)
+    case 15:
+      return Kn(e + 8)
+    case 16:
+      return La(e + 8)
+    case 17:
+      return Tn(e + 8)
+    case 18:
+      return Ua(e + 8)
+    case 19:
+      return Jr(e + 8)
+    case 20:
+      return Ia(e + 8)
+    case 21:
+      return ka(e + 8)
+    case 22:
+      return Ra(e + 8)
+    case 23:
+      return Jn(e + 8)
+    case 24:
+      return Va(e + 8)
+    case 25:
+      return Da(e + 8)
+    case 26:
+      return wa(e + 8)
+    case 27:
+      return Qr(e + 8)
+    case 28:
+      return Xn(e + 8)
+    case 29:
+      return Ma(e + 8)
+    case 30:
+      return Oa(e + 8)
+    case 31:
+      return Fa(e + 8)
+    case 32:
+      return Ln(e + 8)
+    case 33:
+      return Un(e + 8)
+    case 34:
+      return Zr(e + 8)
+    case 35:
+      return en(e + 8)
+    case 36:
+      return tn(e + 8)
+    case 37:
+      return Rr(e + 8)
+    case 38:
+      return Ba(e + 8)
+    case 39:
+      return Ga(e + 8)
+    case 40:
+      return Qn(e + 8)
+    case 41:
+      return Na(e + 8)
+    case 48:
+      return Dr(e + 8)
+    case 49:
+      return wr(e + 8)
+    case 50:
+      return Mr(e + 8)
+    case 64:
+      return G1(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for JSXExpression`)
+  }
+}
+function gC(e) {
+  let t, n
+  return { __proto__: k, type: 'JSXEmptyExpression', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function SC(e) {
+  switch (O[e]) {
+    case 0:
+      return N1(e + 8)
+    case 1:
+      return q1(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for JSXAttributeItem`)
+  }
+}
+function _C(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXAttribute',
+      name: null,
+      value: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.name = vC(e + 16)), (r.value = j1(e + 32)), (l = a), r)
+}
+function bC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXSpreadAttribute',
+      argument: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.argument = Re(e + 16)), (l = a), r)
+}
+function vC(e) {
+  switch (O[e]) {
+    case 0:
+      return Uh(e + 8)
+    case 1:
+      return Ih(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for JSXAttributeName`)
+  }
+}
+function xC(e) {
+  switch (O[e]) {
+    case 0:
+      return Kr(e + 8)
+    case 1:
+      return Rh(e + 8)
+    case 2:
+      return Ln(e + 8)
+    case 3:
+      return Un(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for JSXAttributeValue`)
+  }
+}
+function Ms(e) {
+  let t, n
+  return {
+    __proto__: k,
+    type: 'JSXIdentifier',
+    name: or(e + 16),
+    start: (t = p(e)),
+    end: (n = p(e + 4)),
+    range: [t, n],
+    parent: l,
+  }
+}
+function AC(e) {
+  switch (O[e]) {
+    case 0:
+      return z1(e + 8)
+    case 1:
+      return Ln(e + 8)
+    case 2:
+      return Un(e + 8)
+    case 3:
+      return Rh(e + 8)
+    case 4:
+      return W1(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for JSXChild`)
+  }
+}
+function CC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'JSXSpreadChild',
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (l = a), r)
+}
+function YC(e) {
+  let t = p(e),
+    n = p(e + 4)
+  return {
+    __proto__: k,
+    type: 'JSXText',
+    value: or(e + 16),
+    raw: g[(e >> 2) + 8] === 0 && g[(e >> 2) + 9] === 0 ? null : Cn.slice(t, n),
+    start: t,
+    end: n,
+    range: [t, n],
+    parent: l,
+  }
+}
+function LC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Identifier',
+      decorators: [],
+      name: 'this',
+      optional: !1,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = zt(e + 24)), (l = a), r)
+}
+function UC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSEnumDeclaration',
+      id: null,
+      body: null,
+      const: ge(e + 12),
+      declare: ge(e + 13),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.id = sr(e + 16)), (r.body = IC(e + 48)), (l = a), r)
+}
+function IC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSEnumBody',
+      members: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.members = $1(e + 16)), (l = a), r)
+}
+function kC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSEnumMember',
+      id: null,
+      initializer: null,
+      computed: Yh(e + 16) > 1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.id = RC(e + 16)), (r.initializer = Ir(e + 32)), (l = a), r)
+}
+function RC(e) {
+  switch (O[e]) {
+    case 0:
+      return Fs(e + 8)
+    case 1:
+      return Kr(e + 8)
+    case 2:
+      return Kr(e + 8)
+    case 3:
+      return Yn(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSEnumMemberName`)
+  }
+}
+function VC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeAnnotation',
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = gt(e + 16)), (l = a), r)
+}
+function DC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSLiteralType',
+      literal: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.literal = wC(e + 16)), (l = a), r)
+}
+function wC(e) {
+  switch (O[e]) {
+    case 0:
+      return Wn(e + 8)
+    case 1:
+      return $n(e + 8)
+    case 2:
+      return Hn(e + 8)
+    case 3:
+      return Kr(e + 8)
+    case 4:
+      return Yn(e + 8)
+    case 5:
+      return Xn(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSLiteral`)
+  }
+}
+function gt(e) {
+  switch (O[e]) {
+    case 0:
+      return Vh(e + 8)
+    case 1:
+      return Dh(e + 8)
+    case 2:
+      return wh(e + 8)
+    case 3:
+      return Mh(e + 8)
+    case 4:
+      return Oh(e + 8)
+    case 5:
+      return Fh(e + 8)
+    case 6:
+      return Bh(e + 8)
+    case 7:
+      return Gh(e + 8)
+    case 8:
+      return Nh(e + 8)
+    case 9:
+      return qh(e + 8)
+    case 10:
+      return Pd(e + 8)
+    case 11:
+      return jh(e + 8)
+    case 12:
+      return zh(e + 8)
+    case 13:
+      return Wh(e + 8)
+    case 14:
+      return $h(e + 8)
+    case 15:
+      return Hh(e + 8)
+    case 16:
+      return Kh(e + 8)
+    case 17:
+      return Jh(e + 8)
+    case 18:
+      return hd(e + 8)
+    case 19:
+      return Xh(e + 8)
+    case 20:
+      return Qh(e + 8)
+    case 21:
+      return Zh(e + 8)
+    case 22:
+      return eP(e + 8)
+    case 23:
+      return tP(e + 8)
+    case 24:
+      return rP(e + 8)
+    case 26:
+      return nP(e + 8)
+    case 27:
+      return aP(e + 8)
+    case 28:
+      return iP(e + 8)
+    case 29:
+      return sP(e + 8)
+    case 30:
+      return oP(e + 8)
+    case 31:
+      return lP(e + 8)
+    case 32:
+      return uP(e + 8)
+    case 33:
+      return cP(e + 8)
+    case 34:
+      return fP(e + 8)
+    case 35:
+      return dP(e + 8)
+    case 36:
+      return pP(e + 8)
+    case 37:
+      return EP(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSType`)
+  }
+}
+function MC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSConditionalType',
+      checkType: null,
+      extendsType: null,
+      trueType: null,
+      falseType: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return (
+    (r.checkType = gt(e + 16)),
+    (r.extendsType = gt(e + 32)),
+    (r.trueType = gt(e + 48)),
+    (r.falseType = gt(e + 64)),
+    (l = a),
+    r
+  )
+}
+function OC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSUnionType',
+      types: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.types = zs(e + 16)), (l = a), r)
+}
+function FC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSIntersectionType',
+      types: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.types = zs(e + 16)), (l = a), r)
+}
+function BC(e) {
+  let t
+  return ((t = gt(e + 16)), t)
+}
+function GC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeOperator',
+      operator: NC(e + 12),
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = gt(e + 16)), (l = a), r)
+}
+function NC(e) {
+  switch (O[e]) {
+    case 0:
+      return 'keyof'
+    case 1:
+      return 'unique'
+    case 2:
+      return 'readonly'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSTypeOperatorOperator`)
+  }
+}
+function qC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSArrayType',
+      elementType: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.elementType = gt(e + 16)), (l = a), r)
+}
+function jC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSIndexedAccessType',
+      objectType: null,
+      indexType: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.objectType = gt(e + 16)), (r.indexType = gt(e + 32)), (l = a), r)
+}
+function zC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTupleType',
+      elementTypes: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.elementTypes = H1(e + 16)), (l = a), r)
+}
+function WC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSNamedTupleMember',
+      label: null,
+      elementType: null,
+      optional: ge(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.label = Hr(e + 16)), (r.elementType = sh(e + 48)), (l = a), r)
+}
+function $C(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSOptionalType',
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = gt(e + 16)), (l = a), r)
+}
+function HC(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSRestType',
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = gt(e + 16)), (l = a), r)
+}
+function sh(e) {
+  switch (O[e]) {
+    case 0:
+      return Vh(e + 8)
+    case 1:
+      return Dh(e + 8)
+    case 2:
+      return wh(e + 8)
+    case 3:
+      return Mh(e + 8)
+    case 4:
+      return Oh(e + 8)
+    case 5:
+      return Fh(e + 8)
+    case 6:
+      return Bh(e + 8)
+    case 7:
+      return Gh(e + 8)
+    case 8:
+      return Nh(e + 8)
+    case 9:
+      return qh(e + 8)
+    case 10:
+      return Pd(e + 8)
+    case 11:
+      return jh(e + 8)
+    case 12:
+      return zh(e + 8)
+    case 13:
+      return Wh(e + 8)
+    case 14:
+      return $h(e + 8)
+    case 15:
+      return Hh(e + 8)
+    case 16:
+      return Kh(e + 8)
+    case 17:
+      return Jh(e + 8)
+    case 18:
+      return hd(e + 8)
+    case 19:
+      return Xh(e + 8)
+    case 20:
+      return Qh(e + 8)
+    case 21:
+      return Zh(e + 8)
+    case 22:
+      return eP(e + 8)
+    case 23:
+      return tP(e + 8)
+    case 24:
+      return rP(e + 8)
+    case 26:
+      return nP(e + 8)
+    case 27:
+      return aP(e + 8)
+    case 28:
+      return iP(e + 8)
+    case 29:
+      return sP(e + 8)
+    case 30:
+      return oP(e + 8)
+    case 31:
+      return lP(e + 8)
+    case 32:
+      return uP(e + 8)
+    case 33:
+      return cP(e + 8)
+    case 34:
+      return fP(e + 8)
+    case 35:
+      return dP(e + 8)
+    case 36:
+      return pP(e + 8)
+    case 37:
+      return EP(e + 8)
+    case 64:
+      return K1(e + 8)
+    case 65:
+      return J1(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSTupleElement`)
+  }
+}
+function KC(e) {
+  let t, n
+  return { __proto__: k, type: 'TSAnyKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function JC(e) {
+  let t, n
+  return { __proto__: k, type: 'TSStringKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function XC(e) {
+  let t, n
+  return { __proto__: k, type: 'TSBooleanKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function QC(e) {
+  let t, n
+  return { __proto__: k, type: 'TSNumberKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function ZC(e) {
+  let t, n
+  return { __proto__: k, type: 'TSNeverKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function eY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSIntrinsicKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function tY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSUnknownKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function rY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSNullKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function nY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSUndefinedKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function aY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSVoidKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function iY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSSymbolKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function sY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSThisType', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function oY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSObjectKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function lY(e) {
+  let t, n
+  return { __proto__: k, type: 'TSBigIntKeyword', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function uY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeReference',
+      typeName: null,
+      typeArguments: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeName = ld(e + 16)), (r.typeArguments = Vr(e + 32)), (l = a), r)
+}
+function ld(e) {
+  switch (O[e]) {
+    case 0:
+      return Jt(e + 8)
+    case 1:
+      return yd(e + 8)
+    case 2:
+      return Qr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSTypeName`)
+  }
+}
+function cY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSQualifiedName',
+      left: null,
+      right: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = ld(e + 16)), (r.right = Hr(e + 32)), (l = a), r)
+}
+function fY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeParameterInstantiation',
+      params: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.params = zs(e + 16)), (l = a), r)
+}
+function oh(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeParameter',
+      name: null,
+      constraint: null,
+      default: null,
+      in: ge(e + 12),
+      out: ge(e + 13),
+      const: ge(e + 14),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.name = sr(e + 16)), (r.constraint = Os(e + 48)), (r.default = Os(e + 64)), (l = a), r)
+}
+function dY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeParameterDeclaration',
+      params: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.params = X1(e + 16)), (l = a), r)
+}
+function pY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeAliasDeclaration',
+      id: null,
+      typeParameters: null,
+      typeAnnotation: null,
+      declare: ge(e + 72),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.id = sr(e + 16)), (r.typeParameters = rn(e + 48)), (r.typeAnnotation = gt(e + 56)), (l = a), r)
+}
+function EY(e) {
+  switch (O[e]) {
+    case 0:
+      return 'private'
+    case 1:
+      return 'protected'
+    case 2:
+      return 'public'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSAccessibility`)
+  }
+}
+function mY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSClassImplements',
+      expression: null,
+      typeArguments: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = ld(e + 16)
+  if (s.type === 'TSQualifiedName') {
+    let u = s.left,
+      { right: d } = s,
+      P,
+      y,
+      E = (s = {
+        __proto__: k,
+        type: 'MemberExpression',
+        object: u,
+        property: d,
+        optional: !1,
+        computed: !1,
+        start: (P = s.start),
+        end: (y = s.end),
+        range: [P, y],
+        parent: l,
+      })
+    for (d.parent = E; ; ) {
+      if (u.type !== 'TSQualifiedName') {
+        u.parent = E
+        break
+      }
+      let { left: m, right: _ } = u
+      ;((E = E.object =
+        {
+          __proto__: k,
+          type: 'MemberExpression',
+          object: m,
+          property: _,
+          optional: !1,
+          computed: !1,
+          start: (P = u.start),
+          end: (y = u.end),
+          range: [P, y],
+          parent: E,
+        }),
+        (_.parent = E),
+        (u = m))
+    }
+  }
+  return ((r.expression = s), (r.typeArguments = Vr(e + 32)), (l = a), r)
+}
+function TY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSInterfaceDeclaration',
+      id: null,
+      typeParameters: null,
+      extends: null,
+      body: null,
+      declare: ge(e + 88),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return (
+    (r.id = sr(e + 16)),
+    (r.typeParameters = rn(e + 48)),
+    (r.extends = Q1(e + 56)),
+    (r.body = Z1(e + 80)),
+    (l = a),
+    r
+  )
+}
+function hY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSInterfaceBody',
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.body = mP(e + 16)), (l = a), r)
+}
+function PY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSPropertySignature',
+      computed: ge(e + 12),
+      optional: ge(e + 13),
+      readonly: ge(e + 14),
+      key: null,
+      typeAnnotation: null,
+      accessibility: null,
+      static: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.key = zn(e + 16)), (r.typeAnnotation = zt(e + 32)), (l = a), r)
+}
+function yY(e) {
+  switch (O[e]) {
+    case 0:
+      return xh(e + 8)
+    case 1:
+      return eL(e + 8)
+    case 2:
+      return tL(e + 8)
+    case 3:
+      return rL(e + 8)
+    case 4:
+      return nL(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSSignature`)
+  }
+}
+function gY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSIndexSignature',
+      parameters: null,
+      typeAnnotation: null,
+      readonly: ge(e + 12),
+      static: ge(e + 13),
+      accessibility: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.parameters = aL(e + 16)), (r.typeAnnotation = $i(e + 40)), (l = a), r)
+}
+function SY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSCallSignatureDeclaration',
+      typeParameters: null,
+      params: null,
+      returnType: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = qa(e + 32),
+    u = Ns(e + 24)
+  return (
+    u !== null && s.unshift(u),
+    (r.typeParameters = rn(e + 16)),
+    (r.params = s),
+    (r.returnType = zt(e + 40)),
+    (l = a),
+    r
+  )
+}
+function _Y(e) {
+  switch (O[e]) {
+    case 0:
+      return 'method'
+    case 1:
+      return 'get'
+    case 2:
+      return 'set'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSMethodSignatureKind`)
+  }
+}
+function bY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSMethodSignature',
+      key: null,
+      computed: ge(e + 64),
+      optional: ge(e + 65),
+      kind: _Y(e + 66),
+      typeParameters: null,
+      params: null,
+      returnType: null,
+      accessibility: null,
+      readonly: !1,
+      static: !1,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = qa(e + 48),
+    u = Ns(e + 40)
+  return (
+    u !== null && s.unshift(u),
+    (r.key = zn(e + 16)),
+    (r.typeParameters = rn(e + 32)),
+    (r.params = s),
+    (r.returnType = zt(e + 56)),
+    (l = a),
+    r
+  )
+}
+function vY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSConstructSignatureDeclaration',
+      typeParameters: null,
+      params: null,
+      returnType: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeParameters = rn(e + 16)), (r.params = qa(e + 24)), (r.returnType = zt(e + 32)), (l = a), r)
+}
+function xY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Identifier',
+      decorators: [],
+      name: or(e + 16),
+      optional: !1,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = $i(e + 32)), (l = a), r)
+}
+function AY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSInterfaceHeritage',
+      expression: null,
+      typeArguments: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (r.typeArguments = Vr(e + 32)), (l = a), r)
+}
+function CY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypePredicate',
+      parameterName: null,
+      asserts: ge(e + 12),
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.parameterName = YY(e + 16)), (r.typeAnnotation = zt(e + 32)), (l = a), r)
+}
+function YY(e) {
+  switch (O[e]) {
+    case 0:
+      return Fs(e + 8)
+    case 1:
+      return Pd(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSTypePredicateName`)
+  }
+}
+function LY(e) {
+  let t = UY(e + 88),
+    n = p(e),
+    a = p(e + 4),
+    r = ge(e + 89),
+    s,
+    u = l,
+    d = iL(e + 72)
+  if (d === null)
+    ((s = l =
+      {
+        __proto__: k,
+        type: 'TSModuleDeclaration',
+        id: null,
+        kind: t,
+        declare: r,
+        global: !1,
+        start: n,
+        end: a,
+        range: [n, a],
+        parent: l,
+      }),
+      (s.id = KT(e + 16)))
+  else {
+    s = l = {
+      __proto__: k,
+      type: 'TSModuleDeclaration',
+      id: null,
+      body: d,
+      kind: t,
+      declare: r,
+      global: !1,
+      start: n,
+      end: a,
+      range: [n, a],
+      parent: l,
+    }
+    let P = KT(e + 16)
+    if (d.type === 'TSModuleBlock') ((s.id = P), (d.parent = s))
+    else {
+      let y = d.id
+      if (y.type === 'Identifier') {
+        let E,
+          m,
+          _ =
+            (s.id =
+            l =
+              {
+                __proto__: k,
+                type: 'TSQualifiedName',
+                left: P,
+                right: y,
+                start: (E = P.start),
+                end: (m = y.end),
+                range: [E, m],
+                parent: s,
+              })
+        P.parent = y.parent = _
+      } else {
+        ;((s.id = y), (y.parent = s))
+        let { start: E } = P
+        for (; (y.start = y.range[0] = E), y.left.type !== 'Identifier'; ) y = y.left
+        let m,
+          _ = y.left
+        P.parent =
+          _.parent =
+          y.left =
+            {
+              __proto__: k,
+              type: 'TSQualifiedName',
+              left: P,
+              right: _,
+              start: E,
+              end: (m = _.end),
+              range: [E, m],
+              parent: y,
+            }
+      }
+      Object.hasOwn(d, 'body') ? ((d = d.body), (s.body = d), (d.parent = s)) : (d = null)
+    }
+  }
+  return ((l = u), s)
+}
+function UY(e) {
+  switch (O[e]) {
+    case 0:
+      return 'module'
+    case 1:
+      return 'namespace'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSModuleDeclarationKind`)
+  }
+}
+function KT(e) {
+  switch (O[e]) {
+    case 0:
+      return sr(e + 8)
+    case 1:
+      return kr(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSModuleDeclarationName`)
+  }
+}
+function IY(e) {
+  switch (O[e]) {
+    case 0:
+      return Ed(e + 8)
+    case 1:
+      return sL(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSModuleDeclarationBody`)
+  }
+}
+function kY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSModuleDeclaration',
+      id: null,
+      body: null,
+      kind: 'global',
+      declare: ge(e + 88),
+      global: !0,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s,
+    u
+  return (
+    (r.id = {
+      __proto__: k,
+      type: 'Identifier',
+      decorators: [],
+      name: 'global',
+      optional: !1,
+      typeAnnotation: null,
+      start: (s = p(e + 16)),
+      end: (u = p(e + 20)),
+      range: [s, u],
+      parent: l,
+    }),
+    (r.body = lh(e + 24)),
+    (l = a),
+    r
+  )
+}
+function lh(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSModuleBlock',
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = ud(e + 16)
+  return (s.push(...Ei(e + 40)), (r.body = s), (l = a), r)
+}
+function RY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeLiteral',
+      members: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.members = mP(e + 16)), (l = a), r)
+}
+function VY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSInferType',
+      typeParameter: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeParameter = oL(e + 16)), (l = a), r)
+}
+function DY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeQuery',
+      exprName: null,
+      typeArguments: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.exprName = wY(e + 16)), (r.typeArguments = Vr(e + 32)), (l = a), r)
+}
+function wY(e) {
+  switch (O[e]) {
+    case 0:
+      return Jt(e + 8)
+    case 1:
+      return yd(e + 8)
+    case 2:
+      return Qr(e + 8)
+    case 3:
+      return hd(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSTypeQueryExprName`)
+  }
+}
+function MY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSImportType',
+      source: null,
+      options: null,
+      qualifier: null,
+      typeArguments: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return (
+    (r.source = kr(e + 16)),
+    (r.options = lL(e + 64)),
+    (r.qualifier = uL(e + 72)),
+    (r.typeArguments = Vr(e + 88)),
+    (l = a),
+    r
+  )
+}
+function uh(e) {
+  switch (O[e]) {
+    case 0:
+      return Fs(e + 8)
+    case 1:
+      return cL(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSImportTypeQualifier`)
+  }
+}
+function OY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSQualifiedName',
+      left: null,
+      right: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.left = uh(e + 16)), (r.right = Hr(e + 32)), (l = a), r)
+}
+function FY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSFunctionType',
+      typeParameters: null,
+      params: null,
+      returnType: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = qa(e + 32),
+    u = Ns(e + 24)
+  return (
+    u !== null && s.unshift(u),
+    (r.typeParameters = rn(e + 16)),
+    (r.params = s),
+    (r.returnType = $i(e + 40)),
+    (l = a),
+    r
+  )
+}
+function BY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSConstructorType',
+      abstract: ge(e + 40),
+      typeParameters: null,
+      params: null,
+      returnType: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeParameters = rn(e + 16)), (r.params = qa(e + 24)), (r.returnType = $i(e + 32)), (l = a), r)
+}
+function GY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSMappedType',
+      key: null,
+      constraint: null,
+      nameType: null,
+      typeAnnotation: null,
+      optional: null,
+      readonly: XT(e + 97),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    }),
+    s = XT(e + 96)
+  return (
+    s === null && (s = !1),
+    (r.key = sr(e + 16)),
+    (r.constraint = gt(e + 48)),
+    (r.nameType = Os(e + 64)),
+    (r.typeAnnotation = Os(e + 80)),
+    (r.optional = s),
+    (l = a),
+    r
+  )
+}
+function NY(e) {
+  switch (O[e]) {
+    case 0:
+      return !0
+    case 1:
+      return '+'
+    case 2:
+      return '-'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSMappedTypeModifierOperator`)
+  }
+}
+function qY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTemplateLiteralType',
+      quasis: null,
+      types: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.quasis = ch(e + 16)), (r.types = zs(e + 40)), (l = a), r)
+}
+function jY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSAsExpression',
+      expression: null,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (r.typeAnnotation = gt(e + 32)), (l = a), r)
+}
+function zY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSSatisfiesExpression',
+      expression: null,
+      typeAnnotation: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (r.typeAnnotation = gt(e + 32)), (l = a), r)
+}
+function WY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSTypeAssertion',
+      typeAnnotation: null,
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = gt(e + 16)), (r.expression = Re(e + 32)), (l = a), r)
+}
+function $Y(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSImportEqualsDeclaration',
+      id: null,
+      moduleReference: null,
+      importKind: pi(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.id = sr(e + 16)), (r.moduleReference = HY(e + 48)), (l = a), r)
+}
+function HY(e) {
+  switch (O[e]) {
+    case 0:
+      return fL(e + 8)
+    case 1:
+      return Jt(e + 8)
+    case 2:
+      return yd(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for TSModuleReference`)
+  }
+}
+function KY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSExternalModuleReference',
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = kr(e + 16)), (l = a), r)
+}
+function JY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSNonNullExpression',
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (l = a), r)
+}
+function XY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'Decorator',
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (l = a), r)
+}
+function QY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSExportAssignment',
+      expression: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (l = a), r)
+}
+function ZY(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSNamespaceExportDeclaration',
+      id: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.id = Hr(e + 16)), (l = a), r)
+}
+function e0(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSInstantiationExpression',
+      expression: null,
+      typeArguments: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.expression = Re(e + 16)), (r.typeArguments = dh(e + 32)), (l = a), r)
+}
+function pi(e) {
+  switch (O[e]) {
+    case 0:
+      return 'value'
+    case 1:
+      return 'type'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ImportOrExportKind`)
+  }
+}
+function t0(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSJSDocNullableType',
+      typeAnnotation: null,
+      postfix: ge(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = gt(e + 16)), (l = a), r)
+}
+function r0(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'TSJSDocNonNullableType',
+      typeAnnotation: null,
+      postfix: ge(e + 12),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.typeAnnotation = gt(e + 16)), (l = a), r)
+}
+function n0(e) {
+  let t, n
+  return { __proto__: k, type: 'TSJSDocUnknownType', start: (t = p(e)), end: (n = p(e + 4)), range: [t, n], parent: l }
+}
+function a0(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'StructStatement',
+      decorators: null,
+      id: null,
+      typeParameters: null,
+      body: null,
+      declare: ge(e + 88),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return (
+    (r.decorators = $r(e + 16)),
+    (r.id = sr(e + 40)),
+    (r.typeParameters = rn(e + 72)),
+    (r.body = dL(e + 80)),
+    (l = a),
+    r
+  )
+}
+function i0(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'StructBody',
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.body = pL(e + 16)), (l = a), r)
+}
+function s0(e) {
+  switch (O[e]) {
+    case 0:
+      return Td(e + 8)
+    case 1:
+      return vh(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for StructElement`)
+  }
+}
+function o0(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'ArkUIComponentExpression',
+      callee: null,
+      typeArguments: null,
+      arguments: null,
+      children: null,
+      chainExpressions: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return (
+    (r.callee = Re(e + 16)),
+    (r.typeArguments = Vr(e + 32)),
+    (r.arguments = Wi(e + 40)),
+    (r.children = EL(e + 64)),
+    (r.chainExpressions = mL(e + 88)),
+    (l = a),
+    r
+  )
+}
+function l0(e) {
+  switch (O[e]) {
+    case 0:
+      return Qn(e + 8)
+    case 1:
+      return bh(e + 8)
+    case 2:
+      return TL(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ArkUIChild`)
+  }
+}
+function u0(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'AnnotationDeclaration',
+      decorators: null,
+      id: null,
+      body: null,
+      declare: ge(e + 80),
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.decorators = $r(e + 16)), (r.id = sr(e + 40)), (r.body = hL(e + 72)), (l = a), r)
+}
+function c0(e) {
+  let t,
+    n,
+    a = l,
+    r = (l = {
+      __proto__: k,
+      type: 'AnnotationBody',
+      body: null,
+      start: (t = p(e)),
+      end: (n = p(e + 4)),
+      range: [t, n],
+      parent: l,
+    })
+  return ((r.body = PL(e + 16)), (l = a), r)
+}
+function f0(e) {
+  switch (O[e]) {
+    case 0:
+      return Td(e + 8)
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for AnnotationElement`)
+  }
+}
+function d0(e) {
+  switch (O[e]) {
+    case 0:
+      return 'script'
+    case 1:
+      return 'module'
+    case 3:
+      return 'commonjs'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for ModuleKind`)
+  }
+}
+function p0(e) {
+  switch (O[e]) {
+    case 0:
+      return '='
+    case 1:
+      return '+='
+    case 2:
+      return '-='
+    case 3:
+      return '*='
+    case 4:
+      return '/='
+    case 5:
+      return '%='
+    case 6:
+      return '**='
+    case 7:
+      return '<<='
+    case 8:
+      return '>>='
+    case 9:
+      return '>>>='
+    case 10:
+      return '|='
+    case 11:
+      return '^='
+    case 12:
+      return '&='
+    case 13:
+      return '||='
+    case 14:
+      return '&&='
+    case 15:
+      return '??='
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for AssignmentOperator`)
+  }
+}
+function E0(e) {
+  switch (O[e]) {
+    case 0:
+      return '=='
+    case 1:
+      return '!='
+    case 2:
+      return '==='
+    case 3:
+      return '!=='
+    case 4:
+      return '<'
+    case 5:
+      return '<='
+    case 6:
+      return '>'
+    case 7:
+      return '>='
+    case 8:
+      return '+'
+    case 9:
+      return '-'
+    case 10:
+      return '*'
+    case 11:
+      return '/'
+    case 12:
+      return '%'
+    case 13:
+      return '**'
+    case 14:
+      return '<<'
+    case 15:
+      return '>>'
+    case 16:
+      return '>>>'
+    case 17:
+      return '|'
+    case 18:
+      return '^'
+    case 19:
+      return '&'
+    case 20:
+      return 'in'
+    case 21:
+      return 'instanceof'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for BinaryOperator`)
+  }
+}
+function m0(e) {
+  switch (O[e]) {
+    case 0:
+      return '||'
+    case 1:
+      return '&&'
+    case 2:
+      return '??'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for LogicalOperator`)
+  }
+}
+function T0(e) {
+  switch (O[e]) {
+    case 0:
+      return '+'
+    case 1:
+      return '-'
+    case 2:
+      return '!'
+    case 3:
+      return '~'
+    case 4:
+      return 'typeof'
+    case 5:
+      return 'void'
+    case 6:
+      return 'delete'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for UnaryOperator`)
+  }
+}
+function h0(e) {
+  switch (O[e]) {
+    case 0:
+      return '++'
+    case 1:
+      return '--'
+    default:
+      throw Error(`Unexpected discriminant ${O[e]} for UpdateOperator`)
+  }
+}
+function or(e) {
+  let t = e >> 2,
+    n = g[t + 2]
+  if (n === 0) return ''
+  e = g[t]
+  let a = e + n,
+    r = e >= jn
+  if (r && a <= rd) return zi.substr(e - jn, n)
+  if (n > 64) return td.call(O, e, a)
+  if (r) {
+    for (let u = e; u < a; u++) if (O[u] >= 128) return td.call(O, e, a)
+    return zi.substr(e - jn, n)
+  }
+  let s = QT[n]
+  for (let u = 0; u < n; u++) {
+    let d = O[e + u]
+    if (d >= 128) return td.call(O, e, a)
+    s[u] = d
+  }
+  return Qv.apply(null, s)
+}
+function ud(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 80
+  for (; e !== a; ) (t.push(Nx(e)), (e += 80))
+  return t
+}
+function Ei(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(Xr(e)), (e += 16))
+  return t
+}
+function Wn(e) {
+  return rC(g[e >> 2])
+}
+function ga(e) {
+  return nC(g[e >> 2])
+}
+function $n(e) {
+  return aC(g[e >> 2])
+}
+function Hn(e) {
+  return iC(g[e >> 2])
+}
+function Sa(e) {
+  return sC(g[e >> 2])
+}
+function Kr(e) {
+  return kr(g[e >> 2])
+}
+function Yn(e) {
+  return th(g[e >> 2])
+}
+function Jt(e) {
+  return id(g[e >> 2])
+}
+function _a(e) {
+  return Px(g[e >> 2])
+}
+function ba(e) {
+  return Mx(g[e >> 2])
+}
+function va(e) {
+  return nx(g[e >> 2])
+}
+function xa(e) {
+  return xA(g[e >> 2])
+}
+function Aa(e) {
+  return Cx(g[e >> 2])
+}
+function Ca(e) {
+  return Ox(g[e >> 2])
+}
+function Ya(e) {
+  return bx(g[e >> 2])
+}
+function Kn(e) {
+  return rh(g[e >> 2])
+}
+function La(e) {
+  return Fx(g[e >> 2])
+}
+function Tn(e) {
+  return CA(g[e >> 2])
+}
+function Ua(e) {
+  return Ax(g[e >> 2])
+}
+function Jr(e) {
+  return gA(g[e >> 2])
+}
+function Ia(e) {
+  return FA(g[e >> 2])
+}
+function ka(e) {
+  return xx(g[e >> 2])
+}
+function Ra(e) {
+  return hx(g[e >> 2])
+}
+function Jn(e) {
+  return sx(g[e >> 2])
+}
+function Va(e) {
+  return Gx(g[e >> 2])
+}
+function Da(e) {
+  return wx(g[e >> 2])
+}
+function wa(e) {
+  return cx(g[e >> 2])
+}
+function Qr(e) {
+  return rx(g[e >> 2])
+}
+function Xn(e) {
+  return _x(g[e >> 2])
+}
+function Ma(e) {
+  return Sx(g[e >> 2])
+}
+function Oa(e) {
+  return AA(g[e >> 2])
+}
+function Fa(e) {
+  return vx(g[e >> 2])
+}
+function Ln(e) {
+  return uC(g[e >> 2])
+}
+function Un(e) {
+  return dC(g[e >> 2])
+}
+function Zr(e) {
+  return jY(g[e >> 2])
+}
+function en(e) {
+  return zY(g[e >> 2])
+}
+function tn(e) {
+  return WY(g[e >> 2])
+}
+function Rr(e) {
+  return JY(g[e >> 2])
+}
+function Ba(e) {
+  return e0(g[e >> 2])
+}
+function Ga(e) {
+  return tC(g[e >> 2])
+}
+function Qn(e) {
+  return o0(g[e >> 2])
+}
+function Na(e) {
+  return Tx(g[e >> 2])
+}
+function P0(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(ax(e)), (e += 16))
+  return t
+}
+function cd(e) {
+  return yx(g[e >> 2])
+}
+function y0(e) {
+  return ix(g[e >> 2])
+}
+function g0(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(ox(e)), (e += 16))
+  return t
+}
+function S0(e) {
+  return lx(g[e >> 2])
+}
+function ge(e) {
+  return O[e] === 1
+}
+function Fs(e) {
+  return Hr(g[e >> 2])
+}
+function _0(e) {
+  return od(g[e >> 2])
+}
+function ch(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 48
+  for (; e !== a; ) (t.push(fx(e)), (e += 48))
+  return t
+}
+function fh(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(Re(e)), (e += 16))
+  return t
+}
+function dh(e) {
+  return fY(g[e >> 2])
+}
+function Vr(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : dh(e)
+}
+function b0(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : or(e)
+}
+function Dr(e) {
+  return px(g[e >> 2])
+}
+function wr(e) {
+  return Ex(g[e >> 2])
+}
+function Mr(e) {
+  return mx(g[e >> 2])
+}
+function Wi(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(gx(e)), (e += 16))
+  return t
+}
+function fd(e) {
+  return Lx(g[e >> 2])
+}
+function dd(e) {
+  return Ux(g[e >> 2])
+}
+function v0(e) {
+  return O[e] === 51 ? null : nh(e)
+}
+function x0(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(v0(e)), (e += 16))
+  return t
+}
+function A0(e) {
+  return Ix(g[e >> 2])
+}
+function ph(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : A0(e)
+}
+function C0(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(Rx(e)), (e += 16))
+  return t
+}
+function Y0(e) {
+  return kx(g[e >> 2])
+}
+function L0(e) {
+  return Vx(g[e >> 2])
+}
+function U0(e) {
+  return Dx(g[e >> 2])
+}
+function Ir(e) {
+  return O[e] === 51 ? null : Re(e)
+}
+function Bs(e) {
+  return qx(g[e >> 2])
+}
+function I0(e) {
+  return aA(g[e >> 2])
+}
+function k0(e) {
+  return nA(g[e >> 2])
+}
+function R0(e) {
+  return EA(g[e >> 2])
+}
+function V0(e) {
+  return Xx(g[e >> 2])
+}
+function D0(e) {
+  return Hx(g[e >> 2])
+}
+function w0(e) {
+  return Kx(g[e >> 2])
+}
+function M0(e) {
+  return tA(g[e >> 2])
+}
+function O0(e) {
+  return rA(g[e >> 2])
+}
+function F0(e) {
+  return Zx(g[e >> 2])
+}
+function B0(e) {
+  return Jx(g[e >> 2])
+}
+function G0(e) {
+  return uA(g[e >> 2])
+}
+function N0(e) {
+  return iA(g[e >> 2])
+}
+function q0(e) {
+  return oA(g[e >> 2])
+}
+function j0(e) {
+  return cA(g[e >> 2])
+}
+function z0(e) {
+  return fA(g[e >> 2])
+}
+function W0(e) {
+  return Qx(g[e >> 2])
+}
+function $0(e) {
+  return sA(g[e >> 2])
+}
+function Gs(e) {
+  return zx(g[e >> 2])
+}
+function Eh(e) {
+  return pY(g[e >> 2])
+}
+function pd(e) {
+  return TY(g[e >> 2])
+}
+function mh(e) {
+  return UC(g[e >> 2])
+}
+function Ed(e) {
+  return LY(g[e >> 2])
+}
+function Th(e) {
+  return kY(g[e >> 2])
+}
+function hh(e) {
+  return $Y(g[e >> 2])
+}
+function md(e) {
+  return a0(g[e >> 2])
+}
+function Ph(e) {
+  return u0(g[e >> 2])
+}
+function H0(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 56
+  for (; e !== a; ) (t.push($x(e)), (e += 56))
+  return t
+}
+function $i(e) {
+  return VC(g[e >> 2])
+}
+function zt(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : $i(e)
+}
+function K0(e) {
+  return O[e] === 71 ? null : Xr(e)
+}
+function J0(e) {
+  return O[e] === 65 ? null : eA(e)
+}
+function yh(e) {
+  return g[(e >> 2) + 4] === 0 && g[(e >> 2) + 5] === 0 ? null : eh(e)
+}
+function X0(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 56
+  for (; e !== a; ) (t.push(lA(e)), (e += 56))
+  return t
+}
+function Q0(e) {
+  return dA(g[e >> 2])
+}
+function Z0(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : Q0(e)
+}
+function e1(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : Bs(e)
+}
+function t1(e) {
+  return O[e + 16] === 4 ? null : pA(e)
+}
+function r1(e) {
+  return sr(g[e >> 2])
+}
+function n1(e) {
+  return TA(g[e >> 2])
+}
+function a1(e) {
+  return PA(g[e >> 2])
+}
+function i1(e) {
+  return mA(g[e >> 2])
+}
+function s1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 48
+  for (; e !== a; ) (t.push(hA(e)), (e += 48))
+  return t
+}
+function o1(e) {
+  return yA(g[e >> 2])
+}
+function gh(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : o1(e)
+}
+function l1(e) {
+  return O[e] === 4 ? null : Wr(e)
+}
+function u1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(l1(e)), (e += 16))
+  return t
+}
+function $r(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 5)
+  for (; e !== a; ) (t.push(XY(e)), (e += 32))
+  return t
+}
+function Sh(e) {
+  return g[(e >> 2) + 4] === 0 && g[(e >> 2) + 5] === 0 ? null : sr(e)
+}
+function c1(e) {
+  return dY(g[e >> 2])
+}
+function rn(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : c1(e)
+}
+function f1(e) {
+  return LC(g[e >> 2])
+}
+function Ns(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : f1(e)
+}
+function qa(e) {
+  return _A(g[e >> 2])
+}
+function _h(e) {
+  return vA(g[e >> 2])
+}
+function d1(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : _h(e)
+}
+function p1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 72
+  for (; e !== a; ) (t.push(bA(e)), (e += 72))
+  return t
+}
+function bh(e) {
+  return Re(g[e >> 2])
+}
+function JT(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : bh(e)
+}
+function qs(e) {
+  return O[e] === 3 ? null : EY(e)
+}
+function E1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 40
+  for (; e !== a; ) (t.push(mY(e)), (e += 40))
+  return t
+}
+function m1(e) {
+  return LA(g[e >> 2])
+}
+function T1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(UA(e)), (e += 16))
+  return t
+}
+function h1(e) {
+  return wA(g[e >> 2])
+}
+function vh(e) {
+  return IA(g[e >> 2])
+}
+function Td(e) {
+  return RA(g[e >> 2])
+}
+function P1(e) {
+  return OA(g[e >> 2])
+}
+function xh(e) {
+  return gY(g[e >> 2])
+}
+function y1(e) {
+  return BA(g[e >> 2])
+}
+function g1(e) {
+  return GA(g[e >> 2])
+}
+function S1(e) {
+  return QA(g[e >> 2])
+}
+function _1(e) {
+  return XA(g[e >> 2])
+}
+function b1(e) {
+  return JA(g[e >> 2])
+}
+function v1(e) {
+  return QY(g[e >> 2])
+}
+function x1(e) {
+  return ZY(g[e >> 2])
+}
+function Ah(e) {
+  return O[e] === 2 ? null : NA(e)
+}
+function A1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(qA(e)), (e += 16))
+  return t
+}
+function Ch(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : A1(e)
+}
+function C1(e) {
+  return $A(g[e >> 2])
+}
+function js(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : C1(e)
+}
+function Y1(e) {
+  return jA(g[e >> 2])
+}
+function L1(e) {
+  return zA(g[e >> 2])
+}
+function U1(e) {
+  return WA(g[e >> 2])
+}
+function I1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 120
+  for (; e !== a; ) (t.push(HA(e)), (e += 120))
+  return t
+}
+function k1(e) {
+  return O[e] === 18 ? null : jx(e)
+}
+function R1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 7)
+  for (; e !== a; ) (t.push(ZA(e)), (e += 128))
+  return t
+}
+function V1(e) {
+  return O[e + 12] === 2 ? null : kr(e)
+}
+function D1(e) {
+  return O[e] === 3 ? null : ws(e)
+}
+function w1(e) {
+  return nd[e >> 3]
+}
+function Yh(e) {
+  return O[e]
+}
+function M1(e) {
+  return cC(g[e >> 2])
+}
+function Lh(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(AC(e)), (e += 16))
+  return t
+}
+function O1(e) {
+  return fC(g[e >> 2])
+}
+function F1(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : O1(e)
+}
+function B1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(SC(e)), (e += 16))
+  return t
+}
+function Uh(e) {
+  return Ms(g[e >> 2])
+}
+function Ih(e) {
+  return mC(g[e >> 2])
+}
+function kh(e) {
+  return TC(g[e >> 2])
+}
+function G1(e) {
+  return gC(g[e >> 2])
+}
+function N1(e) {
+  return _C(g[e >> 2])
+}
+function q1(e) {
+  return bC(g[e >> 2])
+}
+function j1(e) {
+  return O[e] === 4 ? null : xC(e)
+}
+function Rh(e) {
+  return PC(g[e >> 2])
+}
+function z1(e) {
+  return YC(g[e >> 2])
+}
+function W1(e) {
+  return CC(g[e >> 2])
+}
+function $1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 48
+  for (; e !== a; ) (t.push(kC(e)), (e += 48))
+  return t
+}
+function Vh(e) {
+  return KC(g[e >> 2])
+}
+function Dh(e) {
+  return lY(g[e >> 2])
+}
+function wh(e) {
+  return XC(g[e >> 2])
+}
+function Mh(e) {
+  return eY(g[e >> 2])
+}
+function Oh(e) {
+  return ZC(g[e >> 2])
+}
+function Fh(e) {
+  return rY(g[e >> 2])
+}
+function Bh(e) {
+  return QC(g[e >> 2])
+}
+function Gh(e) {
+  return oY(g[e >> 2])
+}
+function Nh(e) {
+  return JC(g[e >> 2])
+}
+function qh(e) {
+  return iY(g[e >> 2])
+}
+function jh(e) {
+  return nY(g[e >> 2])
+}
+function zh(e) {
+  return tY(g[e >> 2])
+}
+function Wh(e) {
+  return aY(g[e >> 2])
+}
+function $h(e) {
+  return qC(g[e >> 2])
+}
+function Hh(e) {
+  return MC(g[e >> 2])
+}
+function Kh(e) {
+  return BY(g[e >> 2])
+}
+function Jh(e) {
+  return FY(g[e >> 2])
+}
+function hd(e) {
+  return MY(g[e >> 2])
+}
+function Xh(e) {
+  return jC(g[e >> 2])
+}
+function Qh(e) {
+  return VY(g[e >> 2])
+}
+function Zh(e) {
+  return FC(g[e >> 2])
+}
+function eP(e) {
+  return DC(g[e >> 2])
+}
+function tP(e) {
+  return GY(g[e >> 2])
+}
+function rP(e) {
+  return WC(g[e >> 2])
+}
+function nP(e) {
+  return qY(g[e >> 2])
+}
+function Pd(e) {
+  return sY(g[e >> 2])
+}
+function aP(e) {
+  return zC(g[e >> 2])
+}
+function iP(e) {
+  return RY(g[e >> 2])
+}
+function sP(e) {
+  return GC(g[e >> 2])
+}
+function oP(e) {
+  return CY(g[e >> 2])
+}
+function lP(e) {
+  return DY(g[e >> 2])
+}
+function uP(e) {
+  return uY(g[e >> 2])
+}
+function cP(e) {
+  return OC(g[e >> 2])
+}
+function fP(e) {
+  return BC(g[e >> 2])
+}
+function dP(e) {
+  return t0(g[e >> 2])
+}
+function pP(e) {
+  return r0(g[e >> 2])
+}
+function EP(e) {
+  return n0(g[e >> 2])
+}
+function zs(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(gt(e)), (e += 16))
+  return t
+}
+function H1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(sh(e)), (e += 16))
+  return t
+}
+function K1(e) {
+  return $C(g[e >> 2])
+}
+function J1(e) {
+  return HC(g[e >> 2])
+}
+function yd(e) {
+  return cY(g[e >> 2])
+}
+function Os(e) {
+  return O[e] === 38 ? null : gt(e)
+}
+function X1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 80
+  for (; e !== a; ) (t.push(oh(e)), (e += 80))
+  return t
+}
+function Q1(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 40
+  for (; e !== a; ) (t.push(AY(e)), (e += 40))
+  return t
+}
+function Z1(e) {
+  return hY(g[e >> 2])
+}
+function mP(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(yY(e)), (e += 16))
+  return t
+}
+function eL(e) {
+  return PY(g[e >> 2])
+}
+function tL(e) {
+  return SY(g[e >> 2])
+}
+function rL(e) {
+  return vY(g[e >> 2])
+}
+function nL(e) {
+  return bY(g[e >> 2])
+}
+function aL(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + g[n + 2] * 40
+  for (; e !== a; ) (t.push(xY(e)), (e += 40))
+  return t
+}
+function iL(e) {
+  return O[e] === 2 ? null : IY(e)
+}
+function sL(e) {
+  return lh(g[e >> 2])
+}
+function oL(e) {
+  return oh(g[e >> 2])
+}
+function lL(e) {
+  return g[e >> 2] === 0 && g[(e >> 2) + 1] === 0 ? null : Jn(e)
+}
+function uL(e) {
+  return O[e] === 2 ? null : uh(e)
+}
+function cL(e) {
+  return OY(g[e >> 2])
+}
+function XT(e) {
+  return O[e] === 3 ? null : NY(e)
+}
+function fL(e) {
+  return KY(g[e >> 2])
+}
+function dL(e) {
+  return i0(g[e >> 2])
+}
+function pL(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(s0(e)), (e += 16))
+  return t
+}
+function EL(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(l0(e)), (e += 16))
+  return t
+}
+function mL(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 6)
+  for (; e !== a; ) (t.push(rh(e)), (e += 64))
+  return t
+}
+function TL(e) {
+  return Xr(g[e >> 2])
+}
+function hL(e) {
+  return c0(g[e >> 2])
+}
+function PL(e) {
+  let t = [],
+    n = e >> 2
+  e = g[n]
+  let a = e + (g[n + 2] << 4)
+  for (; e !== a; ) (t.push(f0(e)), (e += 16))
+  return t
+}
+function p(e) {
+  return g[e >> 2]
+}
+var TP = 16,
+  Xt = 2,
+  an = 1 << Xt
+an * 4
+16
+var Zn = 1,
+  Or = 2,
+  sn = 0,
+  Ws = 1,
+  nn = null,
+  gd = [],
+  pe = null,
+  Xe = 0,
+  Sd = Nn,
+  yL = 256
+function ht() {
+  ;(be === null && xt(), be, ot === null && Pa(), ot, (Xe = Be + Je))
+  let e = (Xe + 1) << Xt,
+    t = Sd.length
+  ;(t < e && (Sd = new Int32Array(Math.max(e, t === 0 ? yL : t << 1))),
+    (pe = Sd),
+    Je === 0 ? Hi(sn, be, 0, 0, Be) : Be === 0 ? Hi(Ws, ot, 0, 0, Je) : gL(be, ot),
+    (pe[(Xe << Xt) + Or] = sn))
+}
+function gL(e, t) {
+  let n = 0,
+    a = 0,
+    r = 0,
+    s = e[0],
+    u = t[0]
+  for (; u < s; ) {
+    if ((_d(Ws, r, a, u), (r += an), ++a === Je)) {
+      Hi(sn, e, r, n, Be)
+      return
+    }
+    u = t[a << Xt]
+  }
+  for (;;) {
+    do {
+      if ((_d(sn, r, n, s), (r += an), ++n === Be)) {
+        Hi(Ws, t, r, a, Je)
+        return
+      }
+      s = e[n << Xt]
+    } while (s < u)
+    do {
+      if ((_d(Ws, r, a, u), (r += an), ++a === Je)) {
+        Hi(sn, e, r, n, Be)
+        return
+      }
+      u = t[a << Xt]
+    } while (u < s)
+  }
+}
+function _d(e, t, n, a) {
+  ;((pe[t] = a), (pe[t + Zn] = n), (pe[t + Or] = e))
+}
+function Hi(e, t, n, a, r) {
+  let s = a << Xt
+  for (; a < r; a++) ((pe[n] = t[s]), (pe[n + Zn] = a), (pe[n + Or] = e), (n += an), (s += an))
+}
+function $s(e) {
+  let t = e << Xt,
+    n = pe[t + Zn]
+  return pe[t + Or] === sn ? Ni(n) : ya(n)
+}
+function hP(e) {
+  let t = e << Xt,
+    a = (pe[t + Zn] << Xt) + 1
+  return pe[t + Or] === sn ? be[a] : ot[a]
+}
+function PP() {
+  if (nn !== null) return nn
+  if ((be === null && xt(), ot === null && Pa(), Je === 0)) return (zr === null && Is(), zr, (nn = zr))
+  if (Be === 0) return (jt === null && di(), jt, (nn = jt))
+  ;(qn || Qf(),
+    An || ed(),
+    pe === null && ht(),
+    gd.length >= Xe ? ((nn = gd), (nn.length = Xe)) : ((nn = gd = new Array(Xe).fill(0)), (nn[0] = null)))
+  for (let e = 0; e < Xe; e++) {
+    let t = e << Xt,
+      n = pe[t + Zn]
+    nn[e] = pe[t + Or] === sn ? gr[n] : ir[n]
+  }
+  return nn
+}
+function yP() {
+  ;((nn = null), (pe = null), (Xe = 0))
+}
+var Hs = { includeComments: !0, skip: 0 }
+function gP(e, t, n) {
+  let a = typeof t == 'object' && t !== null ? t.count : null,
+    r = typeof t == 'number' ? t : 0
+  n = (typeof t == 'number' || typeof t > 'u') && typeof n == 'number' ? n : 0
+  let s = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    u = lr(t),
+    d,
+    P
+  u === !1 ? (be === null && xt(), be, (d = be), (P = Be)) : (pe === null && ht(), pe, (d = pe), (P = Xe))
+  let { range: y } = e,
+    E = y[0],
+    m = y[1],
+    _ = at(d, E, 0, P),
+    T = at(d, m, _, P)
+  if (((_ = Math.max(0, _ - r)), (T = Math.min(T + n, P)), typeof s != 'function')) {
+    let C = Math.min(_ + (a ?? T), T)
+    return tr(_, C, u)
+  }
+  let v = []
+  if (typeof a != 'number') {
+    for (let C = _; C < T; C++) {
+      let L = ze(C, u)
+      s(L) && v.push(L)
+    }
+    return v
+  }
+  for (let C = _; C < T && a > 0; C++) {
+    let L = ze(C, u)
+    s(L) && (v.push(L), a--)
+  }
+  return v
+}
+function SP(e, t) {
+  let n = typeof t == 'number' ? t : typeof t == 'object' && t !== null ? t.skip : null,
+    a = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    r = lr(t),
+    s,
+    u
+  r === !1 ? (be === null && xt(), be, (s = be), (u = Be)) : (pe === null && ht(), pe, (s = pe), (u = Xe))
+  let { range: d } = e,
+    P = d[0],
+    y = d[1],
+    E = at(s, P, 0, u)
+  if (typeof a != 'function') {
+    let m = E + (n ?? 0)
+    return m >= u || Fr(m, s) >= y ? null : ze(m, r)
+  }
+  if (typeof n != 'number')
+    for (let m = E; m < u; m++) {
+      if (Fr(m, s) >= y) return null
+      let _ = ze(m, r)
+      if (a(_)) return _
+    }
+  else
+    for (let m = E; m < u; m++) {
+      if (Fr(m, s) >= y) return null
+      let _ = ze(m, r)
+      if (a(_)) {
+        if (n <= 0) return _
+        n--
+      }
+    }
+  return null
+}
+function _P(e, t) {
+  let n = typeof t == 'number' ? t : typeof t == 'object' && t !== null ? t.count : null,
+    a = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    r = lr(t),
+    s,
+    u
+  r === !1 ? (be === null && xt(), be, (s = be), (u = Be)) : (pe === null && ht(), pe, (s = pe), (u = Xe))
+  let { range: d } = e,
+    P = d[0],
+    y = d[1],
+    E = at(s, P, 0, u),
+    m = at(s, y, E, u)
+  if (typeof a != 'function') return typeof n != 'number' ? tr(E, m, r) : tr(E, Math.min(E + n, m), r)
+  let _ = []
+  if (typeof n != 'number')
+    for (let T = E; T < m; T++) {
+      let v = ze(T, r)
+      a(v) && _.push(v)
+    }
+  else
+    for (let T = E; T < m && _.length < n; T++) {
+      let v = ze(T, r)
+      a(v) && _.push(v)
+    }
+  return _
+}
+function bP(e, t) {
+  let n = typeof t == 'number' ? t : typeof t == 'object' && t !== null ? t.skip : null,
+    a = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    r = lr(t),
+    s,
+    u
+  r === !1 ? (be === null && xt(), be, (s = be), (u = Be)) : (pe === null && ht(), pe, (s = pe), (u = Xe))
+  let { range: d } = e,
+    P = d[0],
+    y = d[1],
+    E = at(s, y, 0, u) - 1
+  if (typeof a != 'function') {
+    let m = E - (n ?? 0)
+    return m < 0 || Fr(m, s) < P ? null : ze(m, r)
+  }
+  if (typeof n != 'number')
+    for (let m = E; m >= 0; m--) {
+      if (Fr(m, s) < P) return null
+      let _ = ze(m, r)
+      if (a(_)) return _
+    }
+  else
+    for (let m = E; m >= 0; m--) {
+      if (Fr(m, s) < P) return null
+      let _ = ze(m, r)
+      if (a(_)) {
+        if (n <= 0) return _
+        n--
+      }
+    }
+  return null
+}
+function vP(e, t) {
+  let n = typeof t == 'number' ? t : typeof t == 'object' && t !== null ? t.count : null,
+    a = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    r = lr(t),
+    s,
+    u
+  r === !1 ? (be === null && xt(), be, (s = be), (u = Be)) : (pe === null && ht(), pe, (s = pe), (u = Xe))
+  let { range: d } = e,
+    P = d[0],
+    y = d[1],
+    E = at(s, P, 0, u),
+    m = at(s, y, E, u)
+  if (typeof a != 'function') return tr(typeof n != 'number' ? E : Math.max(E, m - n), m, r)
+  let _ = []
+  if (typeof n != 'number')
+    for (let T = E; T < m; T++) {
+      let v = ze(T, r)
+      a(v) && _.push(v)
+    }
+  else
+    for (let T = m - 1; T >= E && _.length < n; T--) {
+      let v = ze(T, r)
+      a(v) && _.unshift(v)
+    }
+  return _
+}
+function bd(e, t) {
+  let n = typeof t == 'number' ? t : typeof t == 'object' && t !== null ? t.skip : null,
+    a = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    r = lr(t),
+    s,
+    u
+  r === !1 ? (be === null && xt(), be, (s = be), (u = Be)) : (pe === null && ht(), pe, (s = pe), (u = Xe))
+  let d = e.range[0],
+    P = at(s, d, 0, u) - 1
+  if (typeof a != 'function') {
+    let y = P - (n ?? 0)
+    return y < 0 ? null : ze(y, r)
+  }
+  if (typeof n != 'number')
+    for (; P >= 0; ) {
+      let y = ze(P, r)
+      if (a(y)) return y
+      P--
+    }
+  else
+    for (; P >= 0; ) {
+      let y = ze(P, r)
+      if (a(y)) {
+        if (n <= 0) return y
+        n--
+      }
+      P--
+    }
+  return null
+}
+function xP(e, t) {
+  return ((Hs.skip = t), bd(e, Hs))
+}
+function AP(e, t) {
+  let n = typeof t == 'number' ? Math.max(0, t) : typeof t == 'object' && t !== null ? t.count : null,
+    a = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    r = lr(t),
+    s,
+    u
+  r === !1 ? (be === null && xt(), be, (s = be), (u = Be)) : (pe === null && ht(), pe, (s = pe), (u = Xe))
+  let d = e.range[0],
+    P = at(s, d, 0, u)
+  if (typeof a != 'function') return tr(typeof n != 'number' ? 0 : Math.max(0, P - n), P, r)
+  let y = []
+  if (typeof n != 'number')
+    for (let E = 0; E < P; E++) {
+      let m = ze(E, r)
+      a(m) && y.push(m)
+    }
+  else
+    for (let E = P - 1; E >= 0 && y.length < n; E--) {
+      let m = ze(E, r)
+      a(m) && y.unshift(m)
+    }
+  return y
+}
+function vd(e, t) {
+  let n = typeof t == 'number' ? t : typeof t == 'object' && t !== null ? t.skip : null,
+    a = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    r = lr(t),
+    s,
+    u
+  r === !1 ? (be === null && xt(), be, (s = be), (u = Be)) : (pe === null && ht(), pe, (s = pe), (u = Xe))
+  let d = e.range[1],
+    P = at(s, d, 0, u)
+  if (typeof a != 'function') {
+    let y = P + (n ?? 0)
+    return y >= u ? null : ze(y, r)
+  }
+  if (typeof n != 'number')
+    for (let y = P; y < u; y++) {
+      let E = ze(y, r)
+      if (a(E)) return E
+    }
+  else
+    for (let y = P; y < u; y++) {
+      let E = ze(y, r)
+      if (a(E)) {
+        if (n <= 0) return E
+        n--
+      }
+    }
+  return null
+}
+function CP(e, t) {
+  return ((Hs.skip = t), vd(e, Hs))
+}
+function YP(e, t) {
+  let n = typeof t == 'number' ? t : typeof t == 'object' && t !== null ? t.count : null,
+    a = typeof t == 'function' ? t : typeof t == 'object' && t !== null ? t.filter : null,
+    r = lr(t),
+    s,
+    u
+  r === !1 ? (be === null && xt(), be, (s = be), (u = Be)) : (pe === null && ht(), pe, (s = pe), (u = Xe))
+  let d = e.range[1],
+    P = at(s, d, 0, u)
+  if (typeof a != 'function') return typeof n != 'number' ? tr(P, u, r) : tr(P, Math.min(P + n, u), r)
+  let y = []
+  if (typeof n != 'number')
+    for (let E = P; E < u; E++) {
+      let m = ze(E, r)
+      a(m) && y.push(m)
+    }
+  else
+    for (let E = P; E < u && y.length < n; E++) {
+      let m = ze(E, r)
+      a(m) && y.push(m)
+    }
+  return y
+}
+function LP(e, t, n) {
+  let a = typeof n == 'object' && n !== null ? n.count : null,
+    r = typeof n == 'number' ? n : 0,
+    s = typeof n == 'function' ? n : typeof n == 'object' && n !== null ? n.filter : null,
+    u = lr(n),
+    d,
+    P
+  u === !1 ? (be === null && xt(), be, (d = be), (P = Be)) : (pe === null && ht(), pe, (d = pe), (P = Xe))
+  let y = e.range[1],
+    E = t.range[0],
+    m = at(d, y, 0, P),
+    _ = at(d, E, m, P)
+  if (((m = Math.max(0, m - r)), (_ = Math.min(_ + r, P)), typeof s != 'function'))
+    return typeof a != 'number' ? tr(m, _, u) : tr(m, Math.min(m + a, _), u)
+  let T = []
+  if (typeof a != 'number')
+    for (let v = m; v < _; v++) {
+      let C = ze(v, u)
+      s(C) && T.push(C)
+    }
+  else
+    for (let v = m; v < _ && T.length < a; v++) {
+      let C = ze(v, u)
+      s(C) && T.push(C)
+    }
+  return T
+}
+function UP(e, t, n) {
+  let a = typeof n == 'number' ? n : typeof n == 'object' && n !== null ? n.skip : null,
+    r = typeof n == 'function' ? n : typeof n == 'object' && n !== null ? n.filter : null,
+    s = lr(n),
+    u,
+    d
+  s === !1 ? (be === null && xt(), be, (u = be), (d = Be)) : (pe === null && ht(), pe, (u = pe), (d = Xe))
+  let P = e.range[1],
+    y = t.range[0],
+    E = at(u, P, 0, d)
+  if (typeof r != 'function') {
+    let m = E + (a ?? 0)
+    return m >= d || Fr(m, u) >= y ? null : ze(m, s)
+  }
+  if (typeof a != 'number')
+    for (let m = E; m < d; m++) {
+      if (Fr(m, u) >= y) return null
+      let _ = ze(m, s)
+      if (r(_)) return _
+    }
+  else
+    for (let m = E; m < d; m++) {
+      if (Fr(m, u) >= y) return null
+      let _ = ze(m, s)
+      if (r(_)) {
+        if (a <= 0) return _
+        a--
+      }
+    }
+  return null
+}
+function IP(e, t, n) {
+  let a = typeof n == 'number' ? n : typeof n == 'object' && n !== null ? n.count : null,
+    r = typeof n == 'function' ? n : typeof n == 'object' && n !== null ? n.filter : null,
+    s = lr(n),
+    u,
+    d
+  s === !1 ? (be === null && xt(), be, (u = be), (d = Be)) : (pe === null && ht(), pe, (u = pe), (d = Xe))
+  let P = e.range[1],
+    y = t.range[0],
+    E = at(u, P, 0, d),
+    m = at(u, y, E, d)
+  if (typeof r != 'function') return typeof a != 'number' ? tr(E, m, s) : tr(E, Math.min(E + a, m), s)
+  let _ = []
+  if (typeof a != 'number')
+    for (let T = E; T < m; T++) {
+      let v = ze(T, s)
+      r(v) && _.push(v)
+    }
+  else
+    for (let T = E; T < m && _.length < a; T++) {
+      let v = ze(T, s)
+      r(v) && _.push(v)
+    }
+  return _
+}
+function kP(e, t, n) {
+  let a = typeof n == 'number' ? n : typeof n == 'object' && n !== null ? n.skip : null,
+    r = typeof n == 'function' ? n : typeof n == 'object' && n !== null ? n.filter : null,
+    s = lr(n),
+    u,
+    d
+  s === !1 ? (be === null && xt(), be, (u = be), (d = Be)) : (pe === null && ht(), pe, (u = pe), (d = Xe))
+  let P = e.range[1],
+    y = t.range[0],
+    E = at(u, y, 0, d) - 1
+  if (typeof r != 'function') {
+    let m = E - (a ?? 0)
+    return m < 0 || Fr(m, u) < P ? null : ze(m, s)
+  }
+  if (typeof a != 'number')
+    for (let m = E; m >= 0; m--) {
+      if (Fr(m, u) < P) return null
+      let _ = ze(m, s)
+      if (r(_)) return _
+    }
+  else
+    for (let m = E; m >= 0; m--) {
+      if (Fr(m, u) < P) return null
+      let _ = ze(m, s)
+      if (r(_)) {
+        if (a <= 0) return _
+        a--
+      }
+    }
+  return null
+}
+function RP(e, t, n) {
+  let a = typeof n == 'number' ? n : typeof n == 'object' && n !== null ? n.count : null,
+    r = typeof n == 'function' ? n : typeof n == 'object' && n !== null ? n.filter : null,
+    s = lr(n),
+    u,
+    d
+  s === !1 ? (be === null && xt(), be, (u = be), (d = Be)) : (pe === null && ht(), pe, (u = pe), (d = Xe))
+  let P = e.range[1],
+    y = t.range[0],
+    E = at(u, P, 0, d),
+    m = at(u, y, E, d)
+  if (typeof r != 'function') return tr(typeof a != 'number' ? E : Math.max(E, m - a), m, s)
+  let _ = []
+  if (typeof a != 'number')
+    for (let T = E; T < m; T++) {
+      let v = ze(T, s)
+      r(v) && _.push(v)
+    }
+  else
+    for (let T = m - 1; T >= E && _.length < a; T--) {
+      let v = ze(T, s)
+      r(v) && _.unshift(v)
+    }
+  return _
+}
+function VP(e, t) {
+  let n = typeof t == 'object' && t !== null && 'includeComments' in t && !!t.includeComments,
+    a,
+    r
+  n === !1 ? (be === null && xt(), be, (a = be), (r = Be)) : (pe === null && ht(), pe, (a = pe), (r = Xe))
+  for (let s = 0, u = r; s < u; ) {
+    let d = (s + u) >> 1,
+      P = a[d << 2]
+    if (P < e) s = d + 1
+    else if (P > e) u = d
+    else return ze(d, n)
+  }
+  return null
+}
+var SL = /\s/u
+function DP(e, t) {
+  ;(pe === null && ht(), pe)
+  let n = e.range,
+    a = t.range,
+    r = n[0],
+    s = a[0]
+  r < s ? (r = n[1]) : ((s = r), (r = a[1]))
+  let u = at(pe, r, 0, Xe)
+  for (let d = r; u < Xe; u++) {
+    let P = pe[u << 2]
+    if (P > s) break
+    if (P !== d) return !0
+    d = _L(u, !0)
+  }
+  return !1
+}
+function wP(e, t) {
+  ;(pe === null && ht(), pe)
+  let n = e.range,
+    a = t.range,
+    r = n[0],
+    s = a[0]
+  r < s ? (r = n[1]) : ((s = r), (r = a[1]))
+  let u = at(pe, r, 0, Xe)
+  for (let d = r; u < Xe; u++) {
+    let P = pe[u << 2]
+    if (P > s) break
+    let y = $s(u)
+    if (P !== d || (P < s && y.type === 'JSXText' && SL.test(y.value))) return !0
+    d = y.end
+  }
+  return !1
+}
+function lr(e) {
+  return typeof e == 'object' && e !== null && 'includeComments' in e && !!e.includeComments
+}
+function ze(e, t) {
+  return t === !0 ? $s(e) : Ni(e)
+}
+function Fr(e, t) {
+  return t[e << 2]
+}
+function _L(e, t) {
+  return t === !0 ? hP(e) : be[(e << 2) + 1]
+}
+function tr(e, t, n) {
+  if (n === !1) {
+    for (let u = e; u < t; u++) Ni(u)
+    return gr.slice(e, t)
+  }
+  let a = t - e
+  if (a === 0) return []
+  let r = new Array(a).fill(0)
+  r[0] = null
+  let s = 0
+  do r[s] = $s(e + s)
+  while (++s < a)
+  return r
+}
+function at(e, t, n, a) {
+  for (let r = a; n < r; ) {
+    let s = (n + r) >> 1
+    e[s << 2] < t ? (n = s + 1) : (r = s)
+  }
+  return n
+}
+function Ks() {
+  return (jt === null && di(), jt, jt)
+}
+Or > 0
+function MP(e) {
+  if ((pe === null && ht(), pe, Je === 0)) return []
+  let t = e.range[0],
+    a = (at(pe, t, 0, Xe) << Xt) - (an - Or),
+    r = a
+  for (; r > 0 && pe[r] !== sn; ) r -= an
+  let s = a - r
+  if (s === 0) return []
+  let u = pe[r + (an - Or + Zn)],
+    d = u + (s >> Xt)
+  for (let P = u; P < d; P++) ya(P)
+  return ir.slice(u, d)
+}
+function OP(e) {
+  if ((pe === null && ht(), pe, Je === 0)) return []
+  let t = e.range[1],
+    a = (at(pe, t, 0, Xe) << Xt) + Or,
+    r = a
+  for (; pe[r] !== sn; ) r += an
+  let s = r - a
+  if (s === 0) return []
+  let u = pe[a - (Or - Zn)],
+    d = u + (s >> Xt)
+  for (let P = u; P < d; P++) ya(P)
+  return ir.slice(u, d)
+}
+function FP(e) {
+  if ((ot === null && Pa(), ot, Je === 0)) return []
+  let { range: t } = e,
+    n = t[0],
+    a = t[1],
+    r = at(ot, n, 0, Je),
+    s = at(ot, a, r, Je)
+  for (let u = r; u < s; u++) ya(u)
+  return ir.slice(r, s)
+}
+function BP(e, t) {
+  if ((ot === null && Pa(), ot, Je === 0)) return !1
+  let n = e.range[1],
+    a = at(ot, n, 0, Je)
+  return a < Je && ot[(a << 2) + 1] <= t.range[0]
+}
+function GP(e) {
+  throw new Error('`sourceCode.getJSDocComment` is not supported at present (and deprecated)')
+}
+var xL = Object.freeze({
+  insertTextBefore(e, t) {
+    let n = e.range[0]
+    return { range: [n, n], text: t }
+  },
+  insertTextBeforeRange(e, t) {
+    let n = e[0]
+    return { range: [n, n], text: t }
+  },
+  insertTextAfter(e, t) {
+    let n = e.range[1]
+    return { range: [n, n], text: t }
+  },
+  insertTextAfterRange(e, t) {
+    let n = e[1]
+    return { range: [n, n], text: t }
+  },
+  remove(e) {
+    return { range: e.range, text: '' }
+  },
+  removeRange(e) {
+    return { range: e, text: '' }
+  },
+  replaceText(e, t) {
+    return { range: e.range, text: t }
+  },
+  replaceTextRange(e, t) {
+    return { range: e, text: t }
+  },
+})
+function qP(e, t) {
+  let { fix: n } = e
+  if (typeof n != 'function') return null
+  let a = zP(n, e)
+  if (a !== null && t.isFixable === !1)
+    throw new Error('Fixable rules must set the `meta.fixable` property to "code" or "whitespace".')
+  return a
+}
+function jP(e, t) {
+  if (!Object.hasOwn(e, 'suggest')) return null
+  let { suggest: n } = e
+  if (n == null) return null
+  let a = n.length
+  if (a === 0) return null
+  let r = []
+  for (let s = 0; s < a; s++) {
+    let u = n[s],
+      { fix: d } = u
+    if (typeof d != 'function') throw new TypeError('Suggestion without a fix function')
+    let { message: P, messageId: y } = xd(Object.hasOwn(u, 'desc') ? u.desc : null, u, t),
+      E = zP(d, u)
+    E !== null && r.push({ message: P, messageId: y, fixes: E })
+  }
+  if (r.length === 0) return null
+  if (t.hasSuggestions === !1) throw new Error('Rules with suggestions must set `meta.hasSuggestions` to `true`.')
+  return r
+}
+function zP(e, t) {
+  let n = e.call(t, xL)
+  if (!n) return null
+  if (Symbol.iterator in n) {
+    let a = []
+    for (let r of n) r && a.push(NP(r))
+    return a.length === 0 ? null : a
+  }
+  return [NP(n)]
+}
+function NP(e) {
+  let { range: t, text: n } = e
+  if (t != null) {
+    let a = t[0],
+      r = t[1]
+    if (typeof a == 'number' && typeof r == 'number') return { start: a, end: r, text: String(n) }
+  }
+  throw new Error(`Fix has invalid range: ${JSON.stringify(e, null, 2)}`)
+}
+var mi = [],
+  AL = /\{\{([^{}]+)\}\}/gu
+function WP(e, t, n) {
+  if (At === null) throw new Error('Cannot report errors in `createOnce`')
+  t.length > 0 && (e = CL(e, t))
+  let { message: a, messageId: r } = xd(Object.hasOwn(e, 'message') ? e.message : null, e, n),
+    s,
+    u,
+    d,
+    P = null
+  if (Object.hasOwn(e, 'loc') && (d = e.loc) != null) {
+    if (typeof d != 'object') throw new TypeError('`loc` must be an object if provided')
+    if (Object.hasOwn(d, 'start')) {
+      let { start: y, end: E } = d
+      if (y === null || typeof y != 'object') throw new TypeError('`loc.start` must be an object')
+      if (((s = Ad(y)), E == null)) u = s
+      else if (typeof E == 'object') u = Ad(E)
+      else throw new TypeError('`loc.end` must be an object or null/undefined')
+    } else ((s = Ad(d)), (u = s))
+  } else {
+    let { node: y } = e
+    if (y == null) throw new TypeError('Either `node` or `loc` is required')
+    if (typeof y != 'object') throw new TypeError('`node` must be an object')
+    let { range: E } = y
+    if (E === null || typeof E != 'object') throw new TypeError('`node.range` must be present')
+    if (
+      ((s = E[0]),
+      (u = E[1]),
+      typeof s != 'number' || typeof u != 'number' || s < 0 || u < 0 || (s | 0) !== s || (u | 0) !== u)
+    )
+      throw new TypeError('`node.range[0]` and `node.range[1]` must be non-negative integers')
+  }
+  mi.push({
+    message: a,
+    messageId: r,
+    start: s,
+    end: u,
+    ruleIndex: n.ruleIndex,
+    fixes: qP(e, n),
+    suggestions: jP(e, n),
+  })
+}
+function CL(e, t) {
+  let n = t[0]
+  return typeof n == 'string'
+    ? { message: n, node: e, loc: void 0, data: t[1], fix: t[2] }
+    : { message: t[1], node: e, loc: n, data: t[2], fix: t[3] }
+}
+function xd(e, t, n) {
+  let a = null
+  if ((Object.hasOwn(t, 'messageId') && (a = t.messageId ?? null), a !== null)) {
+    if (typeof a != 'string') throw new TypeError('`messageId` must be a string')
+    e = YL(a, n)
+  } else {
+    if (e == null) throw new Error('Either `message` or `messageId` is required')
+    if (typeof e != 'string') throw new TypeError('`message` must be a string')
+  }
+  if (Object.hasOwn(t, 'data')) {
+    let { data: r } = t
+    r != null && (e = LL(e, r))
+  }
+  return { message: e, messageId: a }
+}
+function YL(e, t) {
+  let { messages: n } = t
+  if (n === null)
+    throw new Error(`Cannot use messageId '${e}' - rule does not define any messages in \`meta.messages\``)
+  if (!Object.hasOwn(n, e))
+    throw new Error(
+      `Unknown messageId '${e}'. Available \`messageIds\`: ${Object.keys(n)
+        .map((a) => `'${a}'`)
+        .join(', ')}`,
+    )
+  return n[e]
+}
+function LL(e, t) {
+  return e.replace(AL, (n, a) => {
+    a = a.trim()
+    let r = t[a]
+    return r !== void 0 ? r : n
+  })
+}
+function Ad(e) {
+  let { line: t, column: n } = e
+  if (typeof t != 'number' || typeof n != 'number' || (t | 0) !== t || (n | 0) !== n)
+    throw new TypeError('Expected an object with integer `line` and `column` properties')
+  if ((Nt.length === 0 && vn(), je, ci(), t <= 0 || t > mt.length)) {
+    if (n === 0) {
+      if (t === 0) return 0
+      if (t === mt.length + 1) return je.length
+    }
+    throw new RangeError(
+      `Line number out of range (line ${t} requested). Line numbers should be 1-based, and less than or equal to number of lines in file (${mt.length}).`,
+    )
+  }
+  let r = mt[t - 1] + n
+  if (r < 0 || r > je.length) throw new RangeError('Line/column pair translates to an out of range offset')
+  return r
+}
+function Js(e) {
+  e === null || typeof e != 'object' || (Array.isArray(e) ? Ki(e) : UL(e))
+}
+function UL(e) {
+  for (let t in e) Js(e[t])
+  Object.freeze(e)
+}
+function Ki(e) {
+  for (let t = 0, n = e.length; t !== n; t++) Js(e[t])
+  Object.freeze(e)
+}
+function Xs(e) {
+  return e === null || typeof e != 'object' ? e : Array.isArray(e) ? HP(e) : $P(e)
+}
+function $P(e) {
+  let t = { ...e }
+  for (let n in t) {
+    let a = t[n]
+    typeof a != 'object' || a === null || (t[n] = Array.isArray(a) ? HP(a) : $P(a))
+  }
+  return t
+}
+function HP(e) {
+  let t = []
+  for (let n = 0, a = e.length; n !== a; n++) t.push(Xs(e[n]))
+  return t
+}
+var Qs = null,
+  ja = null
+function KP(e) {
+  Qs = e
+}
+function JP() {
+  ;((ja = JSON.parse(Qs)), Js(ja))
+}
+function XP() {
+  ;((ja = null), (Qs = null))
+}
+var Zs = null,
+  Wt = null,
+  Sr = null
+function QP(e) {
+  Zs = e
+}
+function Ji() {
+  ;(({ globals: Wt, envs: Sr } = JSON.parse(Zs)),
+    typeof Wt == 'object' && Wt !== null && Array.isArray(Wt),
+    typeof Sr == 'object' && Sr !== null && Array.isArray(Sr),
+    Object.freeze(Wt),
+    Object.freeze(Sr))
+}
+function ZP() {
+  ;((Wt = null), (Sr = null), (Zs = null))
+}
+var ey = '0.4.1'
+var At = null,
+  Qi = null
+function eo(e) {
+  Qi = e
+}
+function ty(e) {
+  At = e
+}
+function ry() {
+  At = null
+}
+var IL = 2026,
+  kL = 17,
+  RL = Object.freeze([3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]),
+  Xi = null,
+  VL = Object.freeze({
+    name: 'oxlint',
+    version: ey,
+    parse(e, t) {
+      throw new Error('`context.languageOptions.parser.parse` not implemented yet.')
+    },
+    VisitorKeys: jr,
+    get Syntax() {
+      if (Xi === null) {
+        Xi = Object.create(null)
+        for (let e in jr) Xi[e] = e
+        Object.freeze(Xi)
+      }
+      return Xi
+    },
+    latestEcmaVersion: kL,
+    supportedEcmaVersions: RL,
+  })
+var DL = Object.freeze({
+    get jsx() {
+      return sy()
+    },
+    get globalReturn() {
+      return (Oe === null && yr(), Oe, Oe.sourceType === 'commonjs')
+    },
+    get impliedStrict() {
+      return (Oe === null && yr(), Oe, Oe.sourceType === 'module')
+    },
+  }),
+  ny = Object.freeze({
+    get sourceType() {
+      return (Oe === null && yr(), Oe, Oe.sourceType)
+    },
+    ecmaFeatures: DL,
+  }),
+  ay = {
+    get sourceType() {
+      return (Oe === null && yr(), Oe, Oe.sourceType)
+    },
+    ecmaVersion: IL,
+    parser: VL,
+    parserOptions: ny,
+    get globals() {
+      return (Wt === null && Ji(), Wt, Wt)
+    },
+    get env() {
+      return (Sr === null && Ji(), Sr, Sr)
+    },
+  }
+Object.freeze(ay)
+var wL = Object.freeze({
+  get filename() {
+    if (At === null) throw new Error('Cannot access `context.filename` in `createOnce`')
+    return At
+  },
+  getFilename() {
+    if (At === null) throw new Error('Cannot call `context.getFilename` in `createOnce`')
+    return At
+  },
+  get physicalFilename() {
+    if (At === null) throw new Error('Cannot access `context.physicalFilename` in `createOnce`')
+    return At
+  },
+  getPhysicalFilename() {
+    if (At === null) throw new Error('Cannot call `context.getPhysicalFilename` in `createOnce`')
+    return At
+  },
+  get cwd() {
+    if (At === null) throw new Error('Cannot access `context.cwd` in `createOnce`')
+    return Qi
+  },
+  getCwd() {
+    if (At === null) throw new Error('Cannot call `context.getCwd` in `createOnce`')
+    return Qi
+  },
+  get sourceCode() {
+    if (At === null) throw new Error('Cannot access `context.sourceCode` in `createOnce`')
+    return on
+  },
+  getSourceCode() {
+    if (At === null) throw new Error('Cannot call `context.getSourceCode` in `createOnce`')
+    return on
+  },
+  get languageOptions() {
+    if (At === null) throw new Error('Cannot access `context.languageOptions` in `createOnce`')
+    return ay
+  },
+  get settings() {
+    if (At === null) throw new Error('Cannot access `context.settings` in `createOnce`')
+    return (ja === null && JP(), ja, ja)
+  },
+  extend(e) {
+    return Object.freeze(Object.assign(Object.create(this), e))
+  },
+  get parserOptions() {
+    if (At === null) throw new Error('Cannot access `context.parserOptions` in `createOnce`')
+    return ny
+  },
+  get parserPath() {
+    if (At === null) throw new Error('Cannot access `context.parserPath` in `createOnce`')
+  },
+})
+function iy(e) {
+  return Object.preventExtensions(
+    Object.create(wL, {
+      id: { value: null, enumerable: !0, configurable: !0 },
+      options: { value: null, enumerable: !0, configurable: !0 },
+      report: {
+        value(t, ...n) {
+          WP(t, n, e)
+        },
+        enumerable: !0,
+      },
+    }),
+  )
+}
+var ML = /^\s*(?<label>(?:eslint|oxlint)-(?:disable(?:(?:-next)?-line)?|enable))(?:\s|$)/u,
+  OL = /^(?:eslint|oxlint)-disable-(?:-next)?-line$/u,
+  FL = /\s-{2,}\s/u
+function oy() {
+  let e = [],
+    t = []
+  return (
+    Ks().forEach((n) => {
+      if (n.type === 'Shebang') return
+      let a = ML.exec(n.value)
+      if (!a?.groups?.label || (n.type === 'Line' && OL.test(a.groups.label))) return
+      let { label: r } = a.groups
+      if ((r === 'eslint-disable-line' || r === 'oxlint-disable-line') && n.loc.start.line !== n.loc.end.line) {
+        e.push({ ruleId: null, message: `${r} comment should not span multiple lines.`, loc: n.loc })
+        return
+      }
+      let s = n.value.slice(a[0].length).trim()
+      a = FL.exec(s)
+      let [u, d] = a ? [s.slice(0, a.index).trim(), s.slice(a.index + a[0].length).trim()] : [s, '']
+      t.push({ type: r.slice(7), node: n, value: u, justification: d })
+    }),
+    { problems: e, directives: t }
+  )
+}
+var Kc = _s(Hg(), 1)
+var TO = { readonly: ['define', 'require'], writable: [] },
+  hO = {
+    readonly: [
+      '$',
+      'Application',
+      'Automation',
+      'Library',
+      'ObjC',
+      'ObjectSpecifier',
+      'Path',
+      'Progress',
+      'Ref',
+      'console',
+      'delay',
+    ],
+    writable: [],
+  },
+  PO = { readonly: ['Astro'], writable: [] },
+  yO = {
+    readonly: [
+      'advanceClock',
+      'atom',
+      'fakeClearInterval',
+      'fakeClearTimeout',
+      'fakeSetInterval',
+      'fakeSetTimeout',
+      'resetTimeouts',
+      'waitsForPromise',
+    ],
+    writable: [],
+  },
+  gO = {
+    readonly: [
+      'AbortController',
+      'AbortSignal',
+      'AsyncDisposableStack',
+      'AudioWorkletGlobalScope',
+      'AudioWorkletProcessor',
+      'ByteLengthQueuingStrategy',
+      'CompressionStream',
+      'CountQueuingStrategy',
+      'DecompressionStream',
+      'DisposableStack',
+      'Event',
+      'EventTarget',
+      'MessageEvent',
+      'MessagePort',
+      'PaintWorkletGlobalScope',
+      'QuotaExceededError',
+      'ReadableByteStreamController',
+      'ReadableStream',
+      'ReadableStreamBYOBReader',
+      'ReadableStreamBYOBRequest',
+      'ReadableStreamDefaultController',
+      'ReadableStreamDefaultReader',
+      'SuppressedError',
+      'Temporal',
+      'TextDecoderStream',
+      'TextEncoderStream',
+      'TransformStream',
+      'TransformStreamDefaultController',
+      'UserActivation',
+      'WebAssembly',
+      'WorkletGlobalScope',
+      'WritableStream',
+      'WritableStreamDefaultController',
+      'WritableStreamDefaultWriter',
+      'console',
+      'currentFrame',
+      'currentTime',
+      'port',
+      'registerProcessor',
+      'sampleRate',
+    ],
+    writable: [],
+  },
+  SO = {
+    readonly: [
+      'AI',
+      'AICreateMonitor',
+      'AITextSession',
+      'AbortController',
+      'AbortSignal',
+      'AbsoluteOrientationSensor',
+      'AbstractRange',
+      'Accelerometer',
+      'AnalyserNode',
+      'Animation',
+      'AnimationEffect',
+      'AnimationEvent',
+      'AnimationPlaybackEvent',
+      'AnimationTimeline',
+      'AsyncDisposableStack',
+      'Attr',
+      'Audio',
+      'AudioBuffer',
+      'AudioBufferSourceNode',
+      'AudioContext',
+      'AudioData',
+      'AudioDecoder',
+      'AudioDestinationNode',
+      'AudioEncoder',
+      'AudioListener',
+      'AudioNode',
+      'AudioParam',
+      'AudioParamMap',
+      'AudioProcessingEvent',
+      'AudioScheduledSourceNode',
+      'AudioSinkInfo',
+      'AudioWorklet',
+      'AudioWorkletNode',
+      'AuthenticatorAssertionResponse',
+      'AuthenticatorAttestationResponse',
+      'AuthenticatorResponse',
+      'BackgroundFetchManager',
+      'BackgroundFetchRecord',
+      'BackgroundFetchRegistration',
+      'BarProp',
+      'BarcodeDetector',
+      'BaseAudioContext',
+      'BatteryManager',
+      'BeforeUnloadEvent',
+      'BiquadFilterNode',
+      'Blob',
+      'BlobEvent',
+      'Bluetooth',
+      'BluetoothCharacteristicProperties',
+      'BluetoothDevice',
+      'BluetoothRemoteGATTCharacteristic',
+      'BluetoothRemoteGATTDescriptor',
+      'BluetoothRemoteGATTServer',
+      'BluetoothRemoteGATTService',
+      'BluetoothUUID',
+      'BroadcastChannel',
+      'BrowserCaptureMediaStreamTrack',
+      'ByteLengthQueuingStrategy',
+      'CDATASection',
+      'CSPViolationReportBody',
+      'CSS',
+      'CSSAnimation',
+      'CSSConditionRule',
+      'CSSContainerRule',
+      'CSSCounterStyleRule',
+      'CSSFontFaceRule',
+      'CSSFontFeatureValuesRule',
+      'CSSFontPaletteValuesRule',
+      'CSSFunctionDeclarations',
+      'CSSFunctionDescriptors',
+      'CSSFunctionRule',
+      'CSSGroupingRule',
+      'CSSImageValue',
+      'CSSImportRule',
+      'CSSKeyframeRule',
+      'CSSKeyframesRule',
+      'CSSKeywordValue',
+      'CSSLayerBlockRule',
+      'CSSLayerStatementRule',
+      'CSSMarginRule',
+      'CSSMathClamp',
+      'CSSMathInvert',
+      'CSSMathMax',
+      'CSSMathMin',
+      'CSSMathNegate',
+      'CSSMathProduct',
+      'CSSMathSum',
+      'CSSMathValue',
+      'CSSMatrixComponent',
+      'CSSMediaRule',
+      'CSSNamespaceRule',
+      'CSSNestedDeclarations',
+      'CSSNumericArray',
+      'CSSNumericValue',
+      'CSSPageDescriptors',
+      'CSSPageRule',
+      'CSSPerspective',
+      'CSSPositionTryDescriptors',
+      'CSSPositionTryRule',
+      'CSSPositionValue',
+      'CSSPropertyRule',
+      'CSSRotate',
+      'CSSRule',
+      'CSSRuleList',
+      'CSSScale',
+      'CSSScopeRule',
+      'CSSSkew',
+      'CSSSkewX',
+      'CSSSkewY',
+      'CSSStartingStyleRule',
+      'CSSStyleDeclaration',
+      'CSSStyleProperties',
+      'CSSStyleRule',
+      'CSSStyleSheet',
+      'CSSStyleValue',
+      'CSSSupportsRule',
+      'CSSTransformComponent',
+      'CSSTransformValue',
+      'CSSTransition',
+      'CSSTranslate',
+      'CSSUnitValue',
+      'CSSUnparsedValue',
+      'CSSVariableReferenceValue',
+      'CSSViewTransitionRule',
+      'Cache',
+      'CacheStorage',
+      'CanvasCaptureMediaStream',
+      'CanvasCaptureMediaStreamTrack',
+      'CanvasGradient',
+      'CanvasPattern',
+      'CanvasRenderingContext2D',
+      'CaptureController',
+      'CaretPosition',
+      'ChannelMergerNode',
+      'ChannelSplitterNode',
+      'ChapterInformation',
+      'CharacterBoundsUpdateEvent',
+      'CharacterData',
+      'Clipboard',
+      'ClipboardChangeEvent',
+      'ClipboardEvent',
+      'ClipboardItem',
+      'CloseEvent',
+      'CloseWatcher',
+      'CommandEvent',
+      'Comment',
+      'CompositionEvent',
+      'CompressionStream',
+      'ConstantSourceNode',
+      'ContentVisibilityAutoStateChangeEvent',
+      'ConvolverNode',
+      'CookieChangeEvent',
+      'CookieDeprecationLabel',
+      'CookieStore',
+      'CookieStoreManager',
+      'CountQueuingStrategy',
+      'CrashReportContext',
+      'CreateMonitor',
+      'Credential',
+      'CredentialsContainer',
+      'CropTarget',
+      'Crypto',
+      'CryptoKey',
+      'CustomElementRegistry',
+      'CustomEvent',
+      'CustomStateSet',
+      'DOMError',
+      'DOMException',
+      'DOMImplementation',
+      'DOMMatrix',
+      'DOMMatrixReadOnly',
+      'DOMParser',
+      'DOMPoint',
+      'DOMPointReadOnly',
+      'DOMQuad',
+      'DOMRect',
+      'DOMRectList',
+      'DOMRectReadOnly',
+      'DOMStringList',
+      'DOMStringMap',
+      'DOMTokenList',
+      'DataTransfer',
+      'DataTransferItem',
+      'DataTransferItemList',
+      'DecompressionStream',
+      'DelayNode',
+      'DelegatedInkTrailPresenter',
+      'DeviceMotionEvent',
+      'DeviceMotionEventAcceleration',
+      'DeviceMotionEventRotationRate',
+      'DeviceOrientationEvent',
+      'DevicePosture',
+      'DigitalCredential',
+      'DisposableStack',
+      'Document',
+      'DocumentFragment',
+      'DocumentPictureInPicture',
+      'DocumentPictureInPictureEvent',
+      'DocumentTimeline',
+      'DocumentType',
+      'DragEvent',
+      'DynamicsCompressorNode',
+      'EditContext',
+      'Element',
+      'ElementInternals',
+      'EncodedAudioChunk',
+      'EncodedVideoChunk',
+      'ErrorEvent',
+      'Event',
+      'EventCounts',
+      'EventSource',
+      'EventTarget',
+      'External',
+      'EyeDropper',
+      'FeaturePolicy',
+      'FederatedCredential',
+      'Fence',
+      'FencedFrameConfig',
+      'FetchLaterResult',
+      'File',
+      'FileList',
+      'FileReader',
+      'FileSystem',
+      'FileSystemDirectoryEntry',
+      'FileSystemDirectoryHandle',
+      'FileSystemDirectoryReader',
+      'FileSystemEntry',
+      'FileSystemFileEntry',
+      'FileSystemFileHandle',
+      'FileSystemHandle',
+      'FileSystemObserver',
+      'FileSystemWritableFileStream',
+      'FocusEvent',
+      'FontData',
+      'FontFace',
+      'FontFaceSet',
+      'FontFaceSetLoadEvent',
+      'FormData',
+      'FormDataEvent',
+      'FragmentDirective',
+      'GPU',
+      'GPUAdapter',
+      'GPUAdapterInfo',
+      'GPUBindGroup',
+      'GPUBindGroupLayout',
+      'GPUBuffer',
+      'GPUBufferUsage',
+      'GPUCanvasContext',
+      'GPUColorWrite',
+      'GPUCommandBuffer',
+      'GPUCommandEncoder',
+      'GPUCompilationInfo',
+      'GPUCompilationMessage',
+      'GPUComputePassEncoder',
+      'GPUComputePipeline',
+      'GPUDevice',
+      'GPUDeviceLostInfo',
+      'GPUError',
+      'GPUExternalTexture',
+      'GPUInternalError',
+      'GPUMapMode',
+      'GPUOutOfMemoryError',
+      'GPUPipelineError',
+      'GPUPipelineLayout',
+      'GPUQuerySet',
+      'GPUQueue',
+      'GPURenderBundle',
+      'GPURenderBundleEncoder',
+      'GPURenderPassEncoder',
+      'GPURenderPipeline',
+      'GPUSampler',
+      'GPUShaderModule',
+      'GPUShaderStage',
+      'GPUSupportedFeatures',
+      'GPUSupportedLimits',
+      'GPUTexture',
+      'GPUTextureUsage',
+      'GPUTextureView',
+      'GPUUncapturedErrorEvent',
+      'GPUValidationError',
+      'GainNode',
+      'Gamepad',
+      'GamepadAxisMoveEvent',
+      'GamepadButton',
+      'GamepadButtonEvent',
+      'GamepadEvent',
+      'GamepadHapticActuator',
+      'GamepadPose',
+      'Geolocation',
+      'GeolocationCoordinates',
+      'GeolocationPosition',
+      'GeolocationPositionError',
+      'GravitySensor',
+      'Gyroscope',
+      'HID',
+      'HIDConnectionEvent',
+      'HIDDevice',
+      'HIDInputReportEvent',
+      'HTMLAllCollection',
+      'HTMLAnchorElement',
+      'HTMLAreaElement',
+      'HTMLAudioElement',
+      'HTMLBRElement',
+      'HTMLBaseElement',
+      'HTMLBodyElement',
+      'HTMLButtonElement',
+      'HTMLCanvasElement',
+      'HTMLCollection',
+      'HTMLDListElement',
+      'HTMLDataElement',
+      'HTMLDataListElement',
+      'HTMLDetailsElement',
+      'HTMLDialogElement',
+      'HTMLDirectoryElement',
+      'HTMLDivElement',
+      'HTMLDocument',
+      'HTMLElement',
+      'HTMLEmbedElement',
+      'HTMLFencedFrameElement',
+      'HTMLFieldSetElement',
+      'HTMLFontElement',
+      'HTMLFormControlsCollection',
+      'HTMLFormElement',
+      'HTMLFrameElement',
+      'HTMLFrameSetElement',
+      'HTMLGeolocationElement',
+      'HTMLHRElement',
+      'HTMLHeadElement',
+      'HTMLHeadingElement',
+      'HTMLHtmlElement',
+      'HTMLIFrameElement',
+      'HTMLImageElement',
+      'HTMLInputElement',
+      'HTMLLIElement',
+      'HTMLLabelElement',
+      'HTMLLegendElement',
+      'HTMLLinkElement',
+      'HTMLMapElement',
+      'HTMLMarqueeElement',
+      'HTMLMediaElement',
+      'HTMLMenuElement',
+      'HTMLMetaElement',
+      'HTMLMeterElement',
+      'HTMLModElement',
+      'HTMLOListElement',
+      'HTMLObjectElement',
+      'HTMLOptGroupElement',
+      'HTMLOptionElement',
+      'HTMLOptionsCollection',
+      'HTMLOutputElement',
+      'HTMLParagraphElement',
+      'HTMLParamElement',
+      'HTMLPictureElement',
+      'HTMLPreElement',
+      'HTMLProgressElement',
+      'HTMLQuoteElement',
+      'HTMLScriptElement',
+      'HTMLSelectElement',
+      'HTMLSelectedContentElement',
+      'HTMLSlotElement',
+      'HTMLSourceElement',
+      'HTMLSpanElement',
+      'HTMLStyleElement',
+      'HTMLTableCaptionElement',
+      'HTMLTableCellElement',
+      'HTMLTableColElement',
+      'HTMLTableElement',
+      'HTMLTableRowElement',
+      'HTMLTableSectionElement',
+      'HTMLTemplateElement',
+      'HTMLTextAreaElement',
+      'HTMLTimeElement',
+      'HTMLTitleElement',
+      'HTMLTrackElement',
+      'HTMLUListElement',
+      'HTMLUnknownElement',
+      'HTMLVideoElement',
+      'HashChangeEvent',
+      'Headers',
+      'Highlight',
+      'HighlightRegistry',
+      'History',
+      'IDBCursor',
+      'IDBCursorWithValue',
+      'IDBDatabase',
+      'IDBFactory',
+      'IDBIndex',
+      'IDBKeyRange',
+      'IDBObjectStore',
+      'IDBOpenDBRequest',
+      'IDBRecord',
+      'IDBRequest',
+      'IDBTransaction',
+      'IDBVersionChangeEvent',
+      'IIRFilterNode',
+      'IdentityCredential',
+      'IdentityCredentialError',
+      'IdentityProvider',
+      'IdleDeadline',
+      'IdleDetector',
+      'Image',
+      'ImageBitmap',
+      'ImageBitmapRenderingContext',
+      'ImageCapture',
+      'ImageData',
+      'ImageDecoder',
+      'ImageTrack',
+      'ImageTrackList',
+      'Ink',
+      'InputDeviceCapabilities',
+      'InputDeviceInfo',
+      'InputEvent',
+      'IntegrityViolationReportBody',
+      'InterestEvent',
+      'IntersectionObserver',
+      'IntersectionObserverEntry',
+      'Keyboard',
+      'KeyboardEvent',
+      'KeyboardLayoutMap',
+      'KeyframeEffect',
+      'LanguageDetector',
+      'LargestContentfulPaint',
+      'LaunchParams',
+      'LaunchQueue',
+      'LayoutShift',
+      'LayoutShiftAttribution',
+      'LinearAccelerationSensor',
+      'Location',
+      'Lock',
+      'LockManager',
+      'MIDIAccess',
+      'MIDIConnectionEvent',
+      'MIDIInput',
+      'MIDIInputMap',
+      'MIDIMessageEvent',
+      'MIDIOutput',
+      'MIDIOutputMap',
+      'MIDIPort',
+      'MathMLElement',
+      'MediaCapabilities',
+      'MediaCapabilitiesInfo',
+      'MediaDeviceInfo',
+      'MediaDevices',
+      'MediaElementAudioSourceNode',
+      'MediaEncryptedEvent',
+      'MediaError',
+      'MediaKeyError',
+      'MediaKeyMessageEvent',
+      'MediaKeySession',
+      'MediaKeyStatusMap',
+      'MediaKeySystemAccess',
+      'MediaKeys',
+      'MediaList',
+      'MediaMetadata',
+      'MediaQueryList',
+      'MediaQueryListEvent',
+      'MediaRecorder',
+      'MediaRecorderErrorEvent',
+      'MediaSession',
+      'MediaSource',
+      'MediaSourceHandle',
+      'MediaStream',
+      'MediaStreamAudioDestinationNode',
+      'MediaStreamAudioSourceNode',
+      'MediaStreamEvent',
+      'MediaStreamTrack',
+      'MediaStreamTrackAudioSourceNode',
+      'MediaStreamTrackAudioStats',
+      'MediaStreamTrackEvent',
+      'MediaStreamTrackGenerator',
+      'MediaStreamTrackProcessor',
+      'MediaStreamTrackVideoStats',
+      'MessageChannel',
+      'MessageEvent',
+      'MessagePort',
+      'MimeType',
+      'MimeTypeArray',
+      'ModelGenericSession',
+      'ModelManager',
+      'MouseEvent',
+      'MutationEvent',
+      'MutationObserver',
+      'MutationRecord',
+      'NamedNodeMap',
+      'NavigateEvent',
+      'Navigation',
+      'NavigationActivation',
+      'NavigationCurrentEntryChangeEvent',
+      'NavigationDestination',
+      'NavigationHistoryEntry',
+      'NavigationPrecommitController',
+      'NavigationPreloadManager',
+      'NavigationTransition',
+      'Navigator',
+      'NavigatorLogin',
+      'NavigatorManagedData',
+      'NavigatorUAData',
+      'NetworkInformation',
+      'Node',
+      'NodeFilter',
+      'NodeIterator',
+      'NodeList',
+      'NotRestoredReasonDetails',
+      'NotRestoredReasons',
+      'Notification',
+      'NotifyPaintEvent',
+      'OTPCredential',
+      'Observable',
+      'OfflineAudioCompletionEvent',
+      'OfflineAudioContext',
+      'OffscreenCanvas',
+      'OffscreenCanvasRenderingContext2D',
+      'Option',
+      'OrientationSensor',
+      'Origin',
+      'OscillatorNode',
+      'OverconstrainedError',
+      'PERSISTENT',
+      'PageRevealEvent',
+      'PageSwapEvent',
+      'PageTransitionEvent',
+      'PannerNode',
+      'PasswordCredential',
+      'Path2D',
+      'PaymentAddress',
+      'PaymentManager',
+      'PaymentMethodChangeEvent',
+      'PaymentRequest',
+      'PaymentRequestUpdateEvent',
+      'PaymentResponse',
+      'Performance',
+      'PerformanceElementTiming',
+      'PerformanceEntry',
+      'PerformanceEventTiming',
+      'PerformanceLongAnimationFrameTiming',
+      'PerformanceLongTaskTiming',
+      'PerformanceMark',
+      'PerformanceMeasure',
+      'PerformanceNavigation',
+      'PerformanceNavigationTiming',
+      'PerformanceObserver',
+      'PerformanceObserverEntryList',
+      'PerformancePaintTiming',
+      'PerformanceResourceTiming',
+      'PerformanceScriptTiming',
+      'PerformanceServerTiming',
+      'PerformanceTiming',
+      'PerformanceTimingConfidence',
+      'PeriodicSyncManager',
+      'PeriodicWave',
+      'PermissionStatus',
+      'Permissions',
+      'PictureInPictureEvent',
+      'PictureInPictureWindow',
+      'Plugin',
+      'PluginArray',
+      'PointerEvent',
+      'PopStateEvent',
+      'Presentation',
+      'PresentationAvailability',
+      'PresentationConnection',
+      'PresentationConnectionAvailableEvent',
+      'PresentationConnectionCloseEvent',
+      'PresentationConnectionList',
+      'PresentationReceiver',
+      'PresentationRequest',
+      'PressureObserver',
+      'PressureRecord',
+      'ProcessingInstruction',
+      'Profiler',
+      'ProgressEvent',
+      'PromiseRejectionEvent',
+      'ProtectedAudience',
+      'PublicKeyCredential',
+      'PushManager',
+      'PushSubscription',
+      'PushSubscriptionOptions',
+      'QuotaExceededError',
+      'RTCCertificate',
+      'RTCDTMFSender',
+      'RTCDTMFToneChangeEvent',
+      'RTCDataChannel',
+      'RTCDataChannelEvent',
+      'RTCDtlsTransport',
+      'RTCEncodedAudioFrame',
+      'RTCEncodedVideoFrame',
+      'RTCError',
+      'RTCErrorEvent',
+      'RTCIceCandidate',
+      'RTCIceTransport',
+      'RTCPeerConnection',
+      'RTCPeerConnectionIceErrorEvent',
+      'RTCPeerConnectionIceEvent',
+      'RTCRtpReceiver',
+      'RTCRtpScriptTransform',
+      'RTCRtpSender',
+      'RTCRtpTransceiver',
+      'RTCSctpTransport',
+      'RTCSessionDescription',
+      'RTCStatsReport',
+      'RTCTrackEvent',
+      'RadioNodeList',
+      'Range',
+      'ReadableByteStreamController',
+      'ReadableStream',
+      'ReadableStreamBYOBReader',
+      'ReadableStreamBYOBRequest',
+      'ReadableStreamDefaultController',
+      'ReadableStreamDefaultReader',
+      'RelativeOrientationSensor',
+      'RemotePlayback',
+      'ReportBody',
+      'ReportingObserver',
+      'Request',
+      'ResizeObserver',
+      'ResizeObserverEntry',
+      'ResizeObserverSize',
+      'Response',
+      'RestrictionTarget',
+      'SVGAElement',
+      'SVGAngle',
+      'SVGAnimateElement',
+      'SVGAnimateMotionElement',
+      'SVGAnimateTransformElement',
+      'SVGAnimatedAngle',
+      'SVGAnimatedBoolean',
+      'SVGAnimatedEnumeration',
+      'SVGAnimatedInteger',
+      'SVGAnimatedLength',
+      'SVGAnimatedLengthList',
+      'SVGAnimatedNumber',
+      'SVGAnimatedNumberList',
+      'SVGAnimatedPreserveAspectRatio',
+      'SVGAnimatedRect',
+      'SVGAnimatedString',
+      'SVGAnimatedTransformList',
+      'SVGAnimationElement',
+      'SVGCircleElement',
+      'SVGClipPathElement',
+      'SVGComponentTransferFunctionElement',
+      'SVGDefsElement',
+      'SVGDescElement',
+      'SVGElement',
+      'SVGEllipseElement',
+      'SVGFEBlendElement',
+      'SVGFEColorMatrixElement',
+      'SVGFEComponentTransferElement',
+      'SVGFECompositeElement',
+      'SVGFEConvolveMatrixElement',
+      'SVGFEDiffuseLightingElement',
+      'SVGFEDisplacementMapElement',
+      'SVGFEDistantLightElement',
+      'SVGFEDropShadowElement',
+      'SVGFEFloodElement',
+      'SVGFEFuncAElement',
+      'SVGFEFuncBElement',
+      'SVGFEFuncGElement',
+      'SVGFEFuncRElement',
+      'SVGFEGaussianBlurElement',
+      'SVGFEImageElement',
+      'SVGFEMergeElement',
+      'SVGFEMergeNodeElement',
+      'SVGFEMorphologyElement',
+      'SVGFEOffsetElement',
+      'SVGFEPointLightElement',
+      'SVGFESpecularLightingElement',
+      'SVGFESpotLightElement',
+      'SVGFETileElement',
+      'SVGFETurbulenceElement',
+      'SVGFilterElement',
+      'SVGForeignObjectElement',
+      'SVGGElement',
+      'SVGGeometryElement',
+      'SVGGradientElement',
+      'SVGGraphicsElement',
+      'SVGImageElement',
+      'SVGLength',
+      'SVGLengthList',
+      'SVGLineElement',
+      'SVGLinearGradientElement',
+      'SVGMPathElement',
+      'SVGMarkerElement',
+      'SVGMaskElement',
+      'SVGMatrix',
+      'SVGMetadataElement',
+      'SVGNumber',
+      'SVGNumberList',
+      'SVGPathElement',
+      'SVGPatternElement',
+      'SVGPoint',
+      'SVGPointList',
+      'SVGPolygonElement',
+      'SVGPolylineElement',
+      'SVGPreserveAspectRatio',
+      'SVGRadialGradientElement',
+      'SVGRect',
+      'SVGRectElement',
+      'SVGSVGElement',
+      'SVGScriptElement',
+      'SVGSetElement',
+      'SVGStopElement',
+      'SVGStringList',
+      'SVGStyleElement',
+      'SVGSwitchElement',
+      'SVGSymbolElement',
+      'SVGTSpanElement',
+      'SVGTextContentElement',
+      'SVGTextElement',
+      'SVGTextPathElement',
+      'SVGTextPositioningElement',
+      'SVGTitleElement',
+      'SVGTransform',
+      'SVGTransformList',
+      'SVGUnitTypes',
+      'SVGUseElement',
+      'SVGViewElement',
+      'Scheduler',
+      'Scheduling',
+      'Screen',
+      'ScreenDetailed',
+      'ScreenDetails',
+      'ScreenOrientation',
+      'ScriptProcessorNode',
+      'ScrollTimeline',
+      'SecurityPolicyViolationEvent',
+      'Selection',
+      'Sensor',
+      'SensorErrorEvent',
+      'Serial',
+      'SerialPort',
+      'ServiceWorker',
+      'ServiceWorkerContainer',
+      'ServiceWorkerRegistration',
+      'ShadowRoot',
+      'SharedStorage',
+      'SharedStorageAppendMethod',
+      'SharedStorageClearMethod',
+      'SharedStorageDeleteMethod',
+      'SharedStorageModifierMethod',
+      'SharedStorageSetMethod',
+      'SharedStorageWorklet',
+      'SharedWorker',
+      'SnapEvent',
+      'SourceBuffer',
+      'SourceBufferList',
+      'SpeechGrammar',
+      'SpeechGrammarList',
+      'SpeechRecognition',
+      'SpeechRecognitionErrorEvent',
+      'SpeechRecognitionEvent',
+      'SpeechRecognitionPhrase',
+      'SpeechSynthesis',
+      'SpeechSynthesisErrorEvent',
+      'SpeechSynthesisEvent',
+      'SpeechSynthesisUtterance',
+      'SpeechSynthesisVoice',
+      'StaticRange',
+      'StereoPannerNode',
+      'Storage',
+      'StorageBucket',
+      'StorageBucketManager',
+      'StorageEvent',
+      'StorageManager',
+      'StylePropertyMap',
+      'StylePropertyMapReadOnly',
+      'StyleSheet',
+      'StyleSheetList',
+      'SubmitEvent',
+      'Subscriber',
+      'SubtleCrypto',
+      'Summarizer',
+      'SuppressedError',
+      'SyncManager',
+      'TEMPORARY',
+      'TaskAttributionTiming',
+      'TaskController',
+      'TaskPriorityChangeEvent',
+      'TaskSignal',
+      'Temporal',
+      'Text',
+      'TextDecoder',
+      'TextDecoderStream',
+      'TextEncoder',
+      'TextEncoderStream',
+      'TextEvent',
+      'TextFormat',
+      'TextFormatUpdateEvent',
+      'TextMetrics',
+      'TextTrack',
+      'TextTrackCue',
+      'TextTrackCueList',
+      'TextTrackList',
+      'TextUpdateEvent',
+      'TimeEvent',
+      'TimeRanges',
+      'ToggleEvent',
+      'Touch',
+      'TouchEvent',
+      'TouchList',
+      'TrackEvent',
+      'TransformStream',
+      'TransformStreamDefaultController',
+      'TransitionEvent',
+      'Translator',
+      'TreeWalker',
+      'TrustedHTML',
+      'TrustedScript',
+      'TrustedScriptURL',
+      'TrustedTypePolicy',
+      'TrustedTypePolicyFactory',
+      'UIEvent',
+      'URL',
+      'URLPattern',
+      'URLSearchParams',
+      'USB',
+      'USBAlternateInterface',
+      'USBConfiguration',
+      'USBConnectionEvent',
+      'USBDevice',
+      'USBEndpoint',
+      'USBInTransferResult',
+      'USBInterface',
+      'USBIsochronousInTransferPacket',
+      'USBIsochronousInTransferResult',
+      'USBIsochronousOutTransferPacket',
+      'USBIsochronousOutTransferResult',
+      'USBOutTransferResult',
+      'UserActivation',
+      'VTTCue',
+      'VTTRegion',
+      'ValidityState',
+      'VideoColorSpace',
+      'VideoDecoder',
+      'VideoEncoder',
+      'VideoFrame',
+      'VideoPlaybackQuality',
+      'ViewTimeline',
+      'ViewTransition',
+      'ViewTransitionTypeSet',
+      'Viewport',
+      'VirtualKeyboard',
+      'VirtualKeyboardGeometryChangeEvent',
+      'VisibilityStateEntry',
+      'VisualViewport',
+      'WGSLLanguageFeatures',
+      'WakeLock',
+      'WakeLockSentinel',
+      'WaveShaperNode',
+      'WebAssembly',
+      'WebGL2RenderingContext',
+      'WebGLActiveInfo',
+      'WebGLBuffer',
+      'WebGLContextEvent',
+      'WebGLFramebuffer',
+      'WebGLObject',
+      'WebGLProgram',
+      'WebGLQuery',
+      'WebGLRenderbuffer',
+      'WebGLRenderingContext',
+      'WebGLSampler',
+      'WebGLShader',
+      'WebGLShaderPrecisionFormat',
+      'WebGLSync',
+      'WebGLTexture',
+      'WebGLTransformFeedback',
+      'WebGLUniformLocation',
+      'WebGLVertexArrayObject',
+      'WebSocket',
+      'WebSocketError',
+      'WebSocketStream',
+      'WebTransport',
+      'WebTransportBidirectionalStream',
+      'WebTransportDatagramDuplexStream',
+      'WebTransportError',
+      'WebTransportReceiveStream',
+      'WebTransportSendStream',
+      'WheelEvent',
+      'Window',
+      'WindowControlsOverlay',
+      'WindowControlsOverlayGeometryChangeEvent',
+      'Worker',
+      'Worklet',
+      'WritableStream',
+      'WritableStreamDefaultController',
+      'WritableStreamDefaultWriter',
+      'XMLDocument',
+      'XMLHttpRequest',
+      'XMLHttpRequestEventTarget',
+      'XMLHttpRequestUpload',
+      'XMLSerializer',
+      'XPathEvaluator',
+      'XPathExpression',
+      'XPathResult',
+      'XRAnchor',
+      'XRAnchorSet',
+      'XRBoundedReferenceSpace',
+      'XRCPUDepthInformation',
+      'XRCamera',
+      'XRDOMOverlayState',
+      'XRDepthInformation',
+      'XRFrame',
+      'XRHand',
+      'XRHitTestResult',
+      'XRHitTestSource',
+      'XRInputSource',
+      'XRInputSourceArray',
+      'XRInputSourceEvent',
+      'XRInputSourcesChangeEvent',
+      'XRJointPose',
+      'XRJointSpace',
+      'XRLayer',
+      'XRLightEstimate',
+      'XRLightProbe',
+      'XRPose',
+      'XRRay',
+      'XRReferenceSpace',
+      'XRReferenceSpaceEvent',
+      'XRRenderState',
+      'XRRigidTransform',
+      'XRSession',
+      'XRSessionEvent',
+      'XRSpace',
+      'XRSystem',
+      'XRTransientInputHitTestResult',
+      'XRTransientInputHitTestSource',
+      'XRView',
+      'XRViewerPose',
+      'XRViewport',
+      'XRVisibilityMaskChangeEvent',
+      'XRWebGLBinding',
+      'XRWebGLDepthInformation',
+      'XRWebGLLayer',
+      'XSLTProcessor',
+      'addEventListener',
+      'ai',
+      'alert',
+      'atob',
+      'blur',
+      'btoa',
+      'caches',
+      'cancelAnimationFrame',
+      'cancelIdleCallback',
+      'clearInterval',
+      'clearTimeout',
+      'clientInformation',
+      'close',
+      'closed',
+      'confirm',
+      'console',
+      'cookieStore',
+      'crashReport',
+      'createImageBitmap',
+      'credentialless',
+      'crossOriginIsolated',
+      'crypto',
+      'customElements',
+      'devicePixelRatio',
+      'dispatchEvent',
+      'document',
+      'documentPictureInPicture',
+      'event',
+      'external',
+      'fence',
+      'fetch',
+      'fetchLater',
+      'find',
+      'focus',
+      'frameElement',
+      'frames',
+      'getComputedStyle',
+      'getScreenDetails',
+      'getSelection',
+      'history',
+      'indexedDB',
+      'innerHeight',
+      'innerWidth',
+      'isSecureContext',
+      'launchQueue',
+      'length',
+      'localStorage',
+      'locationbar',
+      'matchMedia',
+      'menubar',
+      'model',
+      'moveBy',
+      'moveTo',
+      'name',
+      'navigation',
+      'navigator',
+      'offscreenBuffering',
+      'open',
+      'opener',
+      'origin',
+      'originAgentCluster',
+      'outerHeight',
+      'outerWidth',
+      'pageXOffset',
+      'pageYOffset',
+      'parent',
+      'performance',
+      'personalbar',
+      'postMessage',
+      'print',
+      'prompt',
+      'queryLocalFonts',
+      'queueMicrotask',
+      'removeEventListener',
+      'reportError',
+      'requestAnimationFrame',
+      'requestIdleCallback',
+      'resizeBy',
+      'resizeTo',
+      'scheduler',
+      'screen',
+      'screenLeft',
+      'screenTop',
+      'screenX',
+      'screenY',
+      'scroll',
+      'scrollBy',
+      'scrollTo',
+      'scrollX',
+      'scrollY',
+      'scrollbars',
+      'self',
+      'sessionStorage',
+      'setInterval',
+      'setTimeout',
+      'sharedStorage',
+      'showDirectoryPicker',
+      'showOpenFilePicker',
+      'showSaveFilePicker',
+      'speechSynthesis',
+      'status',
+      'statusbar',
+      'stop',
+      'structuredClone',
+      'styleMedia',
+      'toolbar',
+      'top',
+      'trustedTypes',
+      'viewport',
+      'visualViewport',
+      'when',
+      'window',
+    ],
+    writable: [
+      'location',
+      'onabort',
+      'onafterprint',
+      'onanimationcancel',
+      'onanimationend',
+      'onanimationiteration',
+      'onanimationstart',
+      'onappinstalled',
+      'onauxclick',
+      'onbeforeinput',
+      'onbeforeinstallprompt',
+      'onbeforematch',
+      'onbeforeprint',
+      'onbeforetoggle',
+      'onbeforeunload',
+      'onbeforexrselect',
+      'onblur',
+      'oncancel',
+      'oncanplay',
+      'oncanplaythrough',
+      'onchange',
+      'onclick',
+      'onclose',
+      'oncommand',
+      'oncontentvisibilityautostatechange',
+      'oncontextlost',
+      'oncontextmenu',
+      'oncontextrestored',
+      'oncopy',
+      'oncuechange',
+      'oncut',
+      'ondblclick',
+      'ondevicemotion',
+      'ondeviceorientation',
+      'ondeviceorientationabsolute',
+      'ondrag',
+      'ondragend',
+      'ondragenter',
+      'ondragleave',
+      'ondragover',
+      'ondragstart',
+      'ondrop',
+      'ondurationchange',
+      'onemptied',
+      'onended',
+      'onerror',
+      'onfocus',
+      'onformdata',
+      'ongamepadconnected',
+      'ongamepaddisconnected',
+      'ongotpointercapture',
+      'onhashchange',
+      'oninput',
+      'oninvalid',
+      'onkeydown',
+      'onkeypress',
+      'onkeyup',
+      'onlanguagechange',
+      'onload',
+      'onloadeddata',
+      'onloadedmetadata',
+      'onloadstart',
+      'onlostpointercapture',
+      'onmessage',
+      'onmessageerror',
+      'onmousedown',
+      'onmouseenter',
+      'onmouseleave',
+      'onmousemove',
+      'onmouseout',
+      'onmouseover',
+      'onmouseup',
+      'onmousewheel',
+      'onoffline',
+      'ononline',
+      'onpagehide',
+      'onpagereveal',
+      'onpageshow',
+      'onpageswap',
+      'onpaste',
+      'onpause',
+      'onplay',
+      'onplaying',
+      'onpointercancel',
+      'onpointerdown',
+      'onpointerenter',
+      'onpointerleave',
+      'onpointermove',
+      'onpointerout',
+      'onpointerover',
+      'onpointerrawupdate',
+      'onpointerup',
+      'onpopstate',
+      'onprogress',
+      'onratechange',
+      'onrejectionhandled',
+      'onreset',
+      'onresize',
+      'onscroll',
+      'onscrollend',
+      'onscrollsnapchange',
+      'onscrollsnapchanging',
+      'onsearch',
+      'onsecuritypolicyviolation',
+      'onseeked',
+      'onseeking',
+      'onselect',
+      'onselectionchange',
+      'onselectstart',
+      'onslotchange',
+      'onstalled',
+      'onstorage',
+      'onsubmit',
+      'onsuspend',
+      'ontimeupdate',
+      'ontoggle',
+      'ontransitioncancel',
+      'ontransitionend',
+      'ontransitionrun',
+      'ontransitionstart',
+      'onunhandledrejection',
+      'onunload',
+      'onvolumechange',
+      'onwaiting',
+      'onwheel',
+    ],
+  },
+  _O = {
+    readonly: [
+      'AggregateError',
+      'Array',
+      'ArrayBuffer',
+      'Atomics',
+      'BigInt',
+      'BigInt64Array',
+      'BigUint64Array',
+      'Boolean',
+      'DataView',
+      'Date',
+      'Error',
+      'EvalError',
+      'FinalizationRegistry',
+      'Float16Array',
+      'Float32Array',
+      'Float64Array',
+      'Function',
+      'Infinity',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Iterator',
+      'JSON',
+      'Map',
+      'Math',
+      'NaN',
+      'Number',
+      'Object',
+      'Promise',
+      'Proxy',
+      'RangeError',
+      'ReferenceError',
+      'Reflect',
+      'RegExp',
+      'Set',
+      'SharedArrayBuffer',
+      'String',
+      'Symbol',
+      'SyntaxError',
+      'TypeError',
+      'URIError',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakRef',
+      'WeakSet',
+      'decodeURI',
+      'decodeURIComponent',
+      'encodeURI',
+      'encodeURIComponent',
+      'escape',
+      'eval',
+      'globalThis',
+      'isFinite',
+      'isNaN',
+      'parseFloat',
+      'parseInt',
+      'undefined',
+      'unescape',
+    ],
+    writable: [],
+  },
+  bO = { readonly: ['global', 'module', 'require'], writable: ['exports'] },
+  vO = {
+    readonly: [
+      'andThen',
+      'click',
+      'currentPath',
+      'currentRouteName',
+      'currentURL',
+      'fillIn',
+      'find',
+      'findAll',
+      'findWithAssert',
+      'keyEvent',
+      'pauseTest',
+      'resumeTest',
+      'triggerEvent',
+      'visit',
+      'wait',
+    ],
+    writable: [],
+  },
+  xO = {
+    readonly: [
+      'ArrayBuffer',
+      'DataView',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakSet',
+    ],
+    writable: [],
+  },
+  AO = {
+    readonly: [
+      'ArrayBuffer',
+      'DataView',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakSet',
+    ],
+    writable: [],
+  },
+  CO = {
+    readonly: [
+      'ArrayBuffer',
+      'Atomics',
+      'DataView',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakSet',
+    ],
+    writable: [],
+  },
+  YO = {
+    readonly: [
+      'ArrayBuffer',
+      'Atomics',
+      'DataView',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakSet',
+    ],
+    writable: [],
+  },
+  LO = {
+    readonly: [
+      'ArrayBuffer',
+      'Atomics',
+      'DataView',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakSet',
+    ],
+    writable: [],
+  },
+  UO = {
+    readonly: [
+      'ArrayBuffer',
+      'Atomics',
+      'BigInt',
+      'BigInt64Array',
+      'BigUint64Array',
+      'DataView',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakSet',
+      'globalThis',
+    ],
+    writable: [],
+  },
+  IO = {
+    readonly: [
+      'AggregateError',
+      'ArrayBuffer',
+      'Atomics',
+      'BigInt',
+      'BigInt64Array',
+      'BigUint64Array',
+      'DataView',
+      'FinalizationRegistry',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakRef',
+      'WeakSet',
+      'globalThis',
+    ],
+    writable: [],
+  },
+  kO = {
+    readonly: [
+      'AggregateError',
+      'ArrayBuffer',
+      'Atomics',
+      'BigInt',
+      'BigInt64Array',
+      'BigUint64Array',
+      'DataView',
+      'FinalizationRegistry',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakRef',
+      'WeakSet',
+      'globalThis',
+    ],
+    writable: [],
+  },
+  RO = {
+    readonly: [
+      'AggregateError',
+      'ArrayBuffer',
+      'Atomics',
+      'BigInt',
+      'BigInt64Array',
+      'BigUint64Array',
+      'DataView',
+      'FinalizationRegistry',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakRef',
+      'WeakSet',
+      'globalThis',
+    ],
+    writable: [],
+  },
+  VO = {
+    readonly: [
+      'AggregateError',
+      'ArrayBuffer',
+      'Atomics',
+      'BigInt',
+      'BigInt64Array',
+      'BigUint64Array',
+      'DataView',
+      'FinalizationRegistry',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakRef',
+      'WeakSet',
+      'globalThis',
+    ],
+    writable: [],
+  },
+  DO = {
+    readonly: [
+      'AggregateError',
+      'ArrayBuffer',
+      'Atomics',
+      'BigInt',
+      'BigInt64Array',
+      'BigUint64Array',
+      'DataView',
+      'FinalizationRegistry',
+      'Float16Array',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Iterator',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakRef',
+      'WeakSet',
+      'globalThis',
+    ],
+    writable: [],
+  },
+  wO = {
+    readonly: [
+      'AggregateError',
+      'ArrayBuffer',
+      'Atomics',
+      'BigInt',
+      'BigInt64Array',
+      'BigUint64Array',
+      'DataView',
+      'FinalizationRegistry',
+      'Float16Array',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Iterator',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'SharedArrayBuffer',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakRef',
+      'WeakSet',
+      'globalThis',
+    ],
+    writable: [],
+  },
+  MO = {
+    readonly: [
+      'ArrayBuffer',
+      'DataView',
+      'Float32Array',
+      'Float64Array',
+      'Int16Array',
+      'Int32Array',
+      'Int8Array',
+      'Intl',
+      'Map',
+      'Promise',
+      'Proxy',
+      'Reflect',
+      'Set',
+      'Symbol',
+      'Uint16Array',
+      'Uint32Array',
+      'Uint8Array',
+      'Uint8ClampedArray',
+      'WeakMap',
+      'WeakSet',
+    ],
+    writable: [],
+  },
+  OO = {
+    readonly: [
+      'GM',
+      'GM_addElement',
+      'GM_addStyle',
+      'GM_addValueChangeListener',
+      'GM_deleteValue',
+      'GM_deleteValues',
+      'GM_download',
+      'GM_getResourceText',
+      'GM_getResourceURL',
+      'GM_getTab',
+      'GM_getTabs',
+      'GM_getValue',
+      'GM_getValues',
+      'GM_info',
+      'GM_listValues',
+      'GM_log',
+      'GM_notification',
+      'GM_openInTab',
+      'GM_registerMenuCommand',
+      'GM_removeValueChangeListener',
+      'GM_saveTab',
+      'GM_setClipboard',
+      'GM_setValue',
+      'GM_setValues',
+      'GM_unregisterMenuCommand',
+      'GM_xmlhttpRequest',
+      'cloneInto',
+      'createObjectIn',
+      'exportFunction',
+      'unsafeWindow',
+    ],
+    writable: [],
+  },
+  FO = {
+    readonly: [
+      'afterAll',
+      'afterEach',
+      'beforeAll',
+      'beforeEach',
+      'describe',
+      'expect',
+      'expectAsync',
+      'fail',
+      'fdescribe',
+      'fit',
+      'it',
+      'jasmine',
+      'pending',
+      'runs',
+      'spyOn',
+      'spyOnAllFunctions',
+      'spyOnProperty',
+      'throwUnless',
+      'throwUnlessAsync',
+      'waits',
+      'waitsFor',
+      'xdescribe',
+      'xit',
+    ],
+    writable: [],
+  },
+  BO = {
+    readonly: [
+      'afterAll',
+      'afterEach',
+      'beforeAll',
+      'beforeEach',
+      'describe',
+      'expect',
+      'fit',
+      'it',
+      'jest',
+      'test',
+      'xdescribe',
+      'xit',
+      'xtest',
+    ],
+    writable: [],
+  },
+  GO = { readonly: ['$', 'jQuery'], writable: [] },
+  NO = {
+    readonly: [
+      '$',
+      'Accounts',
+      'AccountsClient',
+      'AccountsCommon',
+      'AccountsServer',
+      'App',
+      'Assets',
+      'Blaze',
+      'Cordova',
+      'DDP',
+      'DDPRateLimiter',
+      'DDPServer',
+      'Deps',
+      'EJSON',
+      'Email',
+      'HTTP',
+      'Log',
+      'Match',
+      'Meteor',
+      'Mongo',
+      'MongoInternals',
+      'Npm',
+      'Package',
+      'Plugin',
+      'Random',
+      'ReactiveDict',
+      'ReactiveVar',
+      'Router',
+      'ServiceConfiguration',
+      'Session',
+      'Spacebars',
+      'Template',
+      'Tinytest',
+      'Tracker',
+      'UI',
+      'Utils',
+      'WebApp',
+      'WebAppInternals',
+      'check',
+      'process',
+      'share',
+    ],
+    writable: [],
+  },
+  qO = {
+    readonly: [
+      'after',
+      'afterEach',
+      'before',
+      'beforeEach',
+      'context',
+      'describe',
+      'it',
+      'mocha',
+      'run',
+      'setup',
+      'specify',
+      'suite',
+      'suiteSetup',
+      'suiteTeardown',
+      'teardown',
+      'test',
+      'xcontext',
+      'xdescribe',
+      'xit',
+      'xspecify',
+    ],
+    writable: [],
+  },
+  jO = {
+    readonly: [
+      'BulkWriteResult',
+      'ISODate',
+      'Mongo',
+      'NumberInt',
+      'NumberLong',
+      'ObjectId',
+      'PlanCache',
+      'UUID',
+      'WriteResult',
+      '_isWindows',
+      '_rand',
+      'cat',
+      'cd',
+      'connect',
+      'db',
+      'getHostName',
+      'getMemInfo',
+      'hostname',
+      'listFiles',
+      'load',
+      'ls',
+      'md5sumFile',
+      'mkdir',
+      'print',
+      'printjson',
+      'pwd',
+      'quit',
+      'removeFile',
+      'rs',
+      'sh',
+      'version',
+    ],
+    writable: [],
+  },
+  zO = {
+    readonly: [
+      'JSAdapter',
+      'Java',
+      'JavaImporter',
+      'Packages',
+      '__DIR__',
+      '__FILE__',
+      '__LINE__',
+      'com',
+      'edu',
+      'exit',
+      'java',
+      'javafx',
+      'javax',
+      'load',
+      'loadWithNewGlobal',
+      'org',
+      'print',
+      'quit',
+    ],
+    writable: [],
+  },
+  WO = {
+    readonly: [
+      'AbortController',
+      'AbortSignal',
+      'AsyncDisposableStack',
+      'Blob',
+      'BroadcastChannel',
+      'Buffer',
+      'ByteLengthQueuingStrategy',
+      'CloseEvent',
+      'CompressionStream',
+      'CountQueuingStrategy',
+      'Crypto',
+      'CryptoKey',
+      'CustomEvent',
+      'DOMException',
+      'DecompressionStream',
+      'DisposableStack',
+      'ErrorEvent',
+      'Event',
+      'EventTarget',
+      'File',
+      'FormData',
+      'Headers',
+      'MessageChannel',
+      'MessageEvent',
+      'MessagePort',
+      'Navigator',
+      'Performance',
+      'PerformanceEntry',
+      'PerformanceMark',
+      'PerformanceMeasure',
+      'PerformanceObserver',
+      'PerformanceObserverEntryList',
+      'PerformanceResourceTiming',
+      'ReadableByteStreamController',
+      'ReadableStream',
+      'ReadableStreamBYOBReader',
+      'ReadableStreamBYOBRequest',
+      'ReadableStreamDefaultController',
+      'ReadableStreamDefaultReader',
+      'Request',
+      'Response',
+      'Storage',
+      'SubtleCrypto',
+      'SuppressedError',
+      'TextDecoder',
+      'TextDecoderStream',
+      'TextEncoder',
+      'TextEncoderStream',
+      'TransformStream',
+      'TransformStreamDefaultController',
+      'URL',
+      'URLPattern',
+      'URLSearchParams',
+      'WebAssembly',
+      'WebSocket',
+      'WritableStream',
+      'WritableStreamDefaultController',
+      'WritableStreamDefaultWriter',
+      '__dirname',
+      '__filename',
+      'atob',
+      'btoa',
+      'clearImmediate',
+      'clearInterval',
+      'clearTimeout',
+      'console',
+      'crypto',
+      'fetch',
+      'global',
+      'localStorage',
+      'module',
+      'navigator',
+      'performance',
+      'process',
+      'queueMicrotask',
+      'require',
+      'sessionStorage',
+      'setImmediate',
+      'setInterval',
+      'setTimeout',
+      'structuredClone',
+    ],
+    writable: ['exports'],
+  },
+  $O = { readonly: [], writable: ['WebPage', 'console', 'exports', 'phantom', 'require'] },
+  HO = {
+    readonly: [
+      '$',
+      '$$',
+      '$A',
+      '$F',
+      '$H',
+      '$R',
+      '$break',
+      '$continue',
+      '$w',
+      'Abstract',
+      'Ajax',
+      'Autocompleter',
+      'Builder',
+      'Class',
+      'Control',
+      'Draggable',
+      'Draggables',
+      'Droppables',
+      'Effect',
+      'Element',
+      'Enumerable',
+      'Event',
+      'Field',
+      'Form',
+      'Hash',
+      'Insertion',
+      'ObjectRange',
+      'PeriodicalExecuter',
+      'Position',
+      'Prototype',
+      'Scriptaculous',
+      'Selector',
+      'Sortable',
+      'SortableObserver',
+      'Sound',
+      'Template',
+      'Toggle',
+      'Try',
+    ],
+    writable: [],
+  },
+  KO = { readonly: ['$', '$$', 'By', 'DartObject', 'browser', 'by', 'element', 'protractor'], writable: [] },
+  JO = {
+    readonly: [
+      'QUnit',
+      'asyncTest',
+      'deepEqual',
+      'equal',
+      'expect',
+      'module',
+      'notDeepEqual',
+      'notEqual',
+      'notOk',
+      'notPropEqual',
+      'notStrictEqual',
+      'ok',
+      'propEqual',
+      'raises',
+      'start',
+      'stop',
+      'strictEqual',
+      'test',
+      'throws',
+    ],
+    writable: [],
+  },
+  XO = {
+    readonly: [
+      'AI',
+      'AICreateMonitor',
+      'AbortController',
+      'AbortPaymentEvent',
+      'AbortSignal',
+      'AsyncDisposableStack',
+      'BackgroundFetchEvent',
+      'BackgroundFetchManager',
+      'BackgroundFetchRecord',
+      'BackgroundFetchRegistration',
+      'BackgroundFetchUpdateUIEvent',
+      'BarcodeDetector',
+      'Blob',
+      'BroadcastChannel',
+      'ByteLengthQueuingStrategy',
+      'CSSSkewX',
+      'CSSSkewY',
+      'Cache',
+      'CacheStorage',
+      'CanMakePaymentEvent',
+      'CanvasGradient',
+      'CanvasPattern',
+      'Client',
+      'Clients',
+      'CloseEvent',
+      'CompressionStream',
+      'CookieStore',
+      'CookieStoreManager',
+      'CountQueuingStrategy',
+      'CreateMonitor',
+      'CropTarget',
+      'Crypto',
+      'CryptoKey',
+      'CustomEvent',
+      'DOMException',
+      'DOMMatrix',
+      'DOMMatrixReadOnly',
+      'DOMPoint',
+      'DOMPointReadOnly',
+      'DOMQuad',
+      'DOMRect',
+      'DOMRectReadOnly',
+      'DOMStringList',
+      'DecompressionStream',
+      'DisposableStack',
+      'ErrorEvent',
+      'Event',
+      'EventSource',
+      'EventTarget',
+      'ExtendableCookieChangeEvent',
+      'ExtendableEvent',
+      'ExtendableMessageEvent',
+      'FetchEvent',
+      'File',
+      'FileList',
+      'FileReader',
+      'FileSystemDirectoryHandle',
+      'FileSystemFileHandle',
+      'FileSystemHandle',
+      'FileSystemWritableFileStream',
+      'FontFace',
+      'FontFaceSet',
+      'FontFaceSetLoadEvent',
+      'FormData',
+      'GPU',
+      'GPUAdapter',
+      'GPUAdapterInfo',
+      'GPUBindGroup',
+      'GPUBindGroupLayout',
+      'GPUBuffer',
+      'GPUBufferUsage',
+      'GPUCanvasContext',
+      'GPUColorWrite',
+      'GPUCommandBuffer',
+      'GPUCommandEncoder',
+      'GPUCompilationInfo',
+      'GPUCompilationMessage',
+      'GPUComputePassEncoder',
+      'GPUComputePipeline',
+      'GPUDevice',
+      'GPUDeviceLostInfo',
+      'GPUError',
+      'GPUExternalTexture',
+      'GPUInternalError',
+      'GPUMapMode',
+      'GPUOutOfMemoryError',
+      'GPUPipelineError',
+      'GPUPipelineLayout',
+      'GPUQuerySet',
+      'GPUQueue',
+      'GPURenderBundle',
+      'GPURenderBundleEncoder',
+      'GPURenderPassEncoder',
+      'GPURenderPipeline',
+      'GPUSampler',
+      'GPUShaderModule',
+      'GPUShaderStage',
+      'GPUSupportedFeatures',
+      'GPUSupportedLimits',
+      'GPUTexture',
+      'GPUTextureUsage',
+      'GPUTextureView',
+      'GPUUncapturedErrorEvent',
+      'GPUValidationError',
+      'Headers',
+      'IDBCursor',
+      'IDBCursorWithValue',
+      'IDBDatabase',
+      'IDBFactory',
+      'IDBIndex',
+      'IDBKeyRange',
+      'IDBObjectStore',
+      'IDBOpenDBRequest',
+      'IDBRecord',
+      'IDBRequest',
+      'IDBTransaction',
+      'IDBVersionChangeEvent',
+      'ImageBitmap',
+      'ImageBitmapRenderingContext',
+      'ImageData',
+      'InstallEvent',
+      'LanguageDetector',
+      'Lock',
+      'LockManager',
+      'MediaCapabilities',
+      'MessageChannel',
+      'MessageEvent',
+      'MessagePort',
+      'NavigationPreloadManager',
+      'NavigatorUAData',
+      'NetworkInformation',
+      'Notification',
+      'NotificationEvent',
+      'Observable',
+      'OffscreenCanvas',
+      'OffscreenCanvasRenderingContext2D',
+      'Origin',
+      'Path2D',
+      'PaymentRequestEvent',
+      'Performance',
+      'PerformanceEntry',
+      'PerformanceMark',
+      'PerformanceMeasure',
+      'PerformanceObserver',
+      'PerformanceObserverEntryList',
+      'PerformanceResourceTiming',
+      'PerformanceServerTiming',
+      'PeriodicSyncEvent',
+      'PeriodicSyncManager',
+      'PermissionStatus',
+      'Permissions',
+      'ProgressEvent',
+      'PromiseRejectionEvent',
+      'PushEvent',
+      'PushManager',
+      'PushMessageData',
+      'PushSubscription',
+      'PushSubscriptionChangeEvent',
+      'PushSubscriptionOptions',
+      'QuotaExceededError',
+      'ReadableByteStreamController',
+      'ReadableStream',
+      'ReadableStreamBYOBReader',
+      'ReadableStreamBYOBRequest',
+      'ReadableStreamDefaultController',
+      'ReadableStreamDefaultReader',
+      'ReportBody',
+      'ReportingObserver',
+      'Request',
+      'Response',
+      'RestrictionTarget',
+      'Scheduler',
+      'SecurityPolicyViolationEvent',
+      'ServiceWorker',
+      'ServiceWorkerContainer',
+      'ServiceWorkerGlobalScope',
+      'ServiceWorkerRegistration',
+      'StorageBucket',
+      'StorageBucketManager',
+      'StorageManager',
+      'Subscriber',
+      'SubtleCrypto',
+      'SuppressedError',
+      'SyncEvent',
+      'SyncManager',
+      'TaskController',
+      'TaskPriorityChangeEvent',
+      'TaskSignal',
+      'Temporal',
+      'TextDecoder',
+      'TextDecoderStream',
+      'TextEncoder',
+      'TextEncoderStream',
+      'TextMetrics',
+      'TransformStream',
+      'TransformStreamDefaultController',
+      'TrustedHTML',
+      'TrustedScript',
+      'TrustedScriptURL',
+      'TrustedTypePolicy',
+      'TrustedTypePolicyFactory',
+      'URL',
+      'URLPattern',
+      'URLSearchParams',
+      'UserActivation',
+      'WGSLLanguageFeatures',
+      'WebAssembly',
+      'WebGL2RenderingContext',
+      'WebGLActiveInfo',
+      'WebGLBuffer',
+      'WebGLContextEvent',
+      'WebGLFramebuffer',
+      'WebGLObject',
+      'WebGLProgram',
+      'WebGLQuery',
+      'WebGLRenderbuffer',
+      'WebGLRenderingContext',
+      'WebGLSampler',
+      'WebGLShader',
+      'WebGLShaderPrecisionFormat',
+      'WebGLSync',
+      'WebGLTexture',
+      'WebGLTransformFeedback',
+      'WebGLUniformLocation',
+      'WebGLVertexArrayObject',
+      'WebSocket',
+      'WebSocketError',
+      'WebSocketStream',
+      'WebTransport',
+      'WebTransportBidirectionalStream',
+      'WebTransportDatagramDuplexStream',
+      'WebTransportError',
+      'WebTransportReceiveStream',
+      'WebTransportSendStream',
+      'WindowClient',
+      'WorkerGlobalScope',
+      'WorkerLocation',
+      'WorkerNavigator',
+      'WritableStream',
+      'WritableStreamDefaultController',
+      'WritableStreamDefaultWriter',
+      'addEventListener',
+      'ai',
+      'atob',
+      'btoa',
+      'caches',
+      'clearInterval',
+      'clearTimeout',
+      'clients',
+      'console',
+      'cookieStore',
+      'createImageBitmap',
+      'crossOriginIsolated',
+      'crypto',
+      'dispatchEvent',
+      'fetch',
+      'fonts',
+      'importScripts',
+      'indexedDB',
+      'isSecureContext',
+      'location',
+      'navigator',
+      'origin',
+      'performance',
+      'queueMicrotask',
+      'registration',
+      'removeEventListener',
+      'reportError',
+      'scheduler',
+      'self',
+      'serviceWorker',
+      'setInterval',
+      'setTimeout',
+      'skipWaiting',
+      'structuredClone',
+      'trustedTypes',
+      'when',
+    ],
+    writable: [
+      'onabortpayment',
+      'onactivate',
+      'onbackgroundfetchabort',
+      'onbackgroundfetchclick',
+      'onbackgroundfetchfail',
+      'onbackgroundfetchsuccess',
+      'oncanmakepayment',
+      'oncookiechange',
+      'onerror',
+      'onfetch',
+      'oninstall',
+      'onlanguagechange',
+      'onmessage',
+      'onmessageerror',
+      'onnotificationclick',
+      'onnotificationclose',
+      'onoffline',
+      'ononline',
+      'onpaymentrequest',
+      'onperiodicsync',
+      'onpush',
+      'onpushsubscriptionchange',
+      'onrejectionhandled',
+      'onsync',
+      'onunhandledrejection',
+    ],
+  },
+  QO = {
+    readonly: [
+      'AbortController',
+      'AbortSignal',
+      'AsyncDisposableStack',
+      'Blob',
+      'BroadcastChannel',
+      'ByteLengthQueuingStrategy',
+      'CloseEvent',
+      'CompressionStream',
+      'CountQueuingStrategy',
+      'Crypto',
+      'CryptoKey',
+      'CustomEvent',
+      'DOMException',
+      'DecompressionStream',
+      'DisposableStack',
+      'ErrorEvent',
+      'Event',
+      'EventTarget',
+      'File',
+      'FormData',
+      'Headers',
+      'MessageChannel',
+      'MessageEvent',
+      'MessagePort',
+      'Navigator',
+      'Performance',
+      'PerformanceEntry',
+      'PerformanceMark',
+      'PerformanceMeasure',
+      'PerformanceObserver',
+      'PerformanceObserverEntryList',
+      'PerformanceResourceTiming',
+      'ReadableByteStreamController',
+      'ReadableStream',
+      'ReadableStreamBYOBReader',
+      'ReadableStreamBYOBRequest',
+      'ReadableStreamDefaultController',
+      'ReadableStreamDefaultReader',
+      'Request',
+      'Response',
+      'Storage',
+      'SubtleCrypto',
+      'SuppressedError',
+      'TextDecoder',
+      'TextDecoderStream',
+      'TextEncoder',
+      'TextEncoderStream',
+      'TransformStream',
+      'TransformStreamDefaultController',
+      'URL',
+      'URLPattern',
+      'URLSearchParams',
+      'WebAssembly',
+      'WebSocket',
+      'WritableStream',
+      'WritableStreamDefaultController',
+      'WritableStreamDefaultWriter',
+      'atob',
+      'btoa',
+      'clearInterval',
+      'clearTimeout',
+      'console',
+      'crypto',
+      'fetch',
+      'localStorage',
+      'navigator',
+      'performance',
+      'queueMicrotask',
+      'sessionStorage',
+      'setInterval',
+      'setTimeout',
+      'structuredClone',
+    ],
+    writable: [],
+  },
+  ZO = {
+    readonly: [
+      'ShellString',
+      'cat',
+      'cd',
+      'chmod',
+      'cmd',
+      'config',
+      'cp',
+      'dirs',
+      'echo',
+      'env',
+      'error',
+      'errorCode',
+      'exec',
+      'exit',
+      'find',
+      'grep',
+      'head',
+      'ln',
+      'ls',
+      'mkdir',
+      'mv',
+      'popd',
+      'pushd',
+      'pwd',
+      'rm',
+      'sed',
+      'set',
+      'sort',
+      'tail',
+      'tempdir',
+      'test',
+      'touch',
+      'uniq',
+      'which',
+    ],
+    writable: [],
+  },
+  eF = { readonly: ['$bindable', '$derived', '$effect', '$host', '$inspect', '$props', '$state'], writable: [] },
+  tF = {
+    readonly: [
+      'afterAll',
+      'afterEach',
+      'assert',
+      'assertType',
+      'beforeAll',
+      'beforeEach',
+      'chai',
+      'describe',
+      'expect',
+      'expectTypeOf',
+      'it',
+      'onTestFailed',
+      'onTestFinished',
+      'suite',
+      'test',
+      'vi',
+      'vitest',
+    ],
+    writable: [],
+  },
+  rF = {
+    readonly: [
+      'defineEmits',
+      'defineExpose',
+      'defineModel',
+      'defineOptions',
+      'defineProps',
+      'defineSlots',
+      'withDefaults',
+    ],
+    writable: [],
+  },
+  nF = { readonly: ['browser', 'chrome', 'opr'], writable: [] },
+  aF = {
+    readonly: [
+      'AI',
+      'AICreateMonitor',
+      'AbortController',
+      'AbortSignal',
+      'AsyncDisposableStack',
+      'AudioData',
+      'AudioDecoder',
+      'AudioEncoder',
+      'BackgroundFetchManager',
+      'BackgroundFetchRecord',
+      'BackgroundFetchRegistration',
+      'BarcodeDetector',
+      'Blob',
+      'BroadcastChannel',
+      'ByteLengthQueuingStrategy',
+      'CSSSkewX',
+      'CSSSkewY',
+      'Cache',
+      'CacheStorage',
+      'CanvasGradient',
+      'CanvasPattern',
+      'CloseEvent',
+      'CompressionStream',
+      'CountQueuingStrategy',
+      'CreateMonitor',
+      'CropTarget',
+      'Crypto',
+      'CryptoKey',
+      'CustomEvent',
+      'DOMException',
+      'DOMMatrix',
+      'DOMMatrixReadOnly',
+      'DOMPoint',
+      'DOMPointReadOnly',
+      'DOMQuad',
+      'DOMRect',
+      'DOMRectReadOnly',
+      'DOMStringList',
+      'DecompressionStream',
+      'DedicatedWorkerGlobalScope',
+      'DisposableStack',
+      'EncodedAudioChunk',
+      'EncodedVideoChunk',
+      'ErrorEvent',
+      'Event',
+      'EventSource',
+      'EventTarget',
+      'File',
+      'FileList',
+      'FileReader',
+      'FileReaderSync',
+      'FileSystemDirectoryHandle',
+      'FileSystemFileHandle',
+      'FileSystemHandle',
+      'FileSystemObserver',
+      'FileSystemSyncAccessHandle',
+      'FileSystemWritableFileStream',
+      'FontFace',
+      'FontFaceSet',
+      'FontFaceSetLoadEvent',
+      'FormData',
+      'GPU',
+      'GPUAdapter',
+      'GPUAdapterInfo',
+      'GPUBindGroup',
+      'GPUBindGroupLayout',
+      'GPUBuffer',
+      'GPUBufferUsage',
+      'GPUCanvasContext',
+      'GPUColorWrite',
+      'GPUCommandBuffer',
+      'GPUCommandEncoder',
+      'GPUCompilationInfo',
+      'GPUCompilationMessage',
+      'GPUComputePassEncoder',
+      'GPUComputePipeline',
+      'GPUDevice',
+      'GPUDeviceLostInfo',
+      'GPUError',
+      'GPUExternalTexture',
+      'GPUInternalError',
+      'GPUMapMode',
+      'GPUOutOfMemoryError',
+      'GPUPipelineError',
+      'GPUPipelineLayout',
+      'GPUQuerySet',
+      'GPUQueue',
+      'GPURenderBundle',
+      'GPURenderBundleEncoder',
+      'GPURenderPassEncoder',
+      'GPURenderPipeline',
+      'GPUSampler',
+      'GPUShaderModule',
+      'GPUShaderStage',
+      'GPUSupportedFeatures',
+      'GPUSupportedLimits',
+      'GPUTexture',
+      'GPUTextureUsage',
+      'GPUTextureView',
+      'GPUUncapturedErrorEvent',
+      'GPUValidationError',
+      'HID',
+      'HIDConnectionEvent',
+      'HIDDevice',
+      'HIDInputReportEvent',
+      'Headers',
+      'IDBCursor',
+      'IDBCursorWithValue',
+      'IDBDatabase',
+      'IDBFactory',
+      'IDBIndex',
+      'IDBKeyRange',
+      'IDBObjectStore',
+      'IDBOpenDBRequest',
+      'IDBRecord',
+      'IDBRequest',
+      'IDBTransaction',
+      'IDBVersionChangeEvent',
+      'IdleDetector',
+      'ImageBitmap',
+      'ImageBitmapRenderingContext',
+      'ImageData',
+      'ImageDecoder',
+      'ImageTrack',
+      'ImageTrackList',
+      'LanguageDetector',
+      'Lock',
+      'LockManager',
+      'MediaCapabilities',
+      'MediaSource',
+      'MediaSourceHandle',
+      'MessageChannel',
+      'MessageEvent',
+      'MessagePort',
+      'NavigationPreloadManager',
+      'NavigatorUAData',
+      'NetworkInformation',
+      'Notification',
+      'Observable',
+      'OffscreenCanvas',
+      'OffscreenCanvasRenderingContext2D',
+      'Origin',
+      'PERSISTENT',
+      'Path2D',
+      'Performance',
+      'PerformanceEntry',
+      'PerformanceMark',
+      'PerformanceMeasure',
+      'PerformanceObserver',
+      'PerformanceObserverEntryList',
+      'PerformanceResourceTiming',
+      'PerformanceServerTiming',
+      'PeriodicSyncManager',
+      'PermissionStatus',
+      'Permissions',
+      'PressureObserver',
+      'PressureRecord',
+      'ProgressEvent',
+      'PromiseRejectionEvent',
+      'PushManager',
+      'PushSubscription',
+      'PushSubscriptionOptions',
+      'QuotaExceededError',
+      'RTCDataChannel',
+      'RTCEncodedAudioFrame',
+      'RTCEncodedVideoFrame',
+      'RTCRtpScriptTransformer',
+      'RTCTransformEvent',
+      'ReadableByteStreamController',
+      'ReadableStream',
+      'ReadableStreamBYOBReader',
+      'ReadableStreamBYOBRequest',
+      'ReadableStreamDefaultController',
+      'ReadableStreamDefaultReader',
+      'ReportBody',
+      'ReportingObserver',
+      'Request',
+      'Response',
+      'RestrictionTarget',
+      'Scheduler',
+      'SecurityPolicyViolationEvent',
+      'Serial',
+      'SerialPort',
+      'ServiceWorker',
+      'ServiceWorkerContainer',
+      'ServiceWorkerRegistration',
+      'SourceBuffer',
+      'SourceBufferList',
+      'StorageBucket',
+      'StorageBucketManager',
+      'StorageManager',
+      'Subscriber',
+      'SubtleCrypto',
+      'SuppressedError',
+      'SyncManager',
+      'TEMPORARY',
+      'TaskController',
+      'TaskPriorityChangeEvent',
+      'TaskSignal',
+      'Temporal',
+      'TextDecoder',
+      'TextDecoderStream',
+      'TextEncoder',
+      'TextEncoderStream',
+      'TextMetrics',
+      'TransformStream',
+      'TransformStreamDefaultController',
+      'TrustedHTML',
+      'TrustedScript',
+      'TrustedScriptURL',
+      'TrustedTypePolicy',
+      'TrustedTypePolicyFactory',
+      'URL',
+      'URLPattern',
+      'URLSearchParams',
+      'USB',
+      'USBAlternateInterface',
+      'USBConfiguration',
+      'USBConnectionEvent',
+      'USBDevice',
+      'USBEndpoint',
+      'USBInTransferResult',
+      'USBInterface',
+      'USBIsochronousInTransferPacket',
+      'USBIsochronousInTransferResult',
+      'USBIsochronousOutTransferPacket',
+      'USBIsochronousOutTransferResult',
+      'USBOutTransferResult',
+      'UserActivation',
+      'VideoColorSpace',
+      'VideoDecoder',
+      'VideoEncoder',
+      'VideoFrame',
+      'WGSLLanguageFeatures',
+      'WebAssembly',
+      'WebGL2RenderingContext',
+      'WebGLActiveInfo',
+      'WebGLBuffer',
+      'WebGLContextEvent',
+      'WebGLFramebuffer',
+      'WebGLObject',
+      'WebGLProgram',
+      'WebGLQuery',
+      'WebGLRenderbuffer',
+      'WebGLRenderingContext',
+      'WebGLSampler',
+      'WebGLShader',
+      'WebGLShaderPrecisionFormat',
+      'WebGLSync',
+      'WebGLTexture',
+      'WebGLTransformFeedback',
+      'WebGLUniformLocation',
+      'WebGLVertexArrayObject',
+      'WebSocket',
+      'WebSocketError',
+      'WebSocketStream',
+      'WebTransport',
+      'WebTransportBidirectionalStream',
+      'WebTransportDatagramDuplexStream',
+      'WebTransportError',
+      'WebTransportReceiveStream',
+      'WebTransportSendStream',
+      'Worker',
+      'WorkerGlobalScope',
+      'WorkerLocation',
+      'WorkerNavigator',
+      'WritableStream',
+      'WritableStreamDefaultController',
+      'WritableStreamDefaultWriter',
+      'XMLHttpRequest',
+      'XMLHttpRequestEventTarget',
+      'XMLHttpRequestUpload',
+      'addEventListener',
+      'ai',
+      'atob',
+      'btoa',
+      'caches',
+      'cancelAnimationFrame',
+      'clearInterval',
+      'clearTimeout',
+      'close',
+      'console',
+      'createImageBitmap',
+      'crossOriginIsolated',
+      'crypto',
+      'dispatchEvent',
+      'fetch',
+      'fonts',
+      'importScripts',
+      'indexedDB',
+      'isSecureContext',
+      'location',
+      'name',
+      'navigator',
+      'origin',
+      'performance',
+      'postMessage',
+      'queueMicrotask',
+      'removeEventListener',
+      'reportError',
+      'requestAnimationFrame',
+      'scheduler',
+      'self',
+      'setInterval',
+      'setTimeout',
+      'structuredClone',
+      'trustedTypes',
+      'webkitRequestFileSystem',
+      'webkitRequestFileSystemSync',
+      'webkitResolveLocalFileSystemSyncURL',
+      'webkitResolveLocalFileSystemURL',
+      'when',
+    ],
+    writable: [
+      'onerror',
+      'onlanguagechange',
+      'onmessage',
+      'onmessageerror',
+      'onoffline',
+      'ononline',
+      'onrejectionhandled',
+      'onrtctransform',
+      'onunhandledrejection',
+    ],
+  },
+  Kg = new Map([
+    ['amd', TO],
+    ['applescript', hO],
+    ['astro', PO],
+    ['atomtest', yO],
+    ['audioworklet', gO],
+    ['browser', SO],
+    ['builtin', _O],
+    ['commonjs', bO],
+    ['embertest', vO],
+    ['es2015', xO],
+    ['es2016', AO],
+    ['es2017', CO],
+    ['es2018', YO],
+    ['es2019', LO],
+    ['es2020', UO],
+    ['es2021', IO],
+    ['es2022', kO],
+    ['es2023', RO],
+    ['es2024', VO],
+    ['es2025', DO],
+    ['es2026', wO],
+    ['es6', MO],
+    ['greasemonkey', OO],
+    ['jasmine', FO],
+    ['jest', BO],
+    ['jquery', GO],
+    ['meteor', NO],
+    ['mocha', qO],
+    ['mongo', jO],
+    ['nashorn', zO],
+    ['node', WO],
+    ['phantomjs', $O],
+    ['prototypejs', HO],
+    ['protractor', KO],
+    ['qunit', JO],
+    ['serviceworker', XO],
+    ['shared-node-browser', QO],
+    ['shelljs', ZO],
+    ['svelte', eF],
+    ['vitest', tF],
+    ['vue', rF],
+    ['webextensions', nF],
+    ['worker', aF],
+  ])
+var Pt = null,
+  Hc = {
+    childVisitorKeys: void 0,
+    globalReturn: !1,
+    impliedStrict: !1,
+    jsxPragma: 'React',
+    jsxFragmentName: null,
+    lib: [],
+    sourceType: 'module',
+    emitDecoratorMetadata: !1,
+  }
+function Ja() {
+  ;(Oe === null && yr(), Oe)
+  let { sourceType: e } = Oe
+  ;((Hc.sourceType = e),
+    (Hc.globalReturn = e === 'commonjs'),
+    (Hc.impliedStrict = e === 'module'),
+    (Pt = (0, Kc.analyze)(Oe, Hc)),
+    iF())
+}
+function iF() {
+  let e = Pt.scopes[0]
+  ;(Wt === null && Ji(), Wt, Sr)
+  for (let n in Sr) {
+    let a = Kg.get(n)
+    if ((`${n}`, a === void 0)) continue
+    let { readonly: r, writable: s } = a
+    for (let u = 0, d = r.length; u < d; u++) {
+      let P = r[u]
+      Object.hasOwn(Wt, P) || BE(P, e, !1)
+    }
+    for (let u = 0, d = s.length; u < d; u++) {
+      let P = s[u]
+      Object.hasOwn(Wt, P) || BE(P, e, !0)
+    }
+  }
+  for (let n in Wt) {
+    let a = Wt[n]
+    a !== 'off' && BE(n, e, a === 'writable')
+  }
+  e.through = e.through.filter((n) => {
+    let { name: a } = n.identifier,
+      r = e.set.get(a)
+    return r ? ((n.resolved = r), r.references.push(n), !1) : !0
+  })
+  let { implicit: t } = e
+  ;((t.variables = t.variables.filter((n) => {
+    let { name: a } = n
+    return e.set.has(a) ? (t.set.delete(a), !1) : !0
+  })),
+    (t.leftToBeResolved = t.leftToBeResolved.filter((n) => !e.set.has(n.identifier.name))))
+}
+function BE(e, t, n) {
+  let a = t.set.get(e)
+  ;(a === void 0 &&
+    ((a = new Kc.Variable(e, t)), t.set.set(e, a), t.variables.push(a), a.isTypeVariable, a.isValueVariable, void 0),
+    (a.writeable = n),
+    (a.eslintImplicitGlobalSetting = n ? 'writable' : 'readonly'),
+    (a.eslintExplicitGlobal = !1),
+    (a.eslintExplicitGlobalComments = void 0))
+}
+function Jg() {
+  Pt = null
+}
+var Xg = Object.freeze({
+  get scopes() {
+    return (Pt === null && Ja(), Pt.scopes)
+  },
+  get globalScope() {
+    return (Pt === null && Ja(), Pt.globalScope)
+  },
+  getDeclaredVariables(e) {
+    return (Pt === null && Ja(), Pt.getDeclaredVariables(e))
+  },
+  acquire(e, t) {
+    return (Pt === null && Ja(), Pt.acquire(e, t))
+  },
+})
+function Qg(e) {
+  if (!e) throw new TypeError('Missing required argument: `node`')
+  if (e.type !== 'Identifier') return !1
+  Pt === null && Ja()
+  let { scopes: t } = Pt
+  if (t.length === 0) return !1
+  let a = t[0].set.get(e.name)
+  if (a === void 0 || a.defs.length > 0) return !1
+  let { references: r } = a
+  for (let s = 0, u = r.length; s < u; s++) if (r[s].identifier === e) return !0
+  return !1
+}
+function Zg(e) {
+  return (Pt === null && Ja(), Pt.getDeclaredVariables(e))
+}
+function GE(e) {
+  if (!e) throw new TypeError('Missing required argument: `node`')
+  Pt === null && Ja()
+  let t = e.type !== 'Program'
+  do {
+    let n = Pt.acquire(e, t)
+    if (n !== null) return n.type === 'function-expression-name' ? n.childScopes[0] : n
+    e = e.parent
+  } while (e !== null)
+  return Pt.scopes[0]
+}
+function eS(e, t) {
+  t === void 0 && (Oe === null && yr(), Oe, (t = Oe))
+  let n = GE(t)
+  if ((Oe, n.type === 'global')) {
+    let { childScopes: a } = n
+    if (a.length !== 0) {
+      let r = a[0]
+      r.block === Oe && (n = r)
+    }
+  }
+  for (let a = n; a !== null; a = a.upper) {
+    let { variables: r } = a
+    for (let s = 0, u = r.length; s < u; s++) {
+      let d = r[s]
+      if (d.name === e) return ((d.eslintUsed = !0), !0)
+    }
+  }
+  return !1
+}
+var { utf8Slice: cF } = Buffer.prototype,
+  It = null,
+  tS = !1,
+  je = null,
+  Jc = 0,
+  NE = 0,
+  Oe = null
+function rS(e, t) {
+  ;((It = e), (tS = t))
+}
+function xn() {
+  let { int32: e } = It,
+    t = e[536870890]
+  ;((Jc = e[(t + 16) >> 2]), (NE = e[(t + 24) >> 2]), (je = cF.call(It, Jc, Jc + NE)))
+}
+function yr() {
+  ;(je === null && xn(), (Oe = ZT(It, je, Jc, NE)))
+}
+function nS() {
+  ;((It = null), (je = null), (Oe = null), ad(), kT(), Jg(), jT(), HT(), yP())
+}
+function sy() {
+  return It[2147483573] === 1
+}
+var on = Object.freeze({
+  get text() {
+    return (je === null && xn(), je)
+  },
+  get hasBOM() {
+    return tS
+  },
+  get ast() {
+    return (Oe === null && yr(), Oe)
+  },
+  isESTree: !0,
+  get scopeManager() {
+    return Xg
+  },
+  get visitorKeys() {
+    return jr
+  },
+  parserServices: Object.freeze({}),
+  get lines() {
+    return (Nt.length === 0 && vn(), Nt)
+  },
+  get lineStartIndices() {
+    return (Nt.length === 0 && vn(), mt)
+  },
+  get tokensAndComments() {
+    return PP()
+  },
+  getText(e, t, n) {
+    if ((je === null && xn(), !e)) return je
+    let { range: a } = e,
+      r = a[0],
+      s = a[1]
+    return (t && (r = Math.max(r - t, 0)), n && (s += n), je.slice(r, s))
+  },
+  getAncestors(e) {
+    let t = []
+    for (; (e = e.parent), e !== null; ) t.push(e)
+    return t.reverse()
+  },
+  getLines() {
+    return (Nt.length === 0 && vn(), Nt)
+  },
+  getRange: DT,
+  getLoc: wT,
+  getNodeByRangeIndex: OT,
+  getLocFromIndex: RT,
+  getIndexFromLoc: VT,
+  getAllComments: Ks,
+  getCommentsBefore: MP,
+  getCommentsAfter: OP,
+  getCommentsInside: FP,
+  commentsExistBetween: BP,
+  getJSDocComment: GP,
+  isGlobalReference: Qg,
+  getDeclaredVariables: Zg,
+  getScope: GE,
+  markVariableAsUsed: eS,
+  getTokens: gP,
+  getFirstToken: SP,
+  getFirstTokens: _P,
+  getLastToken: bP,
+  getLastTokens: vP,
+  getTokenBefore: bd,
+  getTokenOrCommentBefore: xP,
+  getTokensBefore: AP,
+  getTokenAfter: vd,
+  getTokenOrCommentAfter: CP,
+  getTokensAfter: YP,
+  getTokensBetween: LP,
+  getFirstTokenBetween: UP,
+  getFirstTokensBetween: IP,
+  getLastTokenBetween: kP,
+  getLastTokensBetween: RP,
+  getTokenByRangeStart: VP,
+  isSpaceBetween: DP,
+  isSpaceBetweenTokens: wP,
+  getDisableDirectives: oy,
+})
+var ia = [],
+  fF = new FinalizationRegistry((e) => {
+    let t = ia.pop()
+    if ((t.index, ia.length, t !== e)) {
+      let { index: n } = e
+      ;(ia[n], (t.index = n), (ia[n] = t))
+    }
+  }),
+  aS,
+  Xc = class extends WeakMap {
+    #e
+    #t = !1
+    #n = !1
+    constructor(t) {
+      if ((super(), t != null)) for (let [n, a] of t) n === on ? this.#r(a) : super.set(n, a)
+    }
+    has(t) {
+      return t === on ? this.#t : super.has(t)
+    }
+    get(t) {
+      return t === on ? (this.#t === !0 ? this.#e : void 0) : super.get(t)
+    }
+    set(t, n) {
+      return t === on ? (this.#r(n), this) : super.set(t, n)
+    }
+    delete(t) {
+      if (t === on) {
+        let n = this.#t
+        return ((this.#e = void 0), (this.#t = !1), n)
+      }
+      return super.delete(t)
+    }
+    getOrInsert(t, n) {
+      return t === on
+        ? this.#t === !0
+          ? this.#e
+          : (this.#r(n), n)
+        : super.has(t)
+          ? super.get(t)
+          : (super.set(t, n), n)
+    }
+    getOrInsertComputed(t, n) {
+      if (t === on) {
+        if (this.#t === !0) return this.#e
+        let r = n(t)
+        return (this.#r(r), r)
+      }
+      if (super.has(t)) return super.get(t)
+      let a = n(t)
+      return (super.set(t, a), a)
+    }
+    #r(t) {
+      if (((this.#e = t), (this.#t = !0), this.#n === !1)) {
+        let n = { ref: new WeakRef(this), index: ia.length }
+        ;(ia.push(n), fF.register(this, n), (this.#n = !0))
+      }
+    }
+    static {
+      aS = () => {
+        let t = ia.length
+        for (let n = 0; n < t; n++) {
+          let a = ia[n].ref.deref()
+          a !== void 0 && ((a.#e = void 0), (a.#t = !1))
+        }
+      }
+    }
+  }
+Object.defineProperty(Xc, 'name', { value: 'WeakMap' })
+globalThis.WeakMap = Xc
+var iS = aS
+var zS = _s(FS(), 1)
+var oa = new Map([
+    ['DebuggerStatement', 0],
+    ['EmptyStatement', 1],
+    ['Literal', 2],
+    ['PrivateIdentifier', 3],
+    ['Super', 4],
+    ['TemplateElement', 5],
+    ['ThisExpression', 6],
+    ['JSXClosingFragment', 7],
+    ['JSXEmptyExpression', 8],
+    ['JSXIdentifier', 9],
+    ['JSXOpeningFragment', 10],
+    ['JSXText', 11],
+    ['TSAnyKeyword', 12],
+    ['TSBigIntKeyword', 13],
+    ['TSBooleanKeyword', 14],
+    ['TSIntrinsicKeyword', 15],
+    ['TSJSDocUnknownType', 16],
+    ['TSNeverKeyword', 17],
+    ['TSNullKeyword', 18],
+    ['TSNumberKeyword', 19],
+    ['TSObjectKeyword', 20],
+    ['TSStringKeyword', 21],
+    ['TSSymbolKeyword', 22],
+    ['TSThisType', 23],
+    ['TSUndefinedKeyword', 24],
+    ['TSUnknownKeyword', 25],
+    ['TSVoidKeyword', 26],
+    ['AccessorProperty', 27],
+    ['ArrayExpression', 28],
+    ['ArrayPattern', 29],
+    ['ArrowFunctionExpression', 30],
+    ['AssignmentExpression', 31],
+    ['AssignmentPattern', 32],
+    ['AwaitExpression', 33],
+    ['BinaryExpression', 34],
+    ['BlockStatement', 35],
+    ['BreakStatement', 36],
+    ['CallExpression', 37],
+    ['CatchClause', 38],
+    ['ChainExpression', 39],
+    ['ClassBody', 40],
+    ['ClassDeclaration', 41],
+    ['ClassExpression', 42],
+    ['ConditionalExpression', 43],
+    ['ContinueStatement', 44],
+    ['Decorator', 45],
+    ['DoWhileStatement', 46],
+    ['ExportAllDeclaration', 47],
+    ['ExportDefaultDeclaration', 48],
+    ['ExportNamedDeclaration', 49],
+    ['ExportSpecifier', 50],
+    ['ExpressionStatement', 51],
+    ['ForInStatement', 52],
+    ['ForOfStatement', 53],
+    ['ForStatement', 54],
+    ['FunctionDeclaration', 55],
+    ['FunctionExpression', 56],
+    ['Identifier', 57],
+    ['IfStatement', 58],
+    ['ImportAttribute', 59],
+    ['ImportDeclaration', 60],
+    ['ImportDefaultSpecifier', 61],
+    ['ImportExpression', 62],
+    ['ImportNamespaceSpecifier', 63],
+    ['ImportSpecifier', 64],
+    ['LabeledStatement', 65],
+    ['LogicalExpression', 66],
+    ['MemberExpression', 67],
+    ['MetaProperty', 68],
+    ['MethodDefinition', 69],
+    ['NewExpression', 70],
+    ['ObjectExpression', 71],
+    ['ObjectPattern', 72],
+    ['ParenthesizedExpression', 73],
+    ['Program', 74],
+    ['Property', 75],
+    ['PropertyDefinition', 76],
+    ['RestElement', 77],
+    ['ReturnStatement', 78],
+    ['SequenceExpression', 79],
+    ['SpreadElement', 80],
+    ['StaticBlock', 81],
+    ['SwitchCase', 82],
+    ['SwitchStatement', 83],
+    ['TaggedTemplateExpression', 84],
+    ['TemplateLiteral', 85],
+    ['ThrowStatement', 86],
+    ['TryStatement', 87],
+    ['UnaryExpression', 88],
+    ['UpdateExpression', 89],
+    ['V8IntrinsicExpression', 90],
+    ['VariableDeclaration', 91],
+    ['VariableDeclarator', 92],
+    ['WhileStatement', 93],
+    ['WithStatement', 94],
+    ['YieldExpression', 95],
+    ['JSXAttribute', 96],
+    ['JSXClosingElement', 97],
+    ['JSXElement', 98],
+    ['JSXExpressionContainer', 99],
+    ['JSXFragment', 100],
+    ['JSXMemberExpression', 101],
+    ['JSXNamespacedName', 102],
+    ['JSXOpeningElement', 103],
+    ['JSXSpreadAttribute', 104],
+    ['JSXSpreadChild', 105],
+    ['TSAbstractAccessorProperty', 106],
+    ['TSAbstractMethodDefinition', 107],
+    ['TSAbstractPropertyDefinition', 108],
+    ['TSArrayType', 109],
+    ['TSAsExpression', 110],
+    ['TSCallSignatureDeclaration', 111],
+    ['TSClassImplements', 112],
+    ['TSConditionalType', 113],
+    ['TSConstructSignatureDeclaration', 114],
+    ['TSConstructorType', 115],
+    ['TSDeclareFunction', 116],
+    ['TSEmptyBodyFunctionExpression', 117],
+    ['TSEnumBody', 118],
+    ['TSEnumDeclaration', 119],
+    ['TSEnumMember', 120],
+    ['TSExportAssignment', 121],
+    ['TSExternalModuleReference', 122],
+    ['TSFunctionType', 123],
+    ['TSImportEqualsDeclaration', 124],
+    ['TSImportType', 125],
+    ['TSIndexSignature', 126],
+    ['TSIndexedAccessType', 127],
+    ['TSInferType', 128],
+    ['TSInstantiationExpression', 129],
+    ['TSInterfaceBody', 130],
+    ['TSInterfaceDeclaration', 131],
+    ['TSInterfaceHeritage', 132],
+    ['TSIntersectionType', 133],
+    ['TSJSDocNonNullableType', 134],
+    ['TSJSDocNullableType', 135],
+    ['TSLiteralType', 136],
+    ['TSMappedType', 137],
+    ['TSMethodSignature', 138],
+    ['TSModuleBlock', 139],
+    ['TSModuleDeclaration', 140],
+    ['TSNamedTupleMember', 141],
+    ['TSNamespaceExportDeclaration', 142],
+    ['TSNonNullExpression', 143],
+    ['TSOptionalType', 144],
+    ['TSParameterProperty', 145],
+    ['TSParenthesizedType', 146],
+    ['TSPropertySignature', 147],
+    ['TSQualifiedName', 148],
+    ['TSRestType', 149],
+    ['TSSatisfiesExpression', 150],
+    ['TSTemplateLiteralType', 151],
+    ['TSTupleType', 152],
+    ['TSTypeAliasDeclaration', 153],
+    ['TSTypeAnnotation', 154],
+    ['TSTypeAssertion', 155],
+    ['TSTypeLiteral', 156],
+    ['TSTypeOperator', 157],
+    ['TSTypeParameter', 158],
+    ['TSTypeParameterDeclaration', 159],
+    ['TSTypeParameterInstantiation', 160],
+    ['TSTypePredicate', 161],
+    ['TSTypeQuery', 162],
+    ['TSTypeReference', 163],
+    ['TSUnionType', 164],
+    ['onCodePathStart', 165],
+    ['onCodePathEnd', 166],
+    ['onCodePathSegmentStart', 167],
+    ['onCodePathSegmentEnd', 168],
+    ['onUnreachableCodePathSegmentStart', 169],
+    ['onUnreachableCodePathSegmentEnd', 170],
+    ['onCodePathSegmentLoop', 171],
+  ]),
+  Nr = 165,
+  Er = 27,
+  Li = 172,
+  BS = [
+    0, 1, 35, 36, 41, 44, 46, 47, 48, 49, 51, 52, 53, 54, 55, 58, 60, 65, 78, 83, 86, 87, 91, 93, 94, 111, 114, 119,
+    124, 131, 140, 142, 153, 159,
+  ],
+  GS = [41, 47, 48, 49, 55, 60, 91, 111, 114, 119, 124, 131, 140, 142, 153, 159],
+  NS = [
+    2, 6, 8, 28, 29, 30, 31, 32, 33, 34, 37, 39, 42, 43, 56, 57, 62, 66, 67, 68, 70, 71, 72, 73, 79, 84, 85, 88, 89, 90,
+    95, 101, 110, 117, 129, 143, 150, 156,
+  ],
+  qS = [
+    2, 6, 8, 28, 30, 31, 33, 34, 37, 39, 42, 43, 56, 57, 62, 66, 67, 68, 70, 71, 73, 79, 84, 85, 88, 89, 90, 95, 101,
+    110, 117, 129, 143, 150, 156,
+  ],
+  jS = [30, 55, 56]
+var b = []
+function S(e, t) {
+  if (e != null)
+    if (Array.isArray(e)) {
+      let n = e.length
+      for (let a = 0; a < n; a++) S(e[a], t)
+    } else
+      switch (e.type) {
+        case 'DebuggerStatement':
+          rB(e, t)
+          break
+        case 'EmptyStatement':
+          nB(e, t)
+          break
+        case 'Literal':
+          aB(e, t)
+          break
+        case 'PrivateIdentifier':
+          iB(e, t)
+          break
+        case 'Super':
+          sB(e, t)
+          break
+        case 'TemplateElement':
+          oB(e, t)
+          break
+        case 'ThisExpression':
+          lB(e, t)
+          break
+        case 'JSXClosingFragment':
+          uB(e, t)
+          break
+        case 'JSXEmptyExpression':
+          cB(e, t)
+          break
+        case 'JSXIdentifier':
+          fB(e, t)
+          break
+        case 'JSXOpeningFragment':
+          dB(e, t)
+          break
+        case 'JSXText':
+          pB(e, t)
+          break
+        case 'TSAnyKeyword':
+          EB(e, t)
+          break
+        case 'TSBigIntKeyword':
+          mB(e, t)
+          break
+        case 'TSBooleanKeyword':
+          TB(e, t)
+          break
+        case 'TSIntrinsicKeyword':
+          hB(e, t)
+          break
+        case 'TSJSDocUnknownType':
+          PB(e, t)
+          break
+        case 'TSNeverKeyword':
+          yB(e, t)
+          break
+        case 'TSNullKeyword':
+          gB(e, t)
+          break
+        case 'TSNumberKeyword':
+          SB(e, t)
+          break
+        case 'TSObjectKeyword':
+          _B(e, t)
+          break
+        case 'TSStringKeyword':
+          bB(e, t)
+          break
+        case 'TSSymbolKeyword':
+          vB(e, t)
+          break
+        case 'TSThisType':
+          xB(e, t)
+          break
+        case 'TSUndefinedKeyword':
+          AB(e, t)
+          break
+        case 'TSUnknownKeyword':
+          CB(e, t)
+          break
+        case 'TSVoidKeyword':
+          YB(e, t)
+          break
+        case 'AccessorProperty':
+          LB(e, t)
+          break
+        case 'ArrayExpression':
+          UB(e, t)
+          break
+        case 'ArrayPattern':
+          IB(e, t)
+          break
+        case 'ArrowFunctionExpression':
+          kB(e, t)
+          break
+        case 'AssignmentExpression':
+          RB(e, t)
+          break
+        case 'AssignmentPattern':
+          VB(e, t)
+          break
+        case 'AwaitExpression':
+          DB(e, t)
+          break
+        case 'BinaryExpression':
+          wB(e, t)
+          break
+        case 'BlockStatement':
+          MB(e, t)
+          break
+        case 'BreakStatement':
+          OB(e, t)
+          break
+        case 'CallExpression':
+          FB(e, t)
+          break
+        case 'CatchClause':
+          BB(e, t)
+          break
+        case 'ChainExpression':
+          GB(e, t)
+          break
+        case 'ClassBody':
+          NB(e, t)
+          break
+        case 'ClassDeclaration':
+          qB(e, t)
+          break
+        case 'ClassExpression':
+          jB(e, t)
+          break
+        case 'ConditionalExpression':
+          zB(e, t)
+          break
+        case 'ContinueStatement':
+          WB(e, t)
+          break
+        case 'Decorator':
+          $B(e, t)
+          break
+        case 'DoWhileStatement':
+          HB(e, t)
+          break
+        case 'ExportAllDeclaration':
+          KB(e, t)
+          break
+        case 'ExportDefaultDeclaration':
+          JB(e, t)
+          break
+        case 'ExportNamedDeclaration':
+          XB(e, t)
+          break
+        case 'ExportSpecifier':
+          QB(e, t)
+          break
+        case 'ExpressionStatement':
+          ZB(e, t)
+          break
+        case 'ForInStatement':
+          eG(e, t)
+          break
+        case 'ForOfStatement':
+          tG(e, t)
+          break
+        case 'ForStatement':
+          rG(e, t)
+          break
+        case 'FunctionDeclaration':
+          nG(e, t)
+          break
+        case 'FunctionExpression':
+          aG(e, t)
+          break
+        case 'Identifier':
+          iG(e, t)
+          break
+        case 'IfStatement':
+          sG(e, t)
+          break
+        case 'ImportAttribute':
+          oG(e, t)
+          break
+        case 'ImportDeclaration':
+          lG(e, t)
+          break
+        case 'ImportDefaultSpecifier':
+          uG(e, t)
+          break
+        case 'ImportExpression':
+          cG(e, t)
+          break
+        case 'ImportNamespaceSpecifier':
+          fG(e, t)
+          break
+        case 'ImportSpecifier':
+          dG(e, t)
+          break
+        case 'LabeledStatement':
+          pG(e, t)
+          break
+        case 'LogicalExpression':
+          EG(e, t)
+          break
+        case 'MemberExpression':
+          mG(e, t)
+          break
+        case 'MetaProperty':
+          TG(e, t)
+          break
+        case 'MethodDefinition':
+          hG(e, t)
+          break
+        case 'NewExpression':
+          PG(e, t)
+          break
+        case 'ObjectExpression':
+          yG(e, t)
+          break
+        case 'ObjectPattern':
+          gG(e, t)
+          break
+        case 'ParenthesizedExpression':
+          SG(e, t)
+          break
+        case 'Program':
+          hm(e, t)
+          break
+        case 'Property':
+          _G(e, t)
+          break
+        case 'PropertyDefinition':
+          bG(e, t)
+          break
+        case 'RestElement':
+          vG(e, t)
+          break
+        case 'ReturnStatement':
+          xG(e, t)
+          break
+        case 'SequenceExpression':
+          AG(e, t)
+          break
+        case 'SpreadElement':
+          CG(e, t)
+          break
+        case 'StaticBlock':
+          YG(e, t)
+          break
+        case 'SwitchCase':
+          LG(e, t)
+          break
+        case 'SwitchStatement':
+          UG(e, t)
+          break
+        case 'TaggedTemplateExpression':
+          IG(e, t)
+          break
+        case 'TemplateLiteral':
+          kG(e, t)
+          break
+        case 'ThrowStatement':
+          RG(e, t)
+          break
+        case 'TryStatement':
+          VG(e, t)
+          break
+        case 'UnaryExpression':
+          DG(e, t)
+          break
+        case 'UpdateExpression':
+          wG(e, t)
+          break
+        case 'V8IntrinsicExpression':
+          MG(e, t)
+          break
+        case 'VariableDeclaration':
+          OG(e, t)
+          break
+        case 'VariableDeclarator':
+          FG(e, t)
+          break
+        case 'WhileStatement':
+          BG(e, t)
+          break
+        case 'WithStatement':
+          GG(e, t)
+          break
+        case 'YieldExpression':
+          NG(e, t)
+          break
+        case 'JSXAttribute':
+          qG(e, t)
+          break
+        case 'JSXClosingElement':
+          jG(e, t)
+          break
+        case 'JSXElement':
+          zG(e, t)
+          break
+        case 'JSXExpressionContainer':
+          WG(e, t)
+          break
+        case 'JSXFragment':
+          $G(e, t)
+          break
+        case 'JSXMemberExpression':
+          HG(e, t)
+          break
+        case 'JSXNamespacedName':
+          KG(e, t)
+          break
+        case 'JSXOpeningElement':
+          JG(e, t)
+          break
+        case 'JSXSpreadAttribute':
+          XG(e, t)
+          break
+        case 'JSXSpreadChild':
+          QG(e, t)
+          break
+        case 'TSAbstractAccessorProperty':
+          ZG(e, t)
+          break
+        case 'TSAbstractMethodDefinition':
+          eN(e, t)
+          break
+        case 'TSAbstractPropertyDefinition':
+          tN(e, t)
+          break
+        case 'TSArrayType':
+          rN(e, t)
+          break
+        case 'TSAsExpression':
+          nN(e, t)
+          break
+        case 'TSCallSignatureDeclaration':
+          aN(e, t)
+          break
+        case 'TSClassImplements':
+          iN(e, t)
+          break
+        case 'TSConditionalType':
+          sN(e, t)
+          break
+        case 'TSConstructSignatureDeclaration':
+          oN(e, t)
+          break
+        case 'TSConstructorType':
+          lN(e, t)
+          break
+        case 'TSDeclareFunction':
+          uN(e, t)
+          break
+        case 'TSEmptyBodyFunctionExpression':
+          cN(e, t)
+          break
+        case 'TSEnumBody':
+          fN(e, t)
+          break
+        case 'TSEnumDeclaration':
+          dN(e, t)
+          break
+        case 'TSEnumMember':
+          pN(e, t)
+          break
+        case 'TSExportAssignment':
+          EN(e, t)
+          break
+        case 'TSExternalModuleReference':
+          mN(e, t)
+          break
+        case 'TSFunctionType':
+          TN(e, t)
+          break
+        case 'TSImportEqualsDeclaration':
+          hN(e, t)
+          break
+        case 'TSImportType':
+          PN(e, t)
+          break
+        case 'TSIndexSignature':
+          yN(e, t)
+          break
+        case 'TSIndexedAccessType':
+          gN(e, t)
+          break
+        case 'TSInferType':
+          SN(e, t)
+          break
+        case 'TSInstantiationExpression':
+          _N(e, t)
+          break
+        case 'TSInterfaceBody':
+          bN(e, t)
+          break
+        case 'TSInterfaceDeclaration':
+          vN(e, t)
+          break
+        case 'TSInterfaceHeritage':
+          xN(e, t)
+          break
+        case 'TSIntersectionType':
+          AN(e, t)
+          break
+        case 'TSJSDocNonNullableType':
+          CN(e, t)
+          break
+        case 'TSJSDocNullableType':
+          YN(e, t)
+          break
+        case 'TSLiteralType':
+          LN(e, t)
+          break
+        case 'TSMappedType':
+          UN(e, t)
+          break
+        case 'TSMethodSignature':
+          IN(e, t)
+          break
+        case 'TSModuleBlock':
+          kN(e, t)
+          break
+        case 'TSModuleDeclaration':
+          RN(e, t)
+          break
+        case 'TSNamedTupleMember':
+          VN(e, t)
+          break
+        case 'TSNamespaceExportDeclaration':
+          DN(e, t)
+          break
+        case 'TSNonNullExpression':
+          wN(e, t)
+          break
+        case 'TSOptionalType':
+          MN(e, t)
+          break
+        case 'TSParameterProperty':
+          ON(e, t)
+          break
+        case 'TSParenthesizedType':
+          FN(e, t)
+          break
+        case 'TSPropertySignature':
+          BN(e, t)
+          break
+        case 'TSQualifiedName':
+          GN(e, t)
+          break
+        case 'TSRestType':
+          NN(e, t)
+          break
+        case 'TSSatisfiesExpression':
+          qN(e, t)
+          break
+        case 'TSTemplateLiteralType':
+          jN(e, t)
+          break
+        case 'TSTupleType':
+          zN(e, t)
+          break
+        case 'TSTypeAliasDeclaration':
+          WN(e, t)
+          break
+        case 'TSTypeAnnotation':
+          $N(e, t)
+          break
+        case 'TSTypeAssertion':
+          HN(e, t)
+          break
+        case 'TSTypeLiteral':
+          KN(e, t)
+          break
+        case 'TSTypeOperator':
+          JN(e, t)
+          break
+        case 'TSTypeParameter':
+          XN(e, t)
+          break
+        case 'TSTypeParameterDeclaration':
+          QN(e, t)
+          break
+        case 'TSTypeParameterInstantiation':
+          ZN(e, t)
+          break
+        case 'TSTypePredicate':
+          e8(e, t)
+          break
+        case 'TSTypeQuery':
+          t8(e, t)
+          break
+        case 'TSTypeReference':
+          r8(e, t)
+          break
+        case 'TSUnionType':
+          n8(e, t)
+          break
+      }
+}
+function rB(e, t) {
+  let n = t[0]
+  n !== null && n(e)
+}
+function nB(e, t) {
+  let n = t[1]
+  n !== null && n(e)
+}
+function aB(e, t) {
+  let n = t[2]
+  n !== null && n(e)
+}
+function iB(e, t) {
+  let n = t[3]
+  n !== null && n(e)
+}
+function sB(e, t) {
+  let n = t[4]
+  n !== null && n(e)
+}
+function oB(e, t) {
+  let n = t[5]
+  n !== null && n(e)
+}
+function lB(e, t) {
+  let n = t[6]
+  n !== null && n(e)
+}
+function uB(e, t) {
+  let n = t[7]
+  n !== null && n(e)
+}
+function cB(e, t) {
+  let n = t[8]
+  n !== null && n(e)
+}
+function fB(e, t) {
+  let n = t[9]
+  n !== null && n(e)
+}
+function dB(e, t) {
+  let n = t[10]
+  n !== null && n(e)
+}
+function pB(e, t) {
+  let n = t[11]
+  n !== null && n(e)
+}
+function EB(e, t) {
+  let n = t[12]
+  n !== null && n(e)
+}
+function mB(e, t) {
+  let n = t[13]
+  n !== null && n(e)
+}
+function TB(e, t) {
+  let n = t[14]
+  n !== null && n(e)
+}
+function hB(e, t) {
+  let n = t[15]
+  n !== null && n(e)
+}
+function PB(e, t) {
+  let n = t[16]
+  n !== null && n(e)
+}
+function yB(e, t) {
+  let n = t[17]
+  n !== null && n(e)
+}
+function gB(e, t) {
+  let n = t[18]
+  n !== null && n(e)
+}
+function SB(e, t) {
+  let n = t[19]
+  n !== null && n(e)
+}
+function _B(e, t) {
+  let n = t[20]
+  n !== null && n(e)
+}
+function bB(e, t) {
+  let n = t[21]
+  n !== null && n(e)
+}
+function vB(e, t) {
+  let n = t[22]
+  n !== null && n(e)
+}
+function xB(e, t) {
+  let n = t[23]
+  n !== null && n(e)
+}
+function AB(e, t) {
+  let n = t[24]
+  n !== null && n(e)
+}
+function CB(e, t) {
+  let n = t[25]
+  n !== null && n(e)
+}
+function YB(e, t) {
+  let n = t[26]
+  n !== null && n(e)
+}
+function LB(e, t) {
+  let n = t[27],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.key, t), S(e.typeAnnotation, t), S(e.value, t), b.shift(), a !== null && a(e))
+}
+function UB(e, t) {
+  let n = t[28],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.elements, t), b.shift(), a !== null && a(e))
+}
+function IB(e, t) {
+  let n = t[29],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.elements, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function kB(e, t) {
+  let n = t[30],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function RB(e, t) {
+  let n = t[31],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.left, t), S(e.right, t), b.shift(), a !== null && a(e))
+}
+function VB(e, t) {
+  let n = t[32],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.left, t), S(e.right, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function DB(e, t) {
+  let n = t[33],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.argument, t), b.shift(), a !== null && a(e))
+}
+function wB(e, t) {
+  let n = t[34],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.left, t), S(e.right, t), b.shift(), a !== null && a(e))
+}
+function MB(e, t) {
+  let n = t[35],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.body, t), b.shift(), a !== null && a(e))
+}
+function OB(e, t) {
+  let n = t[36],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.label, t), b.shift(), a !== null && a(e))
+}
+function FB(e, t) {
+  let n = t[37],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.callee, t), S(e.typeArguments, t), S(e.arguments, t), b.shift(), a !== null && a(e))
+}
+function BB(e, t) {
+  let n = t[38],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.param, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function GB(e, t) {
+  let n = t[39],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function NB(e, t) {
+  let n = t[40],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.body, t), b.shift(), a !== null && a(e))
+}
+function qB(e, t) {
+  let n = t[41],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t),
+    S(e.id, t),
+    S(e.typeParameters, t),
+    S(e.superClass, t),
+    S(e.superTypeArguments, t),
+    S(e.implements, t),
+    S(e.body, t),
+    b.shift(),
+    a !== null && a(e))
+}
+function jB(e, t) {
+  let n = t[42],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t),
+    S(e.id, t),
+    S(e.typeParameters, t),
+    S(e.superClass, t),
+    S(e.superTypeArguments, t),
+    S(e.implements, t),
+    S(e.body, t),
+    b.shift(),
+    a !== null && a(e))
+}
+function zB(e, t) {
+  let n = t[43],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.test, t), S(e.consequent, t), S(e.alternate, t), b.shift(), a !== null && a(e))
+}
+function WB(e, t) {
+  let n = t[44],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.label, t), b.shift(), a !== null && a(e))
+}
+function $B(e, t) {
+  let n = t[45],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function HB(e, t) {
+  let n = t[46],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.body, t), S(e.test, t), b.shift(), a !== null && a(e))
+}
+function KB(e, t) {
+  let n = t[47],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.exported, t), S(e.source, t), S(e.attributes, t), b.shift(), a !== null && a(e))
+}
+function JB(e, t) {
+  let n = t[48],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.declaration, t), b.shift(), a !== null && a(e))
+}
+function XB(e, t) {
+  let n = t[49],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.declaration, t), S(e.specifiers, t), S(e.source, t), S(e.attributes, t), b.shift(), a !== null && a(e))
+}
+function QB(e, t) {
+  let n = t[50],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.local, t), S(e.exported, t), b.shift(), a !== null && a(e))
+}
+function ZB(e, t) {
+  let n = t[51],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function eG(e, t) {
+  let n = t[52],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.left, t), S(e.right, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function tG(e, t) {
+  let n = t[53],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.left, t), S(e.right, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function rG(e, t) {
+  let n = t[54],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.init, t), S(e.test, t), S(e.update, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function nG(e, t) {
+  let n = t[55],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function aG(e, t) {
+  let n = t[56],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function iG(e, t) {
+  let n = t[57],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function sG(e, t) {
+  let n = t[58],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.test, t), S(e.consequent, t), S(e.alternate, t), b.shift(), a !== null && a(e))
+}
+function oG(e, t) {
+  let n = t[59],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.key, t), S(e.value, t), b.shift(), a !== null && a(e))
+}
+function lG(e, t) {
+  let n = t[60],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.specifiers, t), S(e.source, t), S(e.attributes, t), b.shift(), a !== null && a(e))
+}
+function uG(e, t) {
+  let n = t[61],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.local, t), b.shift(), a !== null && a(e))
+}
+function cG(e, t) {
+  let n = t[62],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.source, t), S(e.options, t), b.shift(), a !== null && a(e))
+}
+function fG(e, t) {
+  let n = t[63],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.local, t), b.shift(), a !== null && a(e))
+}
+function dG(e, t) {
+  let n = t[64],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.imported, t), S(e.local, t), b.shift(), a !== null && a(e))
+}
+function pG(e, t) {
+  let n = t[65],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.label, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function EG(e, t) {
+  let n = t[66],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.left, t), S(e.right, t), b.shift(), a !== null && a(e))
+}
+function mG(e, t) {
+  let n = t[67],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.object, t), S(e.property, t), b.shift(), a !== null && a(e))
+}
+function TG(e, t) {
+  let n = t[68],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.meta, t), S(e.property, t), b.shift(), a !== null && a(e))
+}
+function hG(e, t) {
+  let n = t[69],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.key, t), S(e.value, t), b.shift(), a !== null && a(e))
+}
+function PG(e, t) {
+  let n = t[70],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.callee, t), S(e.typeArguments, t), S(e.arguments, t), b.shift(), a !== null && a(e))
+}
+function yG(e, t) {
+  let n = t[71],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.properties, t), b.shift(), a !== null && a(e))
+}
+function gG(e, t) {
+  let n = t[72],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.properties, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function SG(e, t) {
+  let n = t[73],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function hm(e, t) {
+  let n = t[74],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.body, t), b.shift(), a !== null && a(e))
+}
+function _G(e, t) {
+  let n = t[75],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.key, t), S(e.value, t), b.shift(), a !== null && a(e))
+}
+function bG(e, t) {
+  let n = t[76],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.key, t), S(e.typeAnnotation, t), S(e.value, t), b.shift(), a !== null && a(e))
+}
+function vG(e, t) {
+  let n = t[77],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.argument, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function xG(e, t) {
+  let n = t[78],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.argument, t), b.shift(), a !== null && a(e))
+}
+function AG(e, t) {
+  let n = t[79],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expressions, t), b.shift(), a !== null && a(e))
+}
+function CG(e, t) {
+  let n = t[80],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.argument, t), b.shift(), a !== null && a(e))
+}
+function YG(e, t) {
+  let n = t[81],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.body, t), b.shift(), a !== null && a(e))
+}
+function LG(e, t) {
+  let n = t[82],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.test, t), S(e.consequent, t), b.shift(), a !== null && a(e))
+}
+function UG(e, t) {
+  let n = t[83],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.discriminant, t), S(e.cases, t), b.shift(), a !== null && a(e))
+}
+function IG(e, t) {
+  let n = t[84],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.tag, t), S(e.typeArguments, t), S(e.quasi, t), b.shift(), a !== null && a(e))
+}
+function kG(e, t) {
+  let n = t[85],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.quasis, t), S(e.expressions, t), b.shift(), a !== null && a(e))
+}
+function RG(e, t) {
+  let n = t[86],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.argument, t), b.shift(), a !== null && a(e))
+}
+function VG(e, t) {
+  let n = t[87],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.block, t), S(e.handler, t), S(e.finalizer, t), b.shift(), a !== null && a(e))
+}
+function DG(e, t) {
+  let n = t[88],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.argument, t), b.shift(), a !== null && a(e))
+}
+function wG(e, t) {
+  let n = t[89],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.argument, t), b.shift(), a !== null && a(e))
+}
+function MG(e, t) {
+  let n = t[90],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.name, t), S(e.arguments, t), b.shift(), a !== null && a(e))
+}
+function OG(e, t) {
+  let n = t[91],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.declarations, t), b.shift(), a !== null && a(e))
+}
+function FG(e, t) {
+  let n = t[92],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.init, t), b.shift(), a !== null && a(e))
+}
+function BG(e, t) {
+  let n = t[93],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.test, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function GG(e, t) {
+  let n = t[94],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.object, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function NG(e, t) {
+  let n = t[95],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.argument, t), b.shift(), a !== null && a(e))
+}
+function qG(e, t) {
+  let n = t[96],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.name, t), S(e.value, t), b.shift(), a !== null && a(e))
+}
+function jG(e, t) {
+  let n = t[97],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.name, t), b.shift(), a !== null && a(e))
+}
+function zG(e, t) {
+  let n = t[98],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.openingElement, t), S(e.children, t), S(e.closingElement, t), b.shift(), a !== null && a(e))
+}
+function WG(e, t) {
+  let n = t[99],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function $G(e, t) {
+  let n = t[100],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.openingFragment, t), S(e.children, t), S(e.closingFragment, t), b.shift(), a !== null && a(e))
+}
+function HG(e, t) {
+  let n = t[101],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.object, t), S(e.property, t), b.shift(), a !== null && a(e))
+}
+function KG(e, t) {
+  let n = t[102],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.namespace, t), S(e.name, t), b.shift(), a !== null && a(e))
+}
+function JG(e, t) {
+  let n = t[103],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.name, t), S(e.typeArguments, t), S(e.attributes, t), b.shift(), a !== null && a(e))
+}
+function XG(e, t) {
+  let n = t[104],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.argument, t), b.shift(), a !== null && a(e))
+}
+function QG(e, t) {
+  let n = t[105],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function ZG(e, t) {
+  let n = t[106],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.key, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function eN(e, t) {
+  let n = t[107],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.key, t), S(e.value, t), b.shift(), a !== null && a(e))
+}
+function tN(e, t) {
+  let n = t[108],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.key, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function rN(e, t) {
+  let n = t[109],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.elementType, t), b.shift(), a !== null && a(e))
+}
+function nN(e, t) {
+  let n = t[110],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function aN(e, t) {
+  let n = t[111],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), b.shift(), a !== null && a(e))
+}
+function iN(e, t) {
+  let n = t[112],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), S(e.typeArguments, t), b.shift(), a !== null && a(e))
+}
+function sN(e, t) {
+  let n = t[113],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.checkType, t), S(e.extendsType, t), S(e.trueType, t), S(e.falseType, t), b.shift(), a !== null && a(e))
+}
+function oN(e, t) {
+  let n = t[114],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), b.shift(), a !== null && a(e))
+}
+function lN(e, t) {
+  let n = t[115],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), b.shift(), a !== null && a(e))
+}
+function uN(e, t) {
+  let n = t[116],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function cN(e, t) {
+  let n = t[117],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), b.shift(), a !== null && a(e))
+}
+function fN(e, t) {
+  let n = t[118],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.members, t), b.shift(), a !== null && a(e))
+}
+function dN(e, t) {
+  let n = t[119],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function pN(e, t) {
+  let n = t[120],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.initializer, t), b.shift(), a !== null && a(e))
+}
+function EN(e, t) {
+  let n = t[121],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function mN(e, t) {
+  let n = t[122],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function TN(e, t) {
+  let n = t[123],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), b.shift(), a !== null && a(e))
+}
+function hN(e, t) {
+  let n = t[124],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.moduleReference, t), b.shift(), a !== null && a(e))
+}
+function PN(e, t) {
+  let n = t[125],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.source, t), S(e.options, t), S(e.qualifier, t), S(e.typeArguments, t), b.shift(), a !== null && a(e))
+}
+function yN(e, t) {
+  let n = t[126],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.parameters, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function gN(e, t) {
+  let n = t[127],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.objectType, t), S(e.indexType, t), b.shift(), a !== null && a(e))
+}
+function SN(e, t) {
+  let n = t[128],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeParameter, t), b.shift(), a !== null && a(e))
+}
+function _N(e, t) {
+  let n = t[129],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), S(e.typeArguments, t), b.shift(), a !== null && a(e))
+}
+function bN(e, t) {
+  let n = t[130],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.body, t), b.shift(), a !== null && a(e))
+}
+function vN(e, t) {
+  let n = t[131],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.typeParameters, t), S(e.extends, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function xN(e, t) {
+  let n = t[132],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), S(e.typeArguments, t), b.shift(), a !== null && a(e))
+}
+function AN(e, t) {
+  let n = t[133],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.types, t), b.shift(), a !== null && a(e))
+}
+function CN(e, t) {
+  let n = t[134],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function YN(e, t) {
+  let n = t[135],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function LN(e, t) {
+  let n = t[136],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.literal, t), b.shift(), a !== null && a(e))
+}
+function UN(e, t) {
+  let n = t[137],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.key, t), S(e.constraint, t), S(e.nameType, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function IN(e, t) {
+  let n = t[138],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.key, t), S(e.typeParameters, t), S(e.params, t), S(e.returnType, t), b.shift(), a !== null && a(e))
+}
+function kN(e, t) {
+  let n = t[139],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.body, t), b.shift(), a !== null && a(e))
+}
+function RN(e, t) {
+  let n = t[140],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.body, t), b.shift(), a !== null && a(e))
+}
+function VN(e, t) {
+  let n = t[141],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.label, t), S(e.elementType, t), b.shift(), a !== null && a(e))
+}
+function DN(e, t) {
+  let n = t[142],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), b.shift(), a !== null && a(e))
+}
+function wN(e, t) {
+  let n = t[143],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function MN(e, t) {
+  let n = t[144],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function ON(e, t) {
+  let n = t[145],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.decorators, t), S(e.parameter, t), b.shift(), a !== null && a(e))
+}
+function FN(e, t) {
+  let n = t[146],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function BN(e, t) {
+  let n = t[147],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.key, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function GN(e, t) {
+  let n = t[148],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.left, t), S(e.right, t), b.shift(), a !== null && a(e))
+}
+function NN(e, t) {
+  let n = t[149],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function qN(e, t) {
+  let n = t[150],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.expression, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function jN(e, t) {
+  let n = t[151],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.quasis, t), S(e.types, t), b.shift(), a !== null && a(e))
+}
+function zN(e, t) {
+  let n = t[152],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.elementTypes, t), b.shift(), a !== null && a(e))
+}
+function WN(e, t) {
+  let n = t[153],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.id, t), S(e.typeParameters, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function $N(e, t) {
+  let n = t[154],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function HN(e, t) {
+  let n = t[155],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeAnnotation, t), S(e.expression, t), b.shift(), a !== null && a(e))
+}
+function KN(e, t) {
+  let n = t[156],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.members, t), b.shift(), a !== null && a(e))
+}
+function JN(e, t) {
+  let n = t[157],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function XN(e, t) {
+  let n = t[158],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.name, t), S(e.constraint, t), S(e.default, t), b.shift(), a !== null && a(e))
+}
+function QN(e, t) {
+  let n = t[159],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.params, t), b.shift(), a !== null && a(e))
+}
+function ZN(e, t) {
+  let n = t[160],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.params, t), b.shift(), a !== null && a(e))
+}
+function e8(e, t) {
+  let n = t[161],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.parameterName, t), S(e.typeAnnotation, t), b.shift(), a !== null && a(e))
+}
+function t8(e, t) {
+  let n = t[162],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.exprName, t), S(e.typeArguments, t), b.shift(), a !== null && a(e))
+}
+function r8(e, t) {
+  let n = t[163],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.typeName, t), S(e.typeArguments, t), b.shift(), a !== null && a(e))
+}
+function n8(e, t) {
+  let n = t[164],
+    a = null,
+    r
+  ;(n !== null && (({ enter: r, exit: a } = n), r !== null && r(e)), b.unshift(e))
+  let s = 0
+  ;(S(e.types, t), b.shift(), a !== null && a(e))
+}
+var cs = 256
+cs >= Li
+i8(cs)
+var Mn = [],
+  qr = []
+function WS() {
+  ;((Mn.length = 0), (qr.length = 0))
+}
+function $S(e, t) {
+  a8(e)
+  let n = Mn.length
+  n > 0
+  for (let a = 0; a < n; a++) {
+    let r = Mn[a]
+    if (r < Nr) {
+      let s = t[r]
+      if (r < Er) s !== null && s(qr[a])
+      else {
+        let u = qr[a]
+        if (s !== null) {
+          let { enter: d } = s
+          d !== null && d(u)
+        }
+        b.unshift(u)
+      }
+    } else if (r >= cs) {
+      ;((r -= cs), b.shift())
+      let s = t[r]
+      if (s !== null) {
+        let { exit: u } = s
+        u !== null && u(qr[a])
+      }
+    } else {
+      Array.isArray(qr[a])
+      let s = t[r]
+      s !== null && s.apply(void 0, qr[a])
+    }
+  }
+  ;((Mn.length = 0), (qr.length = 0))
+}
+function a8(e) {
+  ;(Mn.length, qr.length)
+  let t = 0,
+    n = new zS.default({
+      enterNode(a) {
+        let r = oa.get(a.type)
+        ;(Mn.push(r), qr.push(a))
+      },
+      leaveNode(a) {
+        let r = oa.get(a.type)
+        r >= Er && (Mn.push(r | cs), qr.push(a))
+      },
+      emit(a, r) {
+        let s = oa.get(a)
+        ;(Mn.push(s), qr.push(r))
+      },
+    })
+  ;(Pm(e, n.enterNode.bind(n), n.leaveNode.bind(n)), Mn.length, qr.length)
+}
+function Pm(e, t, n) {
+  t(e)
+  let a = jr[e.type],
+    r = a.length
+  for (let s = 0; s < r; s++) {
+    let u = e[a[s]]
+    if (u !== null)
+      if (Array.isArray(u)) {
+        let d = u.length
+        for (let P = 0; P < d; P++) {
+          let y = u[P]
+          y !== null && Pm(y, t, n)
+        }
+      } else Pm(u, t, n)
+  }
+  n(e)
+}
+function i8(e) {
+  return e > 0 && (e & (e - 1)) === 0
+}
+var Zb = _s(Hb(), 1)
+var qm = {
+  name: 'ajv',
+  version: '6.14.0',
+  description: 'Another JSON Schema Validator',
+  main: 'lib/ajv.js',
+  typings: 'lib/ajv.d.ts',
+  files: ['lib/', 'dist/', 'scripts/', 'LICENSE', '.tonic_example.js'],
+  scripts: {
+    eslint: 'eslint lib/{compile/,}*.js spec/{**/,}*.js scripts --ignore-pattern spec/JSON-Schema-Test-Suite',
+    jshint: 'jshint lib/{compile/,}*.js',
+    lint: 'npm run jshint && npm run eslint',
+    'test-spec': 'mocha spec/{**/,}*.spec.js -R spec',
+    'test-fast': 'AJV_FAST_TEST=true npm run test-spec',
+    'test-debug': 'npm run test-spec -- --inspect-brk',
+    'test-cov': 'nyc npm run test-spec',
+    'test-ts': 'tsc --target ES5 --noImplicitAny --noEmit spec/typescript/index.ts',
+    bundle: 'del-cli dist && node ./scripts/bundle.js . Ajv pure_getters',
+    'bundle-beautify': 'node ./scripts/bundle.js js-beautify',
+    build: 'del-cli lib/dotjs/*.js "!lib/dotjs/index.js" && node scripts/compile-dots.js',
+    'test-karma': 'karma start',
+    'test-browser': 'del-cli .browser && npm run bundle && scripts/prepare-tests && npm run test-karma',
+    'test-all': 'npm run test-cov && if-node-version 10 npm run test-browser',
+    test: 'npm run lint && npm run build && npm run test-all',
+    prepublish: 'npm run build && npm run bundle',
+    watch: 'watch "npm run build" ./lib/dot',
+  },
+  nyc: { exclude: ['**/spec/**', 'node_modules'], reporter: ['lcov', 'text-summary'] },
+  repository: { type: 'git', url: 'https://github.com/ajv-validator/ajv.git' },
+  keywords: [
+    'JSON',
+    'schema',
+    'validator',
+    'validation',
+    'jsonschema',
+    'json-schema',
+    'json-schema-validator',
+    'json-schema-validation',
+  ],
+  author: 'Evgeny Poberezkin',
+  license: 'MIT',
+  bugs: { url: 'https://github.com/ajv-validator/ajv/issues' },
+  homepage: 'https://github.com/ajv-validator/ajv',
+  tonicExampleFilename: '.tonic_example.js',
+  dependencies: {
+    'fast-deep-equal': '^3.1.1',
+    'fast-json-stable-stringify': '^2.0.0',
+    'json-schema-traverse': '^0.4.1',
+    'uri-js': '^4.2.2',
+  },
+  devDependencies: {
+    'ajv-async': '^1.0.0',
+    bluebird: '^3.5.3',
+    brfs: '^2.0.0',
+    browserify: '^16.2.0',
+    chai: '^4.0.1',
+    coveralls: '^3.0.1',
+    'del-cli': '^3.0.0',
+    dot: '^1.0.3',
+    eslint: '^7.3.1',
+    'gh-pages-generator': '^0.2.3',
+    glob: '^7.0.0',
+    'if-node-version': '^1.0.0',
+    'js-beautify': '^1.7.3',
+    jshint: '^2.10.2',
+    'json-schema-test': '^2.0.0',
+    karma: '^5.0.0',
+    'karma-chrome-launcher': '^3.0.0',
+    'karma-mocha': '^2.0.0',
+    'karma-sauce-launcher': '^4.1.3',
+    mocha: '^8.0.1',
+    nyc: '^15.0.0',
+    'pre-commit': '^1.1.1',
+    re2: '^1.21.4',
+    'require-globify': '^1.3.0',
+    typescript: '^3.9.5',
+    'uglify-js': '^3.6.9',
+    watch: '^1.0.0',
+  },
+  collective: { type: 'opencollective', url: 'https://opencollective.com/ajv' },
+  funding: { type: 'github', url: 'https://github.com/sponsors/epoberezkin' },
+}
+var jm = {
+  id: 'http://json-schema.org/draft-04/schema#',
+  $schema: 'http://json-schema.org/draft-04/schema#',
+  description: 'Core schema meta-schema',
+  definitions: {
+    schemaArray: { type: 'array', minItems: 1, items: { $ref: '#' } },
+    positiveInteger: { type: 'integer', minimum: 0 },
+    positiveIntegerDefault0: { allOf: [{ $ref: '#/definitions/positiveInteger' }, { default: 0 }] },
+    simpleTypes: { enum: ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string'] },
+    stringArray: { type: 'array', items: { type: 'string' }, minItems: 1, uniqueItems: !0 },
+  },
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    $schema: { type: 'string' },
+    title: { type: 'string' },
+    description: { type: 'string' },
+    default: {},
+    multipleOf: { type: 'number', minimum: 0, exclusiveMinimum: !0 },
+    maximum: { type: 'number' },
+    exclusiveMaximum: { type: 'boolean', default: !1 },
+    minimum: { type: 'number' },
+    exclusiveMinimum: { type: 'boolean', default: !1 },
+    maxLength: { $ref: '#/definitions/positiveInteger' },
+    minLength: { $ref: '#/definitions/positiveIntegerDefault0' },
+    pattern: { type: 'string', format: 'regex' },
+    additionalItems: { anyOf: [{ type: 'boolean' }, { $ref: '#' }], default: {} },
+    items: { anyOf: [{ $ref: '#' }, { $ref: '#/definitions/schemaArray' }], default: {} },
+    maxItems: { $ref: '#/definitions/positiveInteger' },
+    minItems: { $ref: '#/definitions/positiveIntegerDefault0' },
+    uniqueItems: { type: 'boolean', default: !1 },
+    maxProperties: { $ref: '#/definitions/positiveInteger' },
+    minProperties: { $ref: '#/definitions/positiveIntegerDefault0' },
+    required: { $ref: '#/definitions/stringArray' },
+    additionalProperties: { anyOf: [{ type: 'boolean' }, { $ref: '#' }], default: {} },
+    definitions: { type: 'object', additionalProperties: { $ref: '#' }, default: {} },
+    properties: { type: 'object', additionalProperties: { $ref: '#' }, default: {} },
+    patternProperties: { type: 'object', additionalProperties: { $ref: '#' }, default: {} },
+    dependencies: {
+      type: 'object',
+      additionalProperties: { anyOf: [{ $ref: '#' }, { $ref: '#/definitions/stringArray' }] },
+    },
+    enum: { type: 'array', minItems: 1, uniqueItems: !0 },
+    type: {
+      anyOf: [
+        { $ref: '#/definitions/simpleTypes' },
+        { type: 'array', items: { $ref: '#/definitions/simpleTypes' }, minItems: 1, uniqueItems: !0 },
+      ],
+    },
+    format: { type: 'string' },
+    allOf: { $ref: '#/definitions/schemaArray' },
+    anyOf: { $ref: '#/definitions/schemaArray' },
+    oneOf: { $ref: '#/definitions/schemaArray' },
+    not: { $ref: '#' },
+  },
+  dependencies: { exclusiveMaximum: ['maximum'], exclusiveMinimum: ['minimum'] },
+  default: {},
+}
+var Kb = new Map(),
+  Ui = null,
+  zm = null
+function Jb(e, t) {
+  ;((Ui = e), (zm = t))
+}
+function Ii(e) {
+  if (zm === e) return
+  let t = Kb.get(e)
+  ;(`${e}`, eo(t.cwd), Qb(t.rules), Xb(t.allOptions), Jb(t, e))
+}
+var Wm = Object.freeze([]),
+  pn = null
+function Xb(e) {
+  pn = e
+}
+var ev = 0
+;(qm.version.startsWith('6.'), `${qm.version}`)
+var $m = new Zb.default({
+  meta: !1,
+  useDefaults: !0,
+  validateSchema: !1,
+  missingRefs: 'ignore',
+  verbose: !0,
+  schemaId: 'auto',
+})
+$m.addMetaSchema(jm)
+$m._opts.defaultMeta = jm.id
+function tv(e) {
+  if (e == null) return null
+  if (e === !1) return !1
+  if (typeof e != 'object') throw new TypeError('`rule.meta.schema` must be an array, object, or `false` if provided')
+  if (Array.isArray(e)) {
+    if (e.length === 0) return null
+    e = { type: 'array', items: e, minItems: 0, maxItems: e.length }
+  }
+  let t = $m.compile(e)
+  return Fq(t)
+}
+function Fq(e) {
+  return (t, n) => {
+    if ((e(t), !!e.errors))
+      throw new Error(
+        `Options validation failed for rule '${n}':
+Options:
+${JSON.stringify(t, null, 2)}
+Errors:
+` +
+          e.errors.map((a) => {
+            if (
+              a.keyword === 'additionalProperties' &&
+              a.schema === !1 &&
+              typeof a.parentSchema?.properties == 'object' &&
+              typeof a.params?.additionalProperty == 'string'
+            ) {
+              let r = Object.keys(a.parentSchema.properties).map((s) => `"${s}"`)
+              return `	Value ${JSON.stringify(a.data)} ${a.message}.
+		Unexpected property "${a.params.additionalProperty}". Expected properties: ${r.join(', ')}.`
+            }
+            return `	Value ${JSON.stringify(a.data)} ${a.message}.`
+          }).join(`
+`),
+      )
+  }
+}
+function rv(e) {
+  let t = JSON.parse(e)
+  pn = t.options
+  let { ruleIds: n, cwd: a } = t,
+    { workspaceUri: r } = t
+  ;(r !== null && Ii(r), eo(a))
+  for (let s = 1, u = pn.length; s < u; s++) pn[s] = Bq(pn[s], fa[n[s]])
+  r !== null && (Ui, (Ui.cwd = a), (Ui.allOptions = pn))
+}
+function Bq(e, t) {
+  let n = t.optionsSchemaValidator
+  if (n === null) throw new Error(`Rule '${t.context.id}' does not accept options`)
+  let { defaultOptions: a } = t,
+    r = a === Wm ? e : Gq(e, a)
+  return (n !== !1 && n(r, t.context.id), Ki(r), r)
+}
+function Gq(e, t) {
+  let n = [],
+    a = t.length,
+    r = e.length,
+    s = Math.min(a, r),
+    u = 0
+  for (; u < s; u++) n.push(nv(e[u], t[u]))
+  if (a > r) for (; u < a; u++) n.push(Xs(t[u]))
+  else for (; u < r; u++) n.push(e[u])
+  return n
+}
+function nv(e, t) {
+  if (e === null || typeof e != 'object' || Array.isArray(e) || t === null || typeof t != 'object' || Array.isArray(t))
+    return e
+  for (let n in t)
+    Object.hasOwn(e, n)
+      ? (e[n] = nv(e[n], t[n]))
+      : Object.defineProperty(e, n, { value: Xs(t[n]), writable: !0, enumerable: !0, configurable: !0 })
+  return e
+}
+function ni(e) {
+  try {
+    if (e instanceof Error) {
+      let { stack: n } = e
+      if (typeof n == 'string' && n !== '') return n
+    }
+    let { message: t } = e
+    if (typeof t == 'string' && t !== '') return t
+  } catch {}
+  return 'Unknown error'
+}
+var fa = []
+function Qb(e) {
+  fa = e
+}
+var Nq = () => !1
+async function Hm(e, t, n, a) {
+  try {
+    let r = (await import(e)).default,
+      s = qq(r, t, n, a)
+    return JSON.stringify({ Success: s })
+  } catch (r) {
+    return JSON.stringify({ Failure: ni(r) })
+  }
+}
+function qq(e, t, n, a) {
+  ;((t = jq(e, t, n)), a !== null && Ii(a))
+  let r = fa.length,
+    { rules: s } = e,
+    u = Object.keys(s),
+    d = u.length
+  for (let P = 0; P < d; P++) {
+    let y = u[P],
+      E = s[y],
+      m = `${t}/${y}`,
+      _ = !1,
+      T = !1,
+      v = null,
+      C = Wm,
+      L = null,
+      F = E.meta
+    if (F != null) {
+      if (typeof F != 'object') throw new TypeError('Invalid `rule.meta`')
+      let { fixable: Q } = F
+      if (Q != null) {
+        if (Q !== 'code' && Q !== 'whitespace' && Q !== !0 && Q !== !1)
+          throw new TypeError('Invalid `rule.meta.fixable`')
+        _ = Q !== !1
+      }
+      let R = F.hasSuggestions
+      if (R === !0) T = !0
+      else if (R != null && R !== !1) throw new TypeError('Invalid `rule.meta.hasSuggestions`')
+      L = tv(F.schema)
+      let V = F.defaultOptions
+      if (V != null) {
+        if (!Array.isArray(V)) throw new TypeError('`rule.meta.defaultOptions` must be an array if provided')
+        if (V.length !== 0) {
+          if (((C = Wq(V)), L === null))
+            throw new Error(`Rule ${m}:
+Rules which accept options must provide a schema as \`rule.meta.schema\`, or disable schema validation with \`rule.meta.schema: false\` (not recommended).`)
+          ;(L !== !1 && L(C, m), Ki(C))
+        }
+      }
+      let A = F.messages
+      if (A != null) {
+        if (typeof A != 'object') throw new TypeError('`rule.meta.messages` must be an object if provided')
+        v = A
+      }
+    }
+    let $ = {
+        rule: E,
+        context: null,
+        isFixable: _,
+        hasSuggestions: T,
+        messages: v,
+        defaultOptions: C,
+        optionsSchemaValidator: L,
+        ruleIndex: 0,
+        visitor: null,
+        beforeHook: null,
+        afterHook: null,
+      },
+      j = iy($)
+    if ((($.context = j), 'createOnce' in E)) {
+      let Q = E.createOnce(j)
+      if (typeof Q != 'object' || Q === null) throw new TypeError('`createOnce` must return an object')
+      let { before: R, after: V, ...A } = Q
+      ;((R = av(R, 'before')),
+        (V = av(V, 'after')),
+        Object.keys(A).length === 0 && ((R = Nq), (V = null)),
+        ($.visitor = A),
+        ($.beforeHook = R),
+        ($.afterHook = V))
+    }
+    ;(Object.defineProperty($.context, 'id', { value: m }), fa.push($))
+  }
+  return { name: t, offset: r, ruleNames: u }
+}
+function jq(e, t, n) {
+  if (n) return t
+  let a = e.meta?.name
+  if (a != null) {
+    if (typeof a != 'string') throw new TypeError('`plugin.meta.name` must be a string if defined')
+    return zq(a)
+  }
+  if (t !== null) return t
+  throw new Error(
+    'Plugin must either define `meta.name`, be loaded from an NPM package with a `name` field in `package.json`, or be given an alias in config',
+  )
+}
+function zq(e) {
+  let t = e.indexOf('/')
+  if (t === -1) return e.startsWith('eslint-plugin-') ? e.slice(14) : e
+  let n = e.slice(0, t),
+    a = e.slice(t + 1)
+  return a === 'eslint-plugin' ? n : a.startsWith('eslint-plugin-') ? `${n}/${a.slice(14)}` : e
+}
+function Wq(e) {
+  let t,
+    n = !1
+  try {
+    t = JSON.stringify(e, (a, r) => (r === 1 / 0 || r === -1 / 0 ? ((n = !0), r === 1 / 0 ? Cf : Yf) : r))
+  } catch (a) {
+    throw new Error(`\`rule.meta.defaultOptions\` must be JSON-serializable: ${ni(a)}`)
+  }
+  if (n) {
+    let a = JSON.stringify(e)
+    if (a.includes(Cf) || a.includes(Yf))
+      throw new Error(`\`rule.meta.defaultOptions\` cannot contain the strings "${Cf}" or "${Yf}"`)
+    t = t.replaceAll($q, '1e+400').replaceAll(Hq, '-1e+400')
+  }
+  return JSON.parse(t)
+}
+var Cf = '$_$_$_POS_INFINITY_$_$_$',
+  Yf = '$_$_$_NEG_INFINITY_$_$_$',
+  $q = JSON.stringify(Cf),
+  Hq = JSON.stringify(Yf)
+function av(e, t) {
+  if (e == null) return null
+  if (typeof e != 'function') throw new TypeError(`\`${t}\` hook must be a function if provided`)
+  return e
+}
+var ov = _s(iv(), 1)
+var { matches: Kq, parse: Jq } = ov.default,
+  Xq = {
+    nodeTypeKey: 'type',
+    visitorKeys: jr,
+    fallback(e) {
+      throw new Error(`Unknown node type: ${e.type}`)
+    },
+    matchClass: Qq,
+  }
+function Qq(e, t, n) {
+  let { type: a } = t
+  switch (e.toLowerCase()) {
+    case 'statement':
+      if (a.endsWith('Statement')) return !0
+    case 'declaration':
+      return a.endsWith('Declaration')
+    case 'pattern':
+      if (a.endsWith('Pattern')) return !0
+    case 'expression':
+      return (
+        a.endsWith('Expression') ||
+        a.endsWith('Literal') ||
+        (a === 'Identifier' && t.parent.type !== 'MetaProperty') ||
+        a === 'MetaProperty'
+      )
+    case 'function':
+      return a === 'FunctionDeclaration' || a === 'FunctionExpression' || a === 'ArrowFunctionExpression'
+    default:
+      return (`${e}`, !1)
+  }
+}
+var Xm = 15,
+  lv = 14,
+  uv = 0,
+  cv = Xm,
+  Zq = Xm + lv,
+  Qm = 1 << uv,
+  e4 = 1 << cv,
+  fv = 1 << Zq,
+  dv = (1 << Xm) - 1,
+  pv = (1 << lv) - 1
+function t4(e) {
+  return (e >> uv) & dv
+}
+function r4(e) {
+  return (e >> cv) & pv
+}
+var sv = new Map([]),
+  n4 = []
+function Ev(e) {
+  let t = sv.get(e)
+  if (t !== void 0) return t
+  let n = Jq(e)
+  return (
+    (t = { typeIds: null, esquerySelector: n, isComplex: !1, specificity: 0 }),
+    (t.typeIds = ki(n, t)),
+    sv.set(e, t),
+    t
+  )
+}
+function ki(e, t) {
+  switch (e.type) {
+    case 'identifier': {
+      ;(t4(t.specificity) < dv, (t.specificity += Qm))
+      let n = oa.get(e.value)
+      return n === void 0 || n >= Nr ? n4 : [n]
+    }
+    case 'not':
+      for (let n = 0, a = e.selectors, r = a.length; n < r; n++) ki(a[n], t)
+      return ((t.isComplex = !0), null)
+    case 'matches': {
+      let n = []
+      for (let a = 0, r = e.selectors, s = r.length; a < s; a++) {
+        let u = ki(r[a], t)
+        u === null ? (n = null) : n !== null && n.push(...u)
+      }
+      return n === null ? null : [...new Set(n)]
+    }
+    case 'compound': {
+      let n = e.selectors,
+        a = n.length
+      if (a === 0) return []
+      let r = null
+      for (let s = 0; s < a; s++) {
+        let u = ki(n[s], t)
+        u !== null && (r === null ? (r = u) : (r = u.filter((d) => r.includes(d))))
+      }
+      return r
+    }
+    case 'attribute':
+    case 'field':
+    case 'nth-child':
+    case 'nth-last-child':
+      return ((t.isComplex = !0), r4(t.specificity) < pv, (t.specificity += e4), null)
+    case 'child':
+    case 'descendant':
+    case 'sibling':
+    case 'adjacent':
+      return ((t.isComplex = !0), ki(e.left, t), ki(e.right, t))
+    case 'class':
+      switch (e.name.toLowerCase()) {
+        case 'statement':
+          return BS
+        case 'declaration':
+          return GS
+        case 'pattern':
+          return ((t.isComplex = !0), NS)
+        case 'expression':
+          return ((t.isComplex = !0), qS)
+        case 'function':
+          return jS
+        default:
+          throw new Error(`Invalid class in selector: \`:${e.name}\``)
+      }
+    case 'wildcard':
+      return null
+    default:
+      return ((t.isComplex = !0), null)
+  }
+}
+function mv(e, t) {
+  return (n) => {
+    Kq(n, t, b, Xq) && e(n)
+  }
+}
+var aT = 0,
+  a4 = 1,
+  iT = 2,
+  Df = Nr - Er,
+  Tv = Li - Nr,
+  sT = [],
+  oT = [],
+  lT = []
+for (let e = Er; e !== 0; e--) sT.push([])
+for (let e = Df; e !== 0; e--) oT.push({ enter: [], exit: [] })
+for (let e = Tv; e !== 0; e--) lT.push([])
+var da = []
+for (let e = Li; e !== 0; e--) da.push(null)
+var uT = new ArrayBuffer(Li),
+  hv = new Uint8Array(uT, 0, Er),
+  Pv = new Uint8Array(uT, Er, Df),
+  yv = new Uint8Array(uT, Er + Df, Tv),
+  rT = 0,
+  Rf = 0,
+  If = 0,
+  nT = !1,
+  cT = []
+for (let e = Df; e !== 0; e--) cT.push({ enter: null, exit: null })
+var kf = [],
+  Vf = 0
+function gv(e) {
+  if (e === null || typeof e != 'object') throw new TypeError('Visitor returned from `create` method must be an object')
+  let t = Object.keys(e),
+    n = t.length
+  if (n === 0) return
+  nT = !0
+  let a = Vf + n
+  for (; kf.length < a; ) kf.push({ fn: null, specificity: 0, selectorStr: null })
+  for (let r = 0; r < n; r++) {
+    let s = t[r],
+      u = e[s]
+    if (typeof u != 'function') throw new TypeError(`'${s}' property of visitor object is not a function`)
+    let d = 0,
+      P = s.endsWith(':exit')
+    P && ((s = s.slice(0, -5)), (d = fv))
+    let y = kf[Vf++]
+    ;((y.fn = u), (y.specificity = d), (y.selectorStr = s))
+    let E = oa.get(s)
+    if (E !== void 0) {
+      ;((y.specificity |= Qm), E < Er ? Zm(E, y) : E < Nr ? eT(E, y, P) : i4(E, y, P))
+      continue
+    }
+    if (s !== '*') {
+      let m = Ev(s)
+      ;((y.specificity |= m.specificity), m.isComplex && (y.fn = mv(u, m.esquerySelector)))
+      let { typeIds: _ } = m
+      if (_ !== null) {
+        for (let T = 0, v = _.length; T < v; T++) {
+          let C = _[T]
+          ;(C < Nr, C < Er ? Zm(C, y) : eT(C, y, P))
+        }
+        continue
+      }
+    }
+    for (E = 0; E < Er; E++) Zm(E, y)
+    for (; E < Nr; E++) eT(E, y, P)
+  }
+}
+function Zm(e, t) {
+  let n = sT[e]
+  ;(n.length === 0 && (hv[rT++] = e), n.push(t))
+}
+function eT(e, t, n) {
+  let { enter: a, exit: r } = oT[e - Er]
+  ;(a.length === 0 && r.length === 0 && (Pv[Rf++] = e), n ? r.push(t) : a.push(t))
+}
+function i4(e, t, n) {
+  if (n) throw new Error(`Invalid visitor key: \`${t.selectorStr}:exit\``)
+  let a = lT[e - Nr]
+  ;(a.length === 0 && (yv[If++] = e), a.push(t))
+}
+function fT() {
+  if (nT === !1) return aT
+  for (let t = rT - 1; t >= 0; t--) {
+    let n = hv[t]
+    da[n] = tT(sT[n])
+  }
+  for (let t = 0; t < Rf; t++) {
+    let n = Pv[t],
+      a = oT[n - Er],
+      r = cT[t]
+    let s = a.enter
+    s.length !== 0 && (r.enter = tT(s))
+    let u = a.exit
+    ;(u.length !== 0 && (r.exit = tT(u)), (da[n] = r))
+  }
+  let e = a4
+  if (If > 0) {
+    e = iT
+    for (let t = If - 1; t >= 0; t--) {
+      let n = yv[t]
+      da[n] = s4(lT[n - Nr])
+    }
+    If = 0
+  }
+  for (let t = Vf - 1; t >= 0; t--) {
+    let n = kf[t]
+    ;((n.fn = null), (n.selectorStr = null))
+  }
+  return ((Vf = 0), (rT = 0), (nT = !1), e)
+}
+function dT() {
+  da.fill(null)
+  for (let e = 0; e < Rf; e++) {
+    let t = cT[e]
+    ;((t.enter = null), (t.exit = null))
+  }
+  Rf = 0
+}
+function tT(e) {
+  let t = e.length
+  t > 0
+  let n
+  if (t === 1) (e[0].fn, (n = e[0].fn))
+  else {
+    for (
+      e.sort((r, s) => {
+        let u = r.specificity - s.specificity
+        if (u !== 0) return u
+        let d = r.selectorStr,
+          P = s.selectorStr
+        return d === P ? 0 : d < P ? -1 : 1
+      });
+      Lf.length <= t;
+    )
+      Lf.push(null)
+    let a = Lf[t]
+    ;(a === null && (a = Lf[t] = Sv(t, !1)), (n = a(e)))
+  }
+  return ((e.length = 0), n)
+}
+function s4(e) {
+  let t = e.length
+  t > 0
+  let n
+  if (t === 1) (e[0].fn, (n = e[0].fn))
+  else {
+    for (; Uf.length <= t; ) Uf.push(null)
+    let a = Uf[t]
+    ;(a === null && (a = Uf[t] = Sv(t, !0)), (n = a(e)))
+  }
+  return ((e.length = 0), n)
+}
+function Sv(e, t) {
+  let n = t ? '...a' : 'n',
+    a = 'var ',
+    r = `;return (${n})=>{`
+  for (let s = 0; s < e; s++) (s !== 0 && (a += ','), (a += `v${s}=p[${s}].fn`), (r += `v${s}(${n});`))
+  return ((r += '}'), (a += r), new Function('p', a))
+}
+var Lf = [
+    null,
+    null,
+    (e) => {
+      e.length
+      var t = e[0].fn,
+        n = e[1].fn
+      return (a) => {
+        ;(t(a), n(a))
+      }
+    },
+    (e) => {
+      e.length
+      var t = e[0].fn,
+        n = e[1].fn,
+        a = e[2].fn
+      return (r) => {
+        ;(t(r), n(r), a(r))
+      }
+    },
+    (e) => {
+      e.length
+      var t = e[0].fn,
+        n = e[1].fn,
+        a = e[2].fn,
+        r = e[3].fn
+      return (s) => {
+        ;(t(s), n(s), a(s), r(s))
+      }
+    },
+    (e) => {
+      e.length
+      var t = e[0].fn,
+        n = e[1].fn,
+        a = e[2].fn,
+        r = e[3].fn,
+        s = e[4].fn
+      return (u) => {
+        ;(t(u), n(u), a(u), r(u), s(u))
+      }
+    },
+  ],
+  Uf = [
+    null,
+    null,
+    (e) => {
+      e.length
+      var t = e[0].fn,
+        n = e[1].fn
+      return (...a) => {
+        ;(t(...a), n(...a))
+      }
+    },
+    (e) => {
+      e.length
+      var t = e[0].fn,
+        n = e[1].fn,
+        a = e[2].fn
+      return (...r) => {
+        ;(t(...r), n(...r), a(...r))
+      }
+    },
+  ]
+var wf = [],
+  Mf = [],
+  _v = { value: null }
+function pT(e, t, n, a, r, s, u, d) {
+  try {
+    l4(e, t, n, a, r, s, u, d)
+    let P = null
+    return (mi.length !== 0 && ((P = JSON.stringify({ Success: mi })), (mi.length = 0)), vv(), P)
+  } catch (P) {
+    return (u4(), JSON.stringify({ Failure: ni(P) }))
+  }
+}
+function l4(e, t, n, a, r, s, u, d) {
+  if (n === null) n = wf[t]
+  else {
+    let { buffer: m, byteOffset: _ } = n
+    ;((n.int32 = new Int32Array(m, _)), (n.float64 = new Float64Array(m, _)))
+    for (let T = t - wf.length; T >= 0; T--) wf.push(null)
+    wf[t] = n
+  }
+  ;(typeof e == 'string' && e.length > 0, Array.isArray(a) && a.length > 0, Array.isArray(r), a.length, r.length)
+  let P
+  ;(d !== null && Ii(d), pn, ty(e))
+  let y = n[2147483574] === 1
+  ;(rS(n, y), KP(s), QP(u))
+  for (let m = 0, _ = a.length; m < _; m++) {
+    let T = a[m]
+    T < fa.length
+    let v = fa[T]
+    v.ruleIndex = m
+    let C = r[m]
+    ;(C < pn.length, (_v.value = C === ev ? v.defaultOptions : pn[C]), Object.defineProperty(v.context, 'options', _v))
+    let { visitor: L } = v
+    if (L === null) (v.rule.create, (L = v.rule.create(v.context)))
+    else {
+      let { beforeHook: F, afterHook: $ } = v
+      if (F !== null && F() === !1) continue
+      $ !== null && Mf.push($)
+    }
+    gv(L)
+  }
+  let E = fT()
+  ;(E !== aT && (Oe === null && yr(), Oe, b.length, E === iT ? $S(Oe, da) : hm(Oe, da), b.length, dT()), bv(!0))
+}
+function bv(e) {
+  let t = Mf.length
+  if (t === 0) return
+  let n,
+    a = !1
+  for (let r = 0; r < t; r++)
+    try {
+      ;(0, Mf[r])()
+    } catch (s) {
+      a === !1 && ((n = s), (a = !0))
+    }
+  if (((Mf.length = 0), a && e)) throw n
+}
+function vv() {
+  ;(ry(), nS(), XP(), ZP(), iS())
+}
+function u4() {
+  ;(bv(!1), fT(), dT(), (mi.length = 0), (b.length = 0), vv(), WS())
+}
+function ET(e) {
+  try {
+    return (rv(e), null)
+  } catch (t) {
+    return ni(t)
+  }
+}
+0 && (module.exports = { lintFile, loadPlugin, setupRuleConfigs })
+/*! Bundled license information:
+
+uri-js/dist/es5/uri.all.js:
+  (** @license URI.js v4.4.1 (c) 2011 Gary Court. License: http://github.com/garycourt/uri-js *)
+*/

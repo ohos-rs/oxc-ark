@@ -26,7 +26,8 @@
     "format:check:toml": "pnpm --filter @ohos-rs/oxk exec -- taplo format --check",
     "fmt": "pnpm run format",
     "lint": "cargo clippy --workspace -- -D warnings && pnpm --filter @ohos-rs/oxk lint",
-    "lint:fix": "pnpm --filter @ohos-rs/oxk lint --fix"
+    "lint:fix": "pnpm --filter @ohos-rs/oxk lint --fix",
+    "sync:arkts-api-versions": "node scripts/sync-arkts-system-api-versions.mjs"
   },
   "keywords": [
     "arkts",

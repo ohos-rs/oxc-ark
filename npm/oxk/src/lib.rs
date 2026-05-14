@@ -4,12 +4,19 @@ mod parse;
 
 use napi_derive::napi;
 use serde_json::Value;
+#[cfg(not(target_family = "wasm"))]
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 use format::{
   should_ignore_file, ConfigResolver, ExternalFormatter, FormatFileStrategy,
   FormatResult as CoreFormatResult, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
   SourceFormatter,
+};
+#[cfg(not(target_family = "wasm"))]
+use lint::{
+  JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadJsConfigsCb, JsLoadPluginCb,
+  JsSetupRuleConfigsCb,
 };
 
 #[napi(object)]
@@ -18,6 +25,75 @@ pub struct FormatResult {
   pub code: String,
   /// Parse and format errors.
   pub errors: Vec<String>,
+}
+
+/// Run the oxlint-compatible linter.
+#[cfg(not(target_family = "wasm"))]
+#[napi]
+pub async fn lint(args: Vec<String>) -> bool {
+  let args = args.into_iter().map(OsString::from).collect();
+  lint::lint_args(args)
+}
+
+/// Run the oxlint-compatible linter synchronously.
+#[cfg(not(target_family = "wasm"))]
+#[napi]
+pub fn lint_sync(args: Vec<String>) -> bool {
+  let args = args.into_iter().map(OsString::from).collect();
+  lint::lint_args(args)
+}
+
+/// Run the oxlint-compatible linter.
+#[cfg(target_family = "wasm")]
+#[napi]
+pub async fn lint(_args: Vec<String>) -> napi::Result<bool> {
+  Err(napi::Error::from_reason(
+    "oxk lint is not supported in WASI builds. Use the native npm package or the cargo CLI for linting.",
+  ))
+}
+
+/// Run the oxlint-compatible linter synchronously.
+#[cfg(target_family = "wasm")]
+#[napi]
+pub fn lint_sync(_args: Vec<String>) -> napi::Result<bool> {
+  Err(napi::Error::from_reason(
+    "oxk lint is not supported in WASI builds. Use the native npm package or the cargo CLI for linting.",
+  ))
+}
+
+/// Run the oxlint-compatible linter with JavaScript plugin callbacks.
+#[cfg(not(target_family = "wasm"))]
+#[napi]
+pub async fn lint_with_plugins(
+  args: Vec<String>,
+  load_plugin: JsLoadPluginCb,
+  setup_rule_configs: JsSetupRuleConfigsCb,
+  lint_file: JsLintFileCb,
+  create_workspace: JsCreateWorkspaceCb,
+  destroy_workspace: JsDestroyWorkspaceCb,
+  load_js_configs: JsLoadJsConfigsCb,
+) -> bool {
+  lint::lint_args_with_plugins(
+    args,
+    load_plugin,
+    setup_rule_configs,
+    lint_file,
+    create_workspace,
+    destroy_workspace,
+    load_js_configs,
+  )
+  .await
+}
+
+/// Run the oxlint-compatible linter with JavaScript plugin callbacks.
+#[cfg(target_family = "wasm")]
+#[napi(
+  ts_args_type = "args: Array<string>, loadPlugin: any, setupRuleConfigs: any, lintFile: any, createWorkspace: any, destroyWorkspace: any, loadJsConfigs: any"
+)]
+pub async fn lint_with_plugins(_args: Vec<String>) -> napi::Result<bool> {
+  Err(napi::Error::from_reason(
+    "oxk lint with JavaScript plugins is not supported in WASI builds. Use the native npm package for linting.",
+  ))
 }
 
 fn format_impl(
