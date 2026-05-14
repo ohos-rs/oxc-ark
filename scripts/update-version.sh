@@ -24,6 +24,5 @@ perl -0pi -e 's/(\[\[package\]\]\nname = "oxk"\nversion = ")[^"]+(")/$1$ENV{VERS
 (
   cd "$repo_root"
   pnpm --filter @ohos-rs/oxk exec napi version
-  pnpm --filter @ohos-rs/oxk run build:debug
-  pnpm --filter @ohos-rs/oxk run build:oxlint-runtime
+  bash "$repo_root/scripts/verify-release.sh"
 )

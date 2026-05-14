@@ -63,7 +63,9 @@ pub fn lint_sync(_args: Vec<String>) -> napi::Result<bool> {
 
 /// Run the oxlint-compatible linter with JavaScript plugin callbacks.
 #[cfg(not(target_family = "wasm"))]
-#[napi]
+#[napi(
+  ts_args_type = "args: Array<string>, loadPlugin: (arg0: string, arg1: string | undefined | null, arg2: boolean, arg3?: string | undefined | null) => Promise<string>, setupRuleConfigs: (arg: string) => string | null, lintFile: (arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7?: string | undefined | null) => string | null, createWorkspace: (arg: string) => Promise<undefined>, destroyWorkspace: (arg: string) => void, loadJsConfigs: (arg: Array<string>) => Promise<string>"
+)]
 pub async fn lint_with_plugins(
   args: Vec<String>,
   load_plugin: JsLoadPluginCb,

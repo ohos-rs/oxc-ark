@@ -1,12 +1,8 @@
 #![allow(dead_code)]
 
-use std::sync::Arc;
-
 use napi_derive::napi;
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, CommentKind};
-use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic};
+use oxc_napi::{convert_utf8_to_utf16, Comment, OxcError};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span as OxcSpan};
@@ -54,102 +50,6 @@ pub struct ParseResult {
   pub module: EcmaScriptModule,
   pub comments: Vec<Comment>,
   pub errors: Vec<OxcError>,
-}
-
-#[napi(object)]
-#[derive(Debug, Clone)]
-pub struct Comment {
-  #[napi(ts_type = "'Line' | 'Block'")]
-  pub r#type: String,
-  pub value: String,
-  pub start: u32,
-  pub end: u32,
-}
-
-#[napi(object, use_nullable = true)]
-pub struct OxcError {
-  pub severity: Severity,
-  pub message: String,
-  pub labels: Vec<ErrorLabel>,
-  pub help_message: Option<String>,
-  pub codeframe: Option<String>,
-}
-
-impl OxcError {
-  fn from_diagnostics(
-    filename: &str,
-    source_text: &str,
-    diagnostics: Vec<OxcDiagnostic>,
-  ) -> Vec<Self> {
-    if diagnostics.is_empty() {
-      return vec![];
-    }
-    let source = Arc::new(NamedSource::new(filename, source_text.to_string()));
-    diagnostics
-      .into_iter()
-      .map(|diagnostic| Self::from_diagnostic(&source, diagnostic))
-      .collect()
-  }
-
-  fn from_diagnostic(named_source: &Arc<NamedSource<String>>, diagnostic: OxcDiagnostic) -> Self {
-    let mut error = Self::from(&diagnostic);
-    let codeframe = diagnostic.with_source_code(Arc::clone(named_source));
-    error.codeframe = Some(format!("{codeframe:?}"));
-    error
-  }
-}
-
-impl From<&OxcDiagnostic> for OxcError {
-  fn from(diagnostic: &OxcDiagnostic) -> Self {
-    let labels = diagnostic
-      .labels
-      .as_ref()
-      .map(|labels| labels.iter().map(ErrorLabel::from).collect::<Vec<_>>())
-      .unwrap_or_default();
-    Self {
-      severity: Severity::from(diagnostic.severity),
-      message: diagnostic.message.to_string(),
-      labels,
-      help_message: diagnostic.help.as_ref().map(ToString::to_string),
-      codeframe: None,
-    }
-  }
-}
-
-#[napi(object, use_nullable = true)]
-pub struct ErrorLabel {
-  pub message: Option<String>,
-  pub start: u32,
-  pub end: u32,
-}
-
-impl From<&LabeledSpan> for ErrorLabel {
-  fn from(label: &LabeledSpan) -> Self {
-    let start = u32::try_from(label.offset()).unwrap_or(u32::MAX);
-    let end = u32::try_from(label.offset() + label.len()).unwrap_or(u32::MAX);
-    Self {
-      message: label.label().map(ToString::to_string),
-      start,
-      end,
-    }
-  }
-}
-
-#[napi(string_enum)]
-pub enum Severity {
-  Error,
-  Warning,
-  Advice,
-}
-
-impl From<oxc_diagnostics::Severity> for Severity {
-  fn from(value: oxc_diagnostics::Severity) -> Self {
-    match value {
-      oxc_diagnostics::Severity::Error => Self::Error,
-      oxc_diagnostics::Severity::Warning => Self::Warning,
-      oxc_diagnostics::Severity::Advice => Self::Advice,
-    }
-  }
 }
 
 #[napi(object)]
@@ -414,51 +314,6 @@ pub async fn parse(
 ) -> ParseResult {
   let options = options.unwrap_or_default();
   parse_with_return(&filename, &source_text, &options)
-}
-
-fn convert_utf8_to_utf16(
-  source_text: &str,
-  program: &mut Program,
-  module_record: &mut ModuleRecord,
-  errors: &mut [OxcError],
-) -> Vec<Comment> {
-  let span_converter = Utf8ToUtf16::new(source_text);
-  span_converter.convert_program(program);
-
-  let mut offset_converter = span_converter.converter();
-  let comments = program
-    .comments
-    .iter()
-    .map(|comment| {
-      let value = comment.content_span().source_text(source_text).to_string();
-      let mut span = comment.span;
-      if let Some(converter) = offset_converter.as_mut() {
-        converter.convert_span(&mut span);
-      }
-      Comment {
-        r#type: match comment.kind {
-          CommentKind::Line => String::from("Line"),
-          CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => String::from("Block"),
-        },
-        value,
-        start: span.start,
-        end: span.end,
-      }
-    })
-    .collect::<Vec<_>>();
-
-  span_converter.convert_module_record(module_record);
-
-  if let Some(mut converter) = span_converter.converter() {
-    for error in errors {
-      for label in &mut error.labels {
-        converter.convert_offset(&mut label.start);
-        converter.convert_offset(&mut label.end);
-      }
-    }
-  }
-
-  comments
 }
 
 impl From<&ModuleRecord<'_>> for EcmaScriptModule {

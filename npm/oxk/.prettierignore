@@ -5,4 +5,5 @@ target
 /*.cjs
 /index.js
 index.d.ts
+oxlint-runtime/*.cjs
 pnpm-lock.yaml

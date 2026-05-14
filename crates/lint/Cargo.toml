@@ -33,7 +33,6 @@ tokio = { workspace = true, optional = true }
 default = []
 napi = [
   "dep:napi",
-  "oxlint/napi",
   "dep:tokio",
 ]
 testing = ["oxc_linter/force_test_reporter"]

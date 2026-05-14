@@ -6,8 +6,8 @@
     "arkts/system-api-version": [
       "error",
       {
-        "minApiVersion": 11
-      }
-    ]
-  }
+        "minApiVersion": 11,
+      },
+    ],
+  },
 }
