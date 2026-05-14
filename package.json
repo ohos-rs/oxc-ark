@@ -27,7 +27,8 @@
     "fmt": "pnpm run format",
     "lint": "cargo clippy --workspace -- -D warnings && pnpm --filter @ohos-rs/oxk lint",
     "lint:fix": "pnpm --filter @ohos-rs/oxk lint --fix",
-    "sync:arkts-api-versions": "node scripts/sync-arkts-system-api-versions.mjs"
+    "sync:arkts-api-versions": "node scripts/sync-arkts-system-api-versions.mjs",
+    "version:oxk": "bash scripts/update-version.sh"
   },
   "keywords": [
     "arkts",
