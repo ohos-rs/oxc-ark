@@ -1,3 +1,7 @@
+// Portions of this file are derived from Oxc's oxlint implementation.
+// Copyright (c) Oxc project contributors.
+// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
+
 use std::borrow::Cow;
 
 /// <https://github.com/tafia/quick-xml/blob/6e34a730853fe295d68dc28460153f08a5a12955/src/escapei.rs#L84-L86>

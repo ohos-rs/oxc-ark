@@ -1,3 +1,7 @@
+// Portions of this file are derived from Oxc's oxlint implementation.
+// Copyright (c) Oxc project contributors.
+// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
+
 #![allow(dead_code)]
 
 use crate::output_formatter::InternalFormatter;
