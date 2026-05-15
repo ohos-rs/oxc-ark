@@ -42,6 +42,7 @@ json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18
 # Common dependencies
 serde_json = "1.0"
 serde = { version = "1", features = ["derive"] }
+schemars = { package = "oxc-schemars", version = "0.8.27" }
 tokio = { version = "1", features = ["full"] }
 phf = { version = "0.11", features = ["macros"] }
 simdutf8 = "0.1"

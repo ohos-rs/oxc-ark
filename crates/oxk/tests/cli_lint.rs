@@ -54,6 +54,72 @@ fn diagnostic_codes(report: &Value) -> Vec<String> {
 }
 
 #[test]
+fn cargo_cli_lint_print_config_schema_includes_arkts() {
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .args(["lint", "--print-config-schema"])
+        .output()
+        .expect("failed to run oxk lint --print-config-schema");
+
+    assert!(
+        output.status.success(),
+        "schema printing should succeed: {}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let schema: Value = serde_json::from_slice(&output.stdout).expect("schema should be JSON");
+    let plugins = schema
+        .pointer("/definitions/LintPluginOptionsSchema/enum")
+        .and_then(Value::as_array)
+        .expect("plugin enum should exist");
+    assert!(
+        plugins
+            .iter()
+            .any(|plugin| plugin.as_str() == Some("arkts"))
+    );
+    assert!(
+        schema
+            .pointer("/definitions/DummyRuleMap/properties/arkts~1no-symbol")
+            .is_some()
+    );
+}
+
+#[test]
+fn cargo_cli_lint_init_uses_oxk_schema() {
+    let temp = TempDir::new();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args(["lint", "--init"])
+        .output()
+        .expect("failed to run oxk lint --init");
+
+    assert!(
+        output.status.success(),
+        "init should succeed: {}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let config: Value = serde_json::from_str(
+        &fs::read_to_string(temp.path().join(".oxlintrc.json")).expect("config should exist"),
+    )
+    .expect("config should be JSON");
+
+    assert_eq!(
+        config["$schema"],
+        "./node_modules/@ohos-rs/oxk/configuration_schema.json"
+    );
+    assert!(
+        config["plugins"]
+            .as_array()
+            .expect("plugins should be an array")
+            .iter()
+            .any(|plugin| plugin.as_str() == Some("arkts"))
+    );
+}
+
+#[test]
 fn cargo_cli_lint_reports_json_diagnostic() {
     let temp = TempDir::new();
     let file_path = temp.path().join("input.ts");

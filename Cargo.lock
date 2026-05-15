@@ -802,6 +802,7 @@ dependencies = [
  "json-strip-comments",
  "napi",
  "oxc-miette",
+ "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",

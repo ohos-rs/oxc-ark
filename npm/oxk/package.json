@@ -33,6 +33,7 @@
     "format.d.ts",
     "lint.js",
     "lint.d.ts",
+    "configuration_schema.json",
     "oxlint-runtime",
     "bin"
   ],
@@ -48,7 +49,8 @@
     "./lint": {
       "types": "./lint.d.ts",
       "default": "./lint.js"
-    }
+    },
+    "./configuration_schema.json": "./configuration_schema.json"
   },
   "napi": {
     "binaryName": "oxk",
@@ -81,6 +83,7 @@
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release --no-dts-cache",
     "build:debug": "napi build --platform --no-dts-cache",
+    "build:lint-schema": "cargo run -p oxk -- lint --write-config-schema configuration_schema.json && prettier configuration_schema.json --write",
     "build:debug:binding": "node scripts/build-binding-only.cjs",
     "build:oxlint-runtime": "node scripts/build-oxlint-runtime.mjs",
     "format": "run-p format:prettier format:rs format:toml",

@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const cliPath = fileURLToPath(new URL('../bin/oxk.js', import.meta.url))
+const schemaPath = fileURLToPath(new URL('../configuration_schema.json', import.meta.url))
 
 function canImportTypeScriptConfig() {
   const dir = mkdtempSync(join(tmpdir(), 'oxk-ts-config-'))
@@ -170,6 +171,30 @@ test('npm cli lint reports oxlint diagnostics', (t) => {
 
     t.is(result.status, 1, result.stdout || result.stderr)
     t.true(`${result.stdout}\n${result.stderr}`.includes('no-debugger'), 'Should report oxlint rule diagnostics')
+  })
+})
+
+test('npm package carries ArkTS lint configuration schema', (t) => {
+  const schema = JSON.parse(readFileSync(schemaPath, 'utf8'))
+  const plugins = schema.definitions.LintPluginOptionsSchema.enum
+
+  t.true(plugins.includes('arkts'))
+  t.truthy(schema.definitions.DummyRuleMap.properties['arkts/no-symbol'])
+  t.is(
+    schema.definitions.DummyRuleMap.properties['arkts/system-api-version'].allOf[0].$ref,
+    '#/definitions/ArktsSystemApiVersionRule',
+  )
+})
+
+test('npm cli lint init writes oxk schema path', (t) => {
+  withTempDir((dir) => {
+    const result = runCli(['lint', '--init'], dir)
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+
+    const config = JSON.parse(readFileSync(join(dir, '.oxlintrc.json'), 'utf8'))
+    t.is(config.$schema, './node_modules/@ohos-rs/oxk/configuration_schema.json')
+    t.true(config.plugins.includes('arkts'))
   })
 })
 

@@ -18,6 +18,7 @@ mod mode;
 mod napi_lint;
 mod output_formatter;
 mod runner;
+mod schema;
 mod walk;
 
 const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
@@ -31,6 +32,10 @@ pub use napi_lint::{
 };
 
 pub fn lint_args(args: Vec<OsString>) -> bool {
+    if let Some(success) = handle_schema_args(&args) {
+        return success;
+    }
+
     let prepared = match prepare_arkts_config(args) {
         Ok(prepared) => prepared,
         Err(err) => {
@@ -61,6 +66,33 @@ pub fn lint_args(args: Vec<OsString>) -> bool {
     handle_threads_once(&command);
 
     run_lint_command(command, prepared.arkts, None)
+}
+
+fn handle_schema_args(args: &[OsString]) -> Option<bool> {
+    let args = args
+        .iter()
+        .map(|arg| arg.to_string_lossy())
+        .collect::<Vec<_>>();
+    match args.as_slice() {
+        [arg] if *arg == "--print-config-schema" || *arg == "--schema-json" => {
+            println!("{}", schema::configuration_schema_json());
+            Some(true)
+        }
+        [arg, path] if *arg == "--write-config-schema" => {
+            match schema::write_configuration_schema(Path::new(path.as_ref())) {
+                Ok(()) => Some(true),
+                Err(err) => {
+                    eprintln!("Failed to write configuration schema `{path}`: {err}");
+                    Some(false)
+                }
+            }
+        }
+        [arg] if *arg == "--write-config-schema" => {
+            eprintln!("--write-config-schema requires an output path.");
+            Some(false)
+        }
+        _ => None,
+    }
 }
 
 struct PreparedLintArgs {
