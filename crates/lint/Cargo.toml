@@ -17,7 +17,9 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_config_discovery = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
+oxc_language_server = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
@@ -29,6 +31,8 @@ schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
+tower-lsp-server = { workspace = true, features = ["proposed"] }
+tracing = { workspace = true }
 
 [features]
 default = []

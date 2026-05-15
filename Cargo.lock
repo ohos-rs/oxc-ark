@@ -807,7 +807,9 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_config_discovery",
+ "oxc_data_structures",
  "oxc_diagnostics",
+ "oxc_language_server",
  "oxc_linter",
  "oxc_parser",
  "oxc_span",
@@ -819,6 +821,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tower-lsp-server",
+ "tracing",
 ]
 
 [[package]]
