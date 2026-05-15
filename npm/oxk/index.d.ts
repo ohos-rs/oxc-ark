@@ -96,6 +96,8 @@ export declare const enum ExportLocalNameKind {
  */
 export declare function format(filename: string, sourceText: string, options?: any | undefined | null, initExternalFormatterCb?: (numThreads: number) => Promise<string[]>, formatEmbeddedCb?: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb?: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<FormatResult>
 
+export declare function formatLsp(): Promise<boolean>
+
 export interface FormatResult {
   /** The formatted code. */
   code: string

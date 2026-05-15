@@ -15,6 +15,25 @@ use serde_json::Value;
 use tokio::sync::Semaphore;
 use walkdir::WalkDir;
 
+pub fn run_lsp() -> Result<(), Box<dyn std::error::Error>> {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(1)
+        .enable_all()
+        .build()
+        .map_err(|e| {
+            Box::new(std::io::Error::other(format!(
+                "Failed to create tokio runtime: {}",
+                e
+            ))) as Box<dyn std::error::Error>
+        })?;
+
+    runtime.block_on(format::run_lsp(
+        "oxfmt".to_string(),
+        env!("CARGO_PKG_VERSION").to_string(),
+    ));
+    Ok(())
+}
+
 pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>> {
     let patterns = args.file.clone();
     let thread_count = args.thread;

@@ -27,13 +27,12 @@ rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-tokio = { workspace = true, optional = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [features]
 default = []
 napi = [
   "dep:napi",
-  "dep:tokio",
 ]
 testing = ["oxc_linter/force_test_reporter"]
 ruledocs = ["oxc_linter/ruledocs"]

@@ -53,8 +53,7 @@ pub fn lint_args(args: Vec<OsString>) -> bool {
     init_tracing();
 
     if command.lsp {
-        eprintln!("oxk lint --lsp is not supported by the embedded lint runner.");
-        return false;
+        return run_lsp_server(None);
     }
 
     init_miette();
@@ -354,6 +353,23 @@ fn run_lint_command(
 ) -> bool {
     let mut stdout = BufWriter::new(std::io::stdout());
     is_success(runner::OxkLintRunner::new(command, arkts_config, external_linter).run(&mut stdout))
+}
+
+pub(crate) fn run_lsp_server(external_linter: Option<ExternalLinter>) -> bool {
+    let runtime = match tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(1)
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => runtime,
+        Err(err) => {
+            eprintln!("Failed to create lint LSP runtime: {err}");
+            return false;
+        }
+    };
+
+    runtime.block_on(oxlint::lsp::run_lsp(external_linter));
+    true
 }
 
 fn handle_threads_once(command: &LintCommand) {

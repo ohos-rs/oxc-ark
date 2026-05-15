@@ -2,6 +2,10 @@ use bpaf::{Parser, construct, long, positional};
 use std::{path::PathBuf, str::FromStr};
 
 pub fn cli_format() -> impl Parser<crate::Options> {
+    let lsp = long("lsp")
+        .help("Start language server protocol (LSP) server")
+        .switch();
+
     let config = long("config")
         .argument::<String>("PATH")
         .help("Path to .oxfmtrc config file (default: search upward for .oxfmtrc.json / .oxfmtrc.jsonc)")
@@ -127,6 +131,7 @@ pub fn cli_format() -> impl Parser<crate::Options> {
         .optional();
 
     let format_parser = construct!(crate::FormatArgs {
+        lsp,
         config,
         thread,
         excludes,

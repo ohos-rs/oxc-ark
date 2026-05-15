@@ -2,6 +2,7 @@
 
 const VERSION = require('../package.json').version
 const { formatFiles } = require('./format.js')
+const { formatLsp } = require('../index.js')
 const { lint } = require('../lint.js')
 
 function parseBoolean(value, flagName) {
@@ -55,6 +56,7 @@ Lint Options:
   Run "oxk lint --help" for the full lint option list.
 
 Format Options:
+  --lsp
   --config PATH
   --thread, -t THREAD
   --exclude PATTERN
@@ -94,6 +96,7 @@ function parseFormatArgs(args) {
     excludes: [],
     threadCount: 1,
     configPath: undefined,
+    lsp: false,
     cliOptions: {},
   }
 
@@ -110,6 +113,10 @@ function parseFormatArgs(args) {
     }
 
     switch (token.split('=')[0]) {
+      case '--lsp': {
+        formatArgs.lsp = true
+        break
+      }
       case '--config': {
         const { value, nextIndex } = parseOptionValue(args, index, token)
         formatArgs.configPath = value
@@ -296,6 +303,14 @@ async function main() {
     if (help) {
       showHelp()
       process.exit(0)
+    }
+
+    if (formatArgs.lsp) {
+      if (typeof formatLsp !== 'function') {
+        throw new Error('oxk format --lsp requires the native oxk binding')
+      }
+      await formatLsp()
+      return
     }
 
     await formatFiles(formatArgs)

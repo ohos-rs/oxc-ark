@@ -20,6 +20,15 @@ simdutf8 = { workspace = true }
 json-strip-comments = { workspace = true }
 json5format = { workspace = true }
 
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+globset = { workspace = true }
+ignore = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["rope"] }
+oxc_language_server = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tower-lsp-server = { workspace = true, features = ["proposed"] }
+tracing = { workspace = true }
+
 [dependencies.sort-package-json]
 version = "0.0"
 optional = true

@@ -1,5 +1,7 @@
 mod config;
 mod format;
+#[cfg(not(target_family = "wasm"))]
+mod lsp;
 mod oxfmtrc;
 mod support;
 mod utils;
@@ -12,6 +14,8 @@ pub use config::{
     resolve_oxfmtrc_path,
 };
 pub use format::{FormatResult, SourceFormatter};
+#[cfg(not(target_family = "wasm"))]
+pub use lsp::run_lsp;
 pub use support::{FormatFileStrategy, JsonType, should_ignore_file};
 
 #[cfg(feature = "napi")]

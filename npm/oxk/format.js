@@ -1,5 +1,5 @@
 // Convenience wrapper that automatically uses Prettier for external formatter callbacks
-const { format: napiFormat } = require("./index.js");
+const { format: napiFormat, formatLsp } = require("./index.js");
 
 // Lazy load Prettier
 let prettierCache;
@@ -131,5 +131,4 @@ function formatRaw(
   );
 }
 
-module.exports = { format, formatRaw };
-
+module.exports = { format, formatRaw, formatLsp };

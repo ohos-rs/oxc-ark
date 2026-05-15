@@ -15,6 +15,8 @@ export declare function format(
   options?: Record<string, any>,
 ): Promise<{ code: string; errors: string[] }>
 
+export declare function formatLsp(): Promise<boolean>
+
 // Re-export the raw format function for advanced usage
 export { format as formatRaw } from './index.js'
 export type { FormatResult } from './index.d.ts'

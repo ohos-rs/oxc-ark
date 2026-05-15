@@ -25,7 +25,7 @@ use oxlint::cli::{init_miette, init_tracing, lint_command};
 
 use crate::{
     arkts::{self, ExternalLinterCallbacks},
-    handle_threads_once, prepare_arkts_config, run_lint_command,
+    handle_threads_once, prepare_arkts_config, run_lint_command, run_lsp_server,
 };
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
@@ -123,14 +123,6 @@ pub async fn lint_args_with_plugins(
 
     init_tracing();
 
-    if command.lsp {
-        eprintln!("oxk lint --lsp is not supported by the embedded lint runner.");
-        return false;
-    }
-
-    init_miette();
-    handle_threads_once(&command);
-
     let external_linter = create_external_linter(
         load_plugin,
         setup_rule_configs,
@@ -138,6 +130,14 @@ pub async fn lint_args_with_plugins(
         create_workspace,
         destroy_workspace,
     );
+
+    if command.lsp {
+        return run_lsp_server(Some(external_linter));
+    }
+
+    init_miette();
+    handle_threads_once(&command);
+
     run_lint_command(command, prepared.arkts, Some(external_linter))
 }
 
