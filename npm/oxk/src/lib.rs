@@ -27,6 +27,36 @@ pub struct FormatResult {
   pub errors: Vec<String>,
 }
 
+#[cfg(not(target_family = "wasm"))]
+fn package_version() -> String {
+  serde_json::from_str::<Value>(include_str!("../package.json"))
+    .ok()
+    .and_then(|package| {
+      package
+        .get("version")
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+    })
+    .unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string())
+}
+
+/// Run the oxfmt-compatible formatter language server.
+#[cfg(not(target_family = "wasm"))]
+#[napi]
+pub async fn format_lsp() -> bool {
+  format::run_lsp("oxfmt".to_string(), package_version()).await;
+  true
+}
+
+/// Run the oxfmt-compatible formatter language server.
+#[cfg(target_family = "wasm")]
+#[napi]
+pub async fn format_lsp() -> napi::Result<bool> {
+  Err(napi::Error::from_reason(
+    "oxk format --lsp is not supported in WASI builds. Use the native npm package or the cargo CLI.",
+  ))
+}
+
 /// Run the oxlint-compatible linter.
 #[cfg(not(target_family = "wasm"))]
 #[napi]

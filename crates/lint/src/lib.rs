@@ -7,17 +7,20 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use oxc_linter::ExternalLinter;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_linter::{ExternalLinter, Oxlintrc};
 use oxlint::cli::{CliRunResult, LintCommand, init_miette, init_tracing, lint_command};
 use serde_json::Value;
 
 mod arkts;
 mod config_loader;
+mod lsp;
 mod mode;
 #[cfg(feature = "napi")]
 mod napi_lint;
 mod output_formatter;
 mod runner;
+mod schema;
 mod walk;
 
 const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
@@ -31,6 +34,22 @@ pub use napi_lint::{
 };
 
 pub fn lint_args(args: Vec<OsString>) -> bool {
+    if let Some(success) = handle_schema_args(&args) {
+        return success;
+    }
+
+    let command = match parse_lint_command(&args) {
+        Ok(command) => command,
+        Err(success) => return success,
+    };
+
+    init_tracing();
+
+    if command.lsp {
+        let config_path = command.basic_options.config.clone().map(resolve_from_cwd);
+        return run_lsp_server(None, config_path);
+    }
+
     let prepared = match prepare_arkts_config(args) {
         Ok(prepared) => prepared,
         Err(err) => {
@@ -39,29 +58,54 @@ pub fn lint_args(args: Vec<OsString>) -> bool {
         }
     };
 
-    let command = {
-        let parser = lint_command();
-        match parser.run_inner(&*prepared.args) {
-            Ok(command) => command,
-            Err(err) => {
-                err.print_message(100);
-                return err.exit_code() == 0;
-            }
-        }
+    let command = match parse_lint_command(&prepared.args) {
+        Ok(command) => command,
+        Err(success) => return success,
     };
-
-    init_tracing();
-
-    if command.lsp {
-        eprintln!("oxk lint --lsp is not supported by the embedded lint runner.");
-        return false;
-    }
 
     init_miette();
 
     handle_threads_once(&command);
 
     run_lint_command(command, prepared.arkts, None)
+}
+
+pub(crate) fn parse_lint_command(args: &[OsString]) -> Result<LintCommand, bool> {
+    let parser = lint_command();
+    match parser.run_inner(args) {
+        Ok(command) => Ok(command),
+        Err(err) => {
+            err.print_message(100);
+            Err(err.exit_code() == 0)
+        }
+    }
+}
+
+fn handle_schema_args(args: &[OsString]) -> Option<bool> {
+    let args = args
+        .iter()
+        .map(|arg| arg.to_string_lossy())
+        .collect::<Vec<_>>();
+    match args.as_slice() {
+        [arg] if *arg == "--print-config-schema" || *arg == "--schema-json" => {
+            println!("{}", schema::configuration_schema_json());
+            Some(true)
+        }
+        [arg, path] if *arg == "--write-config-schema" => {
+            match schema::write_configuration_schema(Path::new(path.as_ref())) {
+                Ok(()) => Some(true),
+                Err(err) => {
+                    eprintln!("Failed to write configuration schema `{path}`: {err}");
+                    Some(false)
+                }
+            }
+        }
+        [arg] if *arg == "--write-config-schema" => {
+            eprintln!("--write-config-schema requires an output path.");
+            Some(false)
+        }
+        _ => None,
+    }
 }
 
 struct PreparedLintArgs {
@@ -71,12 +115,12 @@ struct PreparedLintArgs {
 }
 
 #[derive(Clone, Default)]
-struct ArktsLintConfig {
-    rules: Vec<arkts::StandaloneRuleConfig>,
+pub(crate) struct ArktsLintConfig {
+    pub(crate) rules: Vec<arkts::StandaloneRuleConfig>,
 }
 
 impl ArktsLintConfig {
-    fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.rules.is_empty()
     }
 }
@@ -192,7 +236,7 @@ fn find_lint_config_path(args: &[OsString]) -> Option<PathBuf> {
         .find(|path| path.is_file())
 }
 
-fn resolve_from_cwd(path: PathBuf) -> PathBuf {
+pub(crate) fn resolve_from_cwd(path: PathBuf) -> PathBuf {
     if path.is_absolute() {
         path
     } else {
@@ -209,7 +253,57 @@ fn is_json_lint_config(path: &Path) -> bool {
     )
 }
 
-fn rewrite_arkts_builtin_config(
+pub(crate) fn load_oxlintrc_and_arkts_from_file(
+    path: &Path,
+) -> Result<(Oxlintrc, ArktsLintConfig), OxcDiagnostic> {
+    let mut json_text = fs::read_to_string(path).map_err(|err| {
+        OxcDiagnostic::error(format!(
+            "Failed to parse config {} with error {err:?}",
+            path.display()
+        ))
+    })?;
+
+    json_strip_comments::strip(&mut json_text).map_err(|err| {
+        OxcDiagnostic::error(format!(
+            "Failed to parse jsonc file {}: {err:?}",
+            path.display()
+        ))
+    })?;
+
+    let mut value = serde_json::from_str::<Value>(&json_text).map_err(|err| {
+        let ext = path.extension().and_then(std::ffi::OsStr::to_str);
+        let err = match ext {
+            Some("json" | "jsonc") => err.to_string(),
+            Some(_) => "Only JSON configuration files are supported".to_string(),
+            None => {
+                format!("{err}, if the configuration is not a JSON file, please use JSON instead.")
+            }
+        };
+        OxcDiagnostic::error(format!(
+            "Failed to parse oxlint config {}.\n{err}",
+            path.display()
+        ))
+    })?;
+
+    let mut arkts_config = ArktsLintConfig::default();
+    rewrite_arkts_builtin_config(&mut value, &mut arkts_config).map_err(OxcDiagnostic::error)?;
+
+    let mut config = serde_json::from_value::<Oxlintrc>(value).map_err(|err| {
+        OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
+    })?;
+
+    config.path = path.to_path_buf();
+    let config_dir = config
+        .path
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .to_path_buf();
+    config.set_config_dir(&config_dir);
+
+    Ok((config, arkts_config))
+}
+
+pub(crate) fn rewrite_arkts_builtin_config(
     value: &mut Value,
     arkts_config: &mut ArktsLintConfig,
 ) -> Result<bool, String> {
@@ -354,6 +448,26 @@ fn run_lint_command(
 ) -> bool {
     let mut stdout = BufWriter::new(std::io::stdout());
     is_success(runner::OxkLintRunner::new(command, arkts_config, external_linter).run(&mut stdout))
+}
+
+pub(crate) fn run_lsp_server(
+    external_linter: Option<ExternalLinter>,
+    config_path: Option<PathBuf>,
+) -> bool {
+    let runtime = match tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(1)
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => runtime,
+        Err(err) => {
+            eprintln!("Failed to create lint LSP runtime: {err}");
+            return false;
+        }
+    };
+
+    runtime.block_on(lsp::run_lsp(external_linter, config_path));
+    true
 }
 
 fn handle_threads_once(command: &LintCommand) {

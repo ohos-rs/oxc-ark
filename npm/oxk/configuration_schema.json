@@ -1,0 +1,1817 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Oxlintrc",
+  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/@ohos-rs/oxk/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n},\n\"custom\": { \"option\": true }\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```\n\n`oxlint.config.ts`\n\n```ts\nimport { defineConfig } from \"oxlint\";\n\nexport default defineConfig({\nplugins: [\"import\", \"typescript\", \"unicorn\"],\nenv: {\n\"browser\": true\n},\nglobals: {\n\"foo\": \"readonly\"\n},\nsettings: {\nreact: {\nversion: \"18.2.0\"\n},\ncustom: { option: true }\n},\nrules: {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\noverrides: [\n{\nfiles: [\"*.test.ts\", \"*.spec.ts\"],\nrules: {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n});\n```",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Schema URI for editor tooling.",
+      "type": "string",
+      "markdownDescription": "Schema URI for editor tooling."
+    },
+    "categories": {
+      "default": {},
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintCategories"
+        }
+      ]
+    },
+    "env": {
+      "description": "Environments enable and disable collections of global variables.",
+      "default": {
+        "builtin": true
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintEnv"
+        }
+      ],
+      "markdownDescription": "Environments enable and disable collections of global variables."
+    },
+    "extends": {
+      "description": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones."
+    },
+    "globals": {
+      "description": "Enabled or disabled specific global variables.",
+      "default": {},
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintGlobals"
+        }
+      ],
+      "markdownDescription": "Enabled or disabled specific global variables."
+    },
+    "ignorePatterns": {
+      "description": "Globs to ignore during linting. These are resolved from the configuration file path.",
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "Globs to ignore during linting. These are resolved from the configuration file path."
+    },
+    "jsPlugins": {
+      "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExternalPluginEntry"
+          },
+          "uniqueItems": true
+        }
+      ],
+      "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
+    },
+    "options": {
+      "description": "Oxlint config options.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintOptions"
+        }
+      ],
+      "markdownDescription": "Oxlint config options."
+    },
+    "overrides": {
+      "description": "Add, remove, or otherwise reconfigure rules for specific files or groups of files.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintOverrides"
+        }
+      ],
+      "markdownDescription": "Add, remove, or otherwise reconfigure rules for specific files or groups of files."
+    },
+    "plugins": {
+      "description": "Enabled built-in plugins for Oxlint.\nYou can view the list of available plugins on\n[the website](https://oxc.rs/docs/guide/usage/linter/plugins.html#supported-plugins).\n\nNOTE: Setting the `plugins` field will overwrite the base set of plugins.\nThe `plugins` array should reflect all of the plugins you want to use.",
+      "default": null,
+      "allOf": [
+        {
+          "$ref": "#/definitions/LintPlugins"
+        }
+      ],
+      "markdownDescription": "Enabled built-in plugins for Oxlint.\nYou can view the list of available plugins on\n[the website](https://oxc.rs/docs/guide/usage/linter/plugins.html#supported-plugins).\n\nNOTE: Setting the `plugins` field will overwrite the base set of plugins.\nThe `plugins` array should reflect all of the plugins you want to use."
+    },
+    "rules": {
+      "description": "Example\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/@ohos-rs/oxk/configuration_schema.json\",\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"prefer-const\": [\"error\", { \"ignoreReadBeforeAssign\": true }]\n}\n}\n```\n\nSee [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of\nrules.",
+      "default": {},
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintRules"
+        }
+      ],
+      "markdownDescription": "Example\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/@ohos-rs/oxk/configuration_schema.json\",\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"prefer-const\": [\"error\", { \"ignoreReadBeforeAssign\": true }]\n}\n}\n```\n\nSee [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of\nrules."
+    },
+    "settings": {
+      "description": "Plugin-specific configuration for both built-in and custom plugins.\nThis includes settings for built-in plugins such as `react` and `jsdoc`\nas well as configuring settings for JS custom plugins loaded via `jsPlugins`.",
+      "default": {
+        "jsx-a11y": {
+          "polymorphicPropName": null,
+          "components": {},
+          "attributes": {}
+        },
+        "next": {
+          "rootDir": []
+        },
+        "react": {
+          "formComponents": [],
+          "linkComponents": [],
+          "version": null,
+          "componentWrapperFunctions": []
+        },
+        "jsdoc": {
+          "ignorePrivate": false,
+          "ignoreInternal": false,
+          "ignoreReplacesDocs": true,
+          "overrideReplacesDocs": true,
+          "augmentsExtendsReplacesDocs": false,
+          "implementsReplacesDocs": false,
+          "exemptDestructuredRootsFromChecks": false,
+          "tagNamePreference": {}
+        },
+        "vitest": {
+          "typecheck": false
+        },
+        "jest": {
+          "version": null
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintSettings"
+        }
+      ],
+      "markdownDescription": "Plugin-specific configuration for both built-in and custom plugins.\nThis includes settings for built-in plugins such as `react` and `jsdoc`\nas well as configuring settings for JS custom plugins loaded via `jsPlugins`."
+    }
+  },
+  "additionalProperties": false,
+  "allowComments": true,
+  "allowTrailingCommas": true,
+  "definitions": {
+    "AllowWarnDeny": {
+      "oneOf": [
+        {
+          "description": "Oxlint rule.\n- \"allow\" or \"off\": Turn off the rule.\n- \"warn\": Turn the rule on as a warning (doesn't affect exit code).\n- \"error\" or \"deny\": Turn the rule on as an error (will exit with a failure code).",
+          "type": "string",
+          "enum": ["allow", "off", "warn", "error", "deny"],
+          "markdownDescription": "Oxlint rule.\n- \"allow\" or \"off\": Turn off the rule.\n- \"warn\": Turn the rule on as a warning (doesn't affect exit code).\n- \"error\" or \"deny\": Turn the rule on as an error (will exit with a failure code)."
+        },
+        {
+          "description": "Oxlint rule.\n    \n- 0: Turn off the rule.\n- 1: Turn the rule on as a warning (doesn't affect exit code).\n- 2: Turn the rule on as an error (will exit with a failure code).",
+          "type": "integer",
+          "format": "uint32",
+          "maximum": 2.0,
+          "minimum": 0.0,
+          "markdownDescription": "Oxlint rule.\n    \n- 0: Turn off the rule.\n- 1: Turn the rule on as a warning (doesn't affect exit code).\n- 2: Turn the rule on as an error (will exit with a failure code)."
+        }
+      ]
+    },
+    "CustomComponent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": ["attribute", "name"],
+          "properties": {
+            "attribute": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["attributes", "name"],
+          "properties": {
+            "attributes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "DummyRule": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        {
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            }
+          ],
+          "additionalItems": true,
+          "minItems": 1
+        }
+      ]
+    },
+    "DummyRuleMap": {
+      "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/DummyRule"
+      },
+      "properties": {
+        "arkts/identifiers-as-prop-names": {
+          "description": "ArkTS requires object property names to be valid identifiers. (10605001)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS requires object property names to be valid identifiers. (10605001)"
+        },
+        "arkts/no-symbol": {
+          "description": "ArkTS does not support Symbol() or the symbol type. (10605002)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support Symbol() or the symbol type. (10605002)"
+        },
+        "arkts/no-private-identifiers": {
+          "description": "ArkTS does not support private identifiers starting with #. Use the private keyword instead. (10605003)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support private identifiers starting with #. Use the private keyword instead. (10605003)"
+        },
+        "arkts/unique-names": {
+          "description": "ArkTS requires unique names for types, namespaces, and values. (10605004)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS requires unique names for types, namespaces, and values. (10605004)"
+        },
+        "arkts/no-var": {
+          "description": "ArkTS does not support var. Use let or const instead. (10605005)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support var. Use let or const instead. (10605005)"
+        },
+        "arkts/no-any-unknown": {
+          "description": "ArkTS does not support any or unknown. Specify an explicit type. (10605008)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support any or unknown. Specify an explicit type. (10605008)"
+        },
+        "arkts/no-call-signatures": {
+          "description": "ArkTS does not support call signatures in object types. (10605014)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support call signatures in object types. (10605014)"
+        },
+        "arkts/no-ctor-signatures-type": {
+          "description": "ArkTS does not support constructor signatures in object types. (10605015)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support constructor signatures in object types. (10605015)"
+        },
+        "arkts/no-multiple-static-blocks": {
+          "description": "ArkTS supports only one static block per class. (10605016)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS supports only one static block per class. (10605016)"
+        },
+        "arkts/no-indexed-signatures": {
+          "description": "ArkTS does not support index signatures. (10605017)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support index signatures. (10605017)"
+        },
+        "arkts/no-intersection-types": {
+          "description": "ArkTS does not support intersection types. Use inheritance instead. (10605019)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support intersection types. Use inheritance instead. (10605019)"
+        },
+        "arkts/no-typing-with-this": {
+          "description": "ArkTS does not support this in type positions. (10605021)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support this in type positions. (10605021)"
+        },
+        "arkts/no-conditional-types": {
+          "description": "ArkTS does not support conditional types or infer types. (10605022)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support conditional types or infer types. (10605022)"
+        },
+        "arkts/no-ctor-prop-decls": {
+          "description": "ArkTS does not support declaring properties in constructor parameters. (10605025)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support declaring properties in constructor parameters. (10605025)"
+        },
+        "arkts/no-ctor-signatures-iface": {
+          "description": "ArkTS does not support constructor signatures in interfaces. (10605027)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support constructor signatures in interfaces. (10605027)"
+        },
+        "arkts/no-aliases-by-index": {
+          "description": "ArkTS does not support indexed access types. (10605028)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support indexed access types. (10605028)"
+        },
+        "arkts/no-props-by-index": {
+          "description": "ArkTS does not support property access by non-numeric indexes. (10605029)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support property access by non-numeric indexes. (10605029)"
+        },
+        "arkts/no-structural-typing": {
+          "description": "ArkTS does not support structural typing. (10605030)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support structural typing. (10605030)"
+        },
+        "arkts/no-inferred-generic-params": {
+          "description": "ArkTS limits type inference for generic function calls. (10605034)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS limits type inference for generic function calls. (10605034)"
+        },
+        "arkts/no-untyped-obj-literals": {
+          "description": "ArkTS requires object literals to have inferrable or explicit types. (10605038)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS requires object literals to have inferrable or explicit types. (10605038)"
+        },
+        "arkts/no-obj-literals-as-types": {
+          "description": "ArkTS does not support object literal types. (10605040)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support object literal types. (10605040)"
+        },
+        "arkts/no-noninferrable-arr-literals": {
+          "description": "ArkTS requires array literal element types to be inferrable. (10605043)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS requires array literal element types to be inferrable. (10605043)"
+        },
+        "arkts/no-func-expressions": {
+          "description": "ArkTS does not support function expressions. Use arrow functions instead. (10605046)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support function expressions. Use arrow functions instead. (10605046)"
+        },
+        "arkts/no-class-literals": {
+          "description": "ArkTS does not support class expressions. (10605050)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support class expressions. (10605050)"
+        },
+        "arkts/implements-only-iface": {
+          "description": "ArkTS classes may implement interfaces only. (10605051)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS classes may implement interfaces only. (10605051)"
+        },
+        "arkts/no-method-reassignment": {
+          "description": "ArkTS does not support method reassignment. (10605052)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support method reassignment. (10605052)"
+        },
+        "arkts/as-casts": {
+          "description": "ArkTS supports as casts only. (10605053)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS supports as casts only. (10605053)"
+        },
+        "arkts/no-jsx": {
+          "description": "ArkTS does not support JSX. (10605054)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support JSX. (10605054)"
+        },
+        "arkts/no-polymorphic-unops": {
+          "description": "ArkTS restricts unary operator semantics. (10605055)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS restricts unary operator semantics. (10605055)"
+        },
+        "arkts/no-delete": {
+          "description": "ArkTS does not support the delete operator. (10605059)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support the delete operator. (10605059)"
+        },
+        "arkts/no-type-query": {
+          "description": "ArkTS does not support typeof in type positions. (10605060)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support typeof in type positions. (10605060)"
+        },
+        "arkts/instanceof-ref-types": {
+          "description": "ArkTS restricts instanceof to reference types. (10605065)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS restricts instanceof to reference types. (10605065)"
+        },
+        "arkts/no-in": {
+          "description": "ArkTS does not support the in operator. (10605066)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support the in operator. (10605066)"
+        },
+        "arkts/no-destruct-assignment": {
+          "description": "ArkTS does not support destructuring assignment. (10605069)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support destructuring assignment. (10605069)"
+        },
+        "arkts/no-comma-outside-loops": {
+          "description": "ArkTS restricts comma expressions outside loops. (10605071)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS restricts comma expressions outside loops. (10605071)"
+        },
+        "arkts/no-destruct-decls": {
+          "description": "ArkTS does not support destructuring declarations. (10605074)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support destructuring declarations. (10605074)"
+        },
+        "arkts/no-types-in-catch": {
+          "description": "ArkTS does not support type annotations in catch clauses. (10605079)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support type annotations in catch clauses. (10605079)"
+        },
+        "arkts/no-for-in": {
+          "description": "ArkTS does not support for-in statements. (10605080)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support for-in statements. (10605080)"
+        },
+        "arkts/no-mapped-types": {
+          "description": "ArkTS does not support mapped types. (10605083)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support mapped types. (10605083)"
+        },
+        "arkts/no-with": {
+          "description": "ArkTS does not support with statements. (10605084)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support with statements. (10605084)"
+        },
+        "arkts/limited-throw": {
+          "description": "ArkTS restricts thrown values to Error-derived objects. (10605087)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS restricts thrown values to Error-derived objects. (10605087)"
+        },
+        "arkts/no-implicit-return-types": {
+          "description": "ArkTS requires explicit return types for functions and methods. (10605090)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS requires explicit return types for functions and methods. (10605090)"
+        },
+        "arkts/no-destruct-params": {
+          "description": "ArkTS does not support destructuring parameters. (10605091)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support destructuring parameters. (10605091)"
+        },
+        "arkts/no-nested-funcs": {
+          "description": "ArkTS does not support nested function declarations. (10605092)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support nested function declarations. (10605092)"
+        },
+        "arkts/no-standalone-this": {
+          "description": "ArkTS does not support standalone this. (10605093)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support standalone this. (10605093)"
+        },
+        "arkts/no-generators": {
+          "description": "ArkTS does not support generator functions. (10605094)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support generator functions. (10605094)"
+        },
+        "arkts/no-is": {
+          "description": "ArkTS does not support is type predicates. (10605096)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support is type predicates. (10605096)"
+        },
+        "arkts/no-spread": {
+          "description": "ArkTS restricts spread syntax. (10605099)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS restricts spread syntax. (10605099)"
+        },
+        "arkts/no-extend-same-prop": {
+          "description": "ArkTS interfaces cannot extend interfaces with duplicate properties. (106050102)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS interfaces cannot extend interfaces with duplicate properties. (106050102)"
+        },
+        "arkts/no-decl-merging": {
+          "description": "ArkTS does not support declaration merging. (10605103)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support declaration merging. (10605103)"
+        },
+        "arkts/extends-only-class": {
+          "description": "ArkTS classes can extend classes only. (10605104)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS classes can extend classes only. (10605104)"
+        },
+        "arkts/no-ctor-signatures-funcs": {
+          "description": "ArkTS does not support constructor function types. (10605106)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support constructor function types. (10605106)"
+        },
+        "arkts/no-enum-mixed-types": {
+          "description": "ArkTS enum members must be initialized with same-type compile-time expressions. (10605111)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS enum members must be initialized with same-type compile-time expressions. (10605111)"
+        },
+        "arkts/no-enum-merging": {
+          "description": "ArkTS does not support enum declaration merging. (10605113)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support enum declaration merging. (10605113)"
+        },
+        "arkts/no-ns-as-obj": {
+          "description": "ArkTS does not support using namespaces as objects. (10605114)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support using namespaces as objects. (10605114)"
+        },
+        "arkts/no-ns-statements": {
+          "description": "ArkTS does not support non-declaration statements in namespaces. (10605116)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support non-declaration statements in namespaces. (10605116)"
+        },
+        "arkts/no-require": {
+          "description": "ArkTS does not support require or import assignment. (10605121)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support require or import assignment. (10605121)"
+        },
+        "arkts/no-export-assignment": {
+          "description": "ArkTS does not support export = syntax. (10605126)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support export = syntax. (10605126)"
+        },
+        "arkts/no-ambient-decls": {
+          "description": "ArkTS does not support ambient module declarations. (10605128)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support ambient module declarations. (10605128)"
+        },
+        "arkts/no-module-wildcards": {
+          "description": "ArkTS does not support wildcards in module names. (10605129)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support wildcards in module names. (10605129)"
+        },
+        "arkts/no-umd": {
+          "description": "ArkTS does not support UMD declarations. (10605130)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support UMD declarations. (10605130)"
+        },
+        "arkts/no-new-target": {
+          "description": "ArkTS does not support new.target. (10605132)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support new.target. (10605132)"
+        },
+        "arkts/no-definite-assignment": {
+          "description": "ArkTS does not support definite assignment assertions. (10605134)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support definite assignment assertions. (10605134)"
+        },
+        "arkts/no-prototype-assignment": {
+          "description": "ArkTS does not support prototype assignment. (10605136)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support prototype assignment. (10605136)"
+        },
+        "arkts/no-globalthis": {
+          "description": "ArkTS does not support globalThis. (10605137)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support globalThis. (10605137)"
+        },
+        "arkts/no-utility-types": {
+          "description": "ArkTS supports only Partial, Required, Readonly, and Record utility types. (10605138)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS supports only Partial, Required, Readonly, and Record utility types. (10605138)"
+        },
+        "arkts/no-func-props": {
+          "description": "ArkTS does not support declaring properties on functions. (10605139)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support declaring properties on functions. (10605139)"
+        },
+        "arkts/no-func-apply-call": {
+          "description": "ArkTS does not support Function.apply or Function.call. (10605152)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support Function.apply or Function.call. (10605152)"
+        },
+        "arkts/no-func-bind": {
+          "description": "ArkTS does not support Function.bind. (10605140)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support Function.bind. (10605140)"
+        },
+        "arkts/no-as-const": {
+          "description": "ArkTS does not support as const assertions. (10605142)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support as const assertions. (10605142)"
+        },
+        "arkts/no-import-assertions": {
+          "description": "ArkTS does not support import assertions. (10605143)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support import assertions. (10605143)"
+        },
+        "arkts/limited-stdlib": {
+          "description": "ArkTS restricts dynamic standard library APIs. (10605144)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS restricts dynamic standard library APIs. (10605144)"
+        },
+        "arkts/strict-typing-required": {
+          "description": "ArkTS does not allow disabling type checking with @ts-ignore or @ts-nocheck. (10605146)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not allow disabling type checking with @ts-ignore or @ts-nocheck. (10605146)"
+        },
+        "arkts/no-ts-deps": {
+          "description": "TypeScript and JavaScript files cannot import ETS source files. (10605147)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "TypeScript and JavaScript files cannot import ETS source files. (10605147)"
+        },
+        "arkts/no-classes-as-obj": {
+          "description": "ArkTS does not support using classes as objects.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS does not support using classes as objects."
+        },
+        "arkts/no-misplaced-imports": {
+          "description": "ArkTS requires import declarations to appear before other statements.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS requires import declarations to appear before other statements."
+        },
+        "arkts/limited-esobj": {
+          "description": "ArkTS restricts ESObject usage.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsRule"
+            }
+          ],
+          "markdownDescription": "ArkTS restricts ESObject usage."
+        },
+        "arkts/system-api-version": {
+          "description": "ArkTS system API usage must be supported by the configured minimum API version.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ArktsSystemApiVersionRule"
+            }
+          ],
+          "markdownDescription": "ArkTS system API usage must be supported by the configured minimum API version."
+        }
+      },
+      "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+    },
+    "ExternalPluginEntry": {
+      "anyOf": [
+        {
+          "description": "Path or package name of the plugin",
+          "type": "string",
+          "markdownDescription": "Path or package name of the plugin"
+        },
+        {
+          "description": "Plugin with custom name/alias",
+          "type": "object",
+          "required": ["name", "specifier"],
+          "properties": {
+            "name": {
+              "description": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript (includes @typescript-eslint)\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts.",
+              "type": "string",
+              "markdownDescription": "Custom name/alias for the plugin.\n\nNote: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:\n- react (includes react-hooks)\n- unicorn\n- typescript (includes @typescript-eslint)\n- oxc\n- import (includes import-x)\n- jsdoc\n- jest\n- vitest\n- jsx-a11y\n- nextjs\n- react-perf\n- promise\n- node\n- vue\n- eslint\n\nIf you need to use the JavaScript version of any of these plugins, provide a custom alias to avoid conflicts."
+            },
+            "specifier": {
+              "description": "Path or package name of the plugin",
+              "type": "string",
+              "markdownDescription": "Path or package name of the plugin"
+            }
+          },
+          "additionalProperties": false,
+          "markdownDescription": "Plugin with custom name/alias"
+        }
+      ]
+    },
+    "GlobSet": {
+      "description": "A set of glob patterns.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "A set of glob patterns."
+    },
+    "GlobalValue": {
+      "type": "string",
+      "enum": ["readonly", "writable", "off"]
+    },
+    "JSDocPluginSettings": {
+      "type": "object",
+      "properties": {
+        "augmentsExtendsReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Only for `require-(yields|returns|description|example|param|throws)` rule"
+        },
+        "exemptDestructuredRootsFromChecks": {
+          "description": "Only for `require-param-type` and `require-param-description` rule",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Only for `require-param-type` and `require-param-description` rule"
+        },
+        "ignoreInternal": {
+          "description": "For all rules but NOT apply to `empty-tags` rule",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "For all rules but NOT apply to `empty-tags` rule"
+        },
+        "ignorePrivate": {
+          "description": "For all rules but NOT apply to `check-access` and `empty-tags` rule",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "For all rules but NOT apply to `check-access` and `empty-tags` rule"
+        },
+        "ignoreReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Only for `require-(yields|returns|description|example|param|throws)` rule"
+        },
+        "implementsReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Only for `require-(yields|returns|description|example|param|throws)` rule"
+        },
+        "overrideReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Only for `require-(yields|returns|description|example|param|throws)` rule"
+        },
+        "tagNamePreference": {
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/TagNamePreference"
+          }
+        }
+      }
+    },
+    "JSXA11yPluginSettings": {
+      "description": "Configure JSX A11y plugin rules.\n\nSee\n[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s\nconfiguration for a full reference.",
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "description": "Map of attribute names to their DOM equivalents.\nThis is useful for non-React frameworks that use different attribute names.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jsx-a11y\": {\n\"attributes\": {\n\"for\": [\"htmlFor\", \"for\"]\n}\n}\n}\n}\n```",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "markdownDescription": "Map of attribute names to their DOM equivalents.\nThis is useful for non-React frameworks that use different attribute names.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jsx-a11y\": {\n\"attributes\": {\n\"for\": [\"htmlFor\", \"for\"]\n}\n}\n}\n}\n```"
+        },
+        "components": {
+          "description": "To have your custom components be checked as DOM elements, you can\nprovide a mapping of your component names to the DOM element name.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"IconButton\": \"button\"\n}\n}\n}\n}\n```",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "markdownDescription": "To have your custom components be checked as DOM elements, you can\nprovide a mapping of your component names to the DOM element name.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"IconButton\": \"button\"\n}\n}\n}\n}\n```"
+        },
+        "polymorphicPropName": {
+          "description": "An optional setting that define the prop your code uses to create polymorphic components.\nThis setting will be used to determine the element type in rules that\nrequire semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx\n<Box as=\"h3\">Hello</Box>\n```\n\nWill be treated as an `h3`. If not set, this component will be treated\nas a `Box`.",
+          "type": "string",
+          "markdownDescription": "An optional setting that define the prop your code uses to create polymorphic components.\nThis setting will be used to determine the element type in rules that\nrequire semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx\n<Box as=\"h3\">Hello</Box>\n```\n\nWill be treated as an `h3`. If not set, this component will be treated\nas a `Box`."
+        }
+      },
+      "markdownDescription": "Configure JSX A11y plugin rules.\n\nSee\n[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s\nconfiguration for a full reference."
+    },
+    "JestPluginSettings": {
+      "description": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference.",
+      "type": "object",
+      "properties": {
+        "version": {
+          "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/JestVersionSchema"
+            }
+          ],
+          "markdownDescription": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::"
+        }
+      },
+      "markdownDescription": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference."
+    },
+    "JestVersionSchema": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "LintPluginOptionsSchema": {
+      "type": "string",
+      "enum": [
+        "eslint",
+        "react",
+        "unicorn",
+        "typescript",
+        "oxc",
+        "import",
+        "jsdoc",
+        "jest",
+        "vitest",
+        "jsx-a11y",
+        "nextjs",
+        "react-perf",
+        "promise",
+        "node",
+        "vue",
+        "arkts"
+      ]
+    },
+    "LintPlugins": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/LintPluginOptionsSchema"
+          }
+        ]
+      }
+    },
+    "NextPluginSettings": {
+      "description": "Configure Next.js plugin rules.",
+      "type": "object",
+      "properties": {
+        "rootDir": {
+          "description": "The root directory of the Next.js project.\n\nThis is particularly useful when you have a monorepo and your Next.js\nproject is in a subfolder.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n}\n}\n}\n```",
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneOrMany_for_String"
+            }
+          ],
+          "markdownDescription": "The root directory of the Next.js project.\n\nThis is particularly useful when you have a monorepo and your Next.js\nproject is in a subfolder.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n}\n}\n}\n```"
+        }
+      },
+      "markdownDescription": "Configure Next.js plugin rules."
+    },
+    "OneOrMany_for_String": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "OxlintCategories": {
+      "title": "Rule Categories",
+      "description": "Configure an entire category of rules all at once.\n\nRules enabled or disabled this way will be overwritten by individual rules in the `rules` field.\n\nExample\n```json\n{\n    \"$schema\": \"./node_modules/@ohos-rs/oxk/configuration_schema.json\",\n    \"categories\": {\n        \"correctness\": \"warn\"\n    },\n    \"rules\": {\n        \"eslint/no-unused-vars\": \"error\"\n    }\n}\n```",
+      "examples": [
+        {
+          "correctness": "warn"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "correctness": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "nursery": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "pedantic": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "perf": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "restriction": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "style": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        "suspicious": {
+          "$ref": "#/definitions/AllowWarnDeny"
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Configure an entire category of rules all at once.\n\nRules enabled or disabled this way will be overwritten by individual rules in the `rules` field.\n\nExample\n```json\n{\n    \"$schema\": \"./node_modules/@ohos-rs/oxk/configuration_schema.json\",\n    \"categories\": {\n        \"correctness\": \"warn\"\n    },\n    \"rules\": {\n        \"eslint/no-unused-vars\": \"error\"\n    }\n}\n```"
+    },
+    "OxlintEnv": {
+      "description": "Predefine global variables.\n\nEnvironments specify what global variables are predefined.\nAvailable environments:\n- amd - require() and define() globals.\n- applescript - AppleScript globals.\n- astro - Astro globals.\n- atomtest - Atom test globals.\n- audioworklet - AudioWorklet globals.\n- browser - browser globals.\n- builtin - Latest ECMAScript globals, equivalent to es2026.\n- commonjs - CommonJS globals and scoping.\n- embertest - Ember test globals.\n- es2015 - ECMAScript 2015 globals.\n- es2016 - ECMAScript 2016 globals.\n- es2017 - ECMAScript 2017 globals.\n- es2018 - ECMAScript 2018 globals.\n- es2019 - ECMAScript 2019 globals.\n- es2020 - ECMAScript 2020 globals.\n- es2021 - ECMAScript 2021 globals.\n- es2022 - ECMAScript 2022 globals.\n- es2023 - ECMAScript 2023 globals.\n- es2024 - ECMAScript 2024 globals.\n- es2025 - ECMAScript 2025 globals.\n- es2026 - ECMAScript 2026 globals.\n- es6 - ECMAScript 6 globals except modules.\n- greasemonkey - GreaseMonkey globals.\n- jasmine - Jasmine globals.\n- jest - Jest globals.\n- jquery - jQuery globals.\n- meteor - Meteor globals.\n- mocha - Mocha globals.\n- mongo - MongoDB globals.\n- nashorn - Java 8 Nashorn globals.\n- node - Node.js globals and scoping.\n- phantomjs - PhantomJS globals.\n- prototypejs - Prototype.js globals.\n- protractor - Protractor globals.\n- qunit - QUnit globals.\n- serviceworker - Service Worker globals.\n- shared-node-browser - Node.js and Browser common globals.\n- shelljs - ShellJS globals.\n- svelte - Svelte globals.\n- vitest - Vitest globals.\n- vue - Vue globals.\n- webextensions - WebExtensions globals.\n- worker - Web Workers globals.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "markdownDescription": "Predefine global variables.\n\nEnvironments specify what global variables are predefined.\nAvailable environments:\n- amd - require() and define() globals.\n- applescript - AppleScript globals.\n- astro - Astro globals.\n- atomtest - Atom test globals.\n- audioworklet - AudioWorklet globals.\n- browser - browser globals.\n- builtin - Latest ECMAScript globals, equivalent to es2026.\n- commonjs - CommonJS globals and scoping.\n- embertest - Ember test globals.\n- es2015 - ECMAScript 2015 globals.\n- es2016 - ECMAScript 2016 globals.\n- es2017 - ECMAScript 2017 globals.\n- es2018 - ECMAScript 2018 globals.\n- es2019 - ECMAScript 2019 globals.\n- es2020 - ECMAScript 2020 globals.\n- es2021 - ECMAScript 2021 globals.\n- es2022 - ECMAScript 2022 globals.\n- es2023 - ECMAScript 2023 globals.\n- es2024 - ECMAScript 2024 globals.\n- es2025 - ECMAScript 2025 globals.\n- es2026 - ECMAScript 2026 globals.\n- es6 - ECMAScript 6 globals except modules.\n- greasemonkey - GreaseMonkey globals.\n- jasmine - Jasmine globals.\n- jest - Jest globals.\n- jquery - jQuery globals.\n- meteor - Meteor globals.\n- mocha - Mocha globals.\n- mongo - MongoDB globals.\n- nashorn - Java 8 Nashorn globals.\n- node - Node.js globals and scoping.\n- phantomjs - PhantomJS globals.\n- prototypejs - Prototype.js globals.\n- protractor - Protractor globals.\n- qunit - QUnit globals.\n- serviceworker - Service Worker globals.\n- shared-node-browser - Node.js and Browser common globals.\n- shelljs - ShellJS globals.\n- svelte - Svelte globals.\n- vitest - Vitest globals.\n- vue - Vue globals.\n- webextensions - WebExtensions globals.\n- worker - Web Workers globals."
+    },
+    "OxlintGlobals": {
+      "description": "Add or remove global variables.\n\nFor each global variable, set the corresponding value equal to `\"writable\"`\nto allow the variable to be overwritten or `\"readonly\"` to disallow overwriting.\n\nGlobals can be disabled by setting their value to `\"off\"`. For example, in\nan environment where most Es2015 globals are available but `Promise` is unavailable,\nyou might use this config:\n\n```json\n\n{\n\"$schema\": \"./node_modules/@ohos-rs/oxk/configuration_schema.json\",\n\"env\": {\n\"es6\": true\n},\n\"globals\": {\n\"Promise\": \"off\"\n}\n}\n\n```\n\nYou may also use `\"readable\"` or `false` to represent `\"readonly\"`, and\n`\"writeable\"` or `true` to represent `\"writable\"`.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/GlobalValue"
+      },
+      "markdownDescription": "Add or remove global variables.\n\nFor each global variable, set the corresponding value equal to `\"writable\"`\nto allow the variable to be overwritten or `\"readonly\"` to disallow overwriting.\n\nGlobals can be disabled by setting their value to `\"off\"`. For example, in\nan environment where most Es2015 globals are available but `Promise` is unavailable,\nyou might use this config:\n\n```json\n\n{\n\"$schema\": \"./node_modules/@ohos-rs/oxk/configuration_schema.json\",\n\"env\": {\n\"es6\": true\n},\n\"globals\": {\n\"Promise\": \"off\"\n}\n}\n\n```\n\nYou may also use `\"readable\"` or `false` to represent `\"readonly\"`, and\n`\"writeable\"` or `true` to represent `\"writable\"`."
+    },
+    "OxlintOptions": {
+      "description": "Options for the linter.",
+      "type": "object",
+      "properties": {
+        "denyWarnings": {
+          "description": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI.",
+          "type": "boolean",
+          "markdownDescription": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI."
+        },
+        "maxWarnings": {
+          "description": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI."
+        },
+        "reportUnusedDisableDirectives": {
+          "description": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            }
+          ],
+          "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
+        },
+        "respectEslintDisableDirectives": {
+          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file.",
+          "type": "boolean",
+          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file."
+        },
+        "typeAware": {
+          "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
+          "type": "boolean",
+          "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
+        },
+        "typeCheck": {
+          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
+          "type": "boolean",
+          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Options for the linter."
+    },
+    "OxlintOverride": {
+      "type": "object",
+      "required": ["files"],
+      "properties": {
+        "env": {
+          "description": "Environments enable and disable collections of global variables.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OxlintEnv"
+            }
+          ],
+          "markdownDescription": "Environments enable and disable collections of global variables."
+        },
+        "files": {
+          "description": "A list of glob patterns to override.\n\n## Example\n`[ \"*.test.ts\", \"*.spec.ts\" ]`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "A list of glob patterns to override.\n\n## Example\n`[ \"*.test.ts\", \"*.spec.ts\" ]`"
+        },
+        "globals": {
+          "description": "Enabled or disabled specific global variables.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OxlintGlobals"
+            }
+          ],
+          "markdownDescription": "Enabled or disabled specific global variables."
+        },
+        "ignores": {
+          "description": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "A list of glob patterns to exclude from this override.\n\nFiles matching these patterns are not globally ignored; this override\nsimply does not apply to them.\n\n## Example\n`[ \"*.generated.ts\", \"fixtures/**\" ]`"
+        },
+        "jsPlugins": {
+          "description": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ExternalPluginEntry"
+              },
+              "uniqueItems": true
+            }
+          ],
+          "markdownDescription": "JS plugins for this override, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver."
+        },
+        "plugins": {
+          "description": "Optionally change what plugins are enabled for this override. When\nomitted, the base config's plugins are used.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/LintPlugins"
+            }
+          ],
+          "markdownDescription": "Optionally change what plugins are enabled for this override. When\nomitted, the base config's plugins are used."
+        },
+        "rules": {
+          "default": {},
+          "allOf": [
+            {
+              "$ref": "#/definitions/OxlintRules"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "OxlintOverrides": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/OxlintOverride"
+      }
+    },
+    "OxlintRules": {
+      "$ref": "#/definitions/DummyRuleMap"
+    },
+    "OxlintSettings": {
+      "title": "Oxlint Plugin Settings",
+      "description": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n},\n\"react\": {\n\"linkComponents\": [\n{ \"name\": \"Link\", \"linkAttribute\": \"to\" }\n]\n},\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"Button\": \"button\"\n}\n}\n}\n}\n```",
+      "type": "object",
+      "properties": {
+        "jest": {
+          "default": {
+            "version": null
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JestPluginSettings"
+            }
+          ]
+        },
+        "jsdoc": {
+          "default": {
+            "ignorePrivate": false,
+            "ignoreInternal": false,
+            "ignoreReplacesDocs": true,
+            "overrideReplacesDocs": true,
+            "augmentsExtendsReplacesDocs": false,
+            "implementsReplacesDocs": false,
+            "exemptDestructuredRootsFromChecks": false,
+            "tagNamePreference": {}
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSDocPluginSettings"
+            }
+          ]
+        },
+        "jsx-a11y": {
+          "default": {
+            "polymorphicPropName": null,
+            "components": {},
+            "attributes": {}
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSXA11yPluginSettings"
+            }
+          ]
+        },
+        "next": {
+          "default": {
+            "rootDir": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NextPluginSettings"
+            }
+          ]
+        },
+        "react": {
+          "default": {
+            "formComponents": [],
+            "linkComponents": [],
+            "version": null,
+            "componentWrapperFunctions": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReactPluginSettings"
+            }
+          ]
+        },
+        "vitest": {
+          "default": {
+            "typecheck": false
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/VitestPluginSettings"
+            }
+          ]
+        }
+      },
+      "markdownDescription": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n},\n\"react\": {\n\"linkComponents\": [\n{ \"name\": \"Link\", \"linkAttribute\": \"to\" }\n]\n},\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"Button\": \"button\"\n}\n}\n}\n}\n```"
+    },
+    "ReactPluginSettings": {
+      "description": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)",
+      "type": "object",
+      "properties": {
+        "componentWrapperFunctions": {
+          "description": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n}\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Functions that wrap React components and should be treated as HOCs.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"componentWrapperFunctions\": [\"observer\", \"withRouter\"]\n}\n}\n}\n```"
+        },
+        "formComponents": {
+          "description": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"formComponents\": [\n\"CustomForm\",\n// OtherForm is considered a form component and has an endpoint attribute\n{ \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] }\n]\n}\n}\n}\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CustomComponent"
+          },
+          "markdownDescription": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"formComponents\": [\n\"CustomForm\",\n// OtherForm is considered a form component and has an endpoint attribute\n{ \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] }\n]\n}\n}\n}\n```"
+        },
+        "linkComponents": {
+          "description": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"linkComponents\": [\n\"HyperLink\",\n// Use `linkAttribute` for components that use a different prop name\n// than `href`.\n{ \"name\": \"MyLink\", \"linkAttribute\": \"to\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] }\n]\n}\n}\n}\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CustomComponent"
+          },
+          "markdownDescription": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"linkComponents\": [\n\"HyperLink\",\n// Use `linkAttribute` for components that use a different prop name\n// than `href`.\n{ \"name\": \"MyLink\", \"linkAttribute\": \"to\" },\n// allows specifying multiple properties if necessary\n{ \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] }\n]\n}\n}\n}\n```"
+        },
+        "version": {
+          "description": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```",
+          "default": null,
+          "type": "string",
+          "pattern": "^[1-9]\\d*(\\.(0|[1-9]\\d*))?(\\.(0|[1-9]\\d*))?$",
+          "markdownDescription": "React version to use for version-specific rules.\n\nAccepts semver versions (e.g., \"18.2.0\", \"17.0\").\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n}\n}\n}\n```"
+        }
+      },
+      "markdownDescription": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)"
+    },
+    "TagNamePreference": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": ["message", "replacement"],
+          "properties": {
+            "message": {
+              "type": "string"
+            },
+            "replacement": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["message"],
+          "properties": {
+            "message": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "VitestPluginSettings": {
+      "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference.",
+      "type": "object",
+      "properties": {
+        "typecheck": {
+          "description": "Whether to enable typecheck mode for Vitest rules.\nWhen enabled, some rules will skip certain checks for describe blocks\nto accommodate TypeScript type checking scenarios.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to enable typecheck mode for Vitest rules.\nWhen enabled, some rules will skip certain checks for describe blocks\nto accommodate TypeScript type checking scenarios."
+        }
+      },
+      "markdownDescription": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference."
+    },
+    "ArktsRule": {
+      "description": "ArkTS lint rule configuration.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        {
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            }
+          ],
+          "additionalItems": true,
+          "minItems": 1
+        }
+      ],
+      "markdownDescription": "ArkTS lint rule configuration."
+    },
+    "ArktsSystemApiVersionRule": {
+      "description": "ArkTS system API version lint rule configuration.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        {
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "$ref": "#/definitions/ArktsSystemApiVersionOptions"
+            }
+          ],
+          "additionalItems": false,
+          "minItems": 1,
+          "maxItems": 2
+        }
+      ],
+      "markdownDescription": "ArkTS system API version lint rule configuration."
+    },
+    "ArktsSystemApiVersionOptions": {
+      "description": "Options for arkts/system-api-version.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minApiVersion": {
+          "description": "Minimum supported OpenHarmony API version.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          ],
+          "markdownDescription": "Minimum supported OpenHarmony API version."
+        },
+        "minVersion": {
+          "description": "Alias of minApiVersion.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          ],
+          "markdownDescription": "Alias of minApiVersion."
+        },
+        "apiVersionFile": {
+          "description": "Path to a JSON or JSONC file containing system API version data.",
+          "type": "string",
+          "markdownDescription": "Path to a JSON or JSONC file containing system API version data."
+        },
+        "apisFile": {
+          "description": "Alias of apiVersionFile.",
+          "type": "string",
+          "markdownDescription": "Alias of apiVersionFile."
+        },
+        "apis": {
+          "description": "Inline system API version data keyed by API name.",
+          "$ref": "#/definitions/ArktsSystemApiVersions",
+          "markdownDescription": "Inline system API version data keyed by API name."
+        },
+        "apiVersions": {
+          "description": "Alias of apis.",
+          "$ref": "#/definitions/ArktsSystemApiVersions",
+          "markdownDescription": "Alias of apis."
+        }
+      },
+      "markdownDescription": "Options for arkts/system-api-version."
+    },
+    "ArktsSystemApiVersions": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ArktsSystemApiVersion"
+      }
+    },
+    "ArktsSystemApiVersion": {
+      "description": "System API version, either as a version number or an object with lifecycle fields.",
+      "anyOf": [
+        {
+          "description": "The API version where this API was introduced.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          ],
+          "markdownDescription": "The API version where this API was introduced."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "anyOf": [
+            {
+              "required": ["since"]
+            },
+            {
+              "required": ["version"]
+            },
+            {
+              "required": ["apiVersion"]
+            },
+            {
+              "required": ["apiLevel"]
+            }
+          ],
+          "properties": {
+            "since": {
+              "description": "The API version where this API was introduced.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "The API version where this API was introduced."
+            },
+            "version": {
+              "description": "Alias of since.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of since."
+            },
+            "apiVersion": {
+              "description": "Alias of since.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of since."
+            },
+            "apiLevel": {
+              "description": "Alias of since.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of since."
+            },
+            "removed": {
+              "description": "The API version where this API was removed.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "The API version where this API was removed."
+            },
+            "removedVersion": {
+              "description": "Alias of removed.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of removed."
+            },
+            "deleteVersion": {
+              "description": "Alias of removed.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of removed."
+            },
+            "deletedVersion": {
+              "description": "Alias of removed.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of removed."
+            },
+            "removalVersion": {
+              "description": "Alias of removed.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of removed."
+            },
+            "deprecatedSince": {
+              "description": "Alias of removed.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of removed."
+            },
+            "deprecatedVersion": {
+              "description": "Alias of removed.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ],
+              "markdownDescription": "Alias of removed."
+            }
+          }
+        }
+      ],
+      "markdownDescription": "System API version, either as a version number or an object with lifecycle fields."
+    }
+  },
+  "markdownDescription": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\nExample\n\n`.oxlintrc.json`\n\n```json\n{\n\"$schema\": \"./node_modules/@ohos-rs/oxk/configuration_schema.json\",\n\"plugins\": [\"import\", \"typescript\", \"unicorn\"],\n\"env\": {\n\"browser\": true\n},\n\"globals\": {\n\"foo\": \"readonly\"\n},\n\"settings\": {\n\"react\": {\n\"version\": \"18.2.0\"\n},\n\"custom\": { \"option\": true }\n},\n\"rules\": {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\n\"overrides\": [\n{\n\"files\": [\"*.test.ts\", \"*.spec.ts\"],\n\"rules\": {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n}\n```\n\n`oxlint.config.ts`\n\n```ts\nimport { defineConfig } from \"oxlint\";\n\nexport default defineConfig({\nplugins: [\"import\", \"typescript\", \"unicorn\"],\nenv: {\n\"browser\": true\n},\nglobals: {\n\"foo\": \"readonly\"\n},\nsettings: {\nreact: {\nversion: \"18.2.0\"\n},\ncustom: { option: true }\n},\nrules: {\n\"eqeqeq\": \"warn\",\n\"import/no-cycle\": \"error\",\n\"react/self-closing-comp\": [\"error\", { \"html\": false }]\n},\noverrides: [\n{\nfiles: [\"*.test.ts\", \"*.spec.ts\"],\nrules: {\n\"@typescript-eslint/no-explicit-any\": \"off\"\n}\n}\n]\n});\n```"
+}

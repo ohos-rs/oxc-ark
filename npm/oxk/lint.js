@@ -250,6 +250,15 @@ async function withStandardOxlintEnv(run) {
 
 async function lint(args) {
   return withStandardOxlintEnv(async () => {
+    if (
+      args.length > 0 &&
+      (args[0] === '--print-config-schema' ||
+        args[0] === '--schema-json' ||
+        args[0] === '--write-config-schema')
+    ) {
+      return typeof lintSync === 'function' ? lintSync(args) : lintNative(args)
+    }
+
     const prepared = await prepareLintConfig(args)
     try {
       if (!prepared.needsJsPlugins) {

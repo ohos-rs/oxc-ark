@@ -126,6 +126,14 @@ struct ArktsRule {
     check: ArktsCheck,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ArktsRuleMeta {
+    pub name: &'static str,
+    pub code: Option<&'static str>,
+    pub message: &'static str,
+    pub has_options: bool,
+}
+
 static ARKTS_RULES: &[ArktsRule] = &[
     rule(
         "identifiers-as-prop-names",
@@ -2214,6 +2222,15 @@ fn is_unsupported_utility_type(name: &str) -> bool {
 
 pub fn is_rule_name(name: &str) -> bool {
     find_rule(name).is_some()
+}
+
+pub(crate) fn rule_metas() -> impl Iterator<Item = ArktsRuleMeta> {
+    ARKTS_RULES.iter().map(|rule| ArktsRuleMeta {
+        name: rule.name,
+        code: rule.code,
+        message: rule.message,
+        has_options: rule.check == ArktsCheck::SystemApiVersion,
+    })
 }
 
 #[allow(dead_code)]

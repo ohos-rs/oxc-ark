@@ -304,14 +304,18 @@ dependencies = [
 name = "format"
 version = "0.1.0"
 dependencies = [
+ "globset",
+ "ignore",
  "json-strip-comments",
  "json5format",
  "napi",
  "napi-derive",
  "oxc-toml",
  "oxc_allocator",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_formatter",
+ "oxc_language_server",
  "oxc_parser",
  "oxc_span",
  "phf 0.11.3",
@@ -319,6 +323,9 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "sort-package-json",
+ "tokio",
+ "tower-lsp-server",
+ "tracing",
 ]
 
 [[package]]
@@ -795,11 +802,14 @@ dependencies = [
  "json-strip-comments",
  "napi",
  "oxc-miette",
+ "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_config_discovery",
+ "oxc_data_structures",
  "oxc_diagnostics",
+ "oxc_language_server",
  "oxc_linter",
  "oxc_parser",
  "oxc_span",
@@ -811,6 +821,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tower-lsp-server",
+ "tracing",
 ]
 
 [[package]]

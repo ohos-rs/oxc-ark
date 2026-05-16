@@ -21,7 +21,10 @@ use oxc_linter::{
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
+use crate::{
+    ArktsLintConfig, DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME,
+    load_oxlintrc_and_arkts_from_file,
+};
 
 const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
@@ -283,10 +286,12 @@ impl<'a> ConfigLoader<'a> {
 
     /// Load a single config from a file path
     fn load(path: &Path) -> Result<Oxlintrc, ConfigLoadError> {
-        Oxlintrc::from_file(path).map_err(|error| ConfigLoadError::Parse {
-            path: path.to_path_buf(),
-            error,
-        })
+        load_oxlintrc_and_arkts_from_file(path)
+            .map(|(config, _)| config)
+            .map_err(|error| ConfigLoadError::Parse {
+                path: path.to_path_buf(),
+                error,
+            })
     }
 
     pub fn load_js_configs(
@@ -472,7 +477,7 @@ impl<'a> ConfigLoader<'a> {
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
-                Oxlintrc::from_file(&path).map(Some)
+                load_oxlintrc_and_arkts_from_file(&path).map(|(config, _)| Some(config))
             }
             Some(DiscoveredConfigFile::Js(path)) => {
                 let config = self.load_root_js_config(&path)?;
@@ -483,6 +488,33 @@ impl<'a> ConfigLoader<'a> {
                 Ok(config)
             }
             Some(DiscoveredConfigFile::Vite(path)) => self.load_root_js_config(&path),
+            None => Ok(None),
+        }
+    }
+
+    fn try_load_config_and_arkts_from_dir(
+        &self,
+        dir: &Path,
+    ) -> Result<Option<(Oxlintrc, ArktsLintConfig)>, OxcDiagnostic> {
+        let config_file = config_discovery()
+            .find_unique_config_in_directory(dir)
+            .map_err(OxcDiagnostic::from)?;
+
+        match config_file {
+            Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
+                load_oxlintrc_and_arkts_from_file(&path).map(Some)
+            }
+            Some(DiscoveredConfigFile::Js(path)) => {
+                let config = self.load_root_js_config(&path)?;
+                debug_assert!(
+                    config.is_some(),
+                    "oxlint.config.ts should always return a config"
+                );
+                Ok(config.map(|config| (config, ArktsLintConfig::default())))
+            }
+            Some(DiscoveredConfigFile::Vite(path)) => Ok(self
+                .load_root_js_config(&path)?
+                .map(|config| (config, ArktsLintConfig::default()))),
             None => Ok(None),
         }
     }
@@ -537,6 +569,26 @@ impl<'a> ConfigLoader<'a> {
         Ok(Oxlintrc::default())
     }
 
+    pub(crate) fn load_root_config_with_arkts_ancestor_search(
+        &self,
+        cwd: &Path,
+        config_path: Option<&PathBuf>,
+    ) -> Result<(Oxlintrc, ArktsLintConfig), OxcDiagnostic> {
+        if let Some(config_path) = config_path {
+            return self.load_explicit_config_with_arkts(cwd, config_path);
+        }
+
+        let mut current = Some(cwd);
+        while let Some(dir) = current {
+            if let Some(config) = self.try_load_config_and_arkts_from_dir(dir)? {
+                return Ok(config);
+            }
+            current = dir.parent();
+        }
+
+        Ok((Oxlintrc::default(), ArktsLintConfig::default()))
+    }
+
     /// Load an explicitly specified config file (via `--config`).
     /// For JS/TS configs, `None` from JS side (e.g., vite.config.ts without `.lint`) is an error.
     fn load_explicit_config(
@@ -553,7 +605,27 @@ impl<'a> ConfigLoader<'a> {
                 ))
             });
         }
-        Oxlintrc::from_file(&full_path)
+        load_oxlintrc_and_arkts_from_file(&full_path).map(|(config, _)| config)
+    }
+
+    fn load_explicit_config_with_arkts(
+        &self,
+        cwd: &Path,
+        config_path: &Path,
+    ) -> Result<(Oxlintrc, ArktsLintConfig), OxcDiagnostic> {
+        let full_path = cwd.join(config_path);
+        if is_js_config_path(&full_path) {
+            return self
+                .load_root_js_config(&full_path)?
+                .map(|config| (config, ArktsLintConfig::default()))
+                .ok_or_else(|| {
+                    OxcDiagnostic::error(format!(
+                        "Expected a `lint` field in the default export of {}",
+                        full_path.display()
+                    ))
+                });
+        }
+        load_oxlintrc_and_arkts_from_file(&full_path)
     }
 
     /// Load a single JS/TS config file. Returns `Ok(None)` when JS side signals "skip"

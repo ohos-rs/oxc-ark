@@ -14,6 +14,7 @@
     "test:npm": "pnpm --filter @ohos-rs/oxk run test:build",
     "test:all": "pnpm run test:rust && pnpm run test:npm",
     "build": "pnpm run build:rust && pnpm run build:npm",
+    "build:lint-schema": "pnpm --filter @ohos-rs/oxk run build:lint-schema",
     "build:rust": "cargo build --workspace",
     "build:npm": "pnpm --filter @ohos-rs/oxk build:debug",
     "build:release": "cargo build --workspace --release && pnpm --filter @ohos-rs/oxk build",

@@ -21,11 +21,12 @@ use oxc_linter::{
 };
 use serde::Deserialize;
 
-use oxlint::cli::{init_miette, init_tracing, lint_command};
+use oxlint::cli::{init_miette, init_tracing};
 
 use crate::{
     arkts::{self, ExternalLinterCallbacks},
-    handle_threads_once, prepare_arkts_config, run_lint_command,
+    handle_threads_once, parse_lint_command, prepare_arkts_config, resolve_from_cwd,
+    run_lint_command, run_lsp_server,
 };
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
@@ -102,34 +103,12 @@ pub async fn lint_args_with_plugins(
     _load_js_configs: JsLoadJsConfigsCb,
 ) -> bool {
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
-    let prepared = match prepare_arkts_config(args) {
-        Ok(prepared) => prepared,
-        Err(err) => {
-            eprintln!("{err}");
-            return false;
-        }
-    };
-
-    let command = {
-        let parser = lint_command();
-        match parser.run_inner(&*prepared.args) {
-            Ok(command) => command,
-            Err(err) => {
-                err.print_message(100);
-                return err.exit_code() == 0;
-            }
-        }
+    let command = match parse_lint_command(&args) {
+        Ok(command) => command,
+        Err(success) => return success,
     };
 
     init_tracing();
-
-    if command.lsp {
-        eprintln!("oxk lint --lsp is not supported by the embedded lint runner.");
-        return false;
-    }
-
-    init_miette();
-    handle_threads_once(&command);
 
     let external_linter = create_external_linter(
         load_plugin,
@@ -138,6 +117,28 @@ pub async fn lint_args_with_plugins(
         create_workspace,
         destroy_workspace,
     );
+
+    if command.lsp {
+        let config_path = command.basic_options.config.clone().map(resolve_from_cwd);
+        return run_lsp_server(Some(external_linter), config_path);
+    }
+
+    let prepared = match prepare_arkts_config(args) {
+        Ok(prepared) => prepared,
+        Err(err) => {
+            eprintln!("{err}");
+            return false;
+        }
+    };
+
+    let command = match parse_lint_command(&prepared.args) {
+        Ok(command) => command,
+        Err(success) => return success,
+    };
+
+    init_miette();
+    handle_threads_once(&command);
+
     run_lint_command(command, prepared.arkts, Some(external_linter))
 }
 

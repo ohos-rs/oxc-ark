@@ -22,8 +22,10 @@ oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8
   "serialize",
 ] }
 oxc_config_discovery = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
+oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
+oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
 oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
@@ -40,6 +42,7 @@ json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18
 # Common dependencies
 serde_json = "1.0"
 serde = { version = "1", features = ["derive"] }
+schemars = { package = "oxc-schemars", version = "0.8.27" }
 tokio = { version = "1", features = ["full"] }
 phf = { version = "0.11", features = ["macros"] }
 simdutf8 = "0.1"
@@ -57,6 +60,8 @@ rayon = "1.11"
 walkdir = "2"
 futures = "0.3"
 rustc-hash = "2"
+tower-lsp-server = { version = "0.23.0", features = ["proposed"] }
+tracing = "0.1"
 
 # NAPI dependencies
 napi = { version = "3.0", features = ["async", "serde-json"] }

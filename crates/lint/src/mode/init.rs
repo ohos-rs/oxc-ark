@@ -8,19 +8,19 @@ use serde_json::json;
 
 use oxlint::cli::CliRunResult;
 
-use crate::{DEFAULT_OXLINTRC_NAME, runner::print_and_flush_stdout};
+use crate::{DEFAULT_OXLINTRC_NAME, runner::print_and_flush_stdout, schema};
 
 pub fn run_init(cwd: &Path, stdout: &mut dyn std::io::Write) -> CliRunResult {
     let mut config = serde_json::Map::new();
 
     config.insert(
         "$schema".to_string(),
-        json!("./node_modules/oxlint/configuration_schema.json"),
+        json!(schema::CONFIGURATION_SCHEMA_PATH),
     );
 
     config.insert(
         "plugins".to_string(),
-        json!(["typescript", "unicorn", "oxc"]),
+        json!(["typescript", "unicorn", "oxc", "arkts"]),
     );
     config.insert("categories".to_string(), json!({ "correctness": "error" }));
     config.insert("rules".to_string(), json!({}));
