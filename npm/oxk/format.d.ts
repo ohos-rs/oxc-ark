@@ -17,6 +17,18 @@ export declare function format(
 
 export declare function formatLsp(): Promise<boolean>
 
+export interface FormatFilesOptions {
+  patterns: string[]
+  excludes: string[]
+  ignorePaths: string[]
+  withNodeModules: boolean
+  threadCount: number
+  configPath?: string
+  cliOptions?: Record<string, any>
+}
+
+export declare function formatFiles(args: FormatFilesOptions): Promise<boolean>
+
 // Re-export the raw format function for advanced usage
 export { format as formatRaw } from './index.js'
 export type { FormatResult } from './index.d.ts'

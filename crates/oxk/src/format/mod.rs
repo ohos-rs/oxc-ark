@@ -1,19 +1,17 @@
 use std::{
-    collections::HashSet,
     env,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use format::{
-    ConfigResolver, FormatFileStrategy, SourceFormatter, resolve_editorconfig_path,
-    resolve_oxfmtrc_path, should_ignore_file,
+    ConfigResolver, FormatFileStrategy, FormatTargets, SourceFormatter,
+    build_global_ignore_matchers, build_ignore_matcher, collect_matching_files, is_gitignore_match,
+    resolve_editorconfig_path, resolve_ignore_paths, resolve_oxfmtrc_path, should_ignore_file,
 };
 use futures::future;
-use globset::{Glob, GlobSet, GlobSetBuilder};
 use serde_json::Value;
 use tokio::sync::Semaphore;
-use walkdir::WalkDir;
 
 pub fn run_lsp() -> Result<(), Box<dyn std::error::Error>> {
     let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -38,6 +36,8 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
     let patterns = args.file.clone();
     let thread_count = args.thread;
     let excludes = args.excludes.clone();
+    let ignore_paths = args.ignore_path.clone();
+    let with_node_modules = args.with_node_modules;
 
     if patterns.is_empty() {
         return Err(Box::new(std::io::Error::other("Missing file pattern")));
@@ -77,24 +77,37 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
         ))) as Box<dyn std::error::Error>
     })?;
 
-    // Merge config ignore_patterns with CLI excludes (aligned with oxfmt's ignore handling)
-    let mut all_excludes = excludes;
-    all_excludes.extend(ignore_patterns);
+    let config_ignore_root = oxfmtrc_path
+        .as_deref()
+        .and_then(Path::parent)
+        .unwrap_or(&cwd);
+    let config_ignore_matcher = build_ignore_matcher(config_ignore_root, &ignore_patterns)
+        .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error>)?;
 
-    // Collect matching files (handles both exact paths and glob patterns)
-    let exclude_matcher = build_globset(&all_excludes)?;
-    let mut files = collect_matching_files(&patterns)?;
+    let resolved_ignore_paths = resolve_ignore_paths(&cwd, &ignore_paths)
+        .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error>)?;
+    let targets = FormatTargets::new(&cwd, &patterns, &excludes);
+    let global_ignore_matchers =
+        build_global_ignore_matchers(&cwd, &targets.exclude_patterns, &resolved_ignore_paths)
+            .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error>)?;
 
-    // Remove files that match any exclude pattern
-    if let Some(matcher) = exclude_matcher {
-        files.retain(|path| !matcher.is_match(path.to_string_lossy().as_ref()));
+    let mut files = collect_matching_files(
+        &cwd,
+        &targets,
+        &global_ignore_matchers,
+        thread_count,
+        with_node_modules,
+    )?;
+
+    if let Some(matcher) = &config_ignore_matcher {
+        files.retain(|path| !is_gitignore_match(matcher, path, false, true));
     }
 
     let config_resolver = Arc::new(config_resolver);
 
     if files.is_empty() {
         return Err(Box::new(std::io::Error::other(
-            "No files matched the provided patterns (after excludes)",
+            "No files matched the provided patterns (after ignore rules)",
         )));
     }
 
@@ -264,120 +277,6 @@ fn build_value_from_format_args(args: &crate::FormatArgs) -> Value {
     Value::Object(m)
 }
 
-fn collect_matching_files(patterns: &[String]) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
-    let mut seen = HashSet::new();
-    let mut files = Vec::new();
-
-    for pattern in patterns {
-        // Convert pattern to absolute path
-        let absolute_pattern = to_absolute_pattern(pattern)?;
-
-        // Build globset matcher
-        let glob = Glob::new(&absolute_pattern)
-            .map_err(|e| format!("Invalid glob pattern '{}': {}", pattern, e))?;
-        let glob_set = GlobSetBuilder::new()
-            .add(glob)
-            .build()
-            .map_err(|e| format!("Failed to build glob set: {}", e))?;
-
-        // Determine root directory for traversal
-        let root = determine_root(&absolute_pattern)?;
-
-        // Traverse directory tree and match files
-        for entry in WalkDir::new(&root).follow_links(false) {
-            match entry {
-                Ok(entry) if entry.file_type().is_file() => {
-                    let path = entry.path();
-                    let path_str = path.to_string_lossy();
-
-                    if glob_set.is_match(path_str.as_ref()) {
-                        let normalized = normalize_path(path)?;
-                        let key = normalized.to_string_lossy().into_owned();
-                        if seen.insert(key) {
-                            files.push(normalized);
-                        }
-                    }
-                }
-                Err(e) => eprintln!("Warning: {}", e),
-                _ => {}
-            }
-        }
-    }
-
-    Ok(files)
-}
-
-fn build_globset(patterns: &[String]) -> Result<Option<GlobSet>, Box<dyn std::error::Error>> {
-    if patterns.is_empty() {
-        return Ok(None);
-    }
-
-    let mut builder = GlobSetBuilder::new();
-    for pattern in patterns {
-        let absolute_pattern = to_absolute_pattern(pattern)?;
-        let glob = Glob::new(&absolute_pattern)
-            .map_err(|e| format!("Invalid glob pattern '{}': {}", pattern, e))?;
-        builder.add(glob);
-    }
-
-    Ok(Some(
-        builder
-            .build()
-            .map_err(|e| format!("Failed to build glob set: {}", e))?,
-    ))
-}
-
-fn to_absolute_pattern(pattern: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let pattern_path = Path::new(pattern);
-    Ok(if pattern_path.is_absolute() {
-        pattern.to_string()
-    } else {
-        env::current_dir()?
-            .join(pattern)
-            .to_string_lossy()
-            .into_owned()
-    })
-}
-
-fn determine_root(absolute_pattern: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
-    Ok(
-        if let Some(wildcard_pos) = absolute_pattern.find(['*', '?', '{', '[']) {
-            let prefix = Path::new(&absolute_pattern[..wildcard_pos]);
-            let mut current = prefix.to_path_buf();
-            while !current.exists() || !current.is_dir() {
-                if let Some(parent) = current.parent() {
-                    current = parent.to_path_buf();
-                } else {
-                    current = env::current_dir()?;
-                    break;
-                }
-            }
-            current
-        } else {
-            let path = Path::new(&absolute_pattern);
-            if path.is_file() {
-                return Ok(path.to_path_buf());
-            }
-            path.parent()
-                .map(|p| p.to_path_buf())
-                .unwrap_or_else(|| env::current_dir().expect("Failed to get current directory"))
-        },
-    )
-}
-
-fn normalize_path(path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
-    Ok(path
-        .canonicalize()
-        .or_else(|_| {
-            if path.is_absolute() {
-                Ok(path.to_path_buf())
-            } else {
-                env::current_dir().map(|cwd| cwd.join(path))
-            }
-        })
-        .map_err(|e| std::io::Error::other(format!("Failed to normalize path: {}", e)))?)
-}
-
 /// Format a single file as a tokio task
 async fn format_file_task(
     path: PathBuf,
@@ -510,7 +409,63 @@ mod tests {
     use format::{FormatFileStrategy, ResolvedOptions, SourceFormatter};
     use oxc_formatter::FormatOptions;
     use serde_json::Value;
-    use std::path::PathBuf;
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        process,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    use super::{
+        FormatTargets, build_global_ignore_matchers, collect_matching_files, resolve_ignore_paths,
+    };
+
+    static NEXT_TEST_DIR_ID: AtomicU64 = AtomicU64::new(0);
+
+    struct TestDir {
+        path: PathBuf,
+    }
+
+    impl TestDir {
+        fn new(prefix: &str) -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "oxc-ark-format-{prefix}-{}-{}",
+                process::id(),
+                NEXT_TEST_DIR_ID.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir_all(&path).expect("test temp dir should be created");
+            let path = path
+                .canonicalize()
+                .expect("test temp dir should canonicalize");
+            Self { path }
+        }
+
+        fn path(&self) -> &Path {
+            &self.path
+        }
+
+        fn join(&self, child: &str) -> PathBuf {
+            self.path.join(child)
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
+    }
+
+    fn relative_files(paths: Vec<PathBuf>, root: &Path) -> Vec<String> {
+        paths
+            .into_iter()
+            .map(|path| {
+                path.strip_prefix(root)
+                    .expect("path should be under temp root")
+                    .to_string_lossy()
+                    .to_string()
+            })
+            .collect()
+    }
 
     fn format_code(path: &str, source: &str) -> Result<String, String> {
         let strategy = FormatFileStrategy::try_from(PathBuf::from(path))
@@ -534,6 +489,81 @@ mod tests {
                 Err(format!("Format errors: {:?}", diagnostics))
             }
         }
+    }
+
+    #[test]
+    fn collect_matching_files_respects_prettierignore() {
+        let dir = TestDir::new("prettierignore");
+        fs::create_dir_all(dir.join("dist")).expect("dist dir should be created");
+        fs::write(dir.join("src.ts"), "const a=1\n").expect("src file should be written");
+        fs::write(dir.join("dist/ignored.ts"), "const b=1\n")
+            .expect("ignored file should be written");
+        fs::write(dir.join(".prettierignore"), "dist\n").expect("ignore file should be written");
+
+        let targets = FormatTargets::new(dir.path(), &[".".to_string()], &[]);
+        let ignore_paths =
+            resolve_ignore_paths(dir.path(), &[]).expect("default ignore path should resolve");
+        let global_ignores =
+            build_global_ignore_matchers(dir.path(), &targets.exclude_patterns, &ignore_paths)
+                .expect("ignore matcher should build");
+
+        let files = collect_matching_files(dir.path(), &targets, &global_ignores, 1, false)
+            .expect("files should collect");
+
+        assert_eq!(relative_files(files, dir.path()), vec!["src.ts"]);
+    }
+
+    #[test]
+    fn collect_matching_files_supports_oxfmt_globs_and_bang_excludes() {
+        let dir = TestDir::new("glob-exclude");
+        fs::create_dir_all(dir.join("src/generated")).expect("dirs should be created");
+        fs::write(dir.join("src/main.ts"), "const a=1\n").expect("main should be written");
+        fs::write(dir.join("src/generated/main.ts"), "const b=1\n")
+            .expect("generated should be written");
+
+        let targets = FormatTargets::new(
+            dir.path(),
+            &["src/**/*.ts".to_string(), "!src/generated".to_string()],
+            &[],
+        );
+        let global_ignores =
+            build_global_ignore_matchers(dir.path(), &targets.exclude_patterns, &[])
+                .expect("ignore matcher should build");
+
+        let files = collect_matching_files(dir.path(), &targets, &global_ignores, 1, false)
+            .expect("files should collect");
+
+        assert_eq!(relative_files(files, dir.path()), vec!["src/main.ts"]);
+    }
+
+    #[test]
+    fn collect_matching_files_skips_package_modules_by_default() {
+        let dir = TestDir::new("package-modules");
+        fs::create_dir_all(dir.join("node_modules/pkg")).expect("dirs should be created");
+        fs::create_dir_all(dir.join("oh_modules/pkg")).expect("dirs should be created");
+        fs::write(dir.join("node_modules/pkg/index.ts"), "const a=1\n")
+            .expect("node module file should be written");
+        fs::write(dir.join("oh_modules/pkg/index.ts"), "const b=1\n")
+            .expect("oh module file should be written");
+        fs::write(dir.join("index.ts"), "const c=1\n").expect("index should be written");
+
+        let targets = FormatTargets::new(dir.path(), &[".".to_string()], &[]);
+        let files = collect_matching_files(dir.path(), &targets, &[], 1, false)
+            .expect("files should collect");
+
+        assert_eq!(relative_files(files, dir.path()), vec!["index.ts"]);
+
+        let files = collect_matching_files(dir.path(), &targets, &[], 1, true)
+            .expect("files should collect");
+
+        assert_eq!(
+            relative_files(files, dir.path()),
+            vec![
+                "index.ts",
+                "node_modules/pkg/index.ts",
+                "oh_modules/pkg/index.ts"
+            ]
+        );
     }
 
     #[test]

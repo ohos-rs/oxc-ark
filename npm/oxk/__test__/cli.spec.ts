@@ -1,5 +1,5 @@
 import test from 'ava'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -162,6 +162,65 @@ test('npm cli prefers .oxfmtrc.json over .oxfmtrc.jsonc', (t) => {
   })
 })
 
+test('npm cli format honors .prettierignore', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(join(dir, '.prettierignore'), 'dist\n', 'utf8')
+    writeFileSync(join(dir, 'keep.ts'), 'const keep=1\n', 'utf8')
+    mkdirSync(join(dir, 'dist'), { recursive: true })
+    writeFileSync(join(dir, 'dist', 'ignored.ts'), 'const ignored=1\n', 'utf8')
+
+    const result = runCli(['format', '.'], dir)
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+    t.true(readFileSync(join(dir, 'keep.ts'), 'utf8').includes('const keep = 1'))
+    t.is(readFileSync(join(dir, 'dist', 'ignored.ts'), 'utf8'), 'const ignored=1\n')
+  })
+})
+
+test('npm cli format skips oh_modules by default', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(join(dir, 'keep.ts'), 'const keep=1\n', 'utf8')
+    mkdirSync(join(dir, 'oh_modules', 'pkg'), { recursive: true })
+    writeFileSync(join(dir, 'oh_modules', 'pkg', 'ignored.ts'), 'const ignored=1\n', 'utf8')
+
+    const result = runCli(['format', '.'], dir)
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+    t.true(readFileSync(join(dir, 'keep.ts'), 'utf8').includes('const keep = 1'))
+    t.is(readFileSync(join(dir, 'oh_modules', 'pkg', 'ignored.ts'), 'utf8'), 'const ignored=1\n')
+  })
+})
+
+test('npm cli format honors --ignore-path', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(join(dir, 'custom.ignore'), 'dist\n', 'utf8')
+    writeFileSync(join(dir, 'keep.ts'), 'const keep=1\n', 'utf8')
+    mkdirSync(join(dir, 'dist'), { recursive: true })
+    writeFileSync(join(dir, 'dist', 'ignored.ts'), 'const ignored=1\n', 'utf8')
+
+    const result = runCli(['format', '--ignore-path', 'custom.ignore', '.'], dir)
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+    t.true(readFileSync(join(dir, 'keep.ts'), 'utf8').includes('const keep = 1'))
+    t.is(readFileSync(join(dir, 'dist', 'ignored.ts'), 'utf8'), 'const ignored=1\n')
+  })
+})
+
+test('npm cli format resolves ignorePatterns relative to config file', (t) => {
+  withTempDir((dir) => {
+    mkdirSync(join(dir, 'config'), { recursive: true })
+    writeFileSync(join(dir, 'config', '.oxfmtrc.json'), JSON.stringify({ ignorePatterns: ['ignored.ts'] }), 'utf8')
+    writeFileSync(join(dir, 'ignored.ts'), 'const rootIgnored=1\n', 'utf8')
+    writeFileSync(join(dir, 'config', 'ignored.ts'), 'const configIgnored=1\n', 'utf8')
+
+    const result = runCli(['format', '--config', 'config/.oxfmtrc.json', '.'], dir)
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+    t.true(readFileSync(join(dir, 'ignored.ts'), 'utf8').includes('const rootIgnored = 1'))
+    t.is(readFileSync(join(dir, 'config', 'ignored.ts'), 'utf8'), 'const configIgnored=1\n')
+  })
+})
+
 test('npm cli lint reports oxlint diagnostics', (t) => {
   withTempDir((dir) => {
     const filePath = join(dir, 'input.ts')
@@ -171,6 +230,19 @@ test('npm cli lint reports oxlint diagnostics', (t) => {
 
     t.is(result.status, 1, result.stdout || result.stderr)
     t.true(`${result.stdout}\n${result.stderr}`.includes('no-debugger'), 'Should report oxlint rule diagnostics')
+  })
+})
+
+test('npm cli lint skips oh_modules by default', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(join(dir, 'index.ts'), 'const keep = 1\n', 'utf8')
+    mkdirSync(join(dir, 'oh_modules', 'pkg'), { recursive: true })
+    writeFileSync(join(dir, 'oh_modules', 'pkg', 'ignored.ts'), 'debugger\n', 'utf8')
+
+    const result = runCli(['lint', '.', '--threads', '1', '-D', 'no-debugger'], dir)
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+    t.false(`${result.stdout}\n${result.stderr}`.includes('no-debugger'))
   })
 })
 

@@ -17,6 +17,11 @@ use rustc_hash::FxHashMap;
 
 use oxlint::cli::IgnoreOptions;
 
+const GIT_DIR: &str = ".git";
+const JJ_DIR: &str = ".jj";
+const NODE_MODULES_DIR: &str = "node_modules";
+const OH_MODULES_DIR: &str = "oh_modules";
+
 #[derive(Debug, Clone)]
 pub struct Extensions(pub Vec<&'static str>);
 
@@ -64,10 +69,11 @@ impl ignore::ParallelVisitor for WalkCollector {
     fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                // Skip VCS metadata directories because they are not special cases for `.hidden(false)`.
+                // Skip VCS metadata and dependency directories before file collection.
+                // VCS metadata directories are not special-cased for `.hidden(false)`.
                 // <https://github.com/BurntSushi/ripgrep/issues/3099#issuecomment-3052460027>
                 if entry.file_type().is_some_and(|ty| ty.is_dir())
-                    && (entry.file_name() == ".git" || entry.file_name() == ".jj")
+                    && is_skipped_dir(entry.file_name())
                 {
                     return ignore::WalkState::Skip;
                 }
@@ -85,6 +91,7 @@ impl Walk {
     /// # Panics
     pub fn new(
         paths: &[PathBuf],
+        cwd: &Path,
         options: &IgnoreOptions,
         override_builder: Option<Override>,
     ) -> Self {
@@ -114,15 +121,11 @@ impl Walk {
             }
         }
 
-        let require_git = all_paths_have_vcs_boundary(paths);
+        let has_vcs_boundary = all_paths_have_vcs_boundary(paths, cwd);
 
-        let inner = inner
-            .ignore(false)
-            .git_global(false)
-            .git_ignore(true)
+        let inner = configure_walk_builder(&mut inner, has_vcs_boundary)
             .follow_links(true)
-            .hidden(false)
-            .require_git(require_git)
+            .threads(rayon::current_num_threads())
             .build_parallel();
         Self {
             inner,
@@ -173,19 +176,32 @@ impl Walk {
     }
 }
 
-fn all_paths_have_vcs_boundary(paths: &[PathBuf]) -> bool {
-    let cwd = std::env::current_dir().ok();
+fn configure_walk_builder(
+    builder: &mut ignore::WalkBuilder,
+    has_vcs_boundary: bool,
+) -> &mut ignore::WalkBuilder {
+    builder
+        .hidden(false)
+        .ignore(false)
+        .git_global(false)
+        .git_ignore(true)
+        .parents(true)
+        .git_exclude(true)
+        .require_git(has_vcs_boundary)
+}
+
+fn all_paths_have_vcs_boundary(paths: &[PathBuf], cwd: &Path) -> bool {
     let mut cache = FxHashMap::default();
     paths
         .iter()
-        .all(|path| has_vcs_boundary(path, cwd.as_deref(), &mut cache))
+        .all(|path| has_vcs_boundary(path, cwd, &mut cache))
 }
 
-fn has_vcs_boundary(path: &Path, cwd: Option<&Path>, cache: &mut FxHashMap<PathBuf, bool>) -> bool {
+fn has_vcs_boundary(path: &Path, cwd: &Path, cache: &mut FxHashMap<PathBuf, bool>) -> bool {
     let path = if path.is_absolute() {
         path.to_path_buf()
     } else {
-        cwd.map_or_else(|| path.to_path_buf(), |cwd| cwd.join(path))
+        cwd.join(path)
     };
 
     let start = if path.is_file() {
@@ -194,16 +210,112 @@ fn has_vcs_boundary(path: &Path, cwd: Option<&Path>, cache: &mut FxHashMap<PathB
         path.as_path()
     };
 
-    if let Some(has_boundary) = cache.get(start) {
-        return *has_boundary;
+    start.ancestors().any(|dir| {
+        if let Some(&has) = cache.get(dir) {
+            return has;
+        }
+        let has = dir.join(".git").exists() || dir.join(".jj").exists();
+        cache.insert(dir.to_path_buf(), has);
+        has
+    })
+}
+
+fn is_skipped_dir(dir_name: &OsStr) -> bool {
+    dir_name == OsStr::new(GIT_DIR)
+        || dir_name == OsStr::new(JJ_DIR)
+        || dir_name == OsStr::new(NODE_MODULES_DIR)
+        || dir_name == OsStr::new(OH_MODULES_DIR)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        ffi::OsString,
+        fs,
+        path::{Path, PathBuf},
+        process,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    use oxlint::cli::IgnoreOptions;
+
+    use super::{Extensions, Walk};
+
+    static NEXT_TEST_DIR_ID: AtomicU64 = AtomicU64::new(0);
+
+    struct TestDir {
+        path: PathBuf,
     }
 
-    let has_boundary = start.ancestors().any(|dir| {
-        cache
-            .get(dir)
-            .copied()
-            .unwrap_or_else(|| dir.join(".git").exists() || dir.join(".jj").exists())
-    });
-    cache.insert(start.to_path_buf(), has_boundary);
-    has_boundary
+    impl TestDir {
+        fn new(prefix: &str) -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "oxc-ark-lint-walk-{prefix}-{}-{}",
+                process::id(),
+                NEXT_TEST_DIR_ID.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir_all(&path).expect("test temp dir should be created");
+            let path = path
+                .canonicalize()
+                .expect("test temp dir should canonicalize");
+            Self { path }
+        }
+
+        fn path(&self) -> &Path {
+            &self.path
+        }
+
+        fn join(&self, child: &str) -> PathBuf {
+            self.path.join(child)
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
+    }
+
+    fn default_ignore_options() -> IgnoreOptions {
+        IgnoreOptions {
+            ignore_path: OsString::from(".eslintignore"),
+            ignore_pattern: vec![],
+            no_ignore: false,
+        }
+    }
+
+    #[test]
+    fn walk_skips_package_modules_by_default() {
+        let dir = TestDir::new("package-modules");
+        fs::create_dir_all(dir.join("src")).expect("src dir should be created");
+        fs::create_dir_all(dir.join("node_modules/pkg"))
+            .expect("node_modules dir should be created");
+        fs::create_dir_all(dir.join("oh_modules/pkg")).expect("oh_modules dir should be created");
+        fs::write(dir.join("src/index.ts"), "const a = 1;\n").expect("src file should be written");
+        fs::write(dir.join("node_modules/pkg/index.ts"), "const b = 1;\n")
+            .expect("node_modules file should be written");
+        fs::write(dir.join("oh_modules/pkg/index.ts"), "const c = 1;\n")
+            .expect("oh_modules file should be written");
+
+        let mut paths = Walk::new(
+            &[dir.path().to_path_buf()],
+            dir.path(),
+            &default_ignore_options(),
+            None,
+        )
+        .with_extensions(Extensions(vec!["ts"]))
+        .paths()
+        .into_iter()
+        .map(|path| {
+            Path::new(path.as_ref())
+                .strip_prefix(dir.path())
+                .expect("path should be under temp root")
+                .to_string_lossy()
+                .to_string()
+        })
+        .collect::<Vec<_>>();
+        paths.sort();
+
+        assert_eq!(paths, vec!["src/index.ts"]);
+    }
 }

@@ -14,6 +14,8 @@ pub(crate) struct FormatArgs {
     file: Vec<String>,
     thread: usize,
     excludes: Vec<String>,
+    ignore_path: Vec<std::path::PathBuf>,
+    with_node_modules: bool,
     // FormatOptions fields (excluding quote_properties)
     pub indent_style: Option<oxc_formatter::IndentStyle>,
     pub indent_width: Option<oxc_formatter::IndentWidth>,

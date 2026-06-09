@@ -60,6 +60,8 @@ Format Options:
   --config PATH
   --thread, -t THREAD
   --exclude PATTERN
+  --ignore-path PATH
+  --with-node-modules
   --indent-style STYLE
   --indent-width WIDTH
   --line-ending ENDING
@@ -94,6 +96,8 @@ function parseFormatArgs(args) {
   const formatArgs = {
     patterns: [],
     excludes: [],
+    ignorePaths: [],
+    withNodeModules: false,
     threadCount: 1,
     configPath: undefined,
     lsp: false,
@@ -134,6 +138,16 @@ function parseFormatArgs(args) {
         const { value, nextIndex } = parseOptionValue(args, index, token)
         formatArgs.excludes.push(value)
         index = nextIndex
+        break
+      }
+      case '--ignore-path': {
+        const { value, nextIndex } = parseOptionValue(args, index, token)
+        formatArgs.ignorePaths.push(value)
+        index = nextIndex
+        break
+      }
+      case '--with-node-modules': {
+        formatArgs.withNodeModules = true
         break
       }
       case '--indent-style': {

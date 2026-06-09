@@ -1,5 +1,9 @@
 // Convenience wrapper that automatically uses Prettier for external formatter callbacks
-const { format: napiFormat, formatLsp } = require("./index.js");
+const {
+  format: napiFormat,
+  formatFiles: napiFormatFiles,
+  formatLsp,
+} = require("./index.js");
 
 // Lazy load Prettier
 let prettierCache;
@@ -111,6 +115,24 @@ async function format(fileName, sourceText, options) {
   );
 }
 
+async function formatFiles(args) {
+  return napiFormatFiles(
+    {
+      patterns: args.patterns,
+      excludes: args.excludes,
+      ignorePaths: args.ignorePaths,
+      withNodeModules: args.withNodeModules,
+      threadCount: args.threadCount,
+      configPath: args.configPath,
+      cliOptions: args.cliOptions,
+    },
+    resolvePlugins,
+    (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
+    (options, parserName, fileName, code) =>
+      formatFile({ options, parserName, fileName, code }),
+  );
+}
+
 // Re-export the raw format function for advanced usage
 function formatRaw(
   fileName,
@@ -131,4 +153,4 @@ function formatRaw(
   );
 }
 
-module.exports = { format, formatRaw, formatLsp };
+module.exports = { format, formatFiles, formatRaw, formatLsp };

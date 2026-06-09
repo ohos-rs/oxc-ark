@@ -61,6 +61,7 @@ export const ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 export const ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 export const format = __napiModule.exports.format
+export const formatFiles = __napiModule.exports.formatFiles
 export const formatLsp = __napiModule.exports.formatLsp
 export const ImportNameKind = __napiModule.exports.ImportNameKind
 export const lint = __napiModule.exports.lint
