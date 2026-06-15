@@ -8,7 +8,6 @@ use std::{
     sync::Arc,
 };
 
-use globset::{Glob, GlobSet, GlobSetBuilder};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{
@@ -20,8 +19,8 @@ use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, T
 use tracing::{debug, warn};
 
 use crate::{
-    ConfigResolver, FormatFileStrategy, FormatResult, SourceFormatter, resolve_editorconfig_path,
-    resolve_oxfmtrc_path, should_ignore_file,
+    ConfigResolver, FormatFileStrategy, FormatResult, SourceFormatter, build_ignore_matcher,
+    is_gitignore_match, resolve_editorconfig_path, resolve_oxfmtrc_path, should_ignore_file,
 };
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -243,7 +242,7 @@ impl ServerFormatter {
 
         if ignore_matcher
             .as_ref()
-            .is_some_and(|matcher| matcher.is_match(path))
+            .is_some_and(|matcher| is_gitignore_match(matcher, path, false, true))
         {
             debug!(
                 "File is ignored by formatter ignorePatterns: {}",
@@ -276,7 +275,7 @@ impl ServerFormatter {
     fn load_config_for_path(
         &self,
         path: &Path,
-    ) -> Result<Option<(ConfigResolver, Option<GlobSet>)>, String> {
+    ) -> Result<Option<(ConfigResolver, Option<Gitignore>)>, String> {
         let cwd = path.parent().unwrap_or(&self.root_path);
         let config_path = if let Some(explicit_config_path) = &self.explicit_config_path {
             Some(
@@ -328,30 +327,6 @@ fn deserialize_lsp_options(value: Value) -> LspFormatOptions {
             LspFormatOptions::default()
         }
     }
-}
-
-fn build_ignore_matcher(root: &Path, patterns: &[String]) -> Result<Option<GlobSet>, String> {
-    if patterns.is_empty() {
-        return Ok(None);
-    }
-
-    let mut builder = GlobSetBuilder::new();
-    for pattern in patterns {
-        let pattern_path = Path::new(pattern);
-        let absolute_pattern = if pattern_path.is_absolute() {
-            pattern.to_string()
-        } else {
-            root.join(pattern).to_string_lossy().into_owned()
-        };
-        let glob = Glob::new(&absolute_pattern)
-            .map_err(|err| format!("Invalid ignore pattern `{pattern}`: {err}"))?;
-        builder.add(glob);
-    }
-
-    builder
-        .build()
-        .map(Some)
-        .map_err(|err| format!("Failed to build ignore matcher: {err}"))
 }
 
 fn create_prettierignore_glob(root_path: &Path) -> Result<Gitignore, String> {

@@ -577,6 +577,7 @@ module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
 module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
 module.exports.format = nativeBinding.format
+module.exports.formatFiles = nativeBinding.formatFiles
 module.exports.formatLsp = nativeBinding.formatLsp
 module.exports.ImportNameKind = nativeBinding.ImportNameKind
 module.exports.lint = nativeBinding.lint

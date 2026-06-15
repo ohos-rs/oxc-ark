@@ -7,7 +7,14 @@ use serde_json::Value;
 #[cfg(not(target_family = "wasm"))]
 use std::ffi::OsString;
 use std::path::PathBuf;
+#[cfg(not(target_family = "wasm"))]
+use std::{env, fs, path::Path, sync::Arc};
 
+#[cfg(not(target_family = "wasm"))]
+use format::{
+  build_global_ignore_matchers, build_ignore_matcher, collect_matching_files, is_gitignore_match,
+  resolve_editorconfig_path, resolve_ignore_paths, resolve_oxfmtrc_path, FormatTargets,
+};
 use format::{
   should_ignore_file, ConfigResolver, ExternalFormatter, FormatFileStrategy,
   FormatResult as CoreFormatResult, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
@@ -25,6 +32,18 @@ pub struct FormatResult {
   pub code: String,
   /// Parse and format errors.
   pub errors: Vec<String>,
+}
+
+#[cfg(not(target_family = "wasm"))]
+#[napi(object)]
+pub struct FormatFilesArgs {
+  pub patterns: Vec<String>,
+  pub excludes: Vec<String>,
+  pub ignore_paths: Vec<String>,
+  pub with_node_modules: bool,
+  pub thread_count: u32,
+  pub config_path: Option<String>,
+  pub cli_options: Option<Value>,
 }
 
 #[cfg(not(target_family = "wasm"))]
@@ -126,6 +145,200 @@ pub async fn lint_with_plugins(_args: Vec<String>) -> napi::Result<bool> {
   Err(napi::Error::from_reason(
     "oxk lint with JavaScript plugins is not supported in WASI builds. Use the native npm package for linting.",
   ))
+}
+
+/// Run the oxfmt-compatible formatter over files.
+#[cfg(not(target_family = "wasm"))]
+#[napi]
+pub async fn format_files(
+  args: FormatFilesArgs,
+  #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+  init_external_formatter_cb: JsInitExternalFormatterCb,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+  )]
+  format_embedded_cb: JsFormatEmbeddedCb,
+  #[napi(
+    ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+  )]
+  format_file_cb: JsFormatFileCb,
+) -> napi::Result<bool> {
+  let external_formatter = ExternalFormatter::new(
+    init_external_formatter_cb,
+    format_embedded_cb,
+    format_file_cb,
+  );
+  format_files_impl(args, external_formatter)
+    .await
+    .map_err(napi::Error::from_reason)
+}
+
+#[cfg(target_family = "wasm")]
+#[napi]
+pub async fn format_files(_args: Value) -> napi::Result<bool> {
+  Err(napi::Error::from_reason(
+    "oxk format files is not supported in WASI builds. Use the native npm package or the cargo CLI.",
+  ))
+}
+
+#[cfg(not(target_family = "wasm"))]
+async fn format_files_impl(
+  args: FormatFilesArgs,
+  external_formatter: ExternalFormatter,
+) -> Result<bool, String> {
+  if args.patterns.is_empty() {
+    return Err("Missing file pattern".to_string());
+  }
+
+  let cwd = env::current_dir().map_err(|err| format!("Failed to get current directory: {err}"))?;
+  let thread_count = usize::try_from(args.thread_count.max(1)).unwrap_or(1);
+  let config_path = args.config_path.as_deref().map(PathBuf::from);
+  let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_path.as_deref());
+  let editorconfig_path = resolve_editorconfig_path(&cwd);
+
+  let mut config_resolver = if oxfmtrc_path.is_some() {
+    ConfigResolver::from_config_paths(&cwd, oxfmtrc_path.as_deref(), editorconfig_path.as_deref())
+      .map_err(|err| format!("Failed to load configuration: {err}"))?
+  } else {
+    ConfigResolver::from_value(args.cli_options.unwrap_or_else(empty_object))
+  };
+
+  let ignore_patterns = config_resolver
+    .build_and_validate()
+    .map_err(|err| format!("Failed to parse configuration: {err}"))?;
+
+  let config_ignore_root = oxfmtrc_path
+    .as_deref()
+    .and_then(Path::parent)
+    .unwrap_or(&cwd);
+  let config_ignore_matcher = build_ignore_matcher(config_ignore_root, &ignore_patterns)?;
+
+  let ignore_paths = args
+    .ignore_paths
+    .iter()
+    .map(PathBuf::from)
+    .collect::<Vec<_>>();
+  let resolved_ignore_paths = resolve_ignore_paths(&cwd, &ignore_paths)?;
+  let targets = FormatTargets::new(&cwd, &args.patterns, &args.excludes);
+  let global_ignore_matchers =
+    build_global_ignore_matchers(&cwd, &targets.exclude_patterns, &resolved_ignore_paths)?;
+
+  let mut files = collect_matching_files(
+    &cwd,
+    &targets,
+    &global_ignore_matchers,
+    thread_count,
+    args.with_node_modules,
+  )
+  .map_err(|err| err.to_string())?;
+
+  if let Some(matcher) = &config_ignore_matcher {
+    files.retain(|path| !is_gitignore_match(matcher, path, false, true));
+  }
+
+  if files.is_empty() {
+    return Err("No files matched the provided patterns (after ignore rules)".to_string());
+  }
+
+  tokio::task::block_in_place(|| external_formatter.init(thread_count))?;
+
+  let config_resolver = Arc::new(config_resolver);
+  let semaphore = Arc::new(tokio::sync::Semaphore::new(thread_count));
+  let mut handles = Vec::with_capacity(files.len());
+
+  for path in files {
+    let cwd = cwd.clone();
+    let config_resolver = Arc::clone(&config_resolver);
+    let external_formatter = external_formatter.clone();
+    let semaphore = Arc::clone(&semaphore);
+    handles.push(tokio::spawn(async move {
+      format_cli_file(path, cwd, config_resolver, external_formatter, semaphore).await
+    }));
+  }
+
+  let mut formatted_count = 0usize;
+  let mut success = true;
+  for handle in handles {
+    match handle.await {
+      Ok(Ok(formatted)) => {
+        if formatted {
+          formatted_count += 1;
+        }
+      }
+      Ok(Err(err)) => {
+        eprintln!("Error formatting {err}");
+        success = false;
+      }
+      Err(err) => {
+        eprintln!("Error formatting task panicked: {err}");
+        success = false;
+      }
+    }
+  }
+
+  println!("\nFormatted {formatted_count} file(s)");
+  Ok(success)
+}
+
+#[cfg(not(target_family = "wasm"))]
+async fn format_cli_file(
+  path: PathBuf,
+  cwd: PathBuf,
+  config_resolver: Arc<ConfigResolver>,
+  external_formatter: ExternalFormatter,
+  semaphore: Arc<tokio::sync::Semaphore>,
+) -> Result<bool, String> {
+  let _permit = semaphore
+    .acquire()
+    .await
+    .map_err(|err| format!("{}: semaphore error: {err}", path.display()))?;
+
+  tokio::task::spawn_blocking(move || {
+    format_cli_file_blocking(path, &cwd, &config_resolver, external_formatter)
+  })
+  .await
+  .map_err(|err| format!("task join error: {err}"))?
+}
+
+#[cfg(not(target_family = "wasm"))]
+fn format_cli_file_blocking(
+  path: PathBuf,
+  cwd: &Path,
+  config_resolver: &ConfigResolver,
+  external_formatter: ExternalFormatter,
+) -> Result<bool, String> {
+  let source_text = fs::read_to_string(&path)
+    .map_err(|err| format!("{}: failed to read file: {err}", path.display()))?;
+  if source_text.is_empty() || should_ignore_file(&path) {
+    return Ok(false);
+  }
+
+  let strategy = FormatFileStrategy::try_from(path.clone())
+    .map_err(|_| format!("{}: unsupported file type", path.display()))?;
+  let resolved_options = config_resolver.resolve(&strategy);
+  let formatter = SourceFormatter::new(1).with_external_formatter(Some(external_formatter));
+
+  let formatted_code = match formatter.format(&strategy, &source_text, resolved_options) {
+    CoreFormatResult::Success { code, .. } => code,
+    CoreFormatResult::Error(diagnostics) => {
+      let errors = diagnostics
+        .iter()
+        .map(|diagnostic| format!("{diagnostic}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+      return Err(format!("{}:\n{errors}", path.display()));
+    }
+  };
+
+  fs::write(&path, formatted_code)
+    .map_err(|err| format!("{}: failed to write file: {err}", path.display()))?;
+  let display_path = path.strip_prefix(cwd).unwrap_or(&path);
+  println!("Formatted: {}", display_path.display());
+  Ok(true)
+}
+
+fn empty_object() -> Value {
+  Value::Object(serde_json::Map::new())
 }
 
 fn format_impl(

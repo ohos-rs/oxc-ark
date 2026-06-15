@@ -304,6 +304,7 @@ dependencies = [
 name = "format"
 version = "0.1.0"
 dependencies = [
+ "fast-glob",
  "globset",
  "ignore",
  "json-strip-comments",
@@ -1517,7 +1518,6 @@ dependencies = [
  "bpaf",
  "format",
  "futures",
- "globset",
  "json5format",
  "lint",
  "owo-colors",
@@ -1527,7 +1527,6 @@ dependencies = [
  "oxc_span",
  "serde_json",
  "tokio",
- "walkdir",
 ]
 
 [[package]]

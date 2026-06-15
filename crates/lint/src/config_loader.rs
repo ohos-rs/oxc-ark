@@ -28,6 +28,7 @@ use crate::{
 
 const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
+const OH_MODULES_DIR: &str = "oh_modules";
 
 pub struct JsConfigResult {
     pub config: Option<Oxlintrc>,
@@ -162,11 +163,10 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     fn visit(&mut self, entry: Result<DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                // Skip `.git` and `node_modules` directories entirely - they are not part of the
+                // Skip dependency and VCS metadata directories; they are not part of the
                 // lintable project tree for config discovery.
                 if entry.file_type().is_some_and(|ft| ft.is_dir())
-                    && (entry.file_name() == OsStr::new(GIT_DIR)
-                        || entry.file_name() == OsStr::new(NODE_MODULES_DIR))
+                    && is_skipped_config_dir(entry.file_name())
                 {
                     return ignore::WalkState::Skip;
                 }
@@ -178,6 +178,12 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
             Err(_) => ignore::WalkState::Skip,
         }
     }
+}
+
+fn is_skipped_config_dir(dir_name: &OsStr) -> bool {
+    dir_name == OsStr::new(GIT_DIR)
+        || dir_name == OsStr::new(NODE_MODULES_DIR)
+        || dir_name == OsStr::new(OH_MODULES_DIR)
 }
 
 fn to_discovered_config(entry: &DirEntry, base_config_path: &Path) -> Option<DiscoveredConfigFile> {
@@ -798,4 +804,87 @@ fn nested_respect_eslint_disable_directives_not_supported(path: &Path) -> OxcDia
         path.display()
     ))
     .with_help("Move `options.respectEslintDisableDirectives` to the root configuration file.")
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        process,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    use super::discover_configs_in_tree;
+
+    static NEXT_TEST_DIR_ID: AtomicU64 = AtomicU64::new(0);
+
+    struct TestDir {
+        path: PathBuf,
+    }
+
+    impl TestDir {
+        fn new(prefix: &str) -> Self {
+            let path = std::env::temp_dir().join(format!(
+                "oxc-ark-lint-config-{prefix}-{}-{}",
+                process::id(),
+                NEXT_TEST_DIR_ID.fetch_add(1, Ordering::Relaxed)
+            ));
+            fs::create_dir_all(&path).expect("test temp dir should be created");
+            let path = path
+                .canonicalize()
+                .expect("test temp dir should canonicalize");
+            Self { path }
+        }
+
+        fn path(&self) -> &Path {
+            &self.path
+        }
+
+        fn join(&self, child: &str) -> PathBuf {
+            self.path.join(child)
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
+    }
+
+    #[test]
+    fn discover_configs_in_tree_skips_package_modules() {
+        let dir = TestDir::new("package-modules");
+        fs::create_dir_all(dir.join("src")).expect("src dir should be created");
+        fs::create_dir_all(dir.join("node_modules/pkg"))
+            .expect("node_modules dir should be created");
+        fs::create_dir_all(dir.join("oh_modules/pkg")).expect("oh_modules dir should be created");
+
+        let base_config_path = dir.join(".oxlintrc.json");
+        fs::write(&base_config_path, r#"{"rules":{}}"#).expect("base config should be written");
+        fs::write(dir.join("src/.oxlintrc.json"), r#"{"rules":{}}"#)
+            .expect("src config should be written");
+        fs::write(
+            dir.join("node_modules/pkg/.oxlintrc.json"),
+            r#"{"rules":{}}"#,
+        )
+        .expect("node_modules config should be written");
+        fs::write(dir.join("oh_modules/pkg/.oxlintrc.json"), r#"{"rules":{}}"#)
+            .expect("oh_modules config should be written");
+
+        let mut configs = discover_configs_in_tree(dir.path(), &base_config_path)
+            .into_iter()
+            .map(|config| {
+                config
+                    .path()
+                    .strip_prefix(dir.path())
+                    .expect("config should be under temp root")
+                    .to_string_lossy()
+                    .to_string()
+            })
+            .collect::<Vec<_>>();
+        configs.sort();
+
+        assert_eq!(configs, vec!["src/.oxlintrc.json"]);
+    }
 }

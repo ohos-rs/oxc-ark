@@ -96,6 +96,19 @@ export declare const enum ExportLocalNameKind {
  */
 export declare function format(filename: string, sourceText: string, options?: any | undefined | null, initExternalFormatterCb?: (numThreads: number) => Promise<string[]>, formatEmbeddedCb?: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb?: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<FormatResult>
 
+/** Run the oxfmt-compatible formatter over files. */
+export declare function formatFiles(args: FormatFilesArgs, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatEmbeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<boolean>
+
+export interface FormatFilesArgs {
+  patterns: Array<string>
+  excludes: Array<string>
+  ignorePaths: Array<string>
+  withNodeModules: boolean
+  threadCount: number
+  configPath?: string
+  cliOptions?: any
+}
+
 /** Run the oxfmt-compatible formatter language server. */
 export declare function formatLsp(): Promise<boolean>
 

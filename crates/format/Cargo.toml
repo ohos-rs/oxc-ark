@@ -21,6 +21,7 @@ json-strip-comments = { workspace = true }
 json5format = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
+fast-glob = { workspace = true }
 globset = { workspace = true }
 ignore = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }

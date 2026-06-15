@@ -24,9 +24,19 @@ pub fn cli_format() -> impl Parser<crate::Options> {
 
     let excludes = long("exclude")
         .argument("PATTERN")
-        .help("Exclude files or directories.")
+        .help("Exclude files or directories. Equivalent to an oxfmt !PATTERN input.")
         .many()
         .fallback(vec![]);
+
+    let ignore_path = long("ignore-path")
+        .argument::<String>("PATH")
+        .help("Path to ignore file(s). Can be specified multiple times.")
+        .parse(|s| Ok::<PathBuf, String>(PathBuf::from(s)))
+        .many();
+
+    let with_node_modules = long("with-node-modules")
+        .help("Format code in node_modules and oh_modules directories.")
+        .switch();
 
     // FormatOptions parameters
     let indent_style = long("indent-style")
@@ -135,6 +145,8 @@ pub fn cli_format() -> impl Parser<crate::Options> {
         config,
         thread,
         excludes,
+        ignore_path,
+        with_node_modules,
         indent_style,
         indent_width,
         line_ending,
