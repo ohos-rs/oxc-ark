@@ -8,32 +8,37 @@ authors = ["richerfu<southsouth0929@foxmail.com>"]
 license = "MIT"
 description = "An ArkTS/ArkUI tool based on oxc"
 
+[workspace.lints.clippy]
+# Match OXC: `OxcDiagnostic` stays inline so diagnostic construction remains allocation-free.
+result_large_err = "allow"
+
 [workspace.dependencies]
 # inner dependencies
 format = { path = "crates/format" }
 lint = { path = "crates/lint" }
 
 # Oxc dependencies
-oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614", features = [
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e", features = [
   "serialize",
 ] }
-oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614", features = [
+oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e", features = [
   "serialize",
 ] }
-oxc_config_discovery = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614" }
-oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "5caa6d54ae977b8a76ed68b8aba06b38e1c6a614", default-features = false }
+oxc_config = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_formatter_core = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e", default-features = false }
 
 # Json5format dependencies
 json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18181ead25022cf12df7af1bd68b6fb74" }
@@ -42,7 +47,7 @@ json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18
 # Common dependencies
 serde_json = "1.0"
 serde = { version = "1", features = ["derive"] }
-schemars = { package = "oxc-schemars", version = "0.8.27" }
+schemars = { package = "oxc-schemars", version = "0.9.1" }
 tokio = { version = "1", features = ["full"] }
 phf = { version = "0.11", features = ["macros"] }
 simdutf8 = "0.1"
@@ -54,7 +59,7 @@ owo-colors = "4"
 globset = "0.4"
 fast-glob = "1.0.1"
 ignore = { version = "0.4.25", features = ["simd-accel"] }
-miette = { package = "oxc-miette", version = "2.7.1", features = [
+miette = { package = "oxc-miette", version = "3.0.0", features = [
   "fancy-no-syscall",
 ] }
 rayon = "1.11"

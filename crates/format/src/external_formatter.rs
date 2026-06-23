@@ -147,7 +147,7 @@ impl ExternalFormatter {
     pub fn to_external_callbacks(
         &self,
         _path: &Path,
-        _format_options: &oxc_formatter::FormatOptions,
+        _format_options: &oxc_formatter::JsFormatOptions,
         options: Value,
     ) -> oxc_formatter::ExternalCallbacks {
         let format_embedded = Arc::clone(&self.format_embedded);

@@ -4,8 +4,7 @@ use std::path::Path;
 
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
-use oxc_parser::Parser;
+use oxc_formatter::{JsFormatOptions as FormatOptions, format as format_js};
 use oxc_span::SourceType;
 use serde_json::Value;
 
@@ -153,20 +152,7 @@ impl SourceFormatter {
         format_options: FormatOptions,
         external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
-        let source_type = enable_jsx_source_type(source_type);
         let allocator = self.allocator_pool.get();
-
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
-        if !ret.errors.is_empty() {
-            // Return the first error for simplicity
-            return Err(ret
-                .errors
-                .into_iter()
-                .next()
-                .expect("errors.is_empty() was checked above"));
-        }
 
         #[cfg(feature = "napi")]
         let external_callbacks = {
@@ -186,9 +172,13 @@ impl SourceFormatter {
             None
         };
 
-        let base_formatter = Formatter::new(&allocator, format_options);
-        let formatted =
-            base_formatter.format_with_external_callbacks(&ret.program, external_callbacks);
+        let formatted = format_js(
+            &allocator,
+            source_text,
+            source_type,
+            format_options,
+            external_callbacks,
+        )?;
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(

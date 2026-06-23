@@ -407,7 +407,7 @@ async fn format_file_async(
 #[cfg(test)]
 mod tests {
     use format::{FormatFileStrategy, ResolvedOptions, SourceFormatter};
-    use oxc_formatter::FormatOptions;
+    use oxc_formatter::JsFormatOptions as FormatOptions;
     use serde_json::Value;
     use std::{
         fs,

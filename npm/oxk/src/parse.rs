@@ -242,13 +242,13 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
 
   let mut program = ret.program;
   let mut module_record = ret.module_record;
-  let mut diagnostics = ret.errors;
+  let mut diagnostics = ret.diagnostics;
 
   if options.show_semantic_errors == Some(true) {
     let semantic_ret = SemanticBuilder::new()
       .with_check_syntax_error(true)
       .build(&program);
-    diagnostics.extend(semantic_ret.errors);
+    diagnostics.extend(semantic_ret.diagnostics);
   }
 
   let mut errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
@@ -268,9 +268,9 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
           },
         );
       }
-      program.to_estree_js_json_with_fixes(ranges)
+      program.to_estree_json_with_fixes(false, ranges)
     }
-    AstType::TypeScript => program.to_estree_ts_json_with_fixes(ranges),
+    AstType::TypeScript => program.to_estree_json_with_fixes(true, ranges),
   };
   let program = parse_program_json(program_json);
 

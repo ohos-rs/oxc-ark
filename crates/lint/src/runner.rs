@@ -22,7 +22,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
-    LintServiceOptions, Linter,
+    LintServiceOptions, Linter, SuppressionManager,
 };
 use oxc_span::Span;
 
@@ -232,7 +232,7 @@ impl OxkLintRunner {
                             stdout,
                             &format!(
                                 "Failed to parse oxlint configuration file.\n{}\n",
-                                render_report(&handler, &error)
+                                render_report(&handler, error.as_ref())
                             ),
                         );
                     }
@@ -343,6 +343,9 @@ impl OxkLintRunner {
                 .any(|config| config.plugins().has_import());
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+        let suppression_path = format!(".oxk-disabled-suppressions-{}", std::process::id());
+        let diff_manager =
+            SuppressionManager::load(options.cwd(), &suppression_path, false, false).build_diff();
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_check_only = self.options.type_check_only;
@@ -474,7 +477,8 @@ impl OxkLintRunner {
             }
         };
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone()) {
+        match lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
+        {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }

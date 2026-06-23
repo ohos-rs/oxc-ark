@@ -10,9 +10,10 @@ use serde_json::Value;
 
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
-    EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    EmbeddedLanguageFormatting, Expand, JsFormatOptions as FormatOptions, QuoteProperties,
+    QuoteStyle, Semicolons, TrailingCommas,
 };
+use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_toml::Options as TomlFormatterOptions;
 
 /// Configuration options for Oxfmt (.oxfmtrc.json / .oxfmtrc.jsonc).

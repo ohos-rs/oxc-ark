@@ -10,6 +10,7 @@ const packageRoot = path.resolve(import.meta.dirname, '..')
 const workspaceRoot = path.resolve(packageRoot, '../..')
 const packageJson = require(path.join(packageRoot, 'package.json'))
 const upstreamSrc = resolveUpstreamSrc()
+const upstreamSharedEntry = resolveUpstreamSharedEntry(upstreamSrc)
 const outDir = path.join(packageRoot, 'oxlint-runtime')
 const tempDir = fs.mkdtempSync(path.join(tmpdir(), 'oxk-oxlint-runtime-build-'))
 
@@ -49,6 +50,9 @@ const patchPlugin = {
       contents: `export const version = ${JSON.stringify(packageJson.version)}; export default { version };`,
       loader: 'js',
     }))
+    build.onResolve({ filter: /^@oxapps\/shared$/ }, () => ({
+      path: upstreamSharedEntry,
+    }))
   },
 }
 
@@ -61,6 +65,7 @@ const commonOptions = {
     DEBUG: 'false',
     CONFORMANCE: 'false',
   },
+  external: ['vite-plus'],
   plugins: [patchPlugin],
   nodePaths: [path.join(packageRoot, 'node_modules')],
   minify: true,
@@ -106,4 +111,12 @@ function resolveUpstreamSrc() {
     throw new Error(`Resolved oxlint package does not contain src-js runtime sources: ${src}`)
   }
   return src
+}
+
+function resolveUpstreamSharedEntry(src) {
+  const sharedEntry = path.resolve(src, '..', '..', 'shared', 'src-js', 'index.ts')
+  if (!fs.existsSync(sharedEntry)) {
+    throw new Error(`Resolved OXC checkout does not contain @oxapps/shared runtime source: ${sharedEntry}`)
+  }
+  return sharedEntry
 }
