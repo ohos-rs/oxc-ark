@@ -4,6 +4,7 @@ env:
   APP_NAME: 'oxk'
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   CARGO_INCREMENTAL: '1'
+  RUST_TOOLCHAIN: '1.96.0'
 permissions:
   contents: write
   id-token: write
@@ -40,6 +41,7 @@ jobs:
       - name: Install
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: clippy, rustfmt
 
       - name: Install dependencies
@@ -104,7 +106,7 @@ jobs:
           - host: ubuntu-latest
             target: wasm32-wasip1-threads
             build: cd npm/oxk && pnpm build --target wasm32-wasip1-threads
-    name: stable - ${{ matrix.settings.target }} - node@20
+    name: rust 1.96.0 - ${{ matrix.settings.target }} - node@20
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v6
@@ -122,7 +124,7 @@ jobs:
       - name: Install
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           targets: ${{ matrix.settings.target }}
       - name: Cache cargo
         uses: actions/cache@v5
@@ -198,13 +200,13 @@ jobs:
           version: '14.3'
           memory: 8G
           cpu_count: 3
-          environment_variables: 'DEBUG RUSTUP_IO_THREADS'
+          environment_variables: 'DEBUG RUSTUP_IO_THREADS RUST_TOOLCHAIN'
           shell: bash
           run: |
             sudo pkg install -y -f ca_root_nss curl node libnghttp2 npm
             sudo npm install -g corepack
             curl https://sh.rustup.rs -sSf --output rustup.sh
-            sh rustup.sh -y --profile minimal --default-toolchain beta
+            sh rustup.sh -y --profile minimal --default-toolchain "${RUST_TOOLCHAIN}"
             sudo corepack enable
             source "$HOME/.cargo/env"
             echo "~~~~ rustc --version ~~~~"
