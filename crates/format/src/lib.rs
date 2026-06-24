@@ -14,8 +14,7 @@ mod utils;
 mod external_formatter;
 
 pub use config::{
-    ConfigResolver, JsonFormatterOptions, ResolvedOptions, resolve_editorconfig_path,
-    resolve_oxfmtrc_path,
+    ConfigResolver, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
 };
 #[cfg(not(target_family = "wasm"))]
 pub use discovery::{
@@ -27,6 +26,7 @@ pub use format::{FormatResult, SourceFormatter};
 pub use ignore::{build_ignore_matcher, is_gitignore_match};
 #[cfg(not(target_family = "wasm"))]
 pub use lsp::run_lsp;
+pub use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 pub use support::{FormatFileStrategy, JsonType, should_ignore_file};
 
 #[cfg(feature = "napi")]

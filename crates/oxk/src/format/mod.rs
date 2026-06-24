@@ -696,14 +696,10 @@ struct Index {
         // Test actual formatting
         let formatter = SourceFormatter::new(1);
         let resolved_options = ResolvedOptions::OxfmtJson {
-            json_options: format::JsonFormatterOptions {
-                indent_width: 2,
-                use_tabs: false,
-                line_ending: "\n".to_string(),
-                trailing_commas: false,
-                quote_properties: json5format::QuoteProperties::Consistent,
+            json_options: format::JsonFormatOptions {
+                variant: format::JsonVariant::Json5,
+                ..format::JsonFormatOptions::default()
             },
-            json_type: format::JsonType::Json5,
             insert_final_newline: true,
         };
 
@@ -743,14 +739,10 @@ struct Index {
         // Test actual formatting
         let formatter = SourceFormatter::new(1);
         let resolved_options = ResolvedOptions::OxfmtJson {
-            json_options: format::JsonFormatterOptions {
-                indent_width: 2,
-                use_tabs: false,
-                line_ending: "\n".to_string(),
-                trailing_commas: false,
-                quote_properties: json5format::QuoteProperties::Consistent,
+            json_options: format::JsonFormatOptions {
+                variant: format::JsonVariant::Json,
+                ..format::JsonFormatOptions::default()
             },
-            json_type: format::JsonType::Json,
             insert_final_newline: true,
         };
 
@@ -794,28 +786,19 @@ struct Index {
         // Test actual formatting
         let formatter = SourceFormatter::new(1);
         let resolved_options = ResolvedOptions::OxfmtJson {
-            json_options: format::JsonFormatterOptions {
-                indent_width: 2,
-                use_tabs: false,
-                line_ending: "\n".to_string(),
-                trailing_commas: false,
-                quote_properties: json5format::QuoteProperties::Consistent,
+            json_options: format::JsonFormatOptions {
+                variant: format::JsonVariant::Jsonc,
+                ..format::JsonFormatOptions::default()
             },
-            json_type: format::JsonType::Jsonc,
             insert_final_newline: true,
         };
 
         match formatter.format(&strategy, jsonc_content, resolved_options) {
             format::FormatResult::Success { code, .. } => {
                 assert!(!code.is_empty(), "Formatted JSONC should not be empty");
-                // Comments should be stripped
                 assert!(
-                    !code.contains("//"),
-                    "Comments should be stripped from JSONC"
-                );
-                assert!(
-                    !code.contains("/*"),
-                    "Comments should be stripped from JSONC"
+                    code.contains("// This is a comment") || code.contains("/* Another comment */"),
+                    "JSONC comments should follow upstream behavior and be preserved"
                 );
                 assert!(code.contains("name"), "Should contain 'name'");
             }
