@@ -4,7 +4,7 @@
 
 use std::path::{Path, PathBuf};
 
-use oxc_formatter::FormatOptions;
+use oxc_formatter::JsFormatOptions as FormatOptions;
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 

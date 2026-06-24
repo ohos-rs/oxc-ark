@@ -6,10 +6,14 @@ authors = ["richerfu<southorange0929@foxmail.com>"]
 description = "Reusable multi-language formatter based on oxc"
 license.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
+oxc_formatter_core = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 oxc-toml = { workspace = true }

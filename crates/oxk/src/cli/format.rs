@@ -1,6 +1,20 @@
 use bpaf::{Parser, construct, long, positional};
 use std::{path::PathBuf, str::FromStr};
 
+fn parse_quote_style(value: String) -> Result<oxc_formatter::QuoteStyle, String> {
+    match value.as_str() {
+        "double" => Ok(oxc_formatter::QuoteStyle::Double),
+        "single" => Ok(oxc_formatter::QuoteStyle::Single),
+        _ => Err("Value must be 'double' or 'single'".to_string()),
+    }
+}
+
+fn parse_bracket_spacing(value: String) -> Result<oxc_formatter::BracketSpacing, String> {
+    bool::from_str(&value)
+        .map(oxc_formatter::BracketSpacing::from)
+        .map_err(|_| "Value must be 'true' or 'false'".to_string())
+}
+
 pub fn cli_format() -> impl Parser<crate::Options> {
     let lsp = long("lsp")
         .help("Start language server protocol (LSP) server")
@@ -42,37 +56,37 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let indent_style = long("indent-style")
         .argument::<String>("STYLE")
         .help("The indent style. Values: tab, space")
-        .parse(|s| oxc_formatter::IndentStyle::from_str(&s))
+        .parse(|s| oxc_formatter_core::IndentStyle::from_str(&s))
         .optional();
 
     let indent_width = long("indent-width")
         .argument::<String>("WIDTH")
         .help("The indent width (0-24)")
-        .parse(|s| oxc_formatter::IndentWidth::from_str(&s))
+        .parse(|s| oxc_formatter_core::IndentWidth::from_str(&s))
         .optional();
 
     let line_ending = long("line-ending")
         .argument::<String>("ENDING")
         .help("The type of line ending. Values: lf, crlf, cr")
-        .parse(|s| oxc_formatter::LineEnding::from_str(&s))
+        .parse(|s| oxc_formatter_core::LineEnding::from_str(&s))
         .optional();
 
     let line_width = long("line-width")
         .argument::<String>("WIDTH")
         .help("The max width of a line (1-320)")
-        .parse(|s| oxc_formatter::LineWidth::from_str(&s))
+        .parse(|s| oxc_formatter_core::LineWidth::from_str(&s))
         .optional();
 
     let quote_style = long("quote-style")
         .argument::<String>("STYLE")
         .help("The style for quotes. Values: double, single")
-        .parse(|s| oxc_formatter::QuoteStyle::from_str(&s))
+        .parse(parse_quote_style)
         .optional();
 
     let jsx_quote_style = long("jsx-quote-style")
         .argument::<String>("STYLE")
         .help("The style for JSX quotes. Values: double, single")
-        .parse(|s| oxc_formatter::QuoteStyle::from_str(&s))
+        .parse(parse_quote_style)
         .optional();
 
     let trailing_commas = long("trailing-commas")
@@ -96,7 +110,7 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let bracket_spacing = long("bracket-spacing")
         .argument::<String>("VALUE")
         .help("Insert spaces around brackets in object literals. Values: true, false")
-        .parse(|s| oxc_formatter::BracketSpacing::from_str(&s))
+        .parse(parse_bracket_spacing)
         .optional();
 
     let bracket_same_line = long("bracket-same-line")

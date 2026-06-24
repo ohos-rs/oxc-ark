@@ -6,6 +6,9 @@ authors.workspace = true
 description = "Reusable linter based on oxlint"
 license.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 oxlint = { workspace = true }
 cow-utils = { workspace = true }
@@ -16,7 +19,7 @@ napi = { workspace = true, optional = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
-oxc_config_discovery = { workspace = true }
+oxc_config = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_language_server = { workspace = true }
