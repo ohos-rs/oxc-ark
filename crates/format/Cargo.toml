@@ -11,18 +11,19 @@ workspace = true
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["pool"] }
+oxc_ast = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 oxc-toml = { workspace = true }
+oxc_formatter_json = { workspace = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = { workspace = true }
 phf = { workspace = true }
 simdutf8 = { workspace = true }
 json-strip-comments = { workspace = true }
-json5format = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 fast-glob = { workspace = true }

@@ -9,11 +9,16 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
-    EmbeddedLanguageFormatting, Expand, JsFormatOptions as FormatOptions, QuoteProperties,
-    QuoteStyle, Semicolons, TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing as JsBracketSpacing,
+    EmbeddedLanguageFormatting, Expand as JsExpand, JsFormatOptions as FormatOptions,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas as JsTrailingCommas,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_json::{
+    BracketSpacing as JsonBracketSpacing, Expand as JsonExpand, JsonFormatOptions,
+    QuoteProps as JsonQuoteProps, SingleQuote as JsonSingleQuote,
+    TrailingCommas as JsonTrailingCommas,
+};
 use oxc_toml::Options as TomlFormatterOptions;
 
 /// Configuration options for Oxfmt (.oxfmtrc.json / .oxfmtrc.jsonc).
@@ -110,6 +115,7 @@ pub enum EmbeddedLanguageFormattingConfig {
 #[derive(Debug, Clone)]
 pub struct OxfmtOptions {
     pub format_options: FormatOptions,
+    pub json_options: JsonFormatOptions,
     pub toml_options: TomlFormatterOptions,
     /// Used when resolving `ExternalFormatterPackageJson` (napi only).
     #[allow(dead_code)]
@@ -177,9 +183,9 @@ impl FormatConfig {
         }
         if let Some(commas) = self.trailing_comma {
             format_options.trailing_commas = match commas {
-                TrailingCommaConfig::All => TrailingCommas::All,
-                TrailingCommaConfig::Es5 => TrailingCommas::Es5,
-                TrailingCommaConfig::None => TrailingCommas::None,
+                TrailingCommaConfig::All => JsTrailingCommas::All,
+                TrailingCommaConfig::Es5 => JsTrailingCommas::Es5,
+                TrailingCommaConfig::None => JsTrailingCommas::None,
             };
         }
         if let Some(semi) = self.semi {
@@ -196,15 +202,15 @@ impl FormatConfig {
             };
         }
         if let Some(spacing) = self.bracket_spacing {
-            format_options.bracket_spacing = BracketSpacing::from(spacing);
+            format_options.bracket_spacing = JsBracketSpacing::from(spacing);
         }
         if let Some(same_line) = self.bracket_same_line {
             format_options.bracket_same_line = BracketSameLine::from(same_line);
         }
         if let Some(object_wrap) = self.object_wrap {
             format_options.expand = match object_wrap {
-                ObjectWrapConfig::Preserve => Expand::Auto,
-                ObjectWrapConfig::Collapse => Expand::Never,
+                ObjectWrapConfig::Preserve => JsExpand::Auto,
+                ObjectWrapConfig::Collapse => JsExpand::Never,
             };
         }
         if let Some(single_attribute_per_line) = self.single_attribute_per_line {
@@ -222,6 +228,7 @@ impl FormatConfig {
         }
         // experimental_sort_imports, experimental_tailwindcss: parsed but not applied in this minimal impl
 
+        let json_options = build_json_options(&self)?;
         let toml_options = build_toml_options(&format_options);
         let sort_package_json = !matches!(
             self.experimental_sort_package_json.as_ref(),
@@ -231,11 +238,70 @@ impl FormatConfig {
 
         Ok(OxfmtOptions {
             format_options,
+            json_options,
             toml_options,
             sort_package_json,
             insert_final_newline,
         })
     }
+}
+
+fn build_json_options(config: &FormatConfig) -> Result<JsonFormatOptions, String> {
+    let mut options = JsonFormatOptions {
+        single_quote: JsonSingleQuote::from(true),
+        quote_props: JsonQuoteProps::Preserve,
+        ..JsonFormatOptions::default()
+    };
+
+    if let Some(use_tabs) = config.use_tabs {
+        options.indent_style = if use_tabs {
+            IndentStyle::Tab
+        } else {
+            IndentStyle::Space
+        };
+    }
+    if let Some(width) = config.tab_width {
+        options.indent_width =
+            IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
+    }
+    if let Some(ending) = config.end_of_line {
+        options.line_ending = match ending {
+            EndOfLineConfig::Lf => LineEnding::Lf,
+            EndOfLineConfig::Crlf => LineEnding::Crlf,
+            EndOfLineConfig::Cr => LineEnding::Cr,
+        };
+    }
+    if let Some(width) = config.print_width {
+        options.line_width =
+            LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
+    }
+    if let Some(commas) = config.trailing_comma {
+        options.trailing_commas = match commas {
+            TrailingCommaConfig::All | TrailingCommaConfig::Es5 => JsonTrailingCommas::Always,
+            TrailingCommaConfig::None => JsonTrailingCommas::Never,
+        };
+    }
+    if let Some(spacing) = config.bracket_spacing {
+        options.bracket_spacing = JsonBracketSpacing::from(spacing);
+    }
+    if let Some(object_wrap) = config.object_wrap {
+        options.expand = match object_wrap {
+            ObjectWrapConfig::Preserve => JsonExpand::Auto,
+            ObjectWrapConfig::Collapse => JsonExpand::Never,
+        };
+    }
+    if let Some(single_quote) = config.single_quote {
+        options.single_quote = JsonSingleQuote::from(single_quote);
+    }
+    if let Some(props) = config.quote_props {
+        options.quote_props = match props {
+            QuotePropsConfig::AsNeeded => JsonQuoteProps::AsNeeded,
+            QuotePropsConfig::Consistent => JsonQuoteProps::Consistent,
+            QuotePropsConfig::Preserve => JsonQuoteProps::Preserve,
+        };
+    }
+
+    Ok(options)
 }
 
 fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
@@ -316,6 +382,7 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use oxc_formatter_json::QuoteProps as JsonQuoteProps;
 
     #[test]
     fn default_quote_props_are_preserved() {
@@ -327,6 +394,8 @@ mod tests {
             options.format_options.quote_properties,
             QuoteProperties::Preserve
         );
+        assert_eq!(options.json_options.quote_props, JsonQuoteProps::Preserve);
+        assert!(options.json_options.single_quote.value());
     }
 
     #[test]

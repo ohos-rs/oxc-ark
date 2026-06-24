@@ -30,6 +30,7 @@ oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725
 oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
 oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
 oxc_formatter_core = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
+oxc_formatter_json = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
 oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
 oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
 oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
@@ -39,10 +40,6 @@ oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66
 oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
 oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
 oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e", default-features = false }
-
-# Json5format dependencies
-json5format = { git = "https://github.com/ohos-rs/json5format", rev = "26e00bd18181ead25022cf12df7af1bd68b6fb74" }
-
 
 # Common dependencies
 serde_json = "1.0"

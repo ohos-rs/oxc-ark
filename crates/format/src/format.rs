@@ -2,14 +2,19 @@
 use std::borrow::Cow;
 use std::path::Path;
 
-use oxc_allocator::AllocatorPool;
+use oxc_allocator::{Allocator, AllocatorPool, Vec as ArenaVec};
+use oxc_ast::ast::{
+    ArrayExpression, ArrayExpressionElement, Expression, ObjectExpression, ObjectPropertyKind,
+    PropertyKey, Statement, StringLiteral,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::{JsFormatOptions as FormatOptions, format as format_js};
+use oxc_formatter_core::spec::normalize_string;
+use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps, format as format_json};
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 use serde_json::Value;
 
-use super::config::JsonFormatterOptions;
-use super::support::JsonType;
 use super::{FormatFileStrategy, ResolvedOptions};
 
 #[cfg(all(feature = "napi", feature = "sort-package-json"))]
@@ -84,11 +89,10 @@ impl SourceFormatter {
                 FormatFileStrategy::OxfmtJson { json_type: _, .. },
                 ResolvedOptions::OxfmtJson {
                     json_options,
-                    json_type: resolved_json_type,
                     insert_final_newline,
                 },
             ) => (
-                Self::format_by_json(source_text, resolved_json_type, json_options),
+                self.format_by_json(source_text, json_options),
                 insert_final_newline,
             ),
             #[cfg(feature = "napi")]
@@ -195,136 +199,251 @@ impl SourceFormatter {
         oxc_toml::format(source_text, options)
     }
 
-    /// Format JSON/JSON5/JSONC file using Rust formatters.
+    /// Format JSON/JSON5/JSONC using `oxc_formatter_json`.
     fn format_by_json(
+        &self,
         source_text: &str,
-        json_type: JsonType,
-        options: JsonFormatterOptions,
+        options: JsonFormatOptions,
     ) -> Result<String, OxcDiagnostic> {
-        match json_type {
-            JsonType::Json => format_json(source_text, &options),
-            JsonType::Json5 => format_json5(source_text, &options),
-            JsonType::Jsonc => format_jsonc(source_text, &options),
+        let preserve_json5_key_quotes = should_preserve_json5_key_quote_style(options);
+        let allocator = self.allocator_pool.get();
+        let formatted = format_json(&allocator, source_text, options)?;
+        let code = formatted.print().map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to print formatted JSON: {err}"))
+        })?;
+        let mut code = code.into_code();
+
+        if preserve_json5_key_quotes {
+            restore_json5_double_quoted_keys(source_text, &mut code);
         }
+
+        Ok(code)
     }
 }
 
-// --- JSON formatting functions
-
-/// Format standard JSON file.
-fn format_json(source_text: &str, options: &JsonFormatterOptions) -> Result<String, OxcDiagnostic> {
-    // Parse JSON
-    let value: serde_json::Value = serde_json::from_str(source_text)
-        .map_err(|err| OxcDiagnostic::error(format!("Failed to parse JSON: {err}")))?;
-
-    // Format with serde_json
-    let formatted = serde_json::to_string_pretty(&value)
-        .map_err(|err| OxcDiagnostic::error(format!("Failed to format JSON: {err}")))?;
-
-    // Replace indentation and line endings
-    let formatted = if options.use_tabs {
-        // Replace spaces with tabs
-        replace_indent(&formatted, options.indent_width, "\t")
-    } else {
-        formatted
-    };
-
-    let formatted = formatted.replace('\n', &options.line_ending);
-
-    Ok(formatted)
+#[derive(Debug)]
+struct Json5KeyQuote {
+    value: String,
+    quote: u8,
 }
 
-/// Format JSON5 file (supports comments, trailing commas, etc.).
-/// Uses json5format to preserve comments and format JSON5 files.
-fn format_json5(
-    source_text: &str,
-    options: &JsonFormatterOptions,
-) -> Result<String, OxcDiagnostic> {
-    use json5format::{FormatOptions, Json5Format, ParsedDocument};
+#[derive(Debug)]
+struct FormattedJson5Key {
+    value: String,
+    start: usize,
+    end: usize,
+    raw_inner: String,
+    quote: u8,
+}
 
-    // Parse the JSON5 document (preserves comments)
-    let parsed = ParsedDocument::from_str(source_text, None)
-        .map_err(|err| OxcDiagnostic::error(format!("Failed to parse JSON5: {err}")))?;
+fn should_preserve_json5_key_quote_style(options: JsonFormatOptions) -> bool {
+    options.variant == JsonVariant::Json5
+        && matches!(options.quote_props, QuoteProps::Preserve)
+        && options.single_quote.value()
+}
 
-    // Create format options
-    let mut format_options = FormatOptions::default();
-    // Note: json5format uses indent_by as usize (number of spaces), tabs are not directly supported
-    // We'll use spaces and then replace with tabs if needed
-    let indent_by = if options.use_tabs {
-        1 // Will be replaced with tabs later
-    } else {
-        options.indent_width
+fn restore_json5_double_quoted_keys(source_text: &str, code: &mut String) {
+    let Some(source_keys) = collect_source_json5_key_quotes(source_text) else {
+        return;
     };
-    format_options.indent_by = indent_by;
-    format_options.trailing_commas = options.trailing_commas;
-    format_options.quote_properties = options.quote_properties;
-
-    // Create formatter with options
-    let formatter = Json5Format::with_options(format_options)
-        .map_err(|err| OxcDiagnostic::error(format!("Failed to create JSON5 formatter: {err}")))?;
-
-    // Format the JSON5 (preserves comments)
-    let mut formatted = formatter
-        .to_string(&parsed)
-        .map_err(|err| OxcDiagnostic::error(format!("Failed to format JSON5: {err}")))?;
-
-    // Replace spaces with tabs if needed
-    if options.use_tabs {
-        formatted = replace_indent(&formatted, indent_by, "\t");
+    if !source_keys.iter().any(|key| key.quote == b'"') {
+        return;
     }
 
-    // Replace line endings
-    formatted = formatted.replace('\n', &options.line_ending);
+    let Some(formatted_keys) = collect_formatted_json5_keys(code) else {
+        return;
+    };
 
-    Ok(formatted)
-}
-
-/// Format JSONC file (JSON with comments).
-fn format_jsonc(
-    source_text: &str,
-    options: &JsonFormatterOptions,
-) -> Result<String, OxcDiagnostic> {
-    // First, strip comments to get valid JSON
-    let mut json_text = source_text.to_string();
-    json_strip_comments::strip(&mut json_text).map_err(|err| {
-        OxcDiagnostic::error(format!("Failed to strip comments from JSONC: {err}"))
-    })?;
-
-    // Then format as standard JSON
-    format_json(&json_text, options)
-}
-
-/// Replace indentation in formatted JSON string.
-fn replace_indent(text: &str, original_width: usize, new_indent: &str) -> String {
-    let lines: Vec<&str> = text.lines().collect();
-    let mut result = String::new();
-
-    for (i, line) in lines.iter().enumerate() {
-        if i > 0 {
-            result.push('\n');
-        }
-
-        // Count leading spaces (using bytes for safe indexing)
-        let leading_spaces_byte_count = line.bytes().take_while(|&b| b == b' ').count();
-
-        if leading_spaces_byte_count > 0
-            && leading_spaces_byte_count <= line.len()
-            && original_width > 0
+    let mut replacements = Vec::new();
+    for (source_key, formatted_key) in source_keys.iter().zip(formatted_keys.iter()) {
+        if source_key.quote != b'"'
+            || formatted_key.quote != b'\''
+            || source_key.value != formatted_key.value
         {
-            // Calculate number of indent levels
-            let indent_levels = leading_spaces_byte_count / original_width;
-            // Replace with new indent
-            for _ in 0..indent_levels {
-                result.push_str(new_indent);
-            }
-            // Add remaining content (safe because we checked bounds)
-            result.push_str(&line[leading_spaces_byte_count..]);
-        } else {
-            result.push_str(line);
+            continue;
         }
+
+        let normalized = normalize_string(&formatted_key.raw_inner, b'"', true);
+        replacements.push((
+            formatted_key.start,
+            formatted_key.end,
+            format!("\"{normalized}\""),
+        ));
     }
 
-    result
+    for (start, end, replacement) in replacements.into_iter().rev() {
+        if start <= end && end <= code.len() {
+            code.replace_range(start..end, &replacement);
+        }
+    }
+}
+
+fn collect_source_json5_key_quotes(source_text: &str) -> Option<Vec<Json5KeyQuote>> {
+    let allocator = Allocator::default();
+    let expression = parse_json_expression(&allocator, source_text)?;
+    let mut keys = Vec::new();
+    collect_source_key_quotes_from_expression(expression, &mut keys);
+    Some(keys)
+}
+
+fn collect_formatted_json5_keys(code: &str) -> Option<Vec<FormattedJson5Key>> {
+    let allocator = Allocator::default();
+    let expression = parse_json_expression(&allocator, code)?;
+    let mut keys = Vec::new();
+    collect_formatted_keys_from_expression(expression, &mut keys);
+    Some(keys)
+}
+
+fn parse_json_expression<'a>(
+    allocator: &'a Allocator,
+    source_text: &str,
+) -> Option<&'a Expression<'a>> {
+    let wrapped_source = allocator.alloc_concat_strs_array(["(", source_text, "\n)"]);
+    let options = ParseOptions {
+        preserve_parens: false,
+        ..ParseOptions::default()
+    };
+    let ret = Parser::new(allocator, wrapped_source, SourceType::default())
+        .with_options(options)
+        .parse();
+    if ret.panicked || !ret.diagnostics.is_empty() {
+        return None;
+    }
+
+    let mut program = ret.program;
+    let body = std::mem::replace(&mut program.body, ArenaVec::new_in(allocator)).into_arena_slice();
+    let Statement::ExpressionStatement(statement) = body.first()? else {
+        return None;
+    };
+    Some(&statement.expression)
+}
+
+fn collect_source_key_quotes_from_expression(
+    expression: &Expression<'_>,
+    keys: &mut Vec<Json5KeyQuote>,
+) {
+    match expression {
+        Expression::ObjectExpression(object) => collect_source_key_quotes_from_object(object, keys),
+        Expression::ArrayExpression(array) => collect_source_key_quotes_from_array(array, keys),
+        Expression::ParenthesizedExpression(expression) => {
+            collect_source_key_quotes_from_expression(&expression.expression, keys);
+        }
+        _ => {}
+    }
+}
+
+fn collect_source_key_quotes_from_array(
+    array: &ArrayExpression<'_>,
+    keys: &mut Vec<Json5KeyQuote>,
+) {
+    for element in &array.elements {
+        match element {
+            ArrayExpressionElement::ObjectExpression(object) => {
+                collect_source_key_quotes_from_object(object, keys);
+            }
+            ArrayExpressionElement::ArrayExpression(array) => {
+                collect_source_key_quotes_from_array(array, keys);
+            }
+            ArrayExpressionElement::ParenthesizedExpression(expression) => {
+                collect_source_key_quotes_from_expression(&expression.expression, keys);
+            }
+            _ => {}
+        }
+    }
+}
+
+fn collect_source_key_quotes_from_object(
+    object: &ObjectExpression<'_>,
+    keys: &mut Vec<Json5KeyQuote>,
+) {
+    for property in &object.properties {
+        let ObjectPropertyKind::ObjectProperty(property) = property else {
+            continue;
+        };
+
+        if let PropertyKey::StringLiteral(lit) = &property.key
+            && let Some(quote) = string_literal_quote(lit)
+        {
+            keys.push(Json5KeyQuote {
+                value: lit.value.to_string(),
+                quote,
+            });
+        }
+        collect_source_key_quotes_from_expression(&property.value, keys);
+    }
+}
+
+fn collect_formatted_keys_from_expression(
+    expression: &Expression<'_>,
+    keys: &mut Vec<FormattedJson5Key>,
+) {
+    match expression {
+        Expression::ObjectExpression(object) => collect_formatted_keys_from_object(object, keys),
+        Expression::ArrayExpression(array) => collect_formatted_keys_from_array(array, keys),
+        Expression::ParenthesizedExpression(expression) => {
+            collect_formatted_keys_from_expression(&expression.expression, keys);
+        }
+        _ => {}
+    }
+}
+
+fn collect_formatted_keys_from_array(
+    array: &ArrayExpression<'_>,
+    keys: &mut Vec<FormattedJson5Key>,
+) {
+    for element in &array.elements {
+        match element {
+            ArrayExpressionElement::ObjectExpression(object) => {
+                collect_formatted_keys_from_object(object, keys);
+            }
+            ArrayExpressionElement::ArrayExpression(array) => {
+                collect_formatted_keys_from_array(array, keys);
+            }
+            ArrayExpressionElement::ParenthesizedExpression(expression) => {
+                collect_formatted_keys_from_expression(&expression.expression, keys);
+            }
+            _ => {}
+        }
+    }
+}
+
+fn collect_formatted_keys_from_object(
+    object: &ObjectExpression<'_>,
+    keys: &mut Vec<FormattedJson5Key>,
+) {
+    for property in &object.properties {
+        let ObjectPropertyKind::ObjectProperty(property) = property else {
+            continue;
+        };
+
+        if let PropertyKey::StringLiteral(lit) = &property.key
+            && let Some((quote, raw_inner)) = string_literal_quote_and_inner(lit)
+        {
+            keys.push(FormattedJson5Key {
+                value: lit.value.to_string(),
+                start: lit.span.start.saturating_sub(1) as usize,
+                end: lit.span.end.saturating_sub(1) as usize,
+                raw_inner,
+                quote,
+            });
+        }
+        collect_formatted_keys_from_expression(&property.value, keys);
+    }
+}
+
+fn string_literal_quote(lit: &StringLiteral<'_>) -> Option<u8> {
+    string_literal_quote_and_inner(lit).map(|(quote, _)| quote)
+}
+
+fn string_literal_quote_and_inner(lit: &StringLiteral<'_>) -> Option<(u8, String)> {
+    let raw = lit.raw.as_ref()?.as_str();
+    let bytes = raw.as_bytes();
+    let quote = *bytes.first()?;
+    if !matches!(quote, b'"' | b'\'') || bytes.last().copied() != Some(quote) {
+        return None;
+    }
+    let inner = raw.get(1..raw.len().checked_sub(1)?)?.to_string();
+    Some((quote, inner))
 }
 
 impl SourceFormatter {
@@ -400,436 +519,125 @@ impl SourceFormatter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::JsonFormatterOptions;
+
+    use oxc_formatter_core::{IndentStyle, LineEnding};
+    use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps, SingleQuote};
+
+    fn format_json_source(source: &str, options: JsonFormatOptions) -> String {
+        SourceFormatter::new(1)
+            .format_by_json(source, options)
+            .expect("JSON formatting should succeed")
+    }
+
     #[test]
-    fn test_format_json5_basic() {
-        let source = r#"{
+    fn formats_json_with_upstream_json_variant() {
+        let formatted = format_json_source(
+            r#"{"name":"test","version":"1.0.0"}"#,
+            JsonFormatOptions {
+                variant: JsonVariant::Json,
+                ..JsonFormatOptions::default()
+            },
+        );
+
+        assert_eq!(
+            formatted,
+            "{ \"name\": \"test\", \"version\": \"1.0.0\" }\n"
+        );
+    }
+
+    #[test]
+    fn formats_jsonc_with_upstream_comment_preservation() {
+        let formatted = format_json_source(
+            r#"{
+  // This is a comment
+  "name": "test"
+}"#,
+            JsonFormatOptions {
+                variant: JsonVariant::Jsonc,
+                ..JsonFormatOptions::default()
+            },
+        );
+
+        assert!(
+            formatted.contains("// This is a comment"),
+            "JSONC comments should follow upstream behavior and be preserved"
+        );
+        assert!(formatted.contains("\"name\": \"test\""));
+    }
+
+    #[test]
+    fn formats_json5_with_upstream_json5_variant() {
+        let formatted = format_json_source(
+            r#"{
   // This is a JSON5 file
   name: 'test',
-  version: '1.0.0',
-  description: 'Test package',
-  keywords: ['test', 'json5'],
-  private: true,
-  dependencies: {
-    'package-a': '^1.0.0',
-    'package-b': '^2.0.0'
+  version: '1.0.0'
+}"#,
+            JsonFormatOptions {
+                variant: JsonVariant::Json5,
+                single_quote: SingleQuote::from(true),
+                ..JsonFormatOptions::default()
+            },
+        );
+
+        assert!(formatted.contains("// This is a JSON5 file"));
+        assert!(formatted.contains("name: 'test'"));
+        assert!(formatted.contains("version: '1.0.0'"));
+    }
+
+    #[test]
+    fn formats_json5_with_tabs_and_crlf() {
+        let formatted = format_json_source(
+            r#"{
+  name: "test",
+  nested: {
+    value: true
   }
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: true,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 formatting should succeed");
-        let formatted = result.unwrap();
-        assert!(!formatted.is_empty(), "Formatted JSON5 should not be empty");
-        // Verify the formatted code is valid JSON5
-        assert!(formatted.contains("name"), "Should contain 'name'");
-        assert!(formatted.contains("test"), "Should contain 'test'");
-    }
-
-    #[test]
-    fn test_format_json5_with_comments() {
-        let source = r#"{
-  // Single line comment
-  name: 'test',
-  /* Multi-line
-     comment */
-  version: '1.0.0',
-  description: 'Test package'
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(
-            result.is_ok(),
-            "JSON5 with comments should format successfully"
+}"#,
+            JsonFormatOptions {
+                variant: JsonVariant::Json5,
+                indent_style: IndentStyle::Tab,
+                line_ending: LineEnding::Crlf,
+                ..JsonFormatOptions::default()
+            },
         );
-        let formatted = result.unwrap();
-        assert!(!formatted.is_empty(), "Formatted JSON5 should not be empty");
-        // Verify comments are preserved
-        assert!(
-            formatted.contains("//") || formatted.contains("/*"),
-            "Comments should be preserved in formatted JSON5"
-        );
+
+        assert!(formatted.contains("\r\n\tname"));
+        assert!(formatted.ends_with("\r\n"));
     }
 
     #[test]
-    fn test_format_json5_with_trailing_commas() {
-        let source = r#"{
+    fn reports_invalid_json5_syntax() {
+        let result = SourceFormatter::new(1).format_by_json(
+            r#"{
   name: 'test',
-  version: '1.0.0',
-  dependencies: {
-    'package-a': '^1.0.0',
-    'package-b': '^2.0.0',
-  },
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: true,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(
-            result.is_ok(),
-            "JSON5 with trailing commas should format successfully"
-        );
-    }
-
-    #[test]
-    fn test_format_json5_with_tabs() {
-        let source = r#"{
-  name: 'test',
-  version: '1.0.0'
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: true,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 with tabs should format successfully");
-        let formatted = result.unwrap();
-        // Note: json5format uses spaces for indentation, tabs are applied via post-processing
-        // in the format_json5 function
-        assert!(!formatted.is_empty(), "Formatted JSON5 should not be empty");
-    }
-
-    #[test]
-    fn test_format_json5_with_crlf() {
-        let source = r#"{
-  name: 'test',
-  version: '1.0.0'
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\r\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 with CRLF should format successfully");
-        let formatted = result.unwrap();
-        // Verify CRLF line endings are used
-        assert!(
-            formatted.contains("\r\n"),
-            "Formatted JSON5 should use CRLF line endings"
-        );
-    }
-
-    #[test]
-    fn test_format_json5_invalid_syntax() {
-        let source = r#"{
-  name: 'test',
-  version: '1.0.0',
   invalid: [unclosed array
-}"#;
+}"#,
+            JsonFormatOptions {
+                variant: JsonVariant::Json5,
+                ..JsonFormatOptions::default()
+            },
+        );
 
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
         assert!(result.is_err(), "Invalid JSON5 should return an error");
     }
 
     #[test]
-    fn test_format_json_basic() {
-        let source = r#"{"name":"test","version":"1.0.0","description":"Test package"}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json(source, &options);
-        assert!(result.is_ok(), "JSON formatting should succeed");
-        let formatted = result.unwrap();
-        assert!(!formatted.is_empty(), "Formatted JSON should not be empty");
-        assert!(formatted.contains("name"), "Should contain 'name'");
-        assert!(formatted.contains("test"), "Should contain 'test'");
-    }
-
-    #[test]
-    fn test_format_jsonc_basic() {
-        let source = r#"{
-  // This is a comment
-  "name": "test",
-  "version": "1.0.0",
-  /* Another comment */
-  "description": "Test package"
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_jsonc(source, &options);
-        assert!(result.is_ok(), "JSONC formatting should succeed");
-        let formatted = result.unwrap();
-        assert!(!formatted.is_empty(), "Formatted JSONC should not be empty");
-        // Comments should be stripped, so formatted JSON should not contain comment markers
-        assert!(
-            !formatted.contains("//"),
-            "Comments should be stripped from JSONC"
+    fn json5_preserve_quote_props_keeps_mixed_keys() {
+        let formatted = format_json_source(
+            r#"{
+  "quoted": 'value',
+  plain: 'other'
+}"#,
+            JsonFormatOptions {
+                variant: JsonVariant::Json5,
+                single_quote: SingleQuote::from(true),
+                quote_props: QuoteProps::Preserve,
+                ..JsonFormatOptions::default()
+            },
         );
-        assert!(
-            !formatted.contains("/*"),
-            "Comments should be stripped from JSONC"
-        );
-    }
 
-    #[test]
-    fn test_format_by_json_integration() {
-        use crate::support::JsonType;
-
-        let source = r#"{
-  name: 'test',
-  version: '1.0.0'
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        // Test JSON5
-        let result = SourceFormatter::format_by_json(source, JsonType::Json5, options.clone());
-        assert!(result.is_ok(), "format_by_json with Json5 should succeed");
-
-        // Test JSON
-        let json_source = r#"{"name":"test","version":"1.0.0"}"#;
-        let result = SourceFormatter::format_by_json(json_source, JsonType::Json, options.clone());
-        assert!(result.is_ok(), "format_by_json with Json should succeed");
-
-        // Test JSONC
-        let jsonc_source = r#"{
-  // comment
-  "name": "test"
-}"#;
-        let result = SourceFormatter::format_by_json(jsonc_source, JsonType::Jsonc, options);
-        assert!(result.is_ok(), "format_by_json with Jsonc should succeed");
-    }
-
-    #[test]
-    fn test_format_json5_with_license_comment() {
-        // Test case from user report - JSON5 with license comment block
-        let source = r#"/*
-* Copyright (C) 2023 Huawei Device Co., Ltd.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
-{
-  "license": "ISC",
-  "types": "",
-  "devDependencies": {},
-  "name": "@ohos/video-component",
-  "description": "a npm package which contains arkUI2.0 page",
-  "main": "index.ets",
-  "repository": {},
-  "version": "1.0.5",
-  "dependencies": {}
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(
-            result.is_ok(),
-            "JSON5 with license comment should format successfully"
-        );
-        let formatted = result.unwrap();
-        assert!(!formatted.is_empty(), "Formatted JSON5 should not be empty");
-    }
-
-    #[test]
-    fn test_format_json5_quote_properties_consistent_with_quotes() {
-        // Test Consistent behavior when source has quoted keys
-        let source = r#"{
-  "name": "test",
-  "version": "1.0.0",
-  "description": "Test package"
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 formatting should succeed");
-        let formatted = result.unwrap();
-
-        // With Consistent, if source has quotes, it should keep quotes
-        println!(
-            "Formatted with Consistent (source has quotes):\n{}",
-            formatted
-        );
-        // Check that quotes are preserved
-        assert!(
-            formatted.contains("\"name\""),
-            "Should preserve quotes when source has quotes"
-        );
-        assert!(
-            formatted.contains("\"version\""),
-            "Should preserve quotes when source has quotes"
-        );
-    }
-
-    #[test]
-    fn test_format_json5_quote_properties_consistent_without_quotes() {
-        // Test Consistent behavior when source has unquoted keys
-        let source = r#"{
-  name: "test",
-  version: "1.0.0",
-  description: "Test package"
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 formatting should succeed");
-        let formatted = result.unwrap();
-
-        // With Consistent, if source has no quotes, it should keep no quotes
-        println!(
-            "Formatted with Consistent (source has no quotes):\n{}",
-            formatted
-        );
-        // Check that no quotes are added
-        assert!(
-            formatted.contains("name:"),
-            "Should preserve no quotes when source has no quotes"
-        );
-        assert!(
-            formatted.contains("version:"),
-            "Should preserve no quotes when source has no quotes"
-        );
-        // Should not have quoted keys
-        assert!(
-            !formatted.contains("\"name\":"),
-            "Should not add quotes when source has no quotes"
-        );
-    }
-
-    #[test]
-    fn test_format_json5_quote_properties_consistent_mixed() {
-        // Test Consistent behavior with mixed quoted/unquoted keys
-        let source = r#"{
-  "name": "test",
-  version: "1.0.0",
-  "description": "Test package"
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Consistent,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 formatting should succeed");
-        let formatted = result.unwrap();
-
-        println!("Formatted with Consistent (mixed quotes):\n{}", formatted);
-        // Consistent should make all keys have the same quote style
-        // It typically uses the majority style or the first style
-    }
-
-    #[test]
-    fn test_format_json5_quote_properties_preserve() {
-        // Test Preserve behavior - should keep original quote style
-        let source = r#"{
-  "name": "test",
-  version: "1.0.0",
-  "description": "Test package"
-}"#;
-
-        let options = JsonFormatterOptions {
-            indent_width: 2,
-            use_tabs: false,
-            line_ending: "\n".to_string(),
-            trailing_commas: false,
-            quote_properties: json5format::QuoteProperties::Preserve,
-        };
-
-        let result = format_json5(source, &options);
-        assert!(result.is_ok(), "JSON5 formatting should succeed");
-        let formatted = result.unwrap();
-
-        println!("Formatted with Preserve:\n{}", formatted);
-        // Preserve should keep the original quote style for each key
-        assert!(
-            formatted.contains("\"name\""),
-            "Preserve should keep quoted keys"
-        );
-        assert!(
-            formatted.contains("version:"),
-            "Preserve should keep unquoted keys"
-        );
+        assert!(formatted.contains("\"quoted\": 'value'"));
+        assert!(formatted.contains("plain: 'other'"));
     }
 }

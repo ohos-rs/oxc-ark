@@ -5,6 +5,7 @@
 use std::path::{Path, PathBuf};
 
 use oxc_formatter::JsFormatOptions as FormatOptions;
+use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 
@@ -59,8 +60,7 @@ pub enum ResolvedOptions {
     },
     /// For JSON/JSON5/JSONC files.
     OxfmtJson {
-        json_options: JsonFormatterOptions,
-        json_type: JsonType,
+        json_options: JsonFormatOptions,
         insert_final_newline: bool,
     },
     /// For non-JS files formatted by external formatter (Prettier).
@@ -174,11 +174,14 @@ impl ConfigResolver {
                 toml_options: oxfmt_options.toml_options,
                 insert_final_newline,
             },
-            FormatFileStrategy::OxfmtJson { json_type, .. } => ResolvedOptions::OxfmtJson {
-                json_options: build_json_options(&oxfmt_options.format_options),
-                json_type: *json_type,
-                insert_final_newline,
-            },
+            FormatFileStrategy::OxfmtJson { json_type, .. } => {
+                let mut json_options = oxfmt_options.json_options;
+                json_options.variant = json_variant(*json_type);
+                ResolvedOptions::OxfmtJson {
+                    json_options,
+                    insert_final_newline,
+                }
+            }
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { .. } => ResolvedOptions::ExternalFormatter {
                 external_options,
@@ -202,32 +205,11 @@ impl ConfigResolver {
 
 // ---
 
-/// JSON formatter options
-#[derive(Clone, Debug)]
-pub struct JsonFormatterOptions {
-    pub indent_width: usize,
-    pub use_tabs: bool,
-    pub line_ending: String,
-    pub trailing_commas: bool,
-    pub quote_properties: json5format::QuoteProperties,
-}
-
-/// Build JSON formatter options from FormatOptions.
-fn build_json_options(format_options: &FormatOptions) -> JsonFormatterOptions {
-    JsonFormatterOptions {
-        indent_width: format_options.indent_width.value() as usize,
-        use_tabs: format_options.indent_style.is_tab(),
-        line_ending: if format_options.line_ending.is_carriage_return_line_feed() {
-            "\r\n".to_string()
-        } else {
-            "\n".to_string()
-        },
-        trailing_commas: format_options.trailing_commas.is_none(),
-        quote_properties: match format_options.quote_properties {
-            oxc_formatter::QuoteProperties::AsNeeded => json5format::QuoteProperties::AsNeeded,
-            oxc_formatter::QuoteProperties::Preserve => json5format::QuoteProperties::Preserve,
-            oxc_formatter::QuoteProperties::Consistent => json5format::QuoteProperties::Consistent,
-        },
+fn json_variant(json_type: JsonType) -> JsonVariant {
+    match json_type {
+        JsonType::Json => JsonVariant::Json,
+        JsonType::Json5 => JsonVariant::Json5,
+        JsonType::Jsonc => JsonVariant::Jsonc,
     }
 }
 

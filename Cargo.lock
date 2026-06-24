@@ -475,15 +475,16 @@ dependencies = [
  "globset",
  "ignore",
  "json-strip-comments",
- "json5format",
  "napi",
  "napi-derive",
  "oxc-toml",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_formatter",
  "oxc_formatter_core",
+ "oxc_formatter_json",
  "oxc_language_server",
  "oxc_parser",
  "oxc_span",
@@ -880,15 +881,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9301b34ecbe81051a62001a2dfa56d906628efdfbc68153e0a4d5eba58181ece"
 dependencies = [
  "memchr",
-]
-
-[[package]]
-name = "json5format"
-version = "0.2.6"
-source = "git+https://github.com/ohos-rs/json5format?rev=26e00bd18181ead25022cf12df7af1bd68b6fb74#26e00bd18181ead25022cf12df7af1bd68b6fb74"
-dependencies = [
- "lazy_static",
- "regex",
 ]
 
 [[package]]
@@ -1423,6 +1415,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_formatter_json"
+version = "0.56.0"
+source = "git+https://github.com/ohos-rs/oxc?rev=f2da22725d1c6508ad66fd5d60541bb3866a4a6e#f2da22725d1c6508ad66fd5d60541bb3866a4a6e"
+dependencies = [
+ "dragonbox_ecma",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_formatter_core",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
+]
+
+[[package]]
 name = "oxc_index"
 version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1719,7 +1726,6 @@ dependencies = [
  "bpaf",
  "format",
  "futures",
- "json5format",
  "lint",
  "owo-colors",
  "oxc_allocator",
@@ -1736,7 +1742,6 @@ name = "oxk-napi"
 version = "0.1.0"
 dependencies = [
  "format",
- "json5format",
  "lint",
  "napi",
  "napi-build",
