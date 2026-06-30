@@ -166,7 +166,14 @@ function parseApiVersion(api, value, removedValue = null) {
 
 function addEntry(entries, api, version, removed = null) {
   if (typeof api !== 'string' || !api.startsWith('@')) return
-  entries.set(api, parseApiVersion(api, version, removed))
+  const nextVersion = parseApiVersion(api, version, removed)
+  const previousVersion = entries.get(api)
+  if (previousVersion == null) {
+    entries.set(api, nextVersion)
+    return
+  }
+
+  entries.set(api, combinePendingVersions([previousVersion, nextVersion]))
 }
 
 function collectFromJsonValue(value, entries) {
@@ -275,8 +282,13 @@ function declarationName(line) {
 }
 
 function declarationScope(line) {
-  const match = line.match(/^(?:export\s+)?(?:declare\s+)?(?:class|interface|enum|namespace)\s+([A-Za-z_$][\w$]*)/u)
-  return match?.[1] ?? null
+  const match = line.match(/^(?:export\s+)?(?:declare\s+)?(class|interface|enum|namespace)\s+([A-Za-z_$][\w$]*)/u)
+  if (!match) return null
+  return { kind: match[1], name: match[2] }
+}
+
+function isEnumMember(line) {
+  return /^[A-Za-z_$][\w$]*\s*(?:=\s*[^,]+)?[,]?$/u.test(line)
 }
 
 function parseNamedSpecifiers(source) {
@@ -403,9 +415,11 @@ function collectFromDeclarationFile(file, entries) {
     if (pendingVersions.length > 0) {
       const name = declarationName(line)
       if (name) {
-        const segments = [...scopes, name].filter((segment) => segment !== rootScope)
+        const segments = [...scopes.map((scope) => scope.name), name].filter((segment) => segment !== rootScope)
         const api = segments.length === 0 ? moduleName : `${moduleName}.${segments.join('.')}`
         addEntry(entries, api, combinePendingVersions(pendingVersions))
+        pendingVersions = []
+      } else if (scopes.at(-1)?.kind === 'enum' && isEnumMember(line)) {
         pendingVersions = []
       }
     }
