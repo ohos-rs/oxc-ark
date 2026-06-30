@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: oxlint
+        name: oxlint
+        entry: pnpm exec oxlint --fix
+        language: system
+        files: '\.(js|ts|tsx)$'
+
+      - id: prettier
+        name: prettier
+        entry: pnpm exec prettier --write
+        language: system
+        files: '\.(js|ts|tsx|ya?ml|md|json)$'
+
+      - id: taplo
+        name: taplo
+        entry: pnpm exec taplo format
+        language: system
+        files: '\.toml$'

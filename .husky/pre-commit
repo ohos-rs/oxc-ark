@@ -1,1 +1,1 @@
-pnpm run verify:release
+pnpm exec prek run --stage pre-commit
