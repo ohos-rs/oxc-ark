@@ -49,5 +49,5 @@ optional = true
 
 [features]
 default = []
-napi = ["dep:napi", "dep:napi-derive", "dep:sort-package-json"]
+napi = ["dep:napi", "dep:napi-derive", "sort-package-json"]
 sort-package-json = ["dep:sort-package-json"]
