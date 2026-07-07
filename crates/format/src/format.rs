@@ -17,9 +17,6 @@ use serde_json::Value;
 
 use super::{FormatFileStrategy, ResolvedOptions};
 
-#[cfg(all(feature = "napi", feature = "sort-package-json"))]
-use sort_package_json;
-
 pub enum FormatResult {
     Success { is_changed: bool, code: String },
     Error(Vec<OxcDiagnostic>),
