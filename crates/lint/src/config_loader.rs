@@ -37,7 +37,7 @@ pub struct JsConfigResult {
 const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: DEFAULT_OXLINTRC_NAME,
     jsonc: DEFAULT_JSONC_OXLINTRC_NAME,
-    js: DEFAULT_TS_OXLINTRC_NAME,
+    js: &[DEFAULT_TS_OXLINTRC_NAME],
     vite: "vite.config.ts",
 };
 

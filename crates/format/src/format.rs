@@ -308,7 +308,8 @@ fn parse_json_expression<'a>(
     }
 
     let mut program = ret.program;
-    let body = std::mem::replace(&mut program.body, ArenaVec::new_in(allocator)).into_arena_slice();
+    let body =
+        std::mem::replace(&mut program.body, ArenaVec::new_in(&allocator)).into_arena_slice();
     let Statement::ExpressionStatement(statement) = body.first()? else {
         return None;
     };
