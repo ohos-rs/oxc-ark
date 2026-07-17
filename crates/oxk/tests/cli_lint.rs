@@ -359,6 +359,41 @@ fn cargo_cli_lint_arkts_reports_ast_stable_rules() {
 }
 
 #[test]
+fn cargo_cli_lint_arkts_no_new_target_reports_new_target() {
+    let temp = TempDir::new();
+    fs::write(
+        temp.path().join(".oxlintrc.json"),
+        serde_json::json!({
+            "plugins": ["arkts"],
+            "rules": {
+                "no-unused-vars": "off",
+                "arkts/no-new-target": "error"
+            }
+        })
+        .to_string(),
+    )
+    .expect("failed to write config");
+    fs::write(
+        temp.path().join("input.ets"),
+        "function Example() { return new.target }\n",
+    )
+    .expect("failed to write fixture");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args(["lint", "input.ets", "--threads", "1", "--format", "json"])
+        .output()
+        .expect("failed to run oxk lint");
+
+    assert!(
+        !output.status.success(),
+        "lint should fail on arkts/no-new-target"
+    );
+    let report = lint_json(&output);
+    assert_eq!(diagnostic_codes(&report), vec!["arkts(no-new-target)"]);
+}
+
+#[test]
 fn cargo_cli_lint_arkts_system_api_version_reports_unsupported_api() {
     let temp = TempDir::new();
     fs::write(

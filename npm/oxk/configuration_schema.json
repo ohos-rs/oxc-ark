@@ -48,13 +48,13 @@
       "markdownDescription": "Enabled or disabled specific global variables."
     },
     "ignorePatterns": {
-      "description": "Globs to ignore during linting. These are resolved from the configuration file path.",
+      "description": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error.",
       "default": [],
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Globs to ignore during linting. These are resolved from the configuration file path."
+      "markdownDescription": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error."
     },
     "jsPlugins": {
       "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
@@ -1144,6 +1144,9 @@
         "no-unreachable": {
           "$ref": "#/definitions/DummyRule"
         },
+        "no-unreachable-loop": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "no-unsafe-finally": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1448,6 +1451,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "react/forward-ref-uses-ref": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/function-component-definition": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/hook-use-state": {
@@ -2005,6 +2011,9 @@
         "unicorn/explicit-length-check": {
           "$ref": "#/definitions/DummyRule"
         },
+        "unicorn/explicit-timer-delay": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "unicorn/filename-case": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -2051,6 +2060,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "unicorn/no-await-in-promise-methods": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "unicorn/no-confusing-array-with": {
           "$ref": "#/definitions/DummyRule"
         },
         "unicorn/no-console-spaces": {
@@ -2474,6 +2486,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/padding-around-after-all-blocks": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "vitest/padding-around-test-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
         "vitest/prefer-called-exactly-once-with": {

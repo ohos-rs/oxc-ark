@@ -18,28 +18,28 @@ format = { path = "crates/format" }
 lint = { path = "crates/lint" }
 
 # Oxc dependencies
-oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e", features = [
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c", features = [
   "serialize",
 ] }
-oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e", features = [
+oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c", features = [
   "serialize",
 ] }
-oxc_config = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_formatter_core = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_formatter_json = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e" }
-oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "f2da22725d1c6508ad66fd5d60541bb3866a4a6e", default-features = false }
+oxc_config = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_formatter_core = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_formatter_json = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c" }
+oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c", default-features = false }
 
 # Common dependencies
 serde_json = "1.0"

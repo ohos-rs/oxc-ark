@@ -1984,14 +1984,11 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
         walk::walk_sequence_expression(self, it);
     }
 
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        if it.meta.name == "new"
-            && it.property.name == "target"
-            && let Some(active) = self.active.no_new_target
-        {
+    fn visit_new_target(&mut self, it: &NewTarget) {
+        if let Some(active) = self.active.no_new_target {
             self.report(active, it.span);
         }
-        walk::walk_meta_property(self, it);
+        walk::walk_new_target(self, it);
     }
 }
 
