@@ -221,7 +221,7 @@ function moduleNameFromFile(file, source) {
   const declaredModule = source.match(/declare\s+module\s+['"]([^'"]+)['"]/)
   if (declaredModule?.[1]?.startsWith('@')) return declaredModule[1]
 
-  const name = basename(file).replace(/\.d\.ts$/u, '')
+  const name = basename(file).replace(/\.d\.(m?ts|ets)$/u, '')
   if (name.startsWith('@')) return name
   return null
 }
@@ -433,7 +433,7 @@ function collectFromDeclarationFile(file, entries) {
 }
 
 function isKitDeclarationFile(path) {
-  return path.endsWith('.d.ts') && basename(path).startsWith('@kit.')
+  return (path.endsWith('.d.ts') || path.endsWith('.d.ets')) && basename(path).startsWith('@kit.')
 }
 
 function collectSourcePaths(sourcePath) {
@@ -467,7 +467,7 @@ function collectFromPath(path, entries, kitFiles) {
   const extension = extname(path)
   if (extension === '.json' || extension === '.jsonc') {
     collectFromJsonFile(path, entries)
-  } else if (path.endsWith('.d.ts')) {
+  } else if (path.endsWith('.d.ts') || path.endsWith('.d.ets')) {
     if (isKitDeclarationFile(path)) {
       kitFiles.push(path)
     } else {
