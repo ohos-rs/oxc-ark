@@ -980,7 +980,7 @@ checksum = "d101351ce46bee825bad68f0f899431c66c2878124a8e0f0237d0d562e214ade"
 [[package]]
 name = "oxc_allocator"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "allocator-api2",
  "hashbrown 0.17.1",
@@ -995,7 +995,7 @@ dependencies = [
 [[package]]
 name = "oxc_ast"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "bitflags",
  "oxc_allocator",
@@ -1012,7 +1012,7 @@ dependencies = [
 [[package]]
 name = "oxc_ast_macros"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "phf 0.14.0",
  "proc-macro2",
@@ -1023,7 +1023,7 @@ dependencies = [
 [[package]]
 name = "oxc_ast_visit"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1034,7 +1034,7 @@ dependencies = [
 [[package]]
 name = "oxc_cfg"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "bitflags",
  "itertools",
@@ -1047,7 +1047,7 @@ dependencies = [
 [[package]]
 name = "oxc_codegen"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -1067,7 +1067,7 @@ dependencies = [
 [[package]]
 name = "oxc_config"
 version = "0.0.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "fast-glob",
  "ignore",
@@ -1080,7 +1080,7 @@ dependencies = [
 [[package]]
 name = "oxc_data_structures"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "ropey",
 ]
@@ -1088,7 +1088,7 @@ dependencies = [
 [[package]]
 name = "oxc_diagnostics"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -1098,7 +1098,7 @@ dependencies = [
 [[package]]
 name = "oxc_ecmascript"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -1114,7 +1114,7 @@ dependencies = [
 [[package]]
 name = "oxc_estree"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "dragonbox_ecma",
  "itoa",
@@ -1124,7 +1124,7 @@ dependencies = [
 [[package]]
 name = "oxc_estree_tokens"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "itoa",
  "oxc_ast",
@@ -1138,7 +1138,7 @@ dependencies = [
 [[package]]
 name = "oxc_formatter"
 version = "0.59.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "cow-utils",
  "fast-glob",
@@ -1164,7 +1164,7 @@ dependencies = [
 [[package]]
 name = "oxc_formatter_core"
 version = "0.59.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "cow-utils",
  "oxc_allocator",
@@ -1178,7 +1178,7 @@ dependencies = [
 [[package]]
 name = "oxc_formatter_json"
 version = "0.59.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "dragonbox_ecma",
  "oxc_allocator",
@@ -1203,7 +1203,7 @@ dependencies = [
 [[package]]
 name = "oxc_jsdoc"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "oxc_ast",
  "oxc_span",
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "oxc_language_server"
 version = "1.41.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "cow-utils",
  "futures",
@@ -1229,7 +1229,7 @@ dependencies = [
 [[package]]
 name = "oxc_linter"
 version = "1.74.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "bitflags",
  "constcat",
@@ -1284,7 +1284,7 @@ dependencies = [
 [[package]]
 name = "oxc_macros"
 version = "0.0.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "convert_case",
  "itertools",
@@ -1296,7 +1296,7 @@ dependencies = [
 [[package]]
 name = "oxc_napi"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "napi",
  "napi-build",
@@ -1311,7 +1311,7 @@ dependencies = [
 [[package]]
 name = "oxc_parser"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -1334,7 +1334,7 @@ dependencies = [
 [[package]]
 name = "oxc_react_compiler"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "cow-utils",
  "indexmap",
@@ -1355,7 +1355,7 @@ dependencies = [
 [[package]]
 name = "oxc_regular_expression"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "bitflags",
  "oxc_allocator",
@@ -1410,7 +1410,7 @@ dependencies = [
 [[package]]
 name = "oxc_semantic"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "itertools",
  "memchr",
@@ -1434,7 +1434,7 @@ dependencies = [
 [[package]]
 name = "oxc_span"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -1449,7 +1449,7 @@ dependencies = [
 [[package]]
 name = "oxc_str"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "compact_str",
  "hashbrown 0.17.1",
@@ -1462,7 +1462,7 @@ dependencies = [
 [[package]]
 name = "oxc_syntax"
 version = "0.140.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "bitflags",
  "cow-utils",
@@ -1523,7 +1523,7 @@ dependencies = [
 [[package]]
 name = "oxlint"
 version = "1.74.0"
-source = "git+https://github.com/ohos-rs/oxc?rev=cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c#cba37f42b32e6ca8d57c0cf657dc6f8f60cbae7c"
+source = "git+https://github.com/ohos-rs/oxc?rev=39b0ce7aeda63ab83ccea796c5c321fbeee36808#39b0ce7aeda63ab83ccea796c5c321fbeee36808"
 dependencies = [
  "bpaf",
  "cow-utils",
