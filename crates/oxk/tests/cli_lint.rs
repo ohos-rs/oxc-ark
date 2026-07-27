@@ -412,7 +412,7 @@ fn cargo_cli_lint_arkts_system_api_version_reports_unsupported_api() {
     .expect("failed to write config");
     fs::write(
         temp.path().join("input.ets"),
-        "import { router } from '@kit.ArkUI'\nrouter.back()\nrouter.push()\nrouter.showAlertBeforeBackPage()\n",
+        "import { router } from '@kit.ArkUI'\nrouter.back()\nrouter.getStateByIndex()\nrouter.push()\n",
     )
     .expect("failed to write fixture");
 
@@ -469,7 +469,7 @@ fn cargo_cli_lint_arkts_system_api_version_reads_project_min_api_version() {
     .expect("failed to write config");
     fs::write(
         temp.path().join("input.ets"),
-        "import { router } from '@kit.ArkUI'\nrouter.back()\n",
+        "import { router } from '@kit.ArkUI'\nrouter.getStateByIndex()\n",
     )
     .expect("failed to write fixture");
 
