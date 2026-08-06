@@ -31,6 +31,7 @@
     "lint": "cargo clippy --workspace -- -D warnings && pnpm --filter @ohos-rs/oxk lint",
     "lint:fix": "pnpm --filter @ohos-rs/oxk lint --fix",
     "sync:arkts-api-versions": "node scripts/sync-arkts-system-api-versions.mjs",
+    "verify:arkts-api-versions": "node scripts/verify-arkts-system-api-versions.mjs",
     "version:oxk": "bash scripts/update-version.sh"
   },
   "keywords": [
@@ -47,7 +48,8 @@
     "husky": "^9.1.7",
     "npm-run-all": "^4.1.5",
     "oxlint": "^1.35.0",
-    "prettier": "^3.6.2"
+    "prettier": "^3.6.2",
+    "typescript": "^5.0.0"
   },
   "prettier": {
     "printWidth": 120,

@@ -270,21 +270,31 @@ function combinePendingVersions(pendingVersions) {
 
 function declarationName(line) {
   const match = line.match(
-    /^(?:export\s+)?(?:declare\s+)?(?:async\s+)?(?:function|class|interface|enum|const|let|var|type|namespace)\s+([A-Za-z_$][\w$]*)/u,
+    /^(?:export\s+)?(?:declare\s+)?(?:default\s+)?(?:abstract\s+)?(?:async\s+)?(?:(?:const\s+)?enum|@interface|function|class|interface|struct|const|let|var|type|namespace)\s+([A-Za-z_$][\w$]*)/u,
   )
   if (match) return match[1]
 
-  const method = line.match(/^(?:static\s+)?([A-Za-z_$][\w$]*)\s*(?:<[^>]+>)?\s*\(/u)
-  if (method) return method[1]
+  const method = line.match(
+    /^(?:(?:public|private|protected|static|abstract)\s+)*(?:get\s+|set\s+)?([A-Za-z_$][\w$]*)\??\s*(?:<[^>]+>)?\s*\(/u,
+  )
+  if (method) return method[1] === 'constructor' || method[1] === 'new' ? null : method[1]
 
-  const property = line.match(/^(?:readonly\s+)?([A-Za-z_$][\w$]*)\??\s*:/u)
-  return property?.[1] ?? null
+  const property = line.match(/^(?:(?:public|private|protected|static|readonly)\s+)*([A-Za-z_$][\w$]*)\??\s*:/u)
+  if (property) return property[1]
+
+  // 带初始化的属性（如 `readonly ignoreBOM = false;`）要求必须有修饰符，
+  // 避免把无修饰符的枚举成员（如 `ABLE_TO_USE = 1,`）误认为属性
+  const initializer = line.match(/^(?:(?:public|private|protected|static|readonly)\s+)+([A-Za-z_$][\w$]*)\??\s*=/u)
+  return initializer?.[1] ?? null
 }
 
 function declarationScope(line) {
-  const match = line.match(/^(?:export\s+)?(?:declare\s+)?(class|interface|enum|namespace)\s+([A-Za-z_$][\w$]*)/u)
+  const match = line.match(
+    /^(?:export\s+)?(?:declare\s+)?(?:default\s+)?(?:abstract\s+)?(?:(?:const\s+)?enum|@interface|class|interface|struct|namespace)\s+([A-Za-z_$][\w$]*)/u,
+  )
   if (!match) return null
-  return { kind: match[1], name: match[2] }
+  const isEnum = /(?:const\s+)?enum/u.test(match[0])
+  return { kind: isEnum ? 'enum' : 'class', name: match[1] }
 }
 
 function isEnumMember(line) {
@@ -386,6 +396,9 @@ function collectFromDeclarationFile(file, entries) {
   const scopes = []
   let pendingVersions = []
   let comment = null
+  // 内联类型字面量深度：`static fetch(options: {` 这类非作用域 `{` 之后的成员
+  // 属于参数/属性类型，不是独立 API，不应记录
+  let inlineTypeDepth = 0
 
   for (const rawLine of source.split(/\r?\n/u)) {
     const line = rawLine.trim()
@@ -412,6 +425,15 @@ function collectFromDeclarationFile(file, entries) {
 
     if (line === '' || line.startsWith('*') || line.startsWith('//')) continue
 
+    const openingScope = declarationScope(line)
+
+    if (inlineTypeDepth > 0) {
+      // 内联类型字面量内部（如 fetch 参数的 url/data/header）：成员不是独立 API
+      if (pendingVersions.length > 0) pendingVersions = []
+      if (line.startsWith('}')) inlineTypeDepth -= 1 // 以 `}` 开头的行（如 `}) : void;`、`};`）退出
+      continue
+    }
+
     if (pendingVersions.length > 0) {
       const name = declarationName(line)
       if (name) {
@@ -421,13 +443,25 @@ function collectFromDeclarationFile(file, entries) {
         pendingVersions = []
       } else if (scopes.at(-1)?.kind === 'enum' && isEnumMember(line)) {
         pendingVersions = []
+      } else if (/[,;{}]$/u.test(line)) {
+        // 未识别的声明行（如 [Symbol.iterator]()、多行签名中的 `}, callback...)`）
+        // 同样会消费掉待定的版本注释，防止泄漏到下一个声明的版本上
+        pendingVersions = []
       }
     }
 
-    const openingScope = declarationScope(line)
+    // 声明自身记录完毕后再入栈，避免记录时作用域栈已包含自身
     if (openingScope && line.includes('{')) scopes.push(openingScope)
 
-    const closes = (line.match(/\}/gu) ?? []).length
+    // 非作用域行以 `{` 结尾（如 `static fetch(options: {`、`type X = {`）进入内联类型字面量
+    if (line.endsWith('{') && !openingScope) {
+      inlineTypeDepth += 1
+      continue
+    }
+
+    // 仅当整行都是右花括号时才视为作用域结束，避免多行签名中的内联对象
+    // （如 `}, callback: AsyncCallback<T>): void;`）误弹出作用域
+    const closes = (line.match(/^\}+$/u) ?? [''])[0].length
     for (let index = 0; index < closes; index += 1) scopes.pop()
   }
 }
