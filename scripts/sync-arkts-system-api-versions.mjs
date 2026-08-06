@@ -277,18 +277,14 @@ function declarationName(line) {
   const method = line.match(
     /^(?:(?:public|private|protected|static|abstract)\s+)*(?:get\s+|set\s+)?([A-Za-z_$][\w$]*)\??\s*(?:<[^>]+>)?\s*\(/u,
   )
-  if (method) return method[1] === 'constructor' ? null : method[1]
+  if (method) return method[1] === 'constructor' || method[1] === 'new' ? null : method[1]
 
-  const property = line.match(
-    /^(?:(?:public|private|protected|static|readonly)\s+)*([A-Za-z_$][\w$]*)\??\s*:/u,
-  )
+  const property = line.match(/^(?:(?:public|private|protected|static|readonly)\s+)*([A-Za-z_$][\w$]*)\??\s*:/u)
   if (property) return property[1]
 
   // 带初始化的属性（如 `readonly ignoreBOM = false;`）要求必须有修饰符，
   // 避免把无修饰符的枚举成员（如 `ABLE_TO_USE = 1,`）误认为属性
-  const initializer = line.match(
-    /^(?:(?:public|private|protected|static|readonly)\s+)+([A-Za-z_$][\w$]*)\??\s*=/u,
-  )
+  const initializer = line.match(/^(?:(?:public|private|protected|static|readonly)\s+)+([A-Za-z_$][\w$]*)\??\s*=/u)
   return initializer?.[1] ?? null
 }
 
@@ -400,6 +396,9 @@ function collectFromDeclarationFile(file, entries) {
   const scopes = []
   let pendingVersions = []
   let comment = null
+  // 内联类型字面量深度：`static fetch(options: {` 这类非作用域 `{` 之后的成员
+  // 属于参数/属性类型，不是独立 API，不应记录
+  let inlineTypeDepth = 0
 
   for (const rawLine of source.split(/\r?\n/u)) {
     const line = rawLine.trim()
@@ -426,6 +425,15 @@ function collectFromDeclarationFile(file, entries) {
 
     if (line === '' || line.startsWith('*') || line.startsWith('//')) continue
 
+    const openingScope = declarationScope(line)
+
+    if (inlineTypeDepth > 0) {
+      // 内联类型字面量内部（如 fetch 参数的 url/data/header）：成员不是独立 API
+      if (pendingVersions.length > 0) pendingVersions = []
+      if (line.startsWith('}')) inlineTypeDepth -= 1 // 以 `}` 开头的行（如 `}) : void;`、`};`）退出
+      continue
+    }
+
     if (pendingVersions.length > 0) {
       const name = declarationName(line)
       if (name) {
@@ -442,8 +450,14 @@ function collectFromDeclarationFile(file, entries) {
       }
     }
 
-    const openingScope = declarationScope(line)
+    // 声明自身记录完毕后再入栈，避免记录时作用域栈已包含自身
     if (openingScope && line.includes('{')) scopes.push(openingScope)
+
+    // 非作用域行以 `{` 结尾（如 `static fetch(options: {`、`type X = {`）进入内联类型字面量
+    if (line.endsWith('{') && !openingScope) {
+      inlineTypeDepth += 1
+      continue
+    }
 
     // 仅当整行都是右花括号时才视为作用域结束，避免多行签名中的内联对象
     // （如 `}, callback: AsyncCallback<T>): void;`）误弹出作用域

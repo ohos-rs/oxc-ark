@@ -25,6 +25,9 @@ importers:
       prettier:
         specifier: ^3.6.2
         version: 3.7.4
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
 
   npm/oxk:
     dependencies:
