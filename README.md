@@ -31,6 +31,9 @@ npm install @ohos-rs/oxk -g
 ```bash
 # Path support regex
 oxk format xx.ets
+
+# Static ETS / ArkTS 1.2 is selected explicitly
+oxk format --lang ets-static xx.ets
 ```
 
 ### Lint
@@ -38,7 +41,13 @@ oxk format xx.ets
 ```bash
 oxk lint src --threads 1
 oxk lint src/index.ets --format json
+oxk lint --lang ets-static src/index.ets
 ```
+
+Static ETS shares the `.ets` extension with ArkTS 1.1, so parser, formatter,
+lint CLI, and LSP integrations only enable it through the explicit
+`ets-static` language mode. A plain `.ets` path keeps the existing ArkTS 1.1
+behavior.
 
 `oxk lint` embeds oxlint instead of shelling out to an external `oxlint` binary.
 It supports oxlint-compatible rules and config files. The npm package also loads
