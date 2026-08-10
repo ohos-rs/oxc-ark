@@ -14,6 +14,7 @@ use oxc_language_server::{
     Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges, WorkerManager,
     run_server,
 };
+use oxc_span::ExplicitLanguage;
 use serde_json::Value;
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 use tracing::{debug, warn};
@@ -26,6 +27,7 @@ use crate::{
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 struct LspFormatOptions {
     config_path: Option<String>,
+    language: Option<ExplicitLanguage>,
 }
 
 impl TryFrom<Value> for LspFormatOptions {
@@ -40,20 +42,32 @@ impl TryFrom<Value> for LspFormatOptions {
             return Err("no object passed".to_string());
         };
 
+        let language = object
+            .get("fmt.language")
+            .and_then(Value::as_str)
+            .map(str::parse::<ExplicitLanguage>)
+            .transpose()
+            .map_err(|error| error.to_string())?;
+
         Ok(Self {
             config_path: object
                 .get("fmt.configPath")
                 .and_then(Value::as_str)
                 .map(str::to_owned),
+            language,
         })
     }
 }
 
-pub async fn run_lsp(server_name: String, server_version: String) {
+pub async fn run_lsp(
+    server_name: String,
+    server_version: String,
+    language: Option<ExplicitLanguage>,
+) {
     run_server(
         server_name,
         server_version_with_vp(server_version),
-        WorkerManager::new_dynamic(Arc::new(ServerFormatterBuilder)),
+        WorkerManager::new_dynamic(Arc::new(ServerFormatterBuilder { language })),
     )
     .await;
 }
@@ -65,7 +79,9 @@ fn server_version_with_vp(mut version: String) -> String {
     version
 }
 
-struct ServerFormatterBuilder;
+struct ServerFormatterBuilder {
+    language: Option<ExplicitLanguage>,
+}
 
 impl ServerFormatterBuilder {
     fn build(&self, root_uri: &Uri, options: Value) -> ServerFormatter {
@@ -91,6 +107,7 @@ impl ServerFormatterBuilder {
                 .config_path
                 .filter(|path| !path.is_empty())
                 .map(PathBuf::from),
+            language: options.language.or(self.language),
         }
     }
 }
@@ -115,6 +132,7 @@ struct ServerFormatter {
     source_formatter: SourceFormatter,
     prettierignore_glob: Option<Gitignore>,
     explicit_config_path: Option<PathBuf>,
+    language: Option<ExplicitLanguage>,
 }
 
 impl Tool for ServerFormatter {
@@ -202,7 +220,8 @@ impl Tool for ServerFormatter {
             (path, source_text)
         };
 
-        let Some(result) = self.format_path(&path, source_text)? else {
+        let document_language = get_explicit_language_from_language_id(&document.language_id);
+        let Some(result) = self.format_path(&path, source_text, document_language)? else {
             return Ok(Vec::new());
         };
 
@@ -231,7 +250,12 @@ impl Tool for ServerFormatter {
 }
 
 impl ServerFormatter {
-    fn format_path(&self, path: &Path, source_text: &str) -> Result<Option<FormatResult>, String> {
+    fn format_path(
+        &self,
+        path: &Path,
+        source_text: &str,
+        document_language: Option<ExplicitLanguage>,
+    ) -> Result<Option<FormatResult>, String> {
         if should_ignore_file(path) || self.is_prettierignored(path) {
             return Ok(None);
         }
@@ -251,7 +275,10 @@ impl ServerFormatter {
             return Ok(None);
         }
 
-        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
+        let language = document_language.or(self.language);
+        let Some(strategy) =
+            FormatFileStrategy::from_path_with_language(path.to_path_buf(), language)
+        else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return Ok(None);
         };
@@ -350,7 +377,7 @@ fn create_fake_file_path_from_language_id(
         "typescript" => "ts",
         "javascriptreact" => "jsx",
         "typescriptreact" => "tsx",
-        "arkts" | "ets" => "ets",
+        "arkts" | "ets" | "ets-static" => "ets",
         "toml" => "toml",
         "json" => "json",
         "jsonc" => "jsonc",
@@ -371,6 +398,10 @@ fn create_fake_file_path_from_language_id(
     }
 
     Some(root.join(format!("{name}.{extension}")))
+}
+
+fn get_explicit_language_from_language_id(language_id: &LanguageId) -> Option<ExplicitLanguage> {
+    (language_id.as_str() == "ets-static").then_some(ExplicitLanguage::EtsStatic)
 }
 
 /// Returns the minimal text edit `(start, end, replacement)` in byte offsets.
@@ -476,7 +507,7 @@ mod tests {
         let file_path = dir.path().join("input.ts");
         let uri = Uri::from_file_path(&file_path).expect("file URI should be created");
         let root_uri = Uri::from_file_path(dir.path()).expect("root URI should be created");
-        let formatter = ServerFormatterBuilder.build(
+        let formatter = ServerFormatterBuilder { language: None }.build(
             &root_uri,
             json!({
                 "fmt.configPath": ".oxfmtrc.json"
@@ -495,5 +526,27 @@ mod tests {
 
         assert_eq!(edits.len(), 1);
         assert!(edits[0].new_text.contains("'hello'"));
+    }
+
+    #[test]
+    fn formats_static_ets_document_language() {
+        let dir = TestDir::new("static-ets");
+        let file_path = dir.path().join("input.ets");
+        let uri = Uri::from_file_path(&file_path).expect("file URI should be created");
+        let root_uri = Uri::from_file_path(dir.path()).expect("root URI should be created");
+        let formatter = ServerFormatterBuilder { language: None }.build(&root_uri, json!({}));
+        let source: Arc<str> = Arc::from("package example.lsp;\nfinal class Box{value:int=1}\n");
+        let document = TextDocument::new(
+            &uri,
+            LanguageId::new("ets-static".to_string()),
+            Some(Arc::clone(&source)),
+        );
+
+        let edits = formatter
+            .run_format(&document)
+            .expect("static ETS formatting should succeed");
+
+        assert_eq!(edits.len(), 1);
+        assert!(!edits[0].new_text.is_empty());
     }
 }

@@ -23,6 +23,21 @@ pub enum Run {
     OnType,
 }
 
+/// Explicit language modes that cannot be inferred from a file extension.
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, JsonSchema)]
+pub enum Language {
+    #[serde(rename = "ets-static")]
+    EtsStatic,
+}
+
+impl Language {
+    pub const fn source_type(self) -> oxc_span::SourceType {
+        match self {
+            Self::EtsStatic => oxc_span::SourceType::ets_static(),
+        }
+    }
+}
+
 /// LSP Options
 ///
 /// These options can be defined for each workspace folder separately.
@@ -84,6 +99,9 @@ pub struct LintOptions {
     /// Whether to enable/disable type-aware linting.
     /// It will override the root config's `typeAware` option if set.
     pub type_aware: Option<bool>,
+    /// Explicit language grammar for `.ets` documents. Without this option,
+    /// `.ets` remains ArkUI/ArkTS 1.1.
+    pub language: Option<Language>,
     /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
     /// It gets automatically enabled when `configPath` is set.
     #[schemars(with = "Option<bool>")]
@@ -242,6 +260,9 @@ impl TryFrom<Value> for LintOptions {
                 .and_then(Value::as_str)
                 .map(str::to_owned),
             type_aware: object.get("typeAware").and_then(Value::as_bool),
+            language: object
+                .get("language")
+                .and_then(|value| Language::deserialize(value).ok()),
             disable_nested_config: object
                 .get("disableNestedConfig")
                 .and_then(Value::as_bool)
@@ -280,6 +301,7 @@ mod test {
             "configPath": "./custom.json",
             "unusedDisableDirectives": "warn",
             "typeAware": true,
+            "language": "ets-static",
             "disableNestedConfig": true,
             "fixKind": "dangerous_fix",
             "rulesCustomization": {
@@ -301,6 +323,7 @@ mod test {
             Some(UnusedDisableDirectives::Warn)
         );
         assert_eq!(options.type_aware, Some(true));
+        assert_eq!(options.language, Some(super::Language::EtsStatic));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
 
@@ -327,6 +350,7 @@ mod test {
         assert_eq!(options.config_path, None);
         assert_eq!(options.unused_disable_directives, None);
         assert_eq!(options.type_aware, None);
+        assert_eq!(options.language, None);
         assert!(!options.disable_nested_config);
         assert_eq!(
             options.fix_kind,

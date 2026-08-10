@@ -24,7 +24,7 @@ use oxc_linter::{
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
     LintServiceOptions, Linter, SuppressionManager,
 };
-use oxc_span::Span;
+use oxc_span::{SourceType, Span};
 
 use crate::{
     ArktsLintConfig, arkts,
@@ -90,6 +90,7 @@ impl OxkLintRunner {
             misc_options,
             disable_nested_config,
             inline_config_options,
+            lang,
             ..
         } = self.options;
 
@@ -343,6 +344,10 @@ impl OxkLintRunner {
                 .any(|config| config.plugins().has_import());
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+        let arkts_source_type = lang.map(|language| language.source_type());
+        if let Some(source_type) = arkts_source_type {
+            options = options.with_source_type(source_type);
+        }
         let suppression_path = format!(".oxk-disabled-suppressions-{}", std::process::id());
         let diff_manager =
             SuppressionManager::load(options.cwd(), &suppression_path, false, false).build_diff();
@@ -488,7 +493,13 @@ impl OxkLintRunner {
             }
         }
 
-        if let Err(err) = Self::lint_arkts_files(&cwd, &arkts_config, &files_to_lint, &tx_error) {
+        if let Err(err) = Self::lint_arkts_files(
+            &cwd,
+            &arkts_config,
+            &files_to_lint,
+            &tx_error,
+            arkts_source_type,
+        ) {
             print_and_flush_stdout(stdout, &format!("{err}\n"));
             return CliRunResult::InvalidOptionConfig;
         }
@@ -546,6 +557,7 @@ impl OxkLintRunner {
         arkts_config: &ArktsLintConfig,
         files_to_lint: &[Arc<OsStr>],
         tx_error: &DiagnosticSender,
+        source_type: Option<SourceType>,
     ) -> Result<(), String> {
         if arkts_config.is_empty() {
             return Ok(());
@@ -563,8 +575,13 @@ impl OxkLintRunner {
                     path.display()
                 )
             })?;
-            let diagnostics =
-                arkts::lint_standalone_source(path, &source_text, &arkts_config.rules, cwd)?;
+            let diagnostics = arkts::lint_standalone_source(
+                path,
+                &source_text,
+                &arkts_config.rules,
+                cwd,
+                source_type,
+            )?;
             if diagnostics.is_empty() {
                 continue;
             }

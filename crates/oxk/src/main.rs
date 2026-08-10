@@ -10,6 +10,7 @@ mod lint_cmd;
 #[derive(Debug, Clone)]
 pub(crate) struct FormatArgs {
     pub lsp: bool,
+    pub lang: Option<oxc_span::ExplicitLanguage>,
     pub config: Option<std::path::PathBuf>,
     file: Vec<String>,
     thread: usize,
@@ -66,7 +67,7 @@ fn main() {
     let run_ret: Result<(), Box<dyn std::error::Error>> = match ret {
         Options::Format(args) => {
             if args.lsp {
-                format::run_lsp()
+                format::run_lsp(args.lang)
             } else {
                 format::format(args)
             }

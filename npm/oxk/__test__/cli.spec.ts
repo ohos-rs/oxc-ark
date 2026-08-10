@@ -83,6 +83,25 @@ test('npm cli preserves quoted object properties by default', (t) => {
   })
 })
 
+test('npm cli formats static ETS with explicit language', (t) => {
+  withTempDir((dir) => {
+    const filePath = join(dir, 'input.ets')
+    writeFileSync(
+      filePath,
+      "package example.formatter;\nfinal class Box{value:int=1}\nlet character:char=c'a';\n",
+      'utf8',
+    )
+
+    const result = runCli(['format', '--lang', 'ets-static', 'input.ets'], dir)
+
+    t.is(result.status, 0, result.stderr || result.stdout)
+    const formatted = readFileSync(filePath, 'utf8')
+    t.true(formatted.includes('final class Box {'))
+    t.true(formatted.includes('value: int = 1;'))
+    t.true(formatted.includes("let character: char = c'a';"))
+  })
+})
+
 test('npm cli loads nearest .oxfmtrc.json', (t) => {
   withTempDir((dir) => {
     writeFileSync(join(dir, '.oxfmtrc.json'), JSON.stringify({ singleQuote: true }), 'utf8')
@@ -230,6 +249,16 @@ test('npm cli lint reports oxlint diagnostics', (t) => {
 
     t.is(result.status, 1, result.stdout || result.stderr)
     t.true(`${result.stdout}\n${result.stderr}`.includes('no-debugger'), 'Should report oxlint rule diagnostics')
+  })
+})
+
+test('npm cli lints static ETS with explicit language', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(join(dir, 'input.ets'), "package example.lint;\nlet character: char = c'a';\n", 'utf8')
+
+    const result = runCli(['lint', '--lang', 'ets-static', 'input.ets', '--threads', '1'], dir)
+
+    t.is(result.status, 0, result.stderr || result.stdout)
   })
 })
 

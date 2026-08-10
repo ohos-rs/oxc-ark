@@ -3,6 +3,7 @@
 mod parse;
 
 use napi_derive::napi;
+use oxc_span::ExplicitLanguage;
 use serde_json::Value;
 #[cfg(not(target_family = "wasm"))]
 use std::ffi::OsString;
@@ -43,6 +44,9 @@ pub struct FormatFilesArgs {
   pub with_node_modules: bool,
   pub thread_count: u32,
   pub config_path: Option<String>,
+  /// Explicit language for `.ets` files. Currently supported: `ets-static`.
+  #[napi(ts_type = "'ets-static'")]
+  pub lang: Option<String>,
   pub cli_options: Option<Value>,
 }
 
@@ -61,16 +65,17 @@ fn package_version() -> String {
 
 /// Run the oxfmt-compatible formatter language server.
 #[cfg(not(target_family = "wasm"))]
-#[napi]
-pub async fn format_lsp() -> bool {
-  format::run_lsp("oxfmt".to_string(), package_version()).await;
-  true
+#[napi(ts_args_type = "lang?: 'ets-static'")]
+pub async fn format_lsp(lang: Option<String>) -> napi::Result<bool> {
+  let language = parse_explicit_language(lang.as_deref()).map_err(napi::Error::from_reason)?;
+  format::run_lsp("oxfmt".to_string(), package_version(), language).await;
+  Ok(true)
 }
 
 /// Run the oxfmt-compatible formatter language server.
 #[cfg(target_family = "wasm")]
-#[napi]
-pub async fn format_lsp() -> napi::Result<bool> {
+#[napi(ts_args_type = "lang?: 'ets-static'")]
+pub async fn format_lsp(_lang: Option<String>) -> napi::Result<bool> {
   Err(napi::Error::from_reason(
     "oxk format --lsp is not supported in WASI builds. Use the native npm package or the cargo CLI.",
   ))
@@ -191,6 +196,7 @@ async fn format_files_impl(
   }
 
   let cwd = env::current_dir().map_err(|err| format!("Failed to get current directory: {err}"))?;
+  let language = parse_explicit_language(args.lang.as_deref())?;
   let thread_count = usize::try_from(args.thread_count.max(1)).unwrap_or(1);
   let config_path = args.config_path.as_deref().map(PathBuf::from);
   let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_path.as_deref());
@@ -252,7 +258,15 @@ async fn format_files_impl(
     let external_formatter = external_formatter.clone();
     let semaphore = Arc::clone(&semaphore);
     handles.push(tokio::spawn(async move {
-      format_cli_file(path, cwd, config_resolver, external_formatter, semaphore).await
+      format_cli_file(
+        path,
+        cwd,
+        config_resolver,
+        external_formatter,
+        semaphore,
+        language,
+      )
+      .await
     }));
   }
 
@@ -287,6 +301,7 @@ async fn format_cli_file(
   config_resolver: Arc<ConfigResolver>,
   external_formatter: ExternalFormatter,
   semaphore: Arc<tokio::sync::Semaphore>,
+  language: Option<ExplicitLanguage>,
 ) -> Result<bool, String> {
   let _permit = semaphore
     .acquire()
@@ -294,7 +309,7 @@ async fn format_cli_file(
     .map_err(|err| format!("{}: semaphore error: {err}", path.display()))?;
 
   tokio::task::spawn_blocking(move || {
-    format_cli_file_blocking(path, &cwd, &config_resolver, external_formatter)
+    format_cli_file_blocking(path, &cwd, &config_resolver, external_formatter, language)
   })
   .await
   .map_err(|err| format!("task join error: {err}"))?
@@ -306,6 +321,7 @@ fn format_cli_file_blocking(
   cwd: &Path,
   config_resolver: &ConfigResolver,
   external_formatter: ExternalFormatter,
+  language: Option<ExplicitLanguage>,
 ) -> Result<bool, String> {
   let source_text = fs::read_to_string(&path)
     .map_err(|err| format!("{}: failed to read file: {err}", path.display()))?;
@@ -313,8 +329,8 @@ fn format_cli_file_blocking(
     return Ok(false);
   }
 
-  let strategy = FormatFileStrategy::try_from(path.clone())
-    .map_err(|_| format!("{}: unsupported file type", path.display()))?;
+  let strategy = FormatFileStrategy::from_path_with_language(path.clone(), language)
+    .ok_or_else(|| format!("{}: unsupported file type", path.display()))?;
   let resolved_options = config_resolver.resolve(&strategy);
   let formatter = SourceFormatter::new(1).with_external_formatter(Some(external_formatter));
 
@@ -341,6 +357,13 @@ fn empty_object() -> Value {
   Value::Object(serde_json::Map::new())
 }
 
+fn parse_explicit_language(lang: Option<&str>) -> Result<Option<ExplicitLanguage>, String> {
+  lang
+    .map(str::parse::<ExplicitLanguage>)
+    .transpose()
+    .map_err(|error| error.to_string())
+}
+
 fn format_impl(
   filename: String,
   source_text: String,
@@ -350,6 +373,24 @@ fn format_impl(
   format_file_cb: Option<JsFormatFileCb>,
 ) -> FormatResult {
   let num_of_threads = 1;
+  let language = match options.as_ref().and_then(|value| value.get("lang")) {
+    None | Some(Value::Null) => None,
+    Some(Value::String(language)) => match parse_explicit_language(Some(language)) {
+      Ok(language) => language,
+      Err(error) => {
+        return FormatResult {
+          code: source_text,
+          errors: vec![error],
+        };
+      }
+    },
+    Some(_) => {
+      return FormatResult {
+        code: source_text,
+        errors: vec!["`lang` must be the string `ets-static`".to_string()],
+      };
+    }
+  };
 
   // Create external formatter if callbacks are provided
   let external_formatter = if let (Some(init_cb), Some(embedded_cb), Some(file_cb)) = (
@@ -402,7 +443,9 @@ fn format_impl(
   }
 
   // Determine format strategy from file path
-  let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
+  let Some(strategy) =
+    FormatFileStrategy::from_path_with_language(PathBuf::from(&filename), language)
+  else {
     return FormatResult {
       code: source_text,
       errors: vec![format!("Unsupported file type: {filename}")],

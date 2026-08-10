@@ -528,6 +528,38 @@ mod tests {
     }
 
     #[test]
+    fn formats_static_ets_idempotently() {
+        let source =
+            "package example.formatter;\nfinal class Box{value:int=1}\nlet character:char=c'a';\n";
+        let formatter = SourceFormatter::new(1);
+        let options = FormatOptions::default();
+        let formatted = formatter
+            .format_by_oxc_formatter(
+                source,
+                Path::new("test.ets"),
+                SourceType::ets_static(),
+                options.clone(),
+                Value::Null,
+            )
+            .expect("static ETS formatting should succeed");
+
+        assert!(formatted.contains("final class Box {"));
+        assert!(formatted.contains("value: int = 1;"));
+        assert!(formatted.contains("let character: char = c'a';"));
+
+        let second = formatter
+            .format_by_oxc_formatter(
+                &formatted,
+                Path::new("test.ets"),
+                SourceType::ets_static(),
+                options,
+                Value::Null,
+            )
+            .expect("formatted static ETS should remain valid");
+        assert_eq!(second, formatted);
+    }
+
+    #[test]
     fn formats_json_with_upstream_json_variant() {
         let formatted = format_json_source(
             r#"{"name":"test","version":"1.0.0"}"#,

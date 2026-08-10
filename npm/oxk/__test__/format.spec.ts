@@ -90,6 +90,27 @@ struct Index {
   }
 })
 
+test('format static ETS only with explicit language', async (t) => {
+  const source = [
+    'package example.formatter;',
+    'final class Box{value:int=1;method(value:int):int{return value}}',
+    "let character:char=c'a';",
+  ].join('\n')
+
+  const inferred = await format('static.ets', source, undefined)
+  t.true(inferred.errors.length > 0, 'A .ets path should keep using the ArkTS 1.1 grammar')
+
+  const explicit = await format('static.ets', source, { lang: 'ets-static' })
+  t.deepEqual(explicit.errors, [])
+  t.true(explicit.code.includes('final class Box {'))
+  t.true(explicit.code.includes('value: int = 1;'))
+  t.true(explicit.code.includes("let character: char = c'a';"))
+
+  const second = await format('static.ets', explicit.code, { lang: 'ets-static' })
+  t.deepEqual(second.errors, [])
+  t.is(second.code, explicit.code, 'Static ETS formatting should be idempotent')
+})
+
 test('format JSON5 file', async (t) => {
   const json5Source = `{
   // This is a JSON5 file

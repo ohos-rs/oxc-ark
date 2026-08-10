@@ -47,7 +47,7 @@ pub fn lint_args(args: Vec<OsString>) -> bool {
 
     if command.lsp {
         let config_path = command.basic_options.config.clone().map(resolve_from_cwd);
-        return run_lsp_server(None, config_path);
+        return run_lsp_server(None, config_path, command.lang);
     }
 
     let prepared = match prepare_arkts_config(args) {
@@ -453,6 +453,7 @@ fn run_lint_command(
 pub(crate) fn run_lsp_server(
     external_linter: Option<ExternalLinter>,
     config_path: Option<PathBuf>,
+    language: Option<oxc_span::ExplicitLanguage>,
 ) -> bool {
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .worker_threads(1)
@@ -466,7 +467,7 @@ pub(crate) fn run_lsp_server(
         }
     };
 
-    runtime.block_on(lsp::run_lsp(external_linter, config_path));
+    runtime.block_on(lsp::run_lsp(external_linter, config_path, language));
     true
 }
 

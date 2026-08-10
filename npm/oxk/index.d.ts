@@ -24,7 +24,7 @@ export interface OxcError {
 export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
-  Advice = 'Advice'
+  Advice = 'Advice',
 }
 export interface DynamicImport {
   start: number
@@ -55,7 +55,7 @@ export interface ExportExportName {
 export declare const enum ExportExportNameKind {
   Name = 'Name',
   Default = 'Default',
-  None = 'None'
+  None = 'None',
 }
 
 export interface ExportImportName {
@@ -69,7 +69,7 @@ export declare const enum ExportImportNameKind {
   Name = 'Name',
   All = 'All',
   AllButDefault = 'AllButDefault',
-  None = 'None'
+  None = 'None',
 }
 
 export interface ExportLocalName {
@@ -82,7 +82,7 @@ export interface ExportLocalName {
 export declare const enum ExportLocalNameKind {
   Name = 'Name',
   Default = 'Default',
-  None = 'None'
+  None = 'None',
 }
 
 /**
@@ -94,10 +94,22 @@ export declare const enum ExportLocalNameKind {
  * - JSON/JSON5/JSONC files (via native Rust formatters)
  * - Other files (via external formatter callbacks when napi feature is enabled)
  */
-export declare function format(filename: string, sourceText: string, options?: any | undefined | null, initExternalFormatterCb?: (numThreads: number) => Promise<string[]>, formatEmbeddedCb?: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb?: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<FormatResult>
+export declare function format(
+  filename: string,
+  sourceText: string,
+  options?: any | undefined | null,
+  initExternalFormatterCb?: (numThreads: number) => Promise<string[]>,
+  formatEmbeddedCb?: (options: Record<string, any>, tagName: string, code: string) => Promise<string>,
+  formatFileCb?: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>,
+): Promise<FormatResult>
 
 /** Run the oxfmt-compatible formatter over files. */
-export declare function formatFiles(args: FormatFilesArgs, initExternalFormatterCb: (numThreads: number) => Promise<string[]>, formatEmbeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, formatFileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>): Promise<boolean>
+export declare function formatFiles(
+  args: FormatFilesArgs,
+  initExternalFormatterCb: (numThreads: number) => Promise<string[]>,
+  formatEmbeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>,
+  formatFileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>,
+): Promise<boolean>
 
 export interface FormatFilesArgs {
   patterns: Array<string>
@@ -106,11 +118,13 @@ export interface FormatFilesArgs {
   withNodeModules: boolean
   threadCount: number
   configPath?: string
+  /** Explicit language for `.ets` files. Currently supported: `ets-static`. */
+  lang?: 'ets-static'
   cliOptions?: any
 }
 
 /** Run the oxfmt-compatible formatter language server. */
-export declare function formatLsp(): Promise<boolean>
+export declare function formatLsp(lang?: 'ets-static'): Promise<boolean>
 
 export interface FormatResult {
   /** The formatted code. */
@@ -129,7 +143,7 @@ export interface ImportName {
 export declare const enum ImportNameKind {
   Name = 'Name',
   NamespaceObject = 'NamespaceObject',
-  Default = 'Default'
+  Default = 'Default',
 }
 
 /** Run the oxlint-compatible linter. */
@@ -139,10 +153,36 @@ export declare function lint(args: Array<string>): Promise<boolean>
 export declare function lintSync(args: Array<string>): boolean
 
 /** Run the oxlint-compatible linter with JavaScript plugin callbacks. */
-export declare function lintWithPlugins(args: Array<string>, loadPlugin: (arg0: string, arg1: string | undefined | null, arg2: boolean, arg3?: string | undefined | null) => Promise<string>, setupRuleConfigs: (arg: string) => string | null, lintFile: (arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7?: string | undefined | null) => string | null, createWorkspace: (arg: string) => Promise<undefined>, destroyWorkspace: (arg: string) => void, loadJsConfigs: (arg: Array<string>) => Promise<string>): Promise<boolean>
+export declare function lintWithPlugins(
+  args: Array<string>,
+  loadPlugin: (
+    arg0: string,
+    arg1: string | undefined | null,
+    arg2: boolean,
+    arg3?: string | undefined | null,
+  ) => Promise<string>,
+  setupRuleConfigs: (arg: string) => string | null,
+  lintFile: (
+    arg0: string,
+    arg1: number,
+    arg2: Uint8Array | undefined | null,
+    arg3: Array<number>,
+    arg4: Array<number>,
+    arg5: string,
+    arg6: string,
+    arg7?: string | undefined | null,
+  ) => string | null,
+  createWorkspace: (arg: string) => Promise<undefined>,
+  destroyWorkspace: (arg: string) => void,
+  loadJsConfigs: (arg: Array<string>) => Promise<string>,
+): Promise<boolean>
 
 /** Parse JS/TS/ArkTS source text and return an ESTree-compatible AST. */
-export declare function parse(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
+export declare function parse(
+  filename: string,
+  sourceText: string,
+  options?: ParserOptions | undefined | null,
+): Promise<ParseResult>
 
 export interface ParseResult {
   /** ESTree-compatible AST object. */
@@ -153,8 +193,11 @@ export interface ParseResult {
 }
 
 export interface ParserOptions {
-  /** Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts` or `ets`. */
-  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets'
+  /**
+   * Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts`, `ets` or explicitly selected static ETS.
+   * A `.ets` filename without `ets-static` keeps using the ArkUI/ArkTS 1.1 grammar.
+   */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets' | 'ets-static'
   /** Treat the source text as `script`, `module`, `commonjs` or `unambiguous` code. */
   sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous' | undefined
   /** Return an AST which includes TypeScript-related properties, or excludes them. */
