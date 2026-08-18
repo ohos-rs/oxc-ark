@@ -27,6 +27,7 @@ use oxc_language_server::{
     Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument, Tool,
     ToolBuilder, ToolRestartChanges,
 };
+use oxc_span::{ExplicitLanguage, SourceType};
 
 use crate::{
     ArktsLintConfig, arkts,
@@ -56,16 +57,19 @@ use crate::{
 pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
     default_config_path: Option<PathBuf>,
+    language: Option<ExplicitLanguage>,
 }
 
 impl ServerLinterBuilder {
     pub fn new(
         external_linter: Option<ExternalLinter>,
         default_config_path: Option<PathBuf>,
+        language: Option<ExplicitLanguage>,
     ) -> Self {
         Self {
             external_linter,
             default_config_path,
+            language,
         }
     }
 
@@ -208,6 +212,13 @@ impl ServerLinterBuilder {
             .with_workspace_uri(Some(root_uri.as_str()));
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
+        let source_type = options
+            .language
+            .map(super::options::Language::source_type)
+            .or_else(|| self.language.map(ExplicitLanguage::source_type));
+        if let Some(source_type) = source_type {
+            lint_service_options = lint_service_options.with_source_type(source_type);
+        }
 
         if let Some(ts_path) = options.ts_config_path.as_ref() {
             let ts_path = Path::new(ts_path).to_path_buf();
@@ -252,6 +263,7 @@ impl ServerLinterBuilder {
             options.rules_customization,
             arkts_config,
             config_path,
+            source_type,
         )
     }
 }
@@ -408,6 +420,7 @@ pub struct ServerLinter {
     rules_customization: Option<RulesCustomization>,
     arkts_config: ArktsLintConfig,
     config_path: Option<PathBuf>,
+    source_type: Option<SourceType>,
 }
 
 impl Tool for ServerLinter {
@@ -715,6 +728,7 @@ impl ServerLinter {
         rules_customization: Option<RulesCustomization>,
         arkts_config: ArktsLintConfig,
         config_path: Option<PathBuf>,
+        source_type: Option<SourceType>,
     ) -> Self {
         Self {
             run,
@@ -729,6 +743,7 @@ impl ServerLinter {
             rules_customization,
             arkts_config,
             config_path,
+            source_type,
         }
     }
 
@@ -897,8 +912,13 @@ impl ServerLinter {
             return Ok(Vec::new());
         }
 
-        let diagnostics =
-            arkts::lint_standalone_source(path, source_text, &self.arkts_config.rules, &self.cwd)?;
+        let diagnostics = arkts::lint_standalone_source(
+            path,
+            source_text,
+            &self.arkts_config.rules,
+            &self.cwd,
+            self.source_type,
+        )?;
 
         Ok(diagnostics
             .into_iter()
@@ -912,6 +932,7 @@ impl ServerLinter {
             || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind != new_options.fix_kind
             || old_options.unused_disable_directives != new_options.unused_disable_directives
+            || old_options.language != new_options.language
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
     }
@@ -1036,7 +1057,7 @@ mod tests {
 
         let root_uri = Uri::from_file_path(&root).unwrap();
         let file_uri = Uri::from_file_path(&file_path).unwrap();
-        let linter = ServerLinterBuilder::new(None, None).build(&root_uri, json!({}));
+        let linter = ServerLinterBuilder::new(None, None, None).build(&root_uri, json!({}));
         let document = TextDocument::new(
             &file_uri,
             LanguageId::new("typescript".to_string()),

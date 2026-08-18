@@ -1111,8 +1111,9 @@ fn run_arkts_rules(
     allocator: &Allocator,
     active_rules: &[ActiveArktsRule],
     options: ArktsOptionStore,
+    source_type: Option<SourceType>,
 ) -> Result<Vec<LintFileResult>, String> {
-    let source_type = source_type_for_arkts_path(file_path);
+    let source_type = source_type.unwrap_or_else(|| source_type_for_arkts_path(file_path));
     let parser_return = Parser::new(allocator, source_text, source_type).parse();
 
     let mut visitor = ArktsVisitor {
@@ -2242,7 +2243,7 @@ pub fn lint_standalone_file(
             file_path.display()
         )
     })?;
-    lint_standalone_source(file_path, &source_text, rules, cwd)
+    lint_standalone_source(file_path, &source_text, rules, cwd, None)
 }
 
 pub fn lint_standalone_source(
@@ -2250,6 +2251,7 @@ pub fn lint_standalone_source(
     source_text: &str,
     rules: &[StandaloneRuleConfig],
     cwd: &Path,
+    source_type: Option<SourceType>,
 ) -> Result<Vec<StandaloneDiagnostic>, String> {
     if rules.is_empty() || !is_arkts_file(file_path) {
         return Ok(Vec::new());
@@ -2287,6 +2289,7 @@ pub fn lint_standalone_source(
         &allocator,
         &active_rules,
         option_store,
+        source_type,
     )
     .map(|diagnostics| {
         diagnostics

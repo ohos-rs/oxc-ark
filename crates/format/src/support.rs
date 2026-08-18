@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use phf::phf_set;
 
-use oxc_span::SourceType;
+use oxc_span::{ExplicitLanguage, SourceType};
 
 #[derive(Debug)]
 pub enum FormatFileStrategy {
@@ -40,50 +40,66 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
     type Error = ();
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        Self::from_path_with_language(path, None).ok_or(())
+    }
+}
+
+impl FormatFileStrategy {
+    /// Classify a file while applying an explicitly selected language mode.
+    ///
+    /// Static ETS only overrides `.ets` inputs, so this is safe to use for a
+    /// mixed JavaScript, TypeScript and ETS file set.
+    pub fn from_path_with_language(
+        path: PathBuf,
+        language: Option<ExplicitLanguage>,
+    ) -> Option<Self> {
         // Check JS/TS files first
-        if let Some(source_type) = get_oxc_formatter_source_type(&path) {
-            return Ok(Self::OxcFormatter { path, source_type });
+        if let Some(mut source_type) = get_oxc_formatter_source_type(&path) {
+            if source_type.is_arkui()
+                && let Some(language) = language
+            {
+                source_type = language.source_type();
+            }
+            return Some(Self::OxcFormatter { path, source_type });
         }
 
         // Extract file_name and extension once for all subsequent checks
-        let Some(file_name) = path.file_name().and_then(|f| f.to_str()) else {
-            return Err(());
-        };
+        let file_name = path.file_name().and_then(|f| f.to_str())?;
 
         // Excluded files like lock files
         if EXCLUDE_FILENAMES.contains(file_name) {
-            return Err(());
+            return None;
         }
 
         // Then TOML files
         if is_toml_file(file_name) {
-            return Ok(Self::OxfmtToml { path });
+            return Some(Self::OxfmtToml { path });
         }
 
         // Then JSON/JSON5/JSONC files (before external formatter)
         let extension = path.extension().and_then(|ext| ext.to_str());
         // Check if JSON/JSON5/JSONC file should be ignored
         if should_ignore_json_file(file_name, extension) {
-            return Err(());
+            return None;
         }
         if let Some(json_type) = get_json_type(file_name, extension) {
-            return Ok(Self::OxfmtJson { path, json_type });
+            return Some(Self::OxfmtJson { path, json_type });
         }
 
         // Then external formatter files
         // `package.json` is special: sorted then formatted
         if file_name == "package.json" {
-            return Ok(Self::ExternalFormatterPackageJson {
+            return Some(Self::ExternalFormatterPackageJson {
                 path,
                 parser_name: "json-stringify",
             });
         }
 
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
-            return Ok(Self::ExternalFormatter { path, parser_name });
+            return Some(Self::ExternalFormatter { path, parser_name });
         }
 
-        Err(())
+        None
     }
 }
 
@@ -547,6 +563,39 @@ mod tests {
     #[test]
     fn non_upstream_frag_file_is_not_treated_as_javascript() {
         assert!(FormatFileStrategy::try_from(PathBuf::from("shader.frag")).is_err());
+    }
+
+    #[test]
+    fn static_ets_requires_an_explicit_language() {
+        let FormatFileStrategy::OxcFormatter { source_type, .. } = strategy_for("component.ets")
+        else {
+            panic!(".ets must use the Oxc formatter");
+        };
+        assert!(source_type.is_arkui());
+        assert!(!source_type.is_ets_static());
+
+        let FormatFileStrategy::OxcFormatter { source_type, .. } =
+            FormatFileStrategy::from_path_with_language(
+                PathBuf::from("component.ets"),
+                Some(ExplicitLanguage::EtsStatic),
+            )
+            .unwrap()
+        else {
+            panic!(".ets must use the Oxc formatter");
+        };
+        assert!(source_type.is_ets_static());
+
+        let FormatFileStrategy::OxcFormatter { source_type, .. } =
+            FormatFileStrategy::from_path_with_language(
+                PathBuf::from("component.ts"),
+                Some(ExplicitLanguage::EtsStatic),
+            )
+            .unwrap()
+        else {
+            panic!(".ts must use the Oxc formatter");
+        };
+        assert!(source_type.is_typescript());
+        assert!(!source_type.is_ets_static());
     }
 
     #[test]

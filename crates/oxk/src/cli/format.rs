@@ -26,6 +26,12 @@ pub fn cli_format() -> impl Parser<crate::Options> {
         .parse(|s| Ok::<PathBuf, String>(PathBuf::from(s)))
         .optional();
 
+    let lang = long("lang")
+        .argument::<String>("LANG")
+        .help("Explicit language for .ets files. Supported: ets-static")
+        .parse(|value| oxc_span::ExplicitLanguage::from_str(&value))
+        .optional();
+
     let file = positional("input")
         .help("Input regex to select files.")
         .many();
@@ -156,6 +162,7 @@ pub fn cli_format() -> impl Parser<crate::Options> {
 
     let format_parser = construct!(crate::FormatArgs {
         lsp,
+        lang,
         config,
         thread,
         excludes,

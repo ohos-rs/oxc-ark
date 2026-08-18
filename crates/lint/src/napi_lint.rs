@@ -120,7 +120,7 @@ pub async fn lint_args_with_plugins(
 
     if command.lsp {
         let config_path = command.basic_options.config.clone().map(resolve_from_cwd);
-        return run_lsp_server(Some(external_linter), config_path);
+        return run_lsp_server(Some(external_linter), config_path, command.lang);
     }
 
     let prepared = match prepare_arkts_config(args) {

@@ -1,12 +1,8 @@
 // Convenience wrapper that automatically uses Prettier for external formatter callbacks
-const {
-  format: napiFormat,
-  formatFiles: napiFormatFiles,
-  formatLsp,
-} = require("./index.js");
+const { format: napiFormat, formatFiles: napiFormatFiles, formatLsp } = require('./index.js')
 
 // Lazy load Prettier
-let prettierCache;
+let prettierCache
 
 /**
  * TODO: Plugins support
@@ -17,24 +13,24 @@ let prettierCache;
  * @returns {Promise<string[]>} Array of loaded plugin's `languages` info
  */
 async function resolvePlugins() {
-  return [];
+  return []
 }
 
 // ---
 
 const TAG_TO_PARSER = {
   // CSS
-  css: "css",
-  styled: "css",
+  css: 'css',
+  styled: 'css',
   // GraphQL
-  gql: "graphql",
-  graphql: "graphql",
+  gql: 'graphql',
+  graphql: 'graphql',
   // HTML
-  html: "html",
+  html: 'html',
   // Markdown
-  md: "markdown",
-  markdown: "markdown",
-};
+  md: 'markdown',
+  markdown: 'markdown',
+}
 
 /**
  * Format xxx-in-js code snippets
@@ -47,21 +43,21 @@ const TAG_TO_PARSER = {
  */
 async function formatEmbeddedCode({ code, tagName, options }) {
   // TODO: This should be resolved in Rust side
-  const parserName = TAG_TO_PARSER[tagName];
+  const parserName = TAG_TO_PARSER[tagName]
 
   // Unknown tag, return original code
-  if (!parserName) return code;
+  if (!parserName) return code
 
   if (!prettierCache) {
-    prettierCache = await import("prettier");
+    prettierCache = await import('prettier')
   }
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.parser = parserName;
+  options.parser = parserName
   return prettierCache
     .format(code, options)
     .then((formatted) => formatted.trimEnd())
-    .catch(() => code);
+    .catch(() => code)
 }
 
 /**
@@ -76,15 +72,15 @@ async function formatEmbeddedCode({ code, tagName, options }) {
  */
 async function formatFile({ code, parserName, fileName, options }) {
   if (!prettierCache) {
-    prettierCache = await import("prettier");
+    prettierCache = await import('prettier')
   }
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   // We specify `parser` to skip parser inference for performance
-  options.parser = parserName;
+  options.parser = parserName
   // But some plugins rely on `filepath`, so we set it too
-  options.filepath = fileName;
-  return prettierCache.format(code, options);
+  options.filepath = fileName
+  return prettierCache.format(code, options)
 }
 
 /**
@@ -99,10 +95,8 @@ async function formatFile({ code, parserName, fileName, options }) {
  * @returns {Promise<{code: string, errors: string[]}>} A promise that resolves to the formatted code and any errors
  */
 async function format(fileName, sourceText, options) {
-  if (typeof fileName !== "string")
-    throw new TypeError("`fileName` must be a string");
-  if (typeof sourceText !== "string")
-    throw new TypeError("`sourceText` must be a string");
+  if (typeof fileName !== 'string') throw new TypeError('`fileName` must be a string')
+  if (typeof sourceText !== 'string') throw new TypeError('`sourceText` must be a string')
 
   return napiFormat(
     fileName,
@@ -110,9 +104,8 @@ async function format(fileName, sourceText, options) {
     options ?? {},
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
-    (options, parserName, fileName, code) =>
-      formatFile({ options, parserName, fileName, code }),
-  );
+    (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
+  )
 }
 
 async function formatFiles(args) {
@@ -124,33 +117,19 @@ async function formatFiles(args) {
       withNodeModules: args.withNodeModules,
       threadCount: args.threadCount,
       configPath: args.configPath,
+      lang: args.lang,
       cliOptions: args.cliOptions,
     },
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
-    (options, parserName, fileName, code) =>
-      formatFile({ options, parserName, fileName, code }),
-  );
+    (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
+  )
 }
 
 // Re-export the raw format function for advanced usage
-function formatRaw(
-  fileName,
-  sourceText,
-  options,
-  initExternalFormatterCb,
-  formatEmbeddedCb,
-  formatFileCb,
-) {
-  const { format } = require("./index.js");
-  return format(
-    fileName,
-    sourceText,
-    options,
-    initExternalFormatterCb,
-    formatEmbeddedCb,
-    formatFileCb,
-  );
+function formatRaw(fileName, sourceText, options, initExternalFormatterCb, formatEmbeddedCb, formatFileCb) {
+  const { format } = require('./index.js')
+  return format(fileName, sourceText, options, initExternalFormatterCb, formatEmbeddedCb, formatFileCb)
 }
 
-module.exports = { format, formatFiles, formatRaw, formatLsp };
+module.exports = { format, formatFiles, formatRaw, formatLsp }

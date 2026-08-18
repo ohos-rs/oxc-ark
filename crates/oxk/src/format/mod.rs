@@ -13,7 +13,9 @@ use futures::future;
 use serde_json::Value;
 use tokio::sync::Semaphore;
 
-pub fn run_lsp() -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_lsp(
+    language: Option<oxc_span::ExplicitLanguage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(1)
         .enable_all()
@@ -28,6 +30,7 @@ pub fn run_lsp() -> Result<(), Box<dyn std::error::Error>> {
     runtime.block_on(format::run_lsp(
         "oxfmt".to_string(),
         env!("CARGO_PKG_VERSION").to_string(),
+        language,
     ));
     Ok(())
 }
@@ -38,6 +41,7 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
     let excludes = args.excludes.clone();
     let ignore_paths = args.ignore_path.clone();
     let with_node_modules = args.with_node_modules;
+    let language = args.lang;
 
     if patterns.is_empty() {
         return Err(Box::new(std::io::Error::other("Missing file pattern")));
@@ -137,10 +141,9 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
             let config_resolver = Arc::clone(&config_resolver);
 
             // Spawn format_file as a tokio task
-            let handle =
-                tokio::spawn(
-                    async move { format_file_task(path, semaphore, config_resolver).await },
-                );
+            let handle = tokio::spawn(async move {
+                format_file_task(path, semaphore, config_resolver, language).await
+            });
             handles.push(handle);
         }
 
@@ -282,6 +285,7 @@ async fn format_file_task(
     path: PathBuf,
     semaphore: Arc<Semaphore>,
     config_resolver: Arc<ConfigResolver>,
+    language: Option<oxc_span::ExplicitLanguage>,
 ) -> Result<(), String> {
     // Acquire permit to limit concurrency
     let _permit = semaphore
@@ -290,7 +294,7 @@ async fn format_file_task(
         .map_err(|e| format!("Semaphore error: {}", e))?;
 
     // Use async file I/O for better performance in concurrent scenarios
-    format_file_async(&path, config_resolver)
+    format_file_async(&path, config_resolver, language)
         .await
         .map_err(|err| format!("{}: {err}", path.display()))
 }
@@ -299,6 +303,7 @@ async fn format_file_task(
 async fn format_file_async(
     path: &Path,
     config_resolver: Arc<ConfigResolver>,
+    language: Option<oxc_span::ExplicitLanguage>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Verify file exists
     let actual_path = if tokio::fs::metadata(path).await.is_ok() {
@@ -328,8 +333,8 @@ async fn format_file_async(
     }
 
     // Determine format strategy from file path
-    let strategy = FormatFileStrategy::try_from(actual_path.clone())
-        .map_err(|_| format!("Unsupported file type '{}'", actual_path.display()))?;
+    let strategy = FormatFileStrategy::from_path_with_language(actual_path.clone(), language)
+        .ok_or_else(|| format!("Unsupported file type '{}'", actual_path.display()))?;
 
     // Reject ExternalFormatter: oxk CLI has no napi/Prettier (aligned with oxfmt's Mode::Cli behavior)
     if let FormatFileStrategy::ExternalFormatter { parser_name, .. }

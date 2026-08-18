@@ -28,6 +28,8 @@ any rule by default. Enable each rule explicitly in `rules`.
 
 ArkTS rules run only for `.ets` files. The `.arkts` extension is not supported.
 Diagnostics are reported as `arkts(<rule>)`, for example `arkts(no-symbol)`.
+Use `oxk lint --lang ets-static ...` for static ETS / ArkTS 1.2 input. Without
+the explicit language flag, `.ets` continues to use the ArkTS 1.1 grammar.
 
 Supported config files:
 

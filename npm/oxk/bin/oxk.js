@@ -57,6 +57,7 @@ Lint Options:
 
 Format Options:
   --lsp
+  --lang ets-static
   --config PATH
   --thread, -t THREAD
   --exclude PATTERN
@@ -100,6 +101,7 @@ function parseFormatArgs(args) {
     withNodeModules: false,
     threadCount: 1,
     configPath: undefined,
+    lang: undefined,
     lsp: false,
     cliOptions: {},
   }
@@ -124,6 +126,15 @@ function parseFormatArgs(args) {
       case '--config': {
         const { value, nextIndex } = parseOptionValue(args, index, token)
         formatArgs.configPath = value
+        index = nextIndex
+        break
+      }
+      case '--lang': {
+        const { value, nextIndex } = parseOptionValue(args, index, token)
+        if (value !== 'ets-static') {
+          throw new Error("--lang must be 'ets-static'")
+        }
+        formatArgs.lang = value
         index = nextIndex
         break
       }
@@ -323,7 +334,7 @@ async function main() {
       if (typeof formatLsp !== 'function') {
         throw new Error('oxk format --lsp requires the native oxk binding')
       }
-      await formatLsp()
+      await formatLsp(formatArgs.lang)
       return
     }
 
