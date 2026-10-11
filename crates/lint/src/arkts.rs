@@ -2134,8 +2134,9 @@ fn system_api_version(options: &ArktsRuleOptions, api: &str) -> Option<SystemApi
         .find_map(|(name, version)| (name == api).then_some(*version))
         .or_else(|| {
             SYSTEM_API_VERSIONS
-                .iter()
-                .find_map(|(name, version)| (*name == api).then_some(*version))
+                .binary_search_by_key(&api, |(name, _)| *name)
+                .ok()
+                .map(|index| SYSTEM_API_VERSIONS[index].1)
         })
 }
 
@@ -2341,4 +2342,50 @@ pub fn lint_standalone_source(
 
 fn find_rule(name: &str) -> Option<&'static ArktsRule> {
     ARKTS_RULES.iter().find(|rule| rule.name == name)
+}
+
+#[cfg(test)]
+mod api26_tests {
+    use super::*;
+
+    #[test]
+    fn every_generated_api_is_ordered_and_resolvable() {
+        let options = ArktsRuleOptions::default();
+        assert!(SYSTEM_API_VERSIONS.len() > 80_000);
+        for pair in SYSTEM_API_VERSIONS.windows(2) {
+            assert!(pair[0].0 < pair[1].0);
+        }
+        for &(name, expected) in SYSTEM_API_VERSIONS {
+            assert!((1..=26).contains(&expected.since), "{name}");
+            assert!(
+                expected
+                    .removed
+                    .is_none_or(|removed| removed >= expected.since),
+                "{name}"
+            );
+            let actual = system_api_version(&options, name).expect(name);
+            assert_eq!(
+                (actual.since, actual.removed),
+                (expected.since, expected.removed),
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn api26_enum_and_hms_release_versions_are_available_through_kits() {
+        let options = ArktsRuleOptions::default();
+        for api in [
+            "@ohos.annotation.SuppressWarningsType.PERMISSION",
+            "@kit.BasicServicesKit.SuppressWarningsType.PERMISSION",
+        ] {
+            assert_eq!(system_api_version(&options, api).expect(api).since, 26);
+        }
+        assert_eq!(
+            system_api_version(&options, "@hms.core.push.VoIPExtensionAbility")
+                .unwrap()
+                .since,
+            11
+        );
+    }
 }

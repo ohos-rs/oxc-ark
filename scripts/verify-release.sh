@@ -11,6 +11,7 @@ run() {
 cd "$repo_root"
 
 run pnpm run format:check
+run pnpm run test:api-versions
 run cargo clippy --workspace --all-targets -- -D warnings
 run pnpm --filter @ohos-rs/oxk lint
 run cargo test --workspace --lib --bins

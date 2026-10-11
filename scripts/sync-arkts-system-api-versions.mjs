@@ -3,23 +3,26 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join, relative, resolve } from 'node:path'
 import process from 'node:process'
+import { createHash } from 'node:crypto'
 
 const DEFAULT_OUTPUT_FILE = 'crates/lint/src/arkts/system_api_versions.rs'
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'target', 'dist', 'build'])
 
 function usage() {
-  console.error(`Usage: pnpm run sync:arkts-api-versions -- <api-source-path> [--output <system_api_versions.rs>] [--dry-run]
+  console.error(`Usage: pnpm run sync:arkts-api-versions -- <api-source-path> [--output <system_api_versions.rs>] [--api-version 26] [--check | --dry-run]
 
 The source path can be:
   - a JSON/JSONC file containing { "apis": { "@ohos.router.back": 9 } }
   - a JSON/JSONC file containing { "apis": { "@ohos.old": { "since": 9, "removed": 12 } } }
   - a JSON/JSONC file containing { "apis": { "@ohos.legacy": { "since": 9, "deprecatedSince": 12 } } }
   - a JSON/JSONC file containing { "@ohos.router.back": 9 }
-  - a directory containing JSON/JSONC files and OpenHarmony SDK .d.ts files with @since and removal tags
+  - a complete HarmonyOS SDK root containing openharmony/ets and hms/ets
+  - a directory containing JSON/JSONC files and SDK .d.ts/.d.ets declarations with lifecycle tags
 
 When the source path is an OpenHarmony ets/api or ets/kits directory, the sibling
 directory is included automatically so @kit.* aliases are generated from the
-underlying @ohos.* and @system.* declarations.`)
+underlying @ohos.*, @system.*, and @hms.* declarations.
+--api-version verifies SDK metadata; --check fails if the output needs regeneration.`)
 }
 
 function parseArgs(argv) {
@@ -27,6 +30,8 @@ function parseArgs(argv) {
   let sourcePath = null
   let outputFile = DEFAULT_OUTPUT_FILE
   let dryRun = false
+  let check = false
+  let apiVersion = null
 
   while (args.length > 0) {
     const arg = args.shift()
@@ -34,6 +39,12 @@ function parseArgs(argv) {
       const value = args.shift()
       if (!value) throw new Error(`${arg} requires a file path`)
       outputFile = value
+    } else if (arg === '--api-version') {
+      apiVersion = parseVersion(args.shift())
+      if (apiVersion == null) throw new Error('--api-version requires an integer')
+    } else if (arg === '--check') {
+      check = true
+      dryRun = true
     } else if (arg === '--dry-run') {
       dryRun = true
     } else if (arg === '--help' || arg === '-h') {
@@ -54,6 +65,8 @@ function parseArgs(argv) {
     sourcePath: resolve(sourcePath),
     outputFile: resolve(outputFile),
     dryRun,
+    check,
+    apiVersion,
   }
 }
 
@@ -235,20 +248,23 @@ function isSystemModuleName(source) {
   )
 }
 
-function rootNamespaceName(moduleName) {
-  return moduleName.slice(moduleName.lastIndexOf('.') + 1)
+function rootNamespaceName(source) {
+  const match = source.match(
+    /^\s*export\s+default\s+(?:(?:declare\s+)?(?:class|struct|namespace|interface|function)\s+)?([A-Za-z_$][\w$]*)/mu,
+  )
+  return match?.[1] ?? null
 }
 
 function sinceFromComment(comment) {
-  const match = comment.match(/@since\s+(\d+)/u)
-  return match ? Number(match[1]) : null
+  const match = comment.match(/@since\s+(\d+)(?:\.\d+)*(?:\((\d+)\))?/u)
+  return match ? Number(match[2] ?? match[1]) : null
 }
 
 function removedFromComment(comment) {
   const match = comment.match(
-    /@(?:removed|deleted|delete|removal)\s+(?:since\s+)?(\d+)|@deprecated\s+(?:since\s+)?(\d+)/u,
+    /@(?:removed|deleted|delete|removal)\s+(?:since\s+)?(\d+)(?:\.\d+)*(?:\((\d+)\))?|@deprecated\s+(?:since\s+)?(\d+)(?:\.\d+)*(?:\((\d+)\))?/u,
   )
-  return match ? Number(match[1] ?? match[2]) : null
+  return match ? Number(match[2] ?? match[1] ?? match[4] ?? match[3]) : null
 }
 
 function versionFromComment(comment) {
@@ -315,7 +331,7 @@ function parseNamedSpecifiers(source) {
 
 function collectKitImportAliases(source) {
   const aliases = new Map()
-  const importRegex = /import\s+(?:type\s+)?([\s\S]*?)\s+from\s+['"]([^'"]+)['"]\s*;/gu
+  const importRegex = /^\s*import\s+(?:type\s+)?([\s\S]*?)\s+from\s+['"]([^'"]+)['"]\s*;?/gmu
 
   for (const match of source.matchAll(importRegex)) {
     const specifiers = match[1].trim()
@@ -334,7 +350,7 @@ function collectKitImportAliases(source) {
       continue
     }
 
-    const defaultSpecifier = specifiers.slice(0, namedStart).replace(/,$/u, '').trim()
+    const defaultSpecifier = specifiers.slice(0, namedStart).trim().replace(/,$/u, '').trim()
     if (defaultSpecifier) aliases.set(defaultSpecifier, sourceModule)
 
     const namedEnd = specifiers.lastIndexOf('}')
@@ -351,11 +367,11 @@ function collectKitImportAliases(source) {
 
 function collectKitExports(source) {
   const exports = []
-  const exportRegex = /export\s+(?:type\s+)?\{([\s\S]*?)\}\s*;/gu
+  const exportRegex = /^\s*export\s+(?:type\s+)?\{([\s\S]*?)\}(?:\s+from\s+['"]([^'"]+)['"])?\s*;?/gmu
 
   for (const match of source.matchAll(exportRegex)) {
     for (const { imported, local } of parseNamedSpecifiers(match[1])) {
-      exports.push({ local: imported, exported: local })
+      exports.push({ local: imported, exported: local, target: match[2] ? `${match[2]}.${imported}` : null })
     }
   }
 
@@ -381,8 +397,8 @@ function collectFromKitDeclarationFile(file, entries) {
   if (!moduleName?.startsWith('@kit.')) return
 
   const importAliases = collectKitImportAliases(source)
-  for (const { local, exported } of collectKitExports(source)) {
-    const targetApi = importAliases.get(local)
+  for (const { local, exported, target } of collectKitExports(source)) {
+    const targetApi = target ?? importAliases.get(local)
     if (targetApi != null) addKitAliasEntries(entries, moduleName, exported, targetApi)
   }
 }
@@ -392,7 +408,7 @@ function collectFromDeclarationFile(file, entries) {
   const moduleName = moduleNameFromFile(file, source)
   if (!moduleName) return
 
-  const rootScope = rootNamespaceName(moduleName)
+  const rootScope = rootNamespaceName(source)
   const scopes = []
   let pendingVersions = []
   let comment = null
@@ -435,9 +451,13 @@ function collectFromDeclarationFile(file, entries) {
     }
 
     if (pendingVersions.length > 0) {
-      const name = declarationName(line)
+      const name =
+        scopes.at(-1)?.kind === 'enum' && isEnumMember(line)
+          ? line.match(/^[A-Za-z_$][\w$]*/u)[0]
+          : declarationName(line)
       if (name) {
-        const segments = [...scopes.map((scope) => scope.name), name].filter((segment) => segment !== rootScope)
+        const segments = [...scopes.map((scope) => scope.name), name]
+        if (segments[0] === rootScope) segments.shift()
         const api = segments.length === 0 ? moduleName : `${moduleName}.${segments.join('.')}`
         addEntry(entries, api, combinePendingVersions(pendingVersions))
         pendingVersions = []
@@ -471,6 +491,11 @@ function isKitDeclarationFile(path) {
 }
 
 function collectSourcePaths(sourcePath) {
+  // A complete HarmonyOS SDK has both OpenHarmony and HMS declarations.
+  const sdkPaths = ['openharmony', 'hms']
+    .flatMap((vendor) => ['api', 'kits'].map((kind) => join(sourcePath, vendor, 'ets', kind)))
+    .filter((path) => existsSync(path))
+  if (sdkPaths.length > 0) return sdkPaths
   const paths = [sourcePath]
   const stat = statSync(sourcePath)
   if (stat.isDirectory()) {
@@ -519,13 +544,14 @@ function renderVersion(version) {
   return `SystemApiVersion { since: ${version.since}, removed: ${removed} }`
 }
 
-function renderRustTable(entries) {
+function renderRustTable(entries, provenance) {
   const rows = [...entries]
-    .sort(([left], [right]) => left.localeCompare(right))
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
     .map(([api, version]) => `    (${rustString(api)}, ${renderVersion(version)}),`)
 
   return `// This file is generated by scripts/sync-arkts-system-api-versions.mjs.
 // Do not edit by hand.
+${provenance}
 
 #[derive(Clone, Copy, Debug)]
 pub(super) struct SystemApiVersion {
@@ -540,8 +566,8 @@ ${rows.join('\n')}
 `
 }
 
-function updateRustOutput(outputFile, entries, dryRun) {
-  const nextTable = renderRustTable(entries)
+function updateRustOutput(outputFile, entries, dryRun, provenance) {
+  const nextTable = renderRustTable(entries, provenance)
   const previous = existsSync(outputFile) ? readFileSync(outputFile, 'utf8') : null
   if (!dryRun && nextTable !== previous) {
     mkdirSync(dirname(outputFile), { recursive: true })
@@ -551,7 +577,7 @@ function updateRustOutput(outputFile, entries, dryRun) {
 }
 
 try {
-  const { sourcePath, outputFile, dryRun } = parseArgs(process.argv.slice(2))
+  const { sourcePath, outputFile, dryRun, check, apiVersion } = parseArgs(process.argv.slice(2))
   if (!existsSync(sourcePath)) throw new Error(`Source path does not exist: ${sourcePath}`)
 
   const entries = new Map()
@@ -563,7 +589,33 @@ try {
     throw new Error(`No system API version entries found in ${sourcePath}`)
   }
 
-  const changed = updateRustOutput(outputFile, entries, dryRun)
+  const sdkPackage = join(sourcePath, 'sdk-pkg.json')
+  const etsPackage = join(dirname(sourcePath), 'oh-uni-package.json')
+  const metadataPath = existsSync(sdkPackage) ? sdkPackage : existsSync(etsPackage) ? etsPackage : null
+  const metadata = metadataPath ? JSON.parse(readFileSync(metadataPath, 'utf8')) : null
+  const sdk = metadata?.data ?? metadata
+  if (apiVersion != null && Number(sdk?.apiVersion) !== apiVersion) {
+    throw new Error(`Expected API ${apiVersion} SDK metadata, got ${sdk?.apiVersion ?? 'none'}`)
+  }
+  const digest = createHash('sha256')
+  let files = 0
+  function hashDeclarations(path) {
+    if (statSync(path).isDirectory()) {
+      for (const name of readdirSync(path).sort()) if (!SKIP_DIRS.has(name)) hashDeclarations(join(path, name))
+    } else if (/\.d\.(?:ts|ets)$/u.test(path) && basename(path).startsWith('@')) {
+      digest.update(relative(sourcePath, path).split('\\').join('/'))
+      digest.update('\0')
+      digest.update(readFileSync(path))
+      files += 1
+    }
+  }
+  for (const path of sourcePaths) hashDeclarations(path)
+  const provenance = [
+    ...(sdk ? [`// SDK: ${sdk.version} (API ${sdk.apiVersion}).`] : []),
+    `// Source declarations: ${files}; SHA-256: ${digest.digest('hex')}.`,
+  ].join('\n')
+  const changed = updateRustOutput(outputFile, entries, dryRun, provenance)
+  if (check && changed) throw new Error(`Generated API version table is stale: ${outputFile}`)
   const relativeSource = sourcePaths.map((path) => relative(process.cwd(), path) || '.').join(', ')
   const relativeOutput = relative(process.cwd(), outputFile)
   console.log(

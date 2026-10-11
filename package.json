@@ -32,7 +32,8 @@
     "lint:fix": "pnpm --filter @ohos-rs/oxk lint --fix",
     "sync:arkts-api-versions": "node scripts/sync-arkts-system-api-versions.mjs",
     "verify:arkts-api-versions": "node scripts/verify-arkts-system-api-versions.mjs",
-    "version:oxk": "bash scripts/update-version.sh"
+    "version:oxk": "bash scripts/update-version.sh",
+    "test:api-versions": "node --test scripts/arkts-system-api-versions.test.mjs"
   },
   "keywords": [
     "arkts",

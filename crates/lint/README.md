@@ -56,7 +56,10 @@ If `minApiVersion` is omitted, oxk scans common OpenHarmony project files such a
 `AppScope/app.json5`, `app.json5`, `src/main/module.json5`, and
 `entry/src/main/module.json5` for `minAPIVersion` or `minApiVersion`.
 
-The built-in system API table is used by default. `@ohos.*`, `@system.*`,
+The built-in table is generated from HarmonyOS SDK **26.0.0.105 / API26**,
+including OpenHarmony and HMS declarations: 82,846 entries from 735 API files
+and 103 kit files. The generated header records the SDK version and SHA-256
+of the input declarations. `@ohos.*`, `@system.*`,
 `@hms.*`, and `@kit.*` imports are supported. `@kit.*` entries are generated from
 SDK kit aliases, so code like this is checked against the underlying system API
 metadata:
@@ -95,6 +98,11 @@ Refresh the built-in system API version table from a JSON/JSONC mapping or an
 OpenHarmony SDK declaration directory:
 
 ```bash
+pnpm run sync:arkts-api-versions -- /path/to/sdk/default --api-version 26
+pnpm run verify:arkts-api-versions -- /path/to/sdk/default
+pnpm run sync:arkts-api-versions -- /path/to/sdk/default --api-version 26 --check
+
+# Partial SDKs and custom mappings are also supported:
 pnpm run sync:arkts-api-versions -- /path/to/ets/api
 pnpm run sync:arkts-api-versions -- /path/to/system-api-versions.jsonc
 ```
@@ -102,6 +110,15 @@ pnpm run sync:arkts-api-versions -- /path/to/system-api-versions.jsonc
 The generated table is written to `crates/lint/src/arkts/system_api_versions.rs`
 by default. When the source path is `ets/api`, sibling `ets/kits` is included
 automatically so `@kit.*` aliases are generated together with the base APIs.
+Use the full SDK root to reproduce the checked-in table, including `hms/ets`.
+The verifier independently parses declaration ownership and kit imports with
+TypeScript's AST, normalizing ArkTS `struct` and annotation declarations. It
+rejects parse errors, duplicate keys, missing or extra entries, and mismatched
+versions, including every kit member. Enum members are included. HMS version
+tags such as `5.0.0(12)` mean API12; `26.0.0` means API26.
+
+`--check` fails if regeneration would change the checked-in output.
+Run `pnpm run test:api-versions` for the generator and verifier regression tests.
 
 ## Rules
 

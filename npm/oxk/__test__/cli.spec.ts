@@ -633,6 +633,68 @@ test('npm cli lint skips Rust arkts rules for TypeScript files', (t) => {
   })
 })
 
+test('API26 enum members enforce the same boundary through direct and kit imports', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(
+      join(dir, 'input.ets'),
+      [
+        "import { SuppressWarningsType as Direct } from '@ohos.annotation'",
+        "import { SuppressWarningsType as Kit } from '@kit.BasicServicesKit'",
+        'const direct = Direct.PERMISSION',
+        'const kit = Kit.PERMISSION',
+      ].join('\n'),
+    )
+    for (const minApiVersion of [25, 26]) {
+      writeFileSync(
+        join(dir, '.oxlintrc.json'),
+        JSON.stringify({
+          plugins: ['arkts'],
+          rules: { 'no-unused-vars': 'off', 'arkts/system-api-version': ['error', { minApiVersion }] },
+        }),
+      )
+      const result = runCli(['lint', 'input.ets', '--threads', '1', '--format', 'json'], dir)
+      const report = lintJsonSnapshot(result, dir)
+      const diagnostics = (report.output as any).diagnostics
+      t.is(result.status, minApiVersion === 25 ? 1 : 0, result.stdout || result.stderr)
+      t.is(diagnostics.length, minApiVersion === 25 ? 2 : 0)
+      for (const diagnostic of diagnostics) {
+        t.is(diagnostic.code, 'arkts(system-api-version)')
+        t.true(diagnostic.message.includes('26'), diagnostic.message)
+        t.true(diagnostic.message.includes('.SuppressWarningsType.PERMISSION'), diagnostic.message)
+      }
+    }
+  })
+})
+
+test('HMS release notation and API26 deprecation are enforced', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(
+      join(dir, 'input.ets'),
+      "import VoIP from '@hms.core.push.VoIPExtensionAbility'\nclass Ability extends VoIP {}\n",
+    )
+    for (const minApiVersion of [25, 26]) {
+      writeFileSync(
+        join(dir, '.oxlintrc.json'),
+        JSON.stringify({
+          plugins: ['arkts'],
+          rules: { 'no-unused-vars': 'off', 'arkts/system-api-version': ['error', { minApiVersion }] },
+        }),
+      )
+      const result = runCli(['lint', 'input.ets', '--threads', '1', '--format', 'json'], dir)
+      const report = lintJsonSnapshot(result, dir)
+      const diagnostics = (report.output as any).diagnostics
+      t.is(result.status, minApiVersion === 26 ? 1 : 0, result.stdout || result.stderr)
+      if (minApiVersion === 26) {
+        t.true(
+          diagnostics.some((diagnostic: any) => diagnostic.message.includes('removed or deprecated in API version 26')),
+        )
+      } else {
+        t.deepEqual(diagnostics, [])
+      }
+    }
+  })
+})
+
 test('formatter combines EditorConfig sections with per-file config overrides', (t) => {
   withTempDir((dir) => {
     writeFileSync(

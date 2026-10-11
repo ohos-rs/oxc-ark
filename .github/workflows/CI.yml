@@ -47,6 +47,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Test API version generator
+        run: pnpm run test:api-versions
+
       - name: Build npm binding
         run: pnpm --filter @ohos-rs/oxk run build:debug:binding
 
