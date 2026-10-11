@@ -279,7 +279,8 @@ function parseFormatArgs(args) {
         break
       }
       case '--experimental-sort-imports': {
-        const { nextIndex } = parseOptionValue(args, index, token)
+        const { value, nextIndex } = parseOptionValue(args, index, token)
+        formatArgs.cliOptions.sortImports = JSON.parse(value)
         index = nextIndex
         break
       }

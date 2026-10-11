@@ -62,13 +62,23 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let indent_style = long("indent-style")
         .argument::<String>("STYLE")
         .help("The indent style. Values: tab, space")
-        .parse(|s| oxc_formatter_core::IndentStyle::from_str(&s))
+        .parse(|s| match s.as_str() {
+            "tab" => Ok(oxc_formatter_core::IndentStyle::Tab),
+            "space" => Ok(oxc_formatter_core::IndentStyle::Space),
+            _ => Err("Expected tab or space"),
+        })
         .optional();
 
     let indent_width = long("indent-width")
         .argument::<String>("WIDTH")
         .help("The indent width (0-24)")
-        .parse(|s| oxc_formatter_core::IndentWidth::from_str(&s))
+        .parse(|s| {
+            s.parse::<u8>()
+                .map_err(|err| err.to_string())
+                .and_then(|n| {
+                    oxc_formatter_core::IndentWidth::try_from(n).map_err(|err| err.to_string())
+                })
+        })
         .optional();
 
     let line_ending = long("line-ending")
@@ -80,7 +90,13 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let line_width = long("line-width")
         .argument::<String>("WIDTH")
         .help("The max width of a line (1-320)")
-        .parse(|s| oxc_formatter_core::LineWidth::from_str(&s))
+        .parse(|s| {
+            s.parse::<u16>()
+                .map_err(|err| err.to_string())
+                .and_then(|n| {
+                    oxc_formatter_core::LineWidth::try_from(n).map_err(|err| err.to_string())
+                })
+        })
         .optional();
 
     let quote_style = long("quote-style")
@@ -152,12 +168,21 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let embedded_language_formatting = long("embedded-language-formatting")
         .argument::<String>("VALUE")
         .help("Enable formatting for embedded languages. Values: auto, off")
-        .parse(|s| oxc_formatter::EmbeddedLanguageFormatting::from_str(&s))
+        .parse(|s| {
+            if s == "auto" || s == "off" {
+                Ok(s)
+            } else {
+                Err("Expected auto or off")
+            }
+        })
         .optional();
 
     let experimental_sort_imports = long("experimental-sort-imports")
         .argument("JSON")
         .help("Sort import statements. Provide JSON configuration string")
+        .parse(|value: String| {
+            serde_json::from_str::<serde_json::Value>(&value).map_err(|err| err.to_string())
+        })
         .optional();
 
     let format_parser = construct!(crate::FormatArgs {

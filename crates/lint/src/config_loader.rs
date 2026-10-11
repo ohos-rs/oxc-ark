@@ -12,19 +12,14 @@ use std::{
 
 use ignore::DirEntry;
 
-use oxc_config::{
-    ConfigConflict, ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
-};
+use oxc_config::{ConfigConflict, ConfigDiscovery, DiscoveredConfigFile, is_js_config_path};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
     Config, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore, LintFilter, Oxlintrc,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{
-    ArktsLintConfig, DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME,
-    load_oxlintrc_and_arkts_from_file,
-};
+use crate::{ArktsLintConfig, load_oxlintrc_and_arkts_from_file};
 
 const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
@@ -34,15 +29,14 @@ pub struct JsConfigResult {
     pub config: Option<Oxlintrc>,
 }
 
-const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
-    json: DEFAULT_OXLINTRC_NAME,
-    jsonc: DEFAULT_JSONC_OXLINTRC_NAME,
-    js: &[DEFAULT_TS_OXLINTRC_NAME],
-    vite: "vite.config.ts",
-};
+pub(crate) fn config_discovery() -> ConfigDiscovery {
+    ConfigDiscovery::oxlint()
+}
 
-fn config_discovery() -> ConfigDiscovery {
-    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, false)
+pub(crate) fn materialize_default_plugins(config: &mut Oxlintrc) {
+    if config.plugins.is_none() {
+        config.plugins = Some(Default::default());
+    }
 }
 
 pub fn config_file_names() -> Vec<&'static str> {
@@ -84,7 +78,7 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             if !inserted {
                 break;
             }
-            match discovery.find_unique_config_by_readdir(dir, true) {
+            match discovery.find_unique_config_by_readdir(dir) {
                 Ok(Some(config)) => {
                     if config.path() == base_config_path {
                         base_config_found = true;
@@ -479,7 +473,7 @@ impl<'a> ConfigLoader<'a> {
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         let config_file = config_discovery()
-            .find_unique_config_by_readdir(dir, true)
+            .find_unique_config_by_readdir(dir)
             .map_err(OxcDiagnostic::from)?;
 
         match config_file {
@@ -504,7 +498,7 @@ impl<'a> ConfigLoader<'a> {
         dir: &Path,
     ) -> Result<Option<(Oxlintrc, ArktsLintConfig)>, OxcDiagnostic> {
         let config_file = config_discovery()
-            .find_unique_config_by_readdir(dir, true)
+            .find_unique_config_by_readdir(dir)
             .map_err(OxcDiagnostic::from)?;
 
         match config_file {

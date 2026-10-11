@@ -168,17 +168,20 @@ test('format raw JSON5 without external formatter callbacks', async (t) => {
   t.true(result.code.includes('native-json5'), 'Should return formatted JSON5 content')
 })
 
-test('preserve quoted object properties by default for TypeScript', async (t) => {
-  const source = `const value={"quoted":1,plain:2}`
-
-  const result = await format('quoted.ts', source, undefined)
-
-  t.is(result.errors.length, 0, 'Should not have errors')
-  t.true(result.code.includes('"quoted": 1'), 'Should preserve explicit quotes')
-  t.true(result.code.includes('plain: 2'), 'Should keep unquoted properties unchanged')
+test('preserve property quotes and default to double quoted strings in TypeScript and ArkTS', async (t) => {
+  for (const filename of ['quoted.ts', 'quoted.ets']) {
+    const source = `const value={"quoted":'value',plain:'other'}`
+    const result = await format(filename, source, undefined)
+    t.deepEqual(result.errors, [])
+    t.true(result.code.includes('"quoted": "value"'), result.code)
+    t.true(result.code.includes('plain: "other"'), result.code)
+    const second = await format(filename, result.code, undefined)
+    t.deepEqual(second.errors, [])
+    t.is(second.code, result.code)
+  }
 })
 
-test('preserve JSON5 property quotes by default', async (t) => {
+test('preserve JSON5 property quotes and use double quoted values by default', async (t) => {
   const source = `{
   "quoted": 'value',
   plain: 'other'
@@ -187,8 +190,8 @@ test('preserve JSON5 property quotes by default', async (t) => {
   const result = await format('quoted.json5', source, undefined)
 
   t.is(result.errors.length, 0, 'Should not have errors')
-  t.true(result.code.includes('"quoted": \'value\''), 'Should preserve explicit JSON5 quotes')
-  t.true(result.code.includes("plain: 'other'"), 'Should keep unquoted JSON5 properties unchanged')
+  t.true(result.code.includes('"quoted": "value"'), 'Should preserve explicit JSON5 key quotes')
+  t.true(result.code.includes('plain: "other"'), 'Should use double quoted values')
 })
 
 test('format regular TypeScript file', async (t) => {
@@ -207,5 +210,109 @@ test('format regular TypeScript file', async (t) => {
     console.log('Format errors:', result.errors)
     // TypeScript should definitely work
     t.fail('TypeScript formatting should not have errors')
+  }
+})
+
+test('preserve property and string quotes when explicitly configured', async (t) => {
+  for (const filename of ['quoted.ts', 'quoted.json5']) {
+    const object = `{"quoted": 'value', plain: 'other'}`
+    const source = filename.endsWith('.ts') ? `const value = ${object}` : object
+    const result = await format(filename, source, { quoteProps: 'preserve', singleQuote: true })
+    t.deepEqual(result.errors, [])
+    const expected = filename.endsWith('.json5') ? `"quoted": 'value'` : `'quoted': 'value'`
+    t.true(result.code.includes(expected), result.code)
+  }
+})
+
+for (const [filename, source, expected] of [
+  ['style.css', 'a{color:red;margin:0  1px}', 'color: red;'],
+  ['query.graphql', 'query Test{user{id name}}', '  user {\n'],
+  ['data.yaml', 'items: [one,two]', 'items: [one, two]'],
+  ['README.md', '# Title\n\n```ts\nconst value={a:1}\n```', 'const value = { a: 1 };'],
+  ['package.json', '{"version":"1.0.0","name":"example"}', '"name": "example",\n  "version"'],
+]) {
+  test(`format ${filename} and nested native languages without JS callbacks`, async (t) => {
+    const first = await formatRaw(filename, source, {})
+    t.deepEqual(first.errors, [])
+    t.true(first.code.includes(expected), first.code)
+    const second = await formatRaw(filename, first.code, {})
+    t.deepEqual(second.errors, [])
+    t.is(second.code, first.code)
+  })
+}
+
+test('native JS embedding and Prettier HTML doc embedding are idempotent', async (t) => {
+  const source = 'const styles=css`a{color:red}`;const template=html`<div><span>hello</span></div>`'
+  const first = await format('embedded.ts', source, {})
+  t.deepEqual(first.errors, [])
+  t.true(first.code.includes('color: red;'), first.code)
+  const second = await format('embedded.ts', first.code, {})
+  t.deepEqual(second.errors, [])
+  t.is(second.code, first.code)
+  const disabled = await format('embedded.ts', source, { embeddedLanguageFormatting: 'off' })
+  t.true(disabled.code.includes('a{color:red}'), disabled.code)
+})
+
+for (const [filename, source, options] of [
+  [
+    'Component.vue',
+    '<script lang="ts">import z from "z";import a from "a";const value={a,z}</script>\n<template><div>{{value}}</div></template>',
+    {},
+  ],
+  [
+    'Component.svelte',
+    '<script>import z from "z";import a from "a";const value={a,z}</script>\n<div>{value}</div>',
+    { svelte: true },
+  ],
+  [
+    'Component.astro',
+    '---\nimport z from "z";import a from "a";const value={a,z}\n---\n<div>{value}</div>',
+    { astro: true },
+  ],
+] as const) {
+  test(`upstream import sorting inside ${filename}`, async (t) => {
+    const config = { ...options, sortImports: {} }
+    const first = await format(filename, source, config)
+    t.deepEqual(first.errors, [])
+    t.true(first.code.indexOf('import a') < first.code.indexOf('import z'), first.code)
+    const second = await format(filename, first.code, config)
+    t.deepEqual(second.errors, [])
+    t.is(second.code, first.code)
+  })
+}
+
+test('opt-in plugins and invalid merged options return useful errors', async (t) => {
+  for (const extension of ['svelte', 'astro']) {
+    const result = await format(`Component.${extension}`, '<div>hello</div>', {})
+    t.true(result.errors.some((error) => error.includes(`Enable \`${extension}\``)))
+  }
+  const result = await format('test.ts', 'const value=1', {
+    overrides: [{ files: ['*.ts'], options: { printWidth: 1000 } }],
+  })
+  t.true(result.errors.length > 0)
+})
+
+test('sort Tailwind classes in JS and native CSS', async (t) => {
+  for (const [filename, source] of [
+    ['Component.tsx', 'const element=<div className="p-4 flex bg-red-500"/>'],
+    ['style.css', '.button{@apply p-4 flex bg-red-500;}'],
+  ]) {
+    const first = await format(filename, source, { sortTailwindcss: {} })
+    t.deepEqual(first.errors, [])
+    t.true(first.code.includes('flex bg-red-500 p-4'), first.code)
+    const second = await format(filename, first.code, { sortTailwindcss: {} })
+    t.deepEqual(second.errors, [])
+    t.is(second.code, first.code)
+  }
+})
+
+test('explicit quote options override compatibility defaults', async (t) => {
+  for (const filename of ['quoted.ts', 'quoted.ets', 'quoted.json5']) {
+    const object = `{"quoted": 'value', plain: 'other'}`
+    const source = filename.endsWith('.json5') ? object : `const value = ${object}`
+    const result = await format(filename, source, { quoteProps: 'as-needed', singleQuote: false })
+    t.deepEqual(result.errors, [])
+    t.true(result.code.includes('quoted: "value"'), result.code)
+    t.true(result.code.includes('plain: "other"'), result.code)
   }
 })

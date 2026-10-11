@@ -1,6 +1,5 @@
-// Portions of this file are derived from Oxc's oxlint implementation.
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
 // Copyright (c) Oxc project contributors.
-// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
 
 use std::borrow::Cow;
 
@@ -54,24 +53,29 @@ fn format_github(diagnostic: &Error) -> String {
     } = Info::new(diagnostic);
     let severity = match severity {
         Severity::Error => "error",
-        Severity::Warning | miette::Severity::Advice => "warning",
+        Severity::Warning | Severity::Advice => "warning",
     };
     let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
-    let filename = escape_property(&filename);
 
     if filename.is_empty() {
         let severity = match diagnostic.severity() {
             Some(Severity::Error) | None => "error",
-            Some(Severity::Warning | miette::Severity::Advice) => "warning",
+            Some(Severity::Warning | Severity::Advice) => "warning",
         };
         let message = diagnostic.to_string();
         let message = escape_data(&message);
         format!("::{severity} title={title}::{message}\n")
     } else {
+        // The parameters before `::` only feed the annotations panel, not the log
+        // stream, so repeat `file:line:col` in the message text. Same layout as Ruff:
+        // https://github.com/astral-sh/ruff/blob/main/crates/ruff_db/src/diagnostic/render/github.rs
+        let escaped_filename = escape_property(&filename);
+        let filename_data = escape_data(&filename);
         let message = escape_data(&message);
+        let (line, col) = (start.line, start.column);
+        let (end_line, end_col) = (end.line, end.column);
         format!(
-            "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
-            start.line, end.line, start.column, end.column
+            "::{severity} file={escaped_filename},line={line},endLine={end_line},col={col},endColumn={end_col},title={title}::{filename_data}:{line}:{col}: {message}\n"
         )
     }
 }

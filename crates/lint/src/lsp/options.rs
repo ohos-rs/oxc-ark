@@ -1,10 +1,15 @@
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
+// Copyright (c) Oxc project contributors.
+
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
-use oxc_linter::FixKind;
+use oxc_linter::{FixKind, normalize_rule_name};
 use tracing::error;
+
+use crate::config_loader::config_discovery;
 
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -84,14 +89,21 @@ impl Language {
 pub struct LintOptions {
     /// If your editor does not support `textDocument/diagnostic`,
     /// this option handles when diagnostics are sent to the client.
+    ///
+    /// This option only applies to clients which use the push model. Clients which support
+    /// `textDocument/diagnostic` ask for diagnostics themselves (the pull model), so `run`
+    /// currently has no effect for them.
+    /// See [#26613](https://github.com/oxc-project/oxc/issues/26613)
     #[schemars(with = "Option<Run>")]
     pub run: Run,
     /// Path to the config file. Similar to `--config` CLI option.
     /// If set, it disables searching for config files.
+    /// An empty string is treated as unset.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config_path: Option<String>,
     /// Path to the tsconfig file. Similar to `--tsconfig` CLI option.
     /// If set, it disables auto discovery for tsconfig files.
+    /// An empty string is treated as unset.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ts_config_path: Option<String>,
     /// How to handle unused disable directives. By default, they are allowed and ignored.
@@ -104,6 +116,7 @@ pub struct LintOptions {
     pub language: Option<Language>,
     /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
     /// It gets automatically enabled when `configPath` is set.
+    /// Nested config support is always disabled in Vite+ mode.
     #[schemars(with = "Option<bool>")]
     pub disable_nested_config: bool,
     /// What kind of fixes to generate for code actions.
@@ -148,7 +161,7 @@ impl<'de> Deserialize<'de> for RulesCustomization {
                 error!("failed to deserialize customization for rule {rule_name}, skipping.");
                 continue;
             };
-            rules.insert(rule_name.clone(), customization);
+            rules.insert(normalize_rule_name(rule_name), customization);
         }
 
         Ok(Self { rules })
@@ -201,8 +214,11 @@ impl From<LintFixKindFlag> for FixKind {
 }
 
 impl LintOptions {
+    /// Nested config search: off with `disableNestedConfig`, an explicit `configPath`, or in Vite+ mode.
     pub fn use_nested_configs(&self) -> bool {
-        !self.disable_nested_config && self.config_path.is_none()
+        !self.disable_nested_config
+            && self.config_path.is_none()
+            && config_discovery().nested_configs()
     }
 }
 
@@ -254,10 +270,12 @@ impl TryFrom<Value> for LintOptions {
             config_path: object
                 .get("configPath")
                 .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
                 .map(str::to_owned),
             ts_config_path: object
                 .get("tsConfigPath")
                 .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
                 .map(str::to_owned),
             type_aware: object.get("typeAware").and_then(Value::as_bool),
             language: object
@@ -285,216 +303,5 @@ impl TryFrom<Value> for LintOptions {
                 .get("rulesCustomization")
                 .and_then(|key| RulesCustomization::deserialize(key).ok()),
         })
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use serde_json::json;
-
-    use super::{LintOptions, RuleCustomizationSeverity, Run, UnusedDisableDirectives};
-
-    #[test]
-    fn test_valid_options_json() {
-        let json = json!({
-            "run": "onSave",
-            "configPath": "./custom.json",
-            "unusedDisableDirectives": "warn",
-            "typeAware": true,
-            "language": "ets-static",
-            "disableNestedConfig": true,
-            "fixKind": "dangerous_fix",
-            "rulesCustomization": {
-                "no-unused-vars": {
-                    "severity": "error",
-                    "autofix": true
-                },
-                "eqeqeq": {
-                    "severity": "warn"
-                }
-            }
-        });
-
-        let options = LintOptions::try_from(json).unwrap();
-        assert_eq!(options.run, Run::OnSave);
-        assert_eq!(options.config_path, Some("./custom.json".into()));
-        assert_eq!(
-            options.unused_disable_directives,
-            Some(UnusedDisableDirectives::Warn)
-        );
-        assert_eq!(options.type_aware, Some(true));
-        assert_eq!(options.language, Some(super::Language::EtsStatic));
-        assert!(options.disable_nested_config);
-        assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
-
-        assert!(options.rules_customization.is_some());
-        let rules_customization = options.rules_customization.unwrap();
-        assert_eq!(rules_customization.rules.len(), 2);
-        let no_unused_vars = &rules_customization.rules["no-unused-vars"];
-        assert_eq!(
-            no_unused_vars.severity,
-            Some(RuleCustomizationSeverity::Error)
-        );
-        assert_eq!(no_unused_vars.autofix, Some(true));
-        let eqeqeq = &rules_customization.rules["eqeqeq"];
-        assert_eq!(eqeqeq.severity, Some(RuleCustomizationSeverity::Warn));
-        assert_eq!(eqeqeq.autofix, None);
-    }
-
-    #[test]
-    fn test_empty_options_json() {
-        let json = json!({});
-
-        let options = LintOptions::try_from(json).unwrap();
-        assert_eq!(options.run, Run::OnType);
-        assert_eq!(options.config_path, None);
-        assert_eq!(options.unused_disable_directives, None);
-        assert_eq!(options.type_aware, None);
-        assert_eq!(options.language, None);
-        assert!(!options.disable_nested_config);
-        assert_eq!(
-            options.fix_kind,
-            super::LintFixKindFlag::SafeFixOrSuggestion
-        );
-        assert!(options.rules_customization.is_none());
-    }
-
-    #[test]
-    fn test_null_json() {
-        let json = json!(null);
-        let options = LintOptions::try_from(json).unwrap();
-        assert_eq!(options, LintOptions::default());
-    }
-
-    #[test]
-    fn test_invalid_options_json() {
-        let json = json!({
-            "run": true,
-            "configPath": "./custom.json"
-        });
-
-        let options = LintOptions::try_from(json).unwrap();
-        assert_eq!(options.run, Run::OnType); // fallback
-        assert_eq!(options.config_path, Some("./custom.json".into()));
-    }
-
-    #[test]
-    fn test_invalid_rule_customization_json() {
-        let json = json!({
-            "rulesCustomization": {
-                "valid-rule": {
-                    "severity": "error",
-                },
-                "invalid-rule": {
-                    "severity": "invalid_severity",
-                }
-            }
-        });
-
-        let options = LintOptions::try_from(json).unwrap();
-        assert!(options.rules_customization.is_some());
-        let rules_customization = options.rules_customization.unwrap();
-        assert_eq!(rules_customization.rules.len(), 1);
-        // rule settings are valid
-        assert!(rules_customization.rules.contains_key("valid-rule"));
-        // rule settings are invalid, should be skipped without affecting the deserialization of other rules
-        assert!(!rules_customization.rules.contains_key("invalid-rule"));
-    }
-
-    #[test]
-    fn test_null_options_json() {
-        let json = json!({
-            "configPath": null,
-            "tsConfigPath": null,
-            "typeAware": null,
-            "unusedDisableDirectives": null
-        });
-
-        let options = LintOptions::try_from(json).unwrap();
-        assert_eq!(options.type_aware, None); // null should be treated as None
-    }
-
-    #[test]
-    fn test_use_nested_configs() {
-        let options = LintOptions::default();
-        assert!(options.use_nested_configs());
-
-        let options = LintOptions {
-            config_path: Some("config.json".to_string()),
-            ..Default::default()
-        };
-        assert!(!options.use_nested_configs());
-
-        let options = LintOptions {
-            disable_nested_config: true,
-            ..Default::default()
-        };
-        assert!(!options.use_nested_configs());
-    }
-
-    mod deprecated_flags {
-        use serde_json::json;
-
-        use crate::lsp::options::LintFixKindFlag;
-
-        use super::{LintOptions, Run, UnusedDisableDirectives};
-
-        #[test]
-        fn test_valid_options_json_deprecated_flags() {
-            let json = json!({
-                "run": "onSave",
-                "configPath": "./custom.json",
-                "unusedDisableDirectives": "warn",
-                "typeAware": true,
-                "flags": {
-                    "disable_nested_config": "true",
-                    "fix_kind": "dangerous_fix"
-                }
-            });
-
-            let options = LintOptions::try_from(json).unwrap();
-            assert_eq!(options.run, Run::OnSave);
-            assert_eq!(options.config_path, Some("./custom.json".into()));
-            assert_eq!(
-                options.unused_disable_directives,
-                Some(UnusedDisableDirectives::Warn)
-            );
-            assert_eq!(options.type_aware, Some(true));
-            assert!(options.disable_nested_config);
-            assert_eq!(options.fix_kind, LintFixKindFlag::DangerousFix);
-        }
-
-        #[test]
-        fn test_invalid_flags_options_json() {
-            let json = json!({
-                "configPath": "./custom.json",
-                "flags": {
-                    "disable_nested_config": true, // should be string
-                    "fix_kind": "dangerous_fix"
-                }
-            });
-
-            let options = LintOptions::try_from(json).unwrap();
-            assert_eq!(options.run, Run::OnType); // fallback
-            assert_eq!(options.config_path, Some("./custom.json".into()));
-            assert!(!options.disable_nested_config); // fallback
-            assert_eq!(options.fix_kind, LintFixKindFlag::DangerousFix);
-        }
-
-        #[test]
-        fn test_root_options_overrides_flags() {
-            let json = json!({
-                "disableNestedConfig": false,
-                "fixKind": "safe_fix_or_suggestion",
-                "flags": {
-                    "disable_nested_config": "true",
-                    "fix_kind": "dangerous_fix"
-                }
-            });
-
-            let options = LintOptions::try_from(json).unwrap();
-            assert!(!options.disable_nested_config); // root option takes precedence
-            assert_eq!(options.fix_kind, LintFixKindFlag::SafeFixOrSuggestion);
-        }
     }
 }

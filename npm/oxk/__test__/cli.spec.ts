@@ -146,7 +146,7 @@ test('npm cli formats external files with bundled Prettier callbacks', (t) => {
     t.is(result.status, 0, result.stderr || result.stdout)
 
     const formatted = readFileSync(filePath, 'utf8')
-    t.true(formatted.includes('items:\n  - one\n  - two'), 'Should format YAML via Prettier')
+    t.true(formatted.includes('items:\n  - one\n  - two'), 'Should format YAML natively')
   })
 })
 
@@ -161,7 +161,7 @@ test('npm cli formats JSON5 through native formatter', (t) => {
 
     const formatted = readFileSync(filePath, 'utf8')
     t.true(formatted.includes('// keep comment'), 'Should preserve JSON5 comments')
-    t.true(formatted.includes("name: 'native-json5'"), 'Should format JSON5 content')
+    t.true(formatted.includes('name: "native-json5"'), 'Should format JSON5 content')
   })
 })
 
@@ -424,6 +424,10 @@ test('npm cli lint exposes source text to JS plugin runtime', (t) => {
 
     t.is(result.status, 1, result.stdout || result.stderr)
     t.true((report.output as any).diagnostics[0].message.includes('raw buffer marker'))
+    const timed = runCli(['lint', 'input.ts', '--threads', '1', '--debug', 'timings'], dir)
+    t.is(timed.status, 1, timed.stdout || timed.stderr)
+    t.true(timed.stdout.includes('Rule timings:'), timed.stdout)
+    t.true(timed.stdout.includes('JS plugin runtime:'), timed.stdout)
   })
 })
 
@@ -626,5 +630,39 @@ test('npm cli lint skips Rust arkts rules for TypeScript files', (t) => {
     const result = runCli(['lint', 'input.ts', '--threads', '1'], dir)
 
     t.is(result.status, 0, result.stdout || result.stderr)
+  })
+})
+
+test('formatter combines EditorConfig sections with per-file config overrides', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(
+      join(dir, '.editorconfig'),
+      'root = true\n[*]\nindent_style = space\nindent_size = 4\n[*.ts]\nquote_type = single\n',
+    )
+    writeFileSync(
+      join(dir, '.oxfmtrc.json'),
+      JSON.stringify({
+        overrides: [{ files: ['special.ts'], options: { singleQuote: false, tabWidth: 2 } }],
+      }),
+    )
+    for (const name of ['regular.ts', 'special.ts']) {
+      writeFileSync(join(dir, name), 'function greet(){return "hello"}')
+    }
+    const result = runCli(['format', '*.ts'], dir)
+    t.is(result.status, 0, result.stdout || result.stderr)
+    t.true(readFileSync(join(dir, 'regular.ts'), 'utf8').includes("\n    return 'hello';"))
+    t.true(readFileSync(join(dir, 'special.ts'), 'utf8').includes('\n  return "hello";'))
+  })
+})
+
+test('formatter honors EditorConfig without an oxfmtrc and forwards import sorting', (t) => {
+  withTempDir((dir) => {
+    writeFileSync(join(dir, '.editorconfig'), 'root = true\n[*]\nquote_type = single\n')
+    writeFileSync(join(dir, 'input.ts'), 'import z from "z";import a from "a";const value={a,z}')
+    const result = runCli(['format', '--experimental-sort-imports', '{}', 'input.ts'], dir)
+    t.is(result.status, 0, result.stdout || result.stderr)
+    const code = readFileSync(join(dir, 'input.ts'), 'utf8')
+    t.true(code.includes("import a from 'a';"), code)
+    t.true(code.indexOf('import a') < code.indexOf('import z'), code)
   })
 })

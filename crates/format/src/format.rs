@@ -24,6 +24,7 @@ pub enum FormatResult {
 
 pub struct SourceFormatter {
     allocator_pool: AllocatorPool,
+    upstream: crate::core::format::SourceFormatter,
     #[cfg(feature = "napi")]
     external_formatter: Option<super::ExternalFormatter>,
 }
@@ -32,6 +33,7 @@ impl SourceFormatter {
     pub fn new(num_of_threads: usize) -> Self {
         Self {
             allocator_pool: AllocatorPool::new(num_of_threads),
+            upstream: crate::core::format::SourceFormatter::new(num_of_threads),
             #[cfg(feature = "napi")]
             external_formatter: None,
         }
@@ -43,6 +45,11 @@ impl SourceFormatter {
         mut self,
         external_formatter: Option<super::ExternalFormatter>,
     ) -> Self {
+        self.upstream = self.upstream.with_external_services(
+            external_formatter
+                .as_ref()
+                .map(super::ExternalFormatter::to_services),
+        );
         self.external_formatter = external_formatter;
         self
     }
@@ -54,6 +61,14 @@ impl SourceFormatter {
         source_text: &str,
         resolved_options: ResolvedOptions,
     ) -> FormatResult {
+        if let ResolvedOptions::Upstream(plan) = resolved_options {
+            return match self.upstream.format(source_text, plan) {
+                crate::core::format::FormatResult::Success { is_changed, code } => {
+                    FormatResult::Success { is_changed, code }
+                }
+                crate::core::format::FormatResult::Error(errors) => FormatResult::Error(errors),
+            };
+        }
         let (result, insert_final_newline) = match (entry, resolved_options) {
             (
                 FormatFileStrategy::OxcFormatter { path, source_type },
@@ -83,7 +98,7 @@ impl SourceFormatter {
                 insert_final_newline,
             ),
             (
-                FormatFileStrategy::OxfmtJson { json_type: _, .. },
+                FormatFileStrategy::OxfmtJson { .. },
                 ResolvedOptions::OxfmtJson {
                     json_options,
                     insert_final_newline,
@@ -155,31 +170,8 @@ impl SourceFormatter {
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
 
-        #[cfg(feature = "napi")]
-        let external_callbacks = {
-            let is_embed_off = format_options.embedded_language_formatting.is_off();
-            if is_embed_off {
-                None
-            } else {
-                self.external_formatter
-                    .as_ref()
-                    .map(|ext| ext.to_external_callbacks(path, &format_options, external_options))
-            }
-        };
-
-        #[cfg(not(feature = "napi"))]
-        let external_callbacks = {
-            let _ = external_options;
-            None
-        };
-
-        let formatted = format_js(
-            &allocator,
-            source_text,
-            source_type,
-            format_options,
-            external_callbacks,
-        )?;
+        let _ = external_options;
+        let formatted = format_js(&allocator, source_text, source_type, format_options)?;
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
@@ -193,7 +185,7 @@ impl SourceFormatter {
 
     /// Format TOML file using `oxc-toml`.
     fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
-        oxc_toml::format(source_text, options)
+        oxc_toml::format(&oxc_toml::parse(source_text), options)
     }
 
     /// Format JSON/JSON5/JSONC using `oxc_formatter_json`.
@@ -233,13 +225,13 @@ struct FormattedJson5Key {
     quote: u8,
 }
 
-fn should_preserve_json5_key_quote_style(options: JsonFormatOptions) -> bool {
+pub(crate) fn should_preserve_json5_key_quote_style(options: JsonFormatOptions) -> bool {
     options.variant == JsonVariant::Json5
         && matches!(options.quote_props, QuoteProps::Preserve)
         && options.single_quote.value()
 }
 
-fn restore_json5_double_quoted_keys(source_text: &str, code: &mut String) {
+pub(crate) fn restore_json5_double_quoted_keys(source_text: &str, code: &mut String) {
     let Some(source_keys) = collect_source_json5_key_quotes(source_text) else {
         return;
     };
@@ -303,7 +295,7 @@ fn parse_json_expression<'a>(
     let ret = Parser::new(allocator, wrapped_source, SourceType::default())
         .with_options(options)
         .parse();
-    if ret.panicked || !ret.diagnostics.is_empty() {
+    if !ret.diagnostics.is_empty() {
         return None;
     }
 

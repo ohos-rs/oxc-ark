@@ -10,13 +10,16 @@ use std::{
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use oxc_data_structures::rope::{Rope, get_line_column};
+use oxc_language_server::uri_utils::uri_to_file_path;
 use oxc_language_server::{
     Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges, WorkerManager,
     run_server,
 };
 use oxc_span::ExplicitLanguage;
 use serde_json::Value;
-use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
+use tower_lsp_server::gen_lsp_types::{
+    Pattern, Position, Range, ServerCapabilities, TextEdit, Uri,
+};
 use tracing::{debug, warn};
 
 use crate::{
@@ -86,8 +89,7 @@ struct ServerFormatterBuilder {
 impl ServerFormatterBuilder {
     fn build(&self, root_uri: &Uri, options: Value) -> ServerFormatter {
         let options = deserialize_lsp_options(options);
-        let root_path = root_uri
-            .to_file_path()
+        let root_path = uri_to_file_path(root_uri)
             .map(std::borrow::Cow::into_owned)
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
@@ -118,12 +120,14 @@ impl ToolBuilder for ServerFormatterBuilder {
         capabilities: &mut ServerCapabilities,
         _backend_capabilities: &mut Capabilities,
     ) {
-        capabilities.document_formatting_provider =
-            Some(tower_lsp_server::ls_types::OneOf::Left(true));
+        capabilities.document_formatting_provider = Some(true.into());
     }
 
-    fn build_boxed(&self, root_uri: &Uri, options: Value) -> Box<dyn Tool> {
-        Box::new(self.build(root_uri, options))
+    fn build(&self, root_uri: &Uri, options: Value) -> oxc_language_server::ToolBuildResult {
+        oxc_language_server::ToolBuildResult {
+            tool: Box::new(self.build(root_uri, options)),
+            client_messages: vec![],
+        }
     }
 }
 
@@ -147,14 +151,16 @@ impl Tool for ServerFormatter {
         let new_options = deserialize_lsp_options(new_options_json.clone());
         if old_options == new_options {
             return ToolRestartChanges {
+                client_messages: vec![],
                 tool: None,
                 watch_patterns: None,
             };
         }
 
-        let new_formatter = builder.build_boxed(root_uri, new_options_json.clone());
+        let new_formatter = builder.build(root_uri, new_options_json.clone()).tool;
         let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
+            client_messages: vec![],
             tool: Some(new_formatter),
             watch_patterns: Some(watch_patterns),
         }
@@ -184,17 +190,16 @@ impl Tool for ServerFormatter {
         _options: Value,
     ) -> ToolRestartChanges {
         ToolRestartChanges {
+            client_messages: vec![],
             tool: None,
             watch_patterns: None,
         }
     }
 
-    fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
+    fn run_format(&self, document: TextDocument) -> Result<Vec<TextEdit>, String> {
         let file_content;
         let (path, source_text) = if document.uri.scheme().as_str() == "file" {
-            let path = document
-                .uri
-                .to_file_path()
+            let path = uri_to_file_path(document.uri)
                 .map(std::borrow::Cow::into_owned)
                 .ok_or_else(|| "Invalid file URI".to_string())?;
             let source_text = if let Some(text) = document.text.as_deref() {
@@ -291,7 +296,7 @@ impl ServerFormatter {
             return Ok(None);
         }
 
-        let resolved_options = resolver.resolve(&strategy);
+        let resolved_options = resolver.resolve(&strategy)?;
         Ok(Some(self.source_formatter.format(
             &strategy,
             source_text,
@@ -462,7 +467,6 @@ mod tests {
 
     use oxc_language_server::{LanguageId, TextDocument, Tool};
     use serde_json::json;
-    use tower_lsp_server::ls_types::Uri;
 
     use super::ServerFormatterBuilder;
 
@@ -505,8 +509,10 @@ mod tests {
             .expect("config should be written");
 
         let file_path = dir.path().join("input.ts");
-        let uri = Uri::from_file_path(&file_path).expect("file URI should be created");
-        let root_uri = Uri::from_file_path(dir.path()).expect("root URI should be created");
+        let uri = oxc_language_server::uri_utils::file_path_to_uri(&file_path)
+            .expect("file URI should be created");
+        let root_uri = oxc_language_server::uri_utils::file_path_to_uri(dir.path())
+            .expect("root URI should be created");
         let formatter = ServerFormatterBuilder { language: None }.build(
             &root_uri,
             json!({
@@ -521,7 +527,7 @@ mod tests {
         );
 
         let edits = formatter
-            .run_format(&document)
+            .run_format(document)
             .expect("formatting should succeed");
 
         assert_eq!(edits.len(), 1);
@@ -532,8 +538,10 @@ mod tests {
     fn formats_static_ets_document_language() {
         let dir = TestDir::new("static-ets");
         let file_path = dir.path().join("input.ets");
-        let uri = Uri::from_file_path(&file_path).expect("file URI should be created");
-        let root_uri = Uri::from_file_path(dir.path()).expect("root URI should be created");
+        let uri = oxc_language_server::uri_utils::file_path_to_uri(&file_path)
+            .expect("file URI should be created");
+        let root_uri = oxc_language_server::uri_utils::file_path_to_uri(dir.path())
+            .expect("root URI should be created");
         let formatter = ServerFormatterBuilder { language: None }.build(&root_uri, json!({}));
         let source: Arc<str> = Arc::from("package example.lsp;\nfinal class Box{value:int=1}\n");
         let document = TextDocument::new(
@@ -543,7 +551,7 @@ mod tests {
         );
 
         let edits = formatter
-            .run_format(&document)
+            .run_format(document)
             .expect("static ETS formatting should succeed");
 
         assert_eq!(edits.len(), 1);

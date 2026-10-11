@@ -1,0 +1,1123 @@
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
+// Copyright (c) Oxc project contributors.
+
+use std::path::Path;
+
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use oxc_config::GlobSet;
+
+use crate::core::utils;
+
+/// Configuration options for Oxfmt.
+///
+/// Most options are the same as Prettier's options, but not all of them.
+/// In addition, some options are our own extensions.
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Oxfmtrc {
+    #[serde(flatten)]
+    pub format_config: FormatConfig,
+    /// File-specific overrides.
+    /// When a file matches multiple overrides, the later override takes precedence (array order matters).
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub overrides: Option<Vec<OxfmtOverrideConfig>>,
+    /// Ignore files matching these glob patterns.
+    /// Patterns use gitignore-style matching, rooted at the directory containing the configuration file.
+    /// Files outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore_patterns: Option<Vec<String>>,
+}
+
+// ---
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OxfmtOverrideConfig {
+    /// Glob patterns to match files for this override.
+    pub files: GlobSet,
+    /// Glob patterns to exclude from this override.
+    #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
+    pub exclude_files: GlobSet,
+    /// Format options to apply for matched files.
+    /// Accepts the same options as the top-level format options.
+    #[serde(default)]
+    pub options: FormatConfig,
+}
+
+// ---
+
+// NOTE: All fields are typed as `Option` to distinguish between user-specified values and defaults.
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct FormatConfig {
+    // ============================================================================================
+    // Prettier compatible options, also used by `oxc_formatter` and TOML formatter
+    // ============================================================================================
+    /// Indent lines with tabs instead of spaces.
+    ///
+    /// - Languages: All
+    /// - Default: `false`
+    /// - Overrides `.editorconfig.indent_style`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_tabs: Option<bool>,
+    /// Specify the number of spaces per indentation-level.
+    ///
+    /// - Languages: All
+    /// - Default: `2`
+    /// - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tab_width: Option<u8>,
+    /// Which end of line characters to apply.
+    ///
+    /// NOTE: `"auto"` is not supported.
+    ///
+    /// - Languages: All
+    /// - Default: `"lf"`
+    /// - Overrides `.editorconfig.end_of_line`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_of_line: Option<EndOfLineConfig>,
+    /// Specify the line length that the printer will wrap on.
+    ///
+    /// If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
+    ///
+    /// - Languages: All
+    /// - Default: `100`
+    /// - Overrides `.editorconfig.max_line_length`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub print_width: Option<u16>,
+
+    /// Use single quotes instead of double quotes.
+    ///
+    /// For JSX, you can set the `jsxSingleQuote` option.
+    ///
+    /// - Languages: JS, JSX, TS, TSX, JSON5, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro
+    /// - Default: `false`
+    /// - Overrides `.editorconfig.quote_type`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub single_quote: Option<bool>,
+    /// Use single quotes instead of double quotes in JSX.
+    ///
+    /// - Languages: JSX, TSX
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jsx_single_quote: Option<bool>,
+    /// Change when properties in objects are quoted.
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: `"preserve"` (OXK compatibility)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub quote_props: Option<QuotePropsConfig>,
+    /// Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
+    ///
+    /// A single-line array, for example, never gets trailing commas.
+    ///
+    /// - Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML
+    /// - Default: `"all"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trailing_comma: Option<TrailingCommaConfig>,
+    /// Print semicolons at the ends of statements.
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub semi: Option<bool>,
+    /// Include parentheses around a sole arrow function parameter.
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: `"always"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub arrow_parens: Option<ArrowParensConfig>,
+    /// Print spaces between brackets in object literals.
+    ///
+    /// - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bracket_spacing: Option<bool>,
+    /// Put the `>` of a multi-line element at the end of the last line,
+    /// instead of being alone on the next line (does not apply to self-closing elements).
+    ///
+    /// - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bracket_same_line: Option<bool>,
+    /// How to wrap object literals when they could fit on one line or span multiple lines.
+    ///
+    /// By default, formats objects as multi-line if there is a newline prior to the first property.
+    /// Authors can use this heuristic to contextually improve readability, though it has some downsides.
+    ///
+    /// - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5
+    /// - Default: `"preserve"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub object_wrap: Option<ObjectWrapConfig>,
+    /// Enforce single attribute per line.
+    ///
+    /// - Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub single_attribute_per_line: Option<bool>,
+    /// When expressions wrap lines, print operators at the start of new lines (`"start"`)
+    /// or at the end of previous lines (`"end"`).
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: `"end"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub experimental_operator_position: Option<OperatorPositionConfig>,
+
+    // NOTE: This experimental option is not yet supported.
+    // Reject at deserialize time so all entry paths (base / overrides / NAPI `resolve()`) are covered uniformly.
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "reject_experimental_ternaries",
+        default
+    )]
+    #[schemars(skip)]
+    pub experimental_ternaries: Option<bool>,
+
+    /// Control whether to format embedded parts in the file.
+    /// For example:
+    /// - CSS-in-JS: template literal
+    /// - JS-in-Vue: `<script>` block
+    /// - JS-in-Markdown: code fence
+    /// - YAML-in-CSS/Markdown: front matter
+    ///
+    /// With `"off"`, these parts are kept as-is.
+    ///
+    /// NOTE: Some languages behave differently.
+    /// For Svelte, formatting fails with `"off"`, a limitation of `prettier-plugin-svelte`.
+    /// For Astro, the frontmatter is still formatted, but by Prettier instead of Oxfmt (use `astro.skipFrontmatter` to keep it as-is).
+    ///
+    /// - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, HTML, Vue, Angular, Svelte, Astro, Markdown, MDX
+    /// - Default: `"auto"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
+
+    /// How to wrap prose.
+    ///
+    /// - `"always"`: Wrap prose to the print width
+    /// - `"never"`: Put each prose block on a single line, relying on editor/viewer soft wrapping
+    /// - `"preserve"`: Keep wrapping as-is
+    ///
+    /// By default, wrapping is preserved, since some services use a linebreak-sensitive renderer (e.g. GitHub comments, BitBucket).
+    ///
+    /// - Languages: Markdown, MDX, YAML
+    /// - Default: `"preserve"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prose_wrap: Option<ProseWrapConfig>,
+
+    // ============================================================================================
+    // Prettier compatible options and only used by Prettier
+    // ============================================================================================
+    /// Specify the global whitespace sensitivity.
+    ///
+    /// - Languages: HTML, Angular, Vue, Handlebars, Svelte
+    /// - Default: `"css"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub html_whitespace_sensitivity: Option<HtmlWhitespaceSensitivityConfig>,
+    /// Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
+    ///
+    /// - Languages: Vue
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vue_indent_script_and_style: Option<bool>,
+
+    // ============================================================================================
+    // Below are our own extensions, handled by Oxfmt
+    // ============================================================================================
+    /// Whether to insert a final newline at the end of the file.
+    ///
+    /// - Languages: All
+    /// - Default: `true`
+    /// - Overrides `.editorconfig.insert_final_newline`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub insert_final_newline: Option<bool>,
+
+    /// Sort import statements.
+    ///
+    /// Uses a similar algorithm to [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
+    ///
+    /// Pass `true` or an object to enable, `false` to disable.
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "experimentalSortImports")]
+    pub sort_imports: Option<SortImportsUserConfig>,
+
+    /// Sort `package.json` keys.
+    ///
+    /// The order is NOT compatible with [prettier-plugin-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson),
+    /// but we believe it is clearer and easier to navigate.
+    ///
+    /// - Languages: JSON (`package.json` only)
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "experimentalSortPackageJson")]
+    pub sort_package_json: Option<SortPackageJsonUserConfig>,
+
+    /// Sort Tailwind CSS classes.
+    ///
+    /// Uses the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+    /// Option names omit the `tailwind` prefix used in the original plugin (e.g. `config` instead of `tailwindConfig`).
+    ///
+    /// Pass `true` or an object to enable, `false` to disable.
+    ///
+    /// - Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Handlebars, CSS, SCSS, Less, Svelte, Astro
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "experimentalTailwindcss")]
+    pub sort_tailwindcss: Option<SortTailwindcssUserConfig>,
+
+    /// Enable JSDoc comment formatting.
+    ///
+    /// Normalizes JSDoc comments: tag aliases are canonicalized, descriptions are capitalized,
+    /// long lines are wrapped, and short comments are collapsed to single-line.
+    ///
+    /// Pass `true` or an object to enable, `false` to disable.
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub jsdoc: Option<JsdocUserConfig>,
+
+    /// Options for `prettier-plugin-svelte`.
+    ///
+    /// Pass `true` or an object to enable `.svelte` file formatting, `false` to disable (handy in overrides).
+    /// Setting `true` resets to defaults, dropping options inherited from a parent scope.
+    ///
+    /// NOTE: `prettier-plugin-svelte` requires the `svelte` package (`svelte/compiler`) at runtime.
+    /// Oxfmt does NOT bundle it, so install it in your project, otherwise formatting fails.
+    ///
+    /// - Languages: Svelte
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte: Option<SvelteUserConfig>,
+
+    /// Options for `prettier-plugin-astro`.
+    ///
+    /// Pass `true` or an object to enable `.astro` file formatting, `false` to disable (handy in overrides).
+    /// Setting `true` resets to defaults, dropping options inherited from a parent scope.
+    ///
+    /// NOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime.
+    /// Oxfmt does NOT bundle it, so install it in your project, otherwise formatting fails.
+    ///
+    /// - Languages: Astro
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub astro: Option<AstroUserConfig>,
+}
+
+impl FormatConfig {
+    /// Whether embedded-language formatting is enabled by this config
+    /// (`embeddedLanguageFormatting` defaults to `"auto"`; only an explicit `"off"` disables it).
+    /// Consumers reach this through `ResolvedDispatchConfig::is_embedded_formatting_enabled`,
+    /// which owns the never-diverge invariant.
+    pub fn is_embedded_formatting_enabled(&self) -> bool {
+        !matches!(
+            self.embedded_language_formatting,
+            Some(EmbeddedLanguageFormattingConfig::Off)
+        )
+    }
+
+    /// Whether `prettier-plugin-svelte` is enabled by this config.
+    ///
+    /// Enabled when `svelte` is set to `true` or an object;
+    /// disabled when unset or `false`.
+    pub fn is_svelte_enabled(&self) -> bool {
+        matches!(
+            self.svelte,
+            Some(SvelteUserConfig::Bool(true) | SvelteUserConfig::Object(_))
+        )
+    }
+
+    /// Whether `prettier-plugin-astro` is enabled by this config.
+    ///
+    /// Enabled when `astro` is set to `true` or an object;
+    /// disabled when unset or `false`.
+    pub fn is_astro_enabled(&self) -> bool {
+        matches!(
+            self.astro,
+            Some(AstroUserConfig::Bool(true) | AstroUserConfig::Object(_))
+        )
+    }
+
+    /// Whether Tailwind class sorting is enabled by this config.
+    ///
+    /// Enabled when `sortTailwindcss` is set to `true` or an object;
+    /// disabled when unset or `false`.
+    pub fn is_tailwind_enabled(&self) -> bool {
+        matches!(
+            self.sort_tailwindcss,
+            Some(SortTailwindcssUserConfig::Bool(true) | SortTailwindcssUserConfig::Object(_))
+        )
+    }
+
+    /// Resolve relative tailwind paths (`config`, `stylesheet`) to absolute paths.
+    /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
+    /// <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
+    pub fn resolve_tailwind_paths(&mut self, base_dir: &Path) {
+        let Some(SortTailwindcssUserConfig::Object(ref mut tw)) = self.sort_tailwindcss else {
+            return;
+        };
+
+        for path_field in [&mut tw.config, &mut tw.stylesheet] {
+            let Some(path_str) = path_field.as_ref() else {
+                continue;
+            };
+
+            let path = Path::new(path_str);
+            if path.is_relative() {
+                *path_field = Some(
+                    utils::normalize_relative_path(base_dir, path)
+                        .to_string_lossy()
+                        .to_string(),
+                );
+            }
+        }
+    }
+
+    /// Merge another `FormatConfig`, overwriting only fields that are `Some<T>`.
+    ///
+    /// # Panics
+    /// Panics if serialization/deserialization fails,
+    /// which should never happen for valid `FormatConfig` structs.
+    pub fn merge(&mut self, other: &Self) {
+        let base = serde_json::to_value(&*self).unwrap();
+        let overlay = serde_json::to_value(other).unwrap();
+        let merged = json_deep_merge(base, overlay);
+        *self = serde_json::from_value(merged).unwrap();
+    }
+}
+
+// ---
+
+fn reject_experimental_ternaries<'de, D>(d: D) -> Result<Option<bool>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = Option::<bool>::deserialize(d)?;
+    if v.is_some() {
+        return Err(serde::de::Error::custom(
+            "Unsupported option: `experimentalTernaries`",
+        ));
+    }
+    Ok(v)
+}
+
+// ---
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum EndOfLineConfig {
+    Lf,
+    Crlf,
+    Cr,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum QuotePropsConfig {
+    AsNeeded,
+    Consistent,
+    Preserve,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum TrailingCommaConfig {
+    All,
+    Es5,
+    None,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ArrowParensConfig {
+    Always,
+    Avoid,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ObjectWrapConfig {
+    Preserve,
+    Collapse,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum OperatorPositionConfig {
+    Start,
+    End,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum EmbeddedLanguageFormattingConfig {
+    Auto,
+    Off,
+}
+
+// ---
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ProseWrapConfig {
+    Always,
+    Never,
+    Preserve,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum HtmlWhitespaceSensitivityConfig {
+    Css,
+    Strict,
+    Ignore,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortImportsUserConfig {
+    Bool(bool),
+    Object(SortImportsConfig),
+}
+
+impl SortImportsUserConfig {
+    pub fn into_config(self) -> Option<SortImportsConfig> {
+        match self {
+            Self::Bool(true) => Some(SortImportsConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SortImportsConfig {
+    /// Use empty lines to separate imports into logical groups.
+    ///
+    /// When `true`, imports are not sorted across an empty line.
+    ///
+    /// ```js
+    /// import { b1, b2 } from 'b'
+    ///
+    /// import { a } from 'a'
+    /// import { c } from 'c'
+    /// ```
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partition_by_newline: Option<bool>,
+    /// Use comments to separate imports into logical groups.
+    ///
+    /// When `true`, all comments are treated as delimiters.
+    ///
+    /// ```js
+    /// import { b1, b2 } from 'b'
+    /// // PARTITION
+    /// import { a } from 'a'
+    /// import { c } from 'c'
+    /// ```
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partition_by_comment: Option<bool>,
+    /// Sort side effect imports.
+    ///
+    /// Disabled by default for safety reasons.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_side_effects: Option<bool>,
+    /// Sort in ascending or descending order.
+    ///
+    /// - Default: `"asc"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub order: Option<SortOrderConfig>,
+    /// Ignore case when sorting.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore_case: Option<bool>,
+    /// Add newlines between groups.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub newlines_between: Option<bool>,
+    /// Prefixes for identifying internal imports.
+    ///
+    /// - Default: `["~/", "@/", "#"]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub internal_pattern: Option<Vec<String>>,
+    /// List of import groups for sorting.
+    ///
+    /// Each import is assigned to a single group (or `unknown` if none matches), and groups are ordered as listed.
+    /// Within a group, imports are sorted according to `order`, `ignoreCase`, etc.
+    ///
+    /// A predefined group name is a single selector with optional modifiers, joined by `-` (e.g. `type-external`).
+    /// Modifiers can be in any order, but the selector must come last.
+    ///
+    /// Selectors, from most to least important:
+    /// - `type`: TypeScript type imports.
+    /// - `side_effect_style`: Side effect style imports.
+    /// - `side_effect`: Side effect imports.
+    /// - `style`: Style imports.
+    /// - `index`: Main file from the current directory.
+    /// - `sibling`: Modules from the same directory.
+    /// - `parent`: Modules from the parent directory.
+    /// - `subpath`: Node.js subpath imports.
+    /// - `internal`: Your internal modules.
+    /// - `builtin`: Node.js Built-in Modules.
+    /// - `external`: External modules installed in the project.
+    /// - `import`: Any import.
+    ///
+    /// Modifiers, from most to least important:
+    /// - `side_effect`: Side effect imports.
+    /// - `type`: TypeScript type imports.
+    /// - `value`: Value imports.
+    /// - `default`: Imports containing the default specifier.
+    /// - `wildcard`: Imports containing the wildcard (`* as`) specifier.
+    /// - `named`: Imports containing at least one named specifier.
+    ///
+    /// Wrap groups in an array to sort them together as a single group (order within the array does not matter).
+    ///
+    /// To override `newlinesBetween` at a specific group boundary,
+    /// put a `{ "newlinesBetween": boolean }` marker object at that position.
+    ///
+    /// - Default: See below
+    /// ```json
+    /// [
+    ///   "builtin",
+    ///   "external",
+    ///   ["internal", "subpath"],
+    ///   ["parent", "sibling", "index"],
+    ///   "style",
+    ///   "unknown"
+    /// ]
+    /// ```
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub groups: Option<Vec<SortGroupItemConfig>>,
+    /// Define your own groups for matching very specific imports.
+    ///
+    /// The first matching definition is used, and custom groups take precedence over predefined groups.
+    /// To give a predefined group precedence, define an equivalent custom group and put it first.
+    ///
+    /// When multiple conditions (`elementNamePattern`, `selector`, `modifiers`) are specified,
+    /// all of them must match.
+    ///
+    /// NOTE: Predefined group names (e.g. `side_effect`, `external`) and `unknown` are reserved and cannot be used as `groupName`.
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_groups: Option<Vec<CustomGroupItemConfig>>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum SortOrderConfig {
+    Asc,
+    Desc,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortGroupItemConfig {
+    /// A `{ "newlinesBetween": bool }` marker object that overrides the global `newlinesBetween`
+    /// setting for the boundary between the previous and next groups.
+    NewlinesBetween(NewlinesBetweenMarker),
+    /// A single group name string (e.g. `"value-builtin"`).
+    Single(String),
+    /// Multiple group names treated as one group (e.g. `["value-builtin", "value-external"]`).
+    Multiple(Vec<String>),
+}
+
+/// A marker object for overriding `newlinesBetween` at a specific group boundary.
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct NewlinesBetweenMarker {
+    pub newlines_between: bool,
+}
+
+impl SortGroupItemConfig {
+    pub(super) fn into_vec(self) -> Vec<String> {
+        match self {
+            Self::Single(s) => vec![s],
+            Self::Multiple(v) => v,
+            Self::NewlinesBetween(_) => {
+                unreachable!("NewlinesBetween markers should be handled before calling into_vec")
+            }
+        }
+    }
+
+    /// Validate the flat `groups` list's marker grammar: a `{ "newlinesBetween" }`
+    /// marker must sit BETWEEN two groups, so it may not lead, trail, or neighbor another marker.
+    ///
+    /// These are rules of this syntax (the parallel-vec target cannot even represent a violation),
+    /// so their owner is this type, mirroring `SortImportsOptions::validate` on the formatter side.
+    ///
+    /// # Errors
+    /// Returns an error naming the violated position rule.
+    pub(super) fn validate_markers(items: &[Self]) -> Result<(), String> {
+        let is_marker = |item: &Self| matches!(item, Self::NewlinesBetween(_));
+        if items.first().is_some_and(is_marker) {
+            return Err(
+                "`{ \"newlinesBetween\" }` marker cannot appear at the start of `groups`"
+                    .to_string(),
+            );
+        }
+        if items.last().is_some_and(is_marker) {
+            return Err(
+                "`{ \"newlinesBetween\" }` marker cannot appear at the end of `groups`".to_string(),
+            );
+        }
+        if items
+            .windows(2)
+            .any(|pair| is_marker(&pair[0]) && is_marker(&pair[1]))
+        {
+            return Err(
+                "consecutive `{ \"newlinesBetween\" }` markers are not allowed in `groups`"
+                    .to_string(),
+            );
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct CustomGroupItemConfig {
+    /// Name of the custom group, used in the `groups` option.
+    pub group_name: String,
+    /// List of glob patterns to match import sources for this group.
+    pub element_name_pattern: Vec<String>,
+    /// Selector to match the import kind.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selector: Option<ImportSelectorConfig>,
+    /// Modifiers to match the import characteristics.
+    /// All specified modifiers must match.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modifiers: Option<Vec<ImportModifierConfig>>,
+}
+
+/// Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ImportSelectorConfig {
+    Type,
+    SideEffectStyle,
+    SideEffect,
+    Style,
+    Index,
+    Sibling,
+    Parent,
+    Subpath,
+    Internal,
+    Builtin,
+    External,
+    Import,
+}
+
+/// Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ImportModifierConfig {
+    SideEffect,
+    Type,
+    Value,
+    Default,
+    Wildcard,
+    Named,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortPackageJsonUserConfig {
+    Bool(bool),
+    Object(SortPackageJsonConfig),
+}
+
+impl Default for SortPackageJsonUserConfig {
+    fn default() -> Self {
+        Self::Bool(true)
+    }
+}
+
+impl SortPackageJsonUserConfig {
+    pub fn into_config(self) -> Option<SortPackageJsonConfig> {
+        match self {
+            Self::Bool(false) => None,
+            Self::Bool(true) => Some(SortPackageJsonConfig::default()),
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SortPackageJsonConfig {
+    /// Sort the `scripts` field alphabetically.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_scripts: Option<bool>,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortTailwindcssUserConfig {
+    Bool(bool),
+    Object(SortTailwindcssConfig),
+}
+
+impl SortTailwindcssUserConfig {
+    pub fn into_config(self) -> Option<SortTailwindcssConfig> {
+        match self {
+            Self::Bool(true) => Some(SortTailwindcssConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SortTailwindcssConfig {
+    /// Path to your Tailwind CSS configuration file (v3).
+    ///
+    /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// - Default: Automatically find `"tailwind.config.js"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config: Option<String>,
+    /// Path to your Tailwind CSS stylesheet (v4).
+    ///
+    /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// - Default: Installed Tailwind CSS's `theme.css`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stylesheet: Option<String>,
+
+    /// List of custom function names whose arguments should be sorted (exact match).
+    ///
+    /// NOTE: Regex patterns are not yet supported.
+    ///
+    /// - Default: `[]`
+    /// - Example: `["clsx", "cn", "cva", "tw"]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub functions: Option<Vec<String>>,
+    /// List of additional attributes to sort beyond `class` and `className` (exact match).
+    ///
+    /// NOTE: Regex patterns are not yet supported.
+    ///
+    /// - Default: `[]`
+    /// - Example: `["myClassProp", ":class"]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attributes: Option<Vec<String>>,
+
+    /// Preserve whitespace around classes.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preserve_whitespace: Option<bool>,
+    /// Preserve duplicate classes.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preserve_duplicates: Option<bool>,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum JsdocUserConfig {
+    Bool(bool),
+    Object(JsdocConfig),
+}
+
+impl JsdocUserConfig {
+    pub fn into_config(self) -> Option<JsdocConfig> {
+        match self {
+            Self::Bool(true) => Some(JsdocConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct JsdocConfig {
+    /// Capitalize the first letter of tag descriptions.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capitalize_descriptions: Option<bool>,
+    /// Add a trailing dot to the end of descriptions.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_with_dot: Option<bool>,
+    /// Append default values to `@param` descriptions (e.g. "Default is `value`").
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub add_default_to_description: Option<bool>,
+    /// Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prefer_code_fences: Option<bool>,
+    /// Strategy for wrapping description lines at print width.
+    ///
+    /// - `"greedy"`: Always re-wrap text to fit within print width
+    /// - `"balance"`: Preserve original line breaks if all lines fit within print width
+    ///
+    /// By default, description lines are always re-wrapped.
+    ///
+    /// - Default: `"greedy"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_wrapping_style: Option<LineWrappingStyleConfig>,
+    /// How to format comment blocks.
+    ///
+    /// - `"singleLine"`: Convert to single-line `/** content */` when possible
+    /// - `"multiline"`: Always use multi-line format
+    /// - `"keep"`: Preserve original formatting
+    ///
+    /// By default, comments are collapsed to a single line when possible.
+    ///
+    /// - Default: `"singleLine"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment_line_strategy: Option<CommentLineStrategyConfig>,
+    /// Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_tag_groups: Option<bool>,
+    /// Add a blank line between the last `@param` and `@returns`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub separate_returns_from_param: Option<bool>,
+    /// Add spaces inside JSDoc type braces: `{string}` → `{ string }`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bracket_spacing: Option<bool>,
+    /// Emit `@description` tag instead of inline description.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description_tag: Option<bool>,
+    /// Preserve indentation in unparsable `@example` code.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keep_unparsable_example_indent: Option<bool>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum LineWrappingStyleConfig {
+    Greedy,
+    Balance,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum CommentLineStrategyConfig {
+    SingleLine,
+    Multiline,
+    Keep,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SvelteUserConfig {
+    Bool(bool),
+    Object(SvelteConfig),
+}
+
+impl SvelteUserConfig {
+    pub fn into_config(self) -> Option<SvelteConfig> {
+        match self {
+            Self::Bool(true) => Some(SvelteConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SvelteConfig {
+    /// The order in which Svelte component sections are printed.
+    /// Join `options`, `scripts`, `markup`, `styles` with `-` in the desired order,
+    /// or use `none` to keep the original order.
+    ///
+    /// - Default: `"options-scripts-markup-styles"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_order: Option<String>,
+    /// Whether to allow attribute shorthand if attribute name and expression are the same.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_shorthand: Option<bool>,
+    /// Whether to indent code inside `<script>` and `<style>` tags.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indent_script_and_style: Option<bool>,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum AstroUserConfig {
+    Bool(bool),
+    Object(AstroConfig),
+}
+
+impl AstroUserConfig {
+    pub fn into_config(self) -> Option<AstroConfig> {
+        match self {
+            Self::Bool(true) => Some(AstroConfig::default()),
+            Self::Bool(false) => None,
+            Self::Object(config) => Some(config),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AstroConfig {
+    /// Whether to normalize matching identifier attributes to shorthand or explicit form.
+    /// When unset, the form that was written stays as-is.
+    ///
+    /// - Default: Unset
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_shorthand: Option<bool>,
+    /// Whether to skip formatting the frontmatter.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skip_frontmatter: Option<bool>,
+    /// Mirror of Astro's `compressHTML` config.
+    /// Tells the formatter which whitespace the compiler will collapse.
+    ///
+    /// - Default: `"jsx"`
+    #[serde(rename = "compressHTML", skip_serializing_if = "Option::is_none")]
+    pub compress_html: Option<AstroCompressHtmlConfig>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum AstroCompressHtmlConfig {
+    /// Whitespace runs containing a newline are dropped; same-line spaces are content.
+    Jsx,
+    /// Browser HTML whitespace rules.
+    Html,
+    /// No collapsing.
+    None,
+}
+
+// ---
+
+/// Merge two JSON values recursively.
+/// - Overlay values overwrite base values (any non-object overlay wins, including `null`)
+///
+/// All Prettier options are flat, but some our options are nested.
+///
+/// NOTE: null-as-reset is helper-level only.
+/// [`FormatConfig::merge`] re-serializes typed `Option<T>` fields with `skip_serializing_if = "Option::is_none"`,
+/// so `None` is omitted (not emitted as `null`) and never reaches this function.
+/// User-facing override `null` therefore has no effect, explicit field omission has the same result.
+fn json_deep_merge(base: Value, overlay: Value) -> Value {
+    match (base, overlay) {
+        (Value::Object(mut base_map), Value::Object(overlay_map)) => {
+            for (key, overlay_value) in overlay_map {
+                let merged = if let Some(base_value) = base_map.remove(&key) {
+                    json_deep_merge(base_value, overlay_value)
+                } else {
+                    overlay_value
+                };
+                base_map.insert(key, merged);
+            }
+            Value::Object(base_map)
+        }
+        (_base, overlay) => overlay,
+    }
+}
+
+// ---
+
+#[cfg(test)]
+mod tests_json_deep_merge {
+    use super::*;
+
+    #[test]
+    fn test_json_deep_merge() {
+        use serde_json::json;
+
+        // Primitives: overlay wins
+        let base = json!({ "semi": true, "tabWidth": 2 });
+        let overlay = json!({ "semi": false });
+        let merged = json_deep_merge(base, overlay);
+        assert_eq!(merged, json!({ "semi": false, "tabWidth": 2 }));
+
+        // Nested objects: deep merge
+        let base = json!({ "experimentalSortImports": { "order": "asc", "ignoreCase": true } });
+        let overlay = json!({ "experimentalSortImports": { "order": "desc" } });
+        let merged = json_deep_merge(base, overlay);
+        assert_eq!(
+            merged,
+            json!({ "experimentalSortImports": { "order": "desc", "ignoreCase": true } })
+        );
+    }
+}
+
+// ---
+
+#[cfg(test)]
+mod tests_reject_experimental {
+    use super::*;
+
+    #[test]
+    fn test_reject_experimental_ternaries_in_base() {
+        let json = r#"{ "experimentalTernaries": true }"#;
+        let err = serde_json::from_str::<FormatConfig>(json).unwrap_err();
+        assert!(err.to_string().contains("experimentalTernaries"));
+    }
+
+    #[test]
+    fn test_reject_experimental_in_overrides() {
+        // `OxfmtOverrideConfig.options: FormatConfig` so the same deserialize_with applies
+        let json = r#"{
+            "overrides": [
+                {
+                    "files": ["*.ts"],
+                    "options": { "experimentalTernaries": true }
+                }
+            ]
+        }"#;
+        let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
+        assert!(err.to_string().contains("experimentalTernaries"));
+    }
+}

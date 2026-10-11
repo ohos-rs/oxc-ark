@@ -1019,6 +1019,7 @@ fn lint_file_callback(
               options_ids,
               settings_json,
               globals_json,
+              collect_timings,
               workspace_uri,
               allocator| {
             let (delegate_rules, delegate_options, delegate_rule_indices) = {
@@ -1026,12 +1027,12 @@ fn lint_file_callback(
                 split_rules(&state, &rule_ids, &options_ids)?
             };
 
-            let mut diagnostics = Vec::new();
+            let mut output = oxc_linter::LintFileOutput::default();
             if !delegate_rules.is_empty() {
                 let Some(delegate) = &delegate else {
-                    return Err(
-                        "JavaScript plugins are not available in this lint runner.".to_string()
-                    );
+                    return Err("JavaScript plugins are not available in this lint runner."
+                        .to_string()
+                        .into());
                 };
 
                 let mut delegate_diagnostics = (delegate.lint_file)(
@@ -1040,11 +1041,12 @@ fn lint_file_callback(
                     delegate_options,
                     settings_json,
                     globals_json,
+                    collect_timings,
                     workspace_uri,
                     allocator,
                 )?;
 
-                for diagnostic in &mut delegate_diagnostics {
+                for diagnostic in &mut delegate_diagnostics.diagnostics {
                     let mapped = delegate_rule_indices
                         .get(diagnostic.rule_index as usize)
                         .copied()
@@ -1056,10 +1058,22 @@ fn lint_file_callback(
                         })?;
                     diagnostic.rule_index = mapped;
                 }
-                diagnostics.extend(delegate_diagnostics);
+                if let Some(timings) = &mut delegate_diagnostics.timings {
+                    for timing in &mut timings.rules {
+                        timing.rule_index = *delegate_rule_indices
+                            .get(timing.rule_index as usize)
+                            .ok_or_else(|| {
+                                format!(
+                                    "JS plugin returned invalid timing rule index {}.",
+                                    timing.rule_index
+                                )
+                            })?;
+                    }
+                }
+                output = delegate_diagnostics;
             }
 
-            Ok(diagnostics)
+            Ok(output)
         },
     ))
 }
@@ -1741,13 +1755,13 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
         walk::walk_import_declaration(self, it);
     }
 
-    fn visit_export_named_declaration(&mut self, it: &ExportNamedDeclaration<'a>) {
+    fn visit_export_from_declaration(&mut self, it: &ExportFromDeclaration<'a>) {
         if it.with_clause.is_some()
             && let Some(active) = self.active.no_import_assertions
         {
             self.report(active, it.span);
         }
-        walk::walk_export_named_declaration(self, it);
+        walk::walk_export_from_declaration(self, it);
     }
 
     fn visit_export_all_declaration(&mut self, it: &ExportAllDeclaration<'a>) {
@@ -1925,19 +1939,36 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
         walk::walk_ts_namespace_export_declaration(self, it);
     }
 
-    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
+    fn visit_ts_external_module_declaration(&mut self, it: &TSExternalModuleDeclaration<'a>) {
         if it.declare
             && let Some(active) = self.active.no_ambient_decls
         {
             self.report(active, it.span);
         }
-        if let TSModuleDeclarationName::StringLiteral(lit) = &it.id
-            && lit.value.contains('*')
+        if it.id.value.contains('*')
             && let Some(active) = self.active.no_module_wildcards
         {
-            self.report(active, lit.span);
+            self.report(active, it.id.span);
         }
-        walk::walk_ts_module_declaration(self, it);
+        walk::walk_ts_external_module_declaration(self, it);
+    }
+
+    fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
+        if it.declare
+            && let Some(active) = self.active.no_ambient_decls
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_namespace_declaration(self, it);
+    }
+
+    fn visit_ts_global_declaration(&mut self, it: &TSGlobalDeclaration<'a>) {
+        if it.declare
+            && let Some(active) = self.active.no_ambient_decls
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_global_declaration(self, it);
     }
 
     fn visit_spread_element(&mut self, it: &SpreadElement<'a>) {
