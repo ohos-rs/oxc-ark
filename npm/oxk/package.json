@@ -35,7 +35,8 @@
     "lint.d.ts",
     "configuration_schema.json",
     "oxlint-runtime",
-    "bin"
+    "bin",
+    "prettier-plugin-oxk"
   ],
   "exports": {
     ".": {
@@ -100,7 +101,10 @@
     "version": "bash ../../scripts/update-version.sh"
   },
   "dependencies": {
-    "prettier": "^3.8.3"
+    "prettier": "3.9.9",
+    "prettier-plugin-astro": "1.1.0",
+    "prettier-plugin-svelte": "4.1.1",
+    "prettier-plugin-tailwindcss": "0.0.0-insiders.5b27f94"
   },
   "peerDependencies": {
     "vite-plus": "*"

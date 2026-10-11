@@ -17,11 +17,11 @@ use oxc_allocator::free_fixed_size_allocator;
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
     ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileResult, LoadPluginResult,
+    LintFileFailure, LintFileOutput, LoadPluginResult,
 };
 use serde::Deserialize;
 
-use oxlint::cli::{init_miette, init_tracing};
+use oxlint::cli::init_tracing;
 
 use crate::{
     arkts::{self, ExternalLinterCallbacks},
@@ -67,6 +67,7 @@ pub type JsLintFileCb = ThreadsafeFunction<
         Vec<u32>,
         String,
         String,
+        bool,
         Option<String>,
     )>,
     Promise<Option<String>>,
@@ -78,6 +79,7 @@ pub type JsLintFileCb = ThreadsafeFunction<
         Vec<u32>,
         String,
         String,
+        bool,
         Option<String>,
     )>,
     Status,
@@ -136,7 +138,6 @@ pub async fn lint_args_with_plugins(
         Err(success) => return success,
     };
 
-    init_miette();
     handle_threads_once(&command);
 
     run_lint_command(command, prepared.arkts, Some(external_linter))
@@ -223,8 +224,8 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
 
 #[derive(Clone, Debug, Deserialize)]
 enum LintFileReturnValue {
-    Success(Vec<LintFileResult>),
-    Failure(String),
+    Success(LintFileOutput),
+    Failure(LintFileFailure),
 }
 
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
@@ -234,6 +235,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
               options_ids,
               settings_json,
               globals_json,
+              collect_timings,
               workspace_uri,
               allocator| {
             let cb = &cb;
@@ -248,6 +250,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     options_ids,
                     settings_json,
                     globals_json,
+                    collect_timings,
                     workspace_uri,
                 )))
                 .await?
@@ -256,15 +259,16 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             });
 
             match res {
-                Ok(None) => Ok(Vec::new()),
+                Ok(None) => Ok(LintFileOutput::default()),
                 Ok(Some(json)) => match serde_json::from_str(&json) {
                     Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
                     Ok(LintFileReturnValue::Failure(err)) => Err(err),
                     Err(err) => Err(format!(
                         "Failed to deserialize JSON returned by `lintFile`: {err}"
-                    )),
+                    )
+                    .into()),
                 },
-                Err(err) => Err(format!("`lintFile` threw an error: {err}")),
+                Err(err) => Err(format!("`lintFile` threw an error: {err}").into()),
             }
         },
     ))

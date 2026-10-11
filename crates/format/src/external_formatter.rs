@@ -1,8 +1,6 @@
 #[cfg(feature = "napi")]
 use std::future::Future;
 #[cfg(feature = "napi")]
-use std::path::Path;
-#[cfg(feature = "napi")]
 use std::sync::Arc;
 
 #[cfg(feature = "napi")]
@@ -142,25 +140,35 @@ impl ExternalFormatter {
         (self.init)(num_threads)
     }
 
-    /// Convert this external formatter to oxc_formatter::ExternalCallbacks.
-    /// Path, format_options and options are captured for embedded formatting.
-    pub fn to_external_callbacks(
-        &self,
-        _path: &Path,
-        _format_options: &oxc_formatter::JsFormatOptions,
-        options: Value,
-    ) -> oxc_formatter::ExternalCallbacks {
-        let format_embedded = Arc::clone(&self.format_embedded);
-        let embedded_cb: oxc_formatter::EmbeddedFormatterCallback =
-            Arc::new(move |language: &str, code: &str| {
-                let Some(parser_name) = language_to_prettier_parser(language) else {
-                    return Err(format!("Unsupported language: {language}"));
-                };
-                (format_embedded)(&options, parser_name, code)
-            });
-        oxc_formatter::ExternalCallbacks::new()
-            .with_embedded_formatter(Some(embedded_cb))
-            .with_tailwind(None)
+    pub fn to_services(&self) -> ExternalServices {
+        let embedded = Arc::clone(&self.format_embedded);
+        let doc = Arc::clone(&self.format_embedded);
+        let file = Arc::clone(&self.format_file);
+        let tailwind = Arc::clone(&self.format_embedded);
+        ExternalServices {
+            format_file: Arc::new(move |options, code| {
+                file(
+                    &options,
+                    options["parser"].as_str().unwrap_or(""),
+                    options["filepath"].as_str().unwrap_or(""),
+                    code,
+                )
+            }),
+            format_embedded: Arc::new(move |options, code| {
+                embedded(&options, options["parser"].as_str().unwrap_or(""), code)
+            }),
+            format_embedded_doc: Arc::new(move |mut options, code| {
+                options["__oxkDoc"] = Value::Bool(true);
+                doc(&options, options["parser"].as_str().unwrap_or(""), code)
+            }),
+            sort_tailwindcss_classes: Arc::new(move |options, classes| {
+                let source = serde_json::to_string(&classes).unwrap();
+                tailwind(options, "__oxkTailwind", &source)
+                    .ok()
+                    .and_then(|json| serde_json::from_str(&json).ok())
+                    .unwrap_or(classes)
+            }),
+        }
     }
 
     /// Format non-js file using the JS callback.
@@ -176,19 +184,6 @@ impl ExternalFormatter {
 }
 
 // ---
-
-/// Map oxc_formatter embedded language tags to Prettier parser names.
-fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
-    match language {
-        "tagged-css" | "styled-jsx" => Some("css"),
-        "tagged-graphql" => Some("graphql"),
-        "tagged-html" => Some("html"),
-        "tagged-markdown" => Some("markdown"),
-        "angular-template" => Some("angular"),
-        "angular-styles" => Some("scss"),
-        _ => None,
-    }
-}
 
 // These wrappers expose async JS callbacks to the synchronous formatter core.
 // WASI exports run inside the napi runtime, so the blocking wait happens on a
@@ -278,4 +273,19 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
             })
         },
     )
+}
+
+pub type FormatFileCallback = Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
+
+#[derive(Clone)]
+pub struct ExternalServices {
+    pub format_file: FormatFileCallback,
+    pub format_embedded: crate::core::embed::FormatEmbeddedWithConfigCallback,
+    pub format_embedded_doc: crate::core::embed::FormatEmbeddedDocWithConfigCallback,
+    pub sort_tailwindcss_classes: crate::core::embed::TailwindWithConfigCallback,
+}
+impl ExternalServices {
+    pub fn format_file(&self, options: Value, code: &str) -> Result<String, String> {
+        (self.format_file)(options, code)
+    }
 }

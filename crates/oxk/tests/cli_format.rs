@@ -62,3 +62,40 @@ fn cargo_cli_formats_static_ets_with_explicit_language() {
     assert!(formatted.contains("value: int = 1;"));
     assert!(formatted.contains("let character: char = c'a';"));
 }
+
+#[test]
+fn cargo_cli_applies_editorconfig_sorting_and_embedded_options() {
+    let temp = TempDir::new();
+    fs::write(
+        temp.path().join(".editorconfig"),
+        "root = true\n[*]\nquote_type = single\n",
+    )
+    .unwrap();
+    fs::write(
+        temp.path().join("input.ts"),
+        "import z from \"z\";import a from \"a\";const styles=css`a{color:red}`;",
+    )
+    .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args([
+            "format",
+            "--experimental-sort-imports",
+            "{}",
+            "--embedded-language-formatting",
+            "off",
+            "input.ts",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let code = fs::read_to_string(temp.path().join("input.ts")).unwrap();
+    assert!(code.contains("import a from 'a';"), "{code}");
+    assert!(code.find("import a") < code.find("import z"), "{code}");
+    assert!(code.contains("a{color:red}"), "{code}");
+}

@@ -5,14 +5,11 @@
 use std::path::{Path, PathBuf};
 
 use oxc_formatter::JsFormatOptions as FormatOptions;
-use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
+use oxc_formatter_json::JsonFormatOptions;
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 
-use crate::oxfmtrc::{OxfmtOptions, Oxfmtrc, populate_prettier_config};
-
 use super::FormatFileStrategy;
-use super::support::JsonType;
 
 /// Resolve config file path from cwd and optional explicit path.
 pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
@@ -46,6 +43,7 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
 /// Resolved options for each file type.
 /// Each variant contains only the options needed for that formatter.
 pub enum ResolvedOptions {
+    Upstream(crate::core::format::FormatPlan),
     /// For JS/TS files formatted by oxc_formatter.
     OxcFormatter {
         format_options: Box<FormatOptions>,
@@ -82,8 +80,14 @@ pub enum ResolvedOptions {
 pub struct ConfigResolver {
     /// User's raw config as JSON value.
     raw_config: Value,
+    base_dir: Option<PathBuf>,
+    editorconfig: Option<editorconfig_parser::EditorConfig>,
+    overrides: Option<crate::core::config::overrides::OxfmtrcOverrides>,
     /// Cached parsed options after validation.
-    cached_options: Option<(OxfmtOptions, Value)>,
+    upstream: Option<(
+        std::sync::Arc<crate::core::oxfmtrc::FormatConfig>,
+        std::sync::Arc<crate::core::options::ValidatedOptions>,
+    )>,
 }
 
 impl ConfigResolver {
@@ -91,8 +95,22 @@ impl ConfigResolver {
     pub fn from_value(raw_config: Value) -> Self {
         Self {
             raw_config,
-            cached_options: None,
+            base_dir: None,
+            editorconfig: None,
+            overrides: None,
+            upstream: None,
         }
+    }
+
+    /// Resolve CLI values with EditorConfig when no formatter config file exists.
+    pub fn from_cli_options(
+        cwd: &Path,
+        options: Value,
+        editorconfig_path: Option<&Path>,
+    ) -> Result<Self, String> {
+        let mut resolver = Self::from_config_paths(cwd, None, editorconfig_path)?;
+        resolver.raw_config = options;
+        Ok(resolver)
     }
 
     /// Create a resolver by loading config from a file path.
@@ -102,9 +120,9 @@ impl ConfigResolver {
     /// - Config file is specified but not found or invalid
     /// - Config file parsing fails
     pub fn from_config_paths(
-        _cwd: &Path,
+        cwd: &Path,
         oxfmtrc_path: Option<&Path>,
-        _editorconfig_path: Option<&Path>,
+        editorconfig_path: Option<&Path>,
     ) -> Result<Self, String> {
         // Read and parse config file, or use empty JSON if not found
         let json_string = match oxfmtrc_path {
@@ -126,7 +144,15 @@ impl ConfigResolver {
 
         Ok(Self {
             raw_config,
-            cached_options: None,
+            base_dir: Some(
+                oxfmtrc_path
+                    .and_then(Path::parent)
+                    .unwrap_or(cwd)
+                    .to_path_buf(),
+            ),
+            editorconfig: crate::core::config::editorconfig::load_editorconfig(editorconfig_path)?,
+            overrides: None,
+            upstream: None,
         })
     }
 
@@ -137,79 +163,75 @@ impl ConfigResolver {
     /// # Errors
     /// Returns error if config deserialization fails.
     pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
-        let oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
-            .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
-
-        let oxfmt_options = oxfmtrc
-            .format_config
-            .into_oxfmt_options()
-            .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
-
-        let ignore_patterns = oxfmtrc.ignore_patterns.clone().unwrap_or_default();
-
-        let mut external_options = self.raw_config.clone();
-        populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
-
-        self.cached_options = Some((oxfmt_options, external_options));
-
+        let mut upstream: crate::core::oxfmtrc::Oxfmtrc =
+            serde_json::from_value(self.raw_config.clone())
+                .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
+        if let Some(base) = &self.base_dir {
+            upstream.format_config.resolve_tailwind_paths(base);
+        }
+        let overrides = upstream.overrides.take().unwrap_or_default();
+        for item in &overrides {
+            crate::core::options::validate(&item.options)?;
+        }
+        self.overrides = Some(crate::core::config::overrides::OxfmtrcOverrides::new(
+            overrides,
+            self.base_dir.clone(),
+        ));
+        let validated = crate::core::options::validate(&upstream.format_config)?;
+        self.upstream = Some((
+            std::sync::Arc::new(upstream.format_config),
+            std::sync::Arc::new(validated),
+        ));
+        let ignore_patterns =
+            serde_json::from_value::<crate::core::oxfmtrc::Oxfmtrc>(self.raw_config.clone())
+                .map_err(|err| err.to_string())?
+                .ignore_patterns
+                .unwrap_or_default();
         Ok(ignore_patterns)
     }
 
-    /// Resolve format options for a specific file.
-    pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
-        let (oxfmt_options, external_options) = self
-            .cached_options
-            .clone()
-            .expect("`build_and_validate()` must be called before `resolve()`");
-
-        let insert_final_newline = oxfmt_options.insert_final_newline;
-
-        match strategy {
-            FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
-                format_options: Box::new(oxfmt_options.format_options),
-                external_options,
-                insert_final_newline,
-            },
-            FormatFileStrategy::OxfmtToml { .. } => ResolvedOptions::OxfmtToml {
-                toml_options: oxfmt_options.toml_options,
-                insert_final_newline,
-            },
-            FormatFileStrategy::OxfmtJson { json_type, .. } => {
-                let mut json_options = oxfmt_options.json_options;
-                json_options.variant = json_variant(*json_type);
-                ResolvedOptions::OxfmtJson {
-                    json_options,
-                    insert_final_newline,
-                }
-            }
-            #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatter { .. } => ResolvedOptions::ExternalFormatter {
-                external_options,
-                insert_final_newline,
-            },
-            #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
-                ResolvedOptions::ExternalFormatterPackageJson {
-                    external_options,
-                    sort_package_json: oxfmt_options.sort_package_json,
-                    insert_final_newline,
-                }
-            }
-            #[cfg(not(feature = "napi"))]
-            _ => {
-                unreachable!("If `napi` feature is disabled, this should not be passed here")
-            }
+    /// Resolve validated upstream options for a file.
+    pub fn resolve(&self, strategy: &FormatFileStrategy) -> Result<ResolvedOptions, String> {
+        let (config, _validated) = self.upstream.as_ref().expect("validated config");
+        let path = strategy.path();
+        let mut native = crate::core::support::classify_file_with_language(path, None)
+            .ok_or_else(|| format!("Unsupported file type: {}", path.display()))?;
+        if let FormatFileStrategy::OxcFormatter { source_type, .. } = strategy {
+            native = crate::core::support::FormatStrategy::Native(
+                crate::core::support::NativeLanguage::Js(*source_type),
+            );
         }
-    }
-}
-
-// ---
-
-fn json_variant(json_type: JsonType) -> JsonVariant {
-    match json_type {
-        JsonType::Json => JsonVariant::Json,
-        JsonType::Json5 => JsonVariant::Json5,
-        JsonType::Jsonc => JsonVariant::Jsonc,
+        let mut resolved = (**config).clone();
+        for options in self
+            .overrides
+            .as_ref()
+            .expect("validated overrides")
+            .matching(path)
+        {
+            resolved.merge(options);
+        }
+        if let Some(editorconfig) = &self.editorconfig {
+            crate::core::config::editorconfig::apply_editorconfig(
+                &mut resolved,
+                &editorconfig.resolve(path),
+            );
+        }
+        let validated = std::sync::Arc::new(crate::core::options::validate(&resolved)?);
+        #[cfg(feature = "napi")]
+        if let crate::core::support::FormatStrategy::Prettier(language) = &native
+            && let Some(plugin) = language.missing_plugin(&resolved)
+        {
+            return Err(format!(
+                "Enable `{plugin}` in formatter options to format {}",
+                path.display()
+            ));
+        }
+        Ok(ResolvedOptions::Upstream(crate::core::format::FormatPlan {
+            path: path.to_path_buf().into(),
+            strategy: native,
+            config: std::sync::Arc::new(resolved),
+            validated,
+        }))
     }
 }
 
@@ -221,8 +243,6 @@ mod tests {
         process,
         sync::atomic::{AtomicU64, Ordering},
     };
-
-    use oxc_formatter::{QuoteProperties, QuoteStyle};
 
     use super::{ConfigResolver, resolve_oxfmtrc_path};
 
@@ -298,16 +318,10 @@ mod tests {
         let ignore_patterns = resolver
             .build_and_validate()
             .expect("jsonc config should validate");
-        let (oxfmt_options, _) = resolver
-            .cached_options
-            .as_ref()
-            .expect("validated config should be cached");
-
         assert_eq!(ignore_patterns, vec!["dist/**".to_string()]);
-        assert_eq!(oxfmt_options.format_options.quote_style, QuoteStyle::Single);
         assert_eq!(
-            oxfmt_options.format_options.quote_properties,
-            QuoteProperties::Preserve
+            resolver.upstream.as_ref().unwrap().0.single_quote,
+            Some(true)
         );
     }
 }

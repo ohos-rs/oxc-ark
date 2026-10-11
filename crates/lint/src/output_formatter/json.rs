@@ -1,17 +1,15 @@
-// Portions of this file are derived from Oxc's oxlint implementation.
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
 // Copyright (c) Oxc project contributors.
-// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
 
 use std::{cell::RefCell, rc::Rc};
 
 use oxc_str::CompactStr;
 
-use miette::JSONReportHandler;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
 
 use oxc_diagnostics::{
-    Error,
+    Error, JSONReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::{RuleCategory, rules::RULES};
@@ -24,7 +22,7 @@ pub struct JsonOutputFormatter {
 }
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
+    fn all_rules(&self, _enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         #[derive(Debug, Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
@@ -40,13 +38,13 @@ impl InternalFormatter for JsonOutputFormatter {
 
         // Determine which rules are turned on by default (same logic as RuleTable)
         let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
-        let default_rules: FxHashSet<&'static str> = RULES
+        let default_rules: FxHashSet<(&'static str, &'static str)> = RULES
             .iter()
             .filter(|rule| {
                 rule.category() == RuleCategory::Correctness
                     && default_plugin_names.contains(&rule.plugin_name())
             })
-            .map(oxc_linter::rules::RuleEnum::name)
+            .map(|rule| (rule.plugin_name(), rule.name()))
             .collect();
 
         let mut rules_info: Vec<_> = RULES
@@ -59,7 +57,7 @@ impl InternalFormatter for JsonOutputFormatter {
                 version: rule.version(),
                 type_aware: rule.is_tsgolint_rule(),
                 fix: rule.fix().to_string(),
-                default: default_rules.contains(rule.name()),
+                default: default_rules.contains(&(rule.plugin_name(), rule.name())),
                 docs_url: format!(
                     "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
                     rule.plugin_name(),
@@ -69,7 +67,7 @@ impl InternalFormatter for JsonOutputFormatter {
             })
             .collect();
 
-        rules_info.sort_by_key(|rule| (rule.scope, rule.value));
+        rules_info.sort_unstable_by_key(|rule| (rule.scope, rule.value));
 
         Some(serde_json::to_string_pretty(&rules_info).expect("Failed to serialize"))
     }
@@ -144,14 +142,13 @@ impl JsonReporter {
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-json>
 fn format_json(diagnostics: &mut Vec<Error>) -> String {
     let handler = JSONReportHandler::new();
-    let messages = diagnostics
-        .drain(..)
-        .map(|error| {
-            let mut output = String::new();
-            handler.render_report(&mut output, error.as_ref()).unwrap();
-            output
-        })
-        .collect::<Vec<_>>()
-        .join(",\n");
-    format!("[{messages}]")
+    let mut output = String::from("[");
+    for (index, error) in diagnostics.drain(..).enumerate() {
+        if index > 0 {
+            output.push_str(",\n");
+        }
+        handler.render_report(&mut output, error.as_ref()).unwrap();
+    }
+    output.push(']');
+    output
 }

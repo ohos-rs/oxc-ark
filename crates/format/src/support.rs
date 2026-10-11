@@ -6,14 +6,22 @@ use oxc_span::{ExplicitLanguage, SourceType};
 
 #[derive(Debug)]
 pub enum FormatFileStrategy {
+    Native {
+        path: PathBuf,
+    },
     OxcFormatter {
         path: PathBuf,
         source_type: SourceType,
     },
     /// TOML files formatted by oxc_toml (Pure Rust).
-    OxfmtToml { path: PathBuf },
+    OxfmtToml {
+        path: PathBuf,
+    },
     /// JSON/JSON5/JSONC files formatted by Rust formatter (Pure Rust).
-    OxfmtJson { path: PathBuf, json_type: JsonType },
+    OxfmtJson {
+        path: PathBuf,
+        json_type: JsonType,
+    },
     ExternalFormatter {
         path: PathBuf,
         parser_name: &'static str,
@@ -86,6 +94,18 @@ impl FormatFileStrategy {
             return Some(Self::OxfmtJson { path, json_type });
         }
 
+        if let Some(native) = crate::core::support::classify_file_with_language(&path, language) {
+            #[cfg(feature = "napi")]
+            if let crate::core::support::FormatStrategy::Prettier(language) = native {
+                return Some(Self::ExternalFormatter {
+                    path,
+                    parser_name: language.parser(),
+                });
+            }
+            #[cfg(not(feature = "napi"))]
+            let _ = native;
+            return Some(Self::Native { path });
+        }
         // Then external formatter files
         // `package.json` is special: sorted then formatted
         if file_name == "package.json" {
@@ -107,13 +127,17 @@ impl FormatFileStrategy {
     pub fn can_format_without_external(&self) -> bool {
         matches!(
             self,
-            Self::OxcFormatter { .. } | Self::OxfmtToml { .. } | Self::OxfmtJson { .. }
+            Self::Native { .. }
+                | Self::OxcFormatter { .. }
+                | Self::OxfmtToml { .. }
+                | Self::OxfmtJson { .. }
         )
     }
 
     pub fn path(&self) -> &Path {
         match self {
-            Self::OxcFormatter { path, .. }
+            Self::Native { path }
+            | Self::OxcFormatter { path, .. }
             | Self::OxfmtToml { path }
             | Self::OxfmtJson { path, .. }
             | Self::ExternalFormatter { path, .. }
@@ -628,21 +652,19 @@ mod tests {
     }
 
     #[test]
-    fn external_formatter_strategies_are_preserved() {
-        assert!(matches!(
-            strategy_for("package.json"),
-            FormatFileStrategy::ExternalFormatterPackageJson {
-                parser_name: "json-stringify",
-                ..
-            }
-        ));
-        assert!(matches!(
-            strategy_for("README.md"),
-            FormatFileStrategy::ExternalFormatter {
-                parser_name: "markdown",
-                ..
-            }
-        ));
+    fn native_and_external_formatter_strategies_match_upstream() {
+        for path in [
+            "package.json",
+            "README.md",
+            "style.css",
+            "query.graphql",
+            "data.yaml",
+        ] {
+            assert!(matches!(
+                strategy_for(path),
+                FormatFileStrategy::Native { .. }
+            ));
+        }
         assert!(matches!(
             strategy_for("component.vue"),
             FormatFileStrategy::ExternalFormatter {
@@ -652,10 +674,7 @@ mod tests {
         ));
         assert!(matches!(
             strategy_for("schema.graphql"),
-            FormatFileStrategy::ExternalFormatter {
-                parser_name: "graphql",
-                ..
-            }
+            FormatFileStrategy::Native { .. }
         ));
     }
 

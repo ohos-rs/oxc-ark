@@ -1,0 +1,86 @@
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
+// Copyright (c) Oxc project contributors.
+
+use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
+use oxc_formatter_json::{
+    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
+};
+
+use super::super::oxfmtrc::{
+    FormatConfig, ObjectWrapConfig, QuotePropsConfig, SortPackageJsonConfig,
+    SortPackageJsonUserConfig, TrailingCommaConfig,
+};
+
+/// Convert `FormatConfig` into `JsonFormatOptions` for `oxc_formatter_json`.
+///
+/// Most JSON-specific output options are fixed by [`oxc_formatter_json::JsonVariant`].
+///
+/// NOTE: Pure field translation:
+/// `core` comes pre-validated from the config-resolution gate (`validate()`), so this cannot fail.
+pub fn to_oxc_formatter_json(
+    config: &FormatConfig,
+    core_options: CoreFormatOptions,
+    variant: JsonVariant,
+) -> JsonFormatOptions {
+    let mut options = JsonFormatOptions {
+        variant,
+        // Preserve explicit property quotes; string values default to double quotes.
+        quote_props: QuoteProps::Preserve,
+        ..JsonFormatOptions::default()
+    };
+    options.apply_core(core_options);
+
+    // [Prettier] trailingComma: "all" | "es5" | "none"
+    if let Some(commas) = config.trailing_comma {
+        options.trailing_commas = match commas {
+            // "all" and "es5" are indistinguishable for JSON
+            TrailingCommaConfig::All | TrailingCommaConfig::Es5 => TrailingCommas::Always,
+            TrailingCommaConfig::None => TrailingCommas::Never,
+        };
+    }
+    // [Prettier] bracketSpacing: boolean
+    if let Some(spacing) = config.bracket_spacing {
+        options.bracket_spacing = BracketSpacing::from(spacing);
+    }
+    // [Prettier] objectWrap: "preserve" | "collapse"
+    if let Some(wrap) = config.object_wrap {
+        options.expand = match wrap {
+            ObjectWrapConfig::Preserve => Expand::Auto,
+            ObjectWrapConfig::Collapse => Expand::Never,
+        };
+    }
+    // [Prettier] singleQuote: boolean
+    if let Some(single_quote) = config.single_quote {
+        options.single_quote = single_quote.into();
+    }
+    // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
+    if let Some(quote_props) = config.quote_props {
+        options.quote_props = match quote_props {
+            QuotePropsConfig::AsNeeded => QuoteProps::AsNeeded,
+            QuotePropsConfig::Consistent => QuoteProps::Consistent,
+            QuotePropsConfig::Preserve => QuoteProps::Preserve,
+        };
+    }
+
+    options
+}
+
+/// Convert `FormatConfig` into `sort_package_json::SortOptions`,
+/// the companion of [`to_oxc_formatter_json`] for the `package.json` pipeline
+/// (sorted by `sort-package-json`, then formatted with the `json-stringify` variant).
+///
+/// `package.json` sorting is opt-out: when `sort_package_json` is unset,
+/// it defaults to enabled with default options.
+/// Returns `None` only when the user explicitly sets `sort_package_json: false`.
+pub fn to_sort_package_json(config: &FormatConfig) -> Option<sort_package_json::SortOptions> {
+    let sort_config = config.sort_package_json.clone().map_or_else(
+        || Some(SortPackageJsonConfig::default()),
+        SortPackageJsonUserConfig::into_config,
+    )?;
+    Some(
+        sort_package_json::SortOptions::new()
+            .with_sort_scripts(sort_config.sort_scripts.unwrap_or(false))
+            // Small optimization: `oxc_formatter_json` will reformat anyway
+            .with_pretty(false),
+    )
+}

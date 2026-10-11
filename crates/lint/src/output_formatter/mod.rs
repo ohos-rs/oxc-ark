@@ -1,6 +1,5 @@
-// Portions of this file are derived from Oxc's oxlint implementation.
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
 // Copyright (c) Oxc project contributors.
-// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
 
 mod agent;
 mod checkstyle;
@@ -22,6 +21,7 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
+use oxc_linter::{OxlintSuppressionFileAction, RuleTimingRecord};
 use rustc_hash::FxHashSet;
 use sarif::SarifOutputFormatter;
 use stylish::StylishOutputFormatter;
@@ -79,29 +79,62 @@ pub struct LintCommandInfo {
     pub threads_count: usize,
     /// Some reporters want to output the duration it took to finished the task
     pub start_time: Duration,
+    /// At least in default mode we want to notify if oxlint-suppressions.json was created or updated.
+    pub oxlint_suppression_file_action: OxlintSuppressionFileAction,
+    /// Optional per-rule timing records for debug timing output.
+    pub rule_timings: Option<RuleTimings>,
+}
+
+pub struct RuleTimings {
+    pub records: Vec<RuleTimingRecord>,
+    pub js_plugin_runtime: Duration,
 }
 
 impl LintCommandInfo {
-    pub(super) fn format_execution_summary(&self) -> String {
-        let ms = self.start_time.as_millis();
-        let time = if ms < 1000 {
+    fn get_execution_time(start_time: &Duration) -> String {
+        let ms = start_time.as_millis();
+        if ms < 1000 {
             format!("{ms}ms")
         } else {
-            format!("{:.1}s", self.start_time.as_secs_f64())
-        };
+            format!("{:.1}s", start_time.as_secs_f64())
+        }
+    }
+
+    pub(super) fn format_execution_summary(&self) -> String {
+        let time = Self::get_execution_time(&self.start_time);
         let s = if self.number_of_files == 1 { "" } else { "s" };
 
-        if let Some(number_of_rules) = self.number_of_rules {
+        let mut finished_text = if let Some(number_of_rules) = self.number_of_rules {
             format!(
-                "Finished in {time} on {} file{s} with {number_of_rules} rules using {} threads.\n",
-                self.number_of_files, self.threads_count
+                "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
+                self.number_of_files, number_of_rules, self.threads_count
             )
         } else {
             format!(
                 "Finished in {time} on {} file{s} using {} threads.\n",
                 self.number_of_files, self.threads_count
             )
-        }
+        };
+
+        let oxlint_suppression_action_text = match &self.oxlint_suppression_file_action {
+            OxlintSuppressionFileAction::None
+            | OxlintSuppressionFileAction::Exists
+            | OxlintSuppressionFileAction::HasUnprunedSuppressions => String::new(),
+            OxlintSuppressionFileAction::Created => {
+                "Created 'oxlint-suppressions.json' in the root folder.\n".to_string()
+            }
+            OxlintSuppressionFileAction::Updated => {
+                "Updated 'oxlint-suppressions.json'.\n".to_string()
+            }
+            OxlintSuppressionFileAction::Malformed(error)
+            | OxlintSuppressionFileAction::UnableToPerformFsOperation(error) => {
+                format!("{}\n", error.message)
+            }
+        };
+
+        finished_text.insert_str(0, oxlint_suppression_action_text.as_ref());
+
+        finished_text
     }
 }
 
@@ -109,7 +142,7 @@ impl LintCommandInfo {
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
     /// Print all available rules by oxlint
-    fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
+    fn all_rules(&self, _enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         None
     }
 
@@ -128,26 +161,14 @@ pub struct OutputFormatter {
 }
 
 impl OutputFormatter {
+    pub fn from_debug_name(name: &str) -> Self {
+        Self::new(name.to_lowercase().parse().unwrap_or(OutputFormat::Default))
+    }
+
     pub fn new(format: OutputFormat) -> Self {
         Self {
             internal: Self::get_internal_formatter(format),
         }
-    }
-
-    pub fn from_debug_name(format: &str) -> Self {
-        let format = match format {
-            "Json" => OutputFormat::Json,
-            "Checkstyle" => OutputFormat::Checkstyle,
-            "Github" => OutputFormat::Github,
-            "Gitlab" => OutputFormat::Gitlab,
-            "Unix" => OutputFormat::Unix,
-            "Agent" => OutputFormat::Agent,
-            "Stylish" => OutputFormat::Stylish,
-            "JUnit" => OutputFormat::JUnit,
-            "Sarif" => OutputFormat::Sarif,
-            _ => OutputFormat::Default,
-        };
-        Self::new(format)
     }
 
     fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
@@ -167,7 +188,7 @@ impl OutputFormatter {
 
     /// Print all available rules by oxlint
     /// See [`InternalFormatter::all_rules`] for more details.
-    pub fn all_rules(&self, enabled_rules: FxHashSet<&str>) -> Option<String> {
+    pub fn all_rules(&self, enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         self.internal.all_rules(enabled_rules)
     }
 

@@ -30,12 +30,12 @@
       "markdownDescription": "Environments enable and disable collections of global variables."
     },
     "extends": {
-      "description": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones.",
+      "description": "Configurations that this configuration file extends (inherits from).\n\nIn `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration\nfile, resolved relative to the location of the configuration file that contains the\n`extends` property.\n\nIn `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and\npass the configuration object directly:\n\n```ts\nimport { defineConfig } from \"oxlint\";\nimport baseConfig from \"./base-config.ts\";\n\nexport default defineConfig({ extends: [baseConfig] });\n```\n\nConfigurations are merged from the first to the last, with the last configuration\noverriding the previous ones.",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones."
+      "markdownDescription": "Configurations that this configuration file extends (inherits from).\n\nIn `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration\nfile, resolved relative to the location of the configuration file that contains the\n`extends` property.\n\nIn `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and\npass the configuration object directly:\n\n```ts\nimport { defineConfig } from \"oxlint\";\nimport baseConfig from \"./base-config.ts\";\n\nexport default defineConfig({ extends: [baseConfig] });\n```\n\nConfigurations are merged from the first to the last, with the last configuration\noverriding the previous ones."
     },
     "globals": {
       "description": "Enabled or disabled specific global variables.",
@@ -287,6 +287,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "guard-for-in": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "id-denylist": {
           "$ref": "#/definitions/DummyRule"
         },
         "id-length": {
@@ -590,6 +593,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "jsdoc/implements-on-classes": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "jsdoc/no-blank-blocks": {
           "$ref": "#/definitions/DummyRule"
         },
         "jsdoc/no-defaults": {
@@ -1216,6 +1222,9 @@
         "node/callback-return": {
           "$ref": "#/definitions/DummyRule"
         },
+        "node/exports-style": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "node/global-require": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1240,7 +1249,13 @@
         "node/no-sync": {
           "$ref": "#/definitions/DummyRule"
         },
+        "node/no-top-level-await": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "object-shorthand": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "one-var": {
           "$ref": "#/definitions/DummyRule"
         },
         "operator-assignment": {
@@ -1259,6 +1274,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "oxc/bad-comparison-sequence": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "oxc/bad-match-all-arg": {
           "$ref": "#/definitions/DummyRule"
         },
         "oxc/bad-min-max-func": {
@@ -1432,13 +1450,22 @@
         "react/button-has-type": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/capitalized-calls": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/checked-requires-onchange-or-readonly": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/display-name": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/error-boundaries": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/exhaustive-deps": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/exhaustive-effect-dependencies": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/forbid-component-props": {
@@ -1456,10 +1483,25 @@
         "react/function-component-definition": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/globals": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/hook-use-state": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/hooks": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/iframe-missing-sandbox": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/immutability": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/incompatible-library": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/invariant": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/jsx-boolean-value": {
@@ -1516,6 +1558,9 @@
         "react/jsx-props-no-spreading": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/memo-dependencies": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/no-array-index-key": {
           "$ref": "#/definitions/DummyRule"
         },
@@ -1529,6 +1574,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "react/no-danger-with-children": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/no-deriving-state-in-effects": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/no-did-mount-set-state": {
@@ -1597,13 +1645,22 @@
         "react/prefer-function-component": {
           "$ref": "#/definitions/DummyRule"
         },
-        "react/react-compiler": {
+        "react/preserve-manual-memoization": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/purity": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/react-in-jsx-scope": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/refs": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/require-render-return": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/rule-suppression": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/rules-of-hooks": {
@@ -1612,13 +1669,37 @@
         "react/self-closing-comp": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/set-state-in-effect": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/set-state-in-render": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/state-in-constructor": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/static-components": {
           "$ref": "#/definitions/DummyRule"
         },
         "react/style-prop-object": {
           "$ref": "#/definitions/DummyRule"
         },
+        "react/syntax": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/todo": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/unsupported-syntax": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/use-memo": {
+          "$ref": "#/definitions/DummyRule"
+        },
         "react/void-dom-elements-no-children": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "react/void-use-memo": {
           "$ref": "#/definitions/DummyRule"
         },
         "require-await": {
@@ -1742,6 +1823,9 @@
           "$ref": "#/definitions/DummyRule"
         },
         "typescript/no-for-in-array": {
+          "$ref": "#/definitions/DummyRule"
+        },
+        "typescript/no-generated-empty-object-type": {
           "$ref": "#/definitions/DummyRule"
         },
         "typescript/no-implied-eval": {

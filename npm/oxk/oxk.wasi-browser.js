@@ -5,15 +5,12 @@ import {
   WASI as __WASI,
 } from '@napi-rs/wasm-runtime'
 
-
-
 const __wasi = new __WASI({
   version: 'preview1',
 })
 
 const __wasmUrl = new URL('./oxk.wasm32-wasi.wasm', import.meta.url).href
 const __emnapiContext = __emnapiGetDefaultContext()
-
 
 const __sharedMemory = new WebAssembly.Memory({
   initial: 4000,
@@ -64,6 +61,7 @@ export const format = __napiModule.exports.format
 export const formatFiles = __napiModule.exports.formatFiles
 export const formatLsp = __napiModule.exports.formatLsp
 export const ImportNameKind = __napiModule.exports.ImportNameKind
+export const jsTextToDoc = __napiModule.exports.jsTextToDoc
 export const lint = __napiModule.exports.lint
 export const lintSync = __napiModule.exports.lintSync
 export const lintWithPlugins = __napiModule.exports.lintWithPlugins

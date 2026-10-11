@@ -146,6 +146,17 @@ export declare const enum ImportNameKind {
   Default = 'Default',
 }
 
+/** Format embedded JS/TS to a Prettier document using the upstream formatter. */
+export declare function jsTextToDoc(
+  sourceExt: string,
+  sourceText: string,
+  optionsJson: string,
+  parentContext: string,
+  initCb: (numThreads: number) => Promise<string[]>,
+  embeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>,
+  fileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>,
+): Promise<string | null>
+
 /** Run the oxlint-compatible linter. */
 export declare function lint(args: Array<string>): Promise<boolean>
 
@@ -170,7 +181,8 @@ export declare function lintWithPlugins(
     arg4: Array<number>,
     arg5: string,
     arg6: string,
-    arg7?: string | undefined | null,
+    collectTimings: boolean,
+    workspaceUri?: string | undefined | null,
   ) => string | null,
   createWorkspace: (arg: string) => Promise<undefined>,
   destroyWorkspace: (arg: string) => void,

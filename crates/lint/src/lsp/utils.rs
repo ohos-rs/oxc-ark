@@ -1,35 +1,10 @@
-use std::{
-    borrow::Cow,
-    path::{Component, Path, PathBuf},
-};
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
+// Copyright (c) Oxc project contributors.
 
-use oxc_diagnostics::OxcCode;
-use tower_lsp_server::ls_types::Range;
+use std::borrow::Cow;
 
-/// Normalize a path by removing `.` and resolving `..` components,
-/// without touching the filesystem.
-pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
-    let mut result = PathBuf::new();
-
-    for component in path.as_ref().components() {
-        match component {
-            Component::ParentDir => {
-                result.pop();
-            }
-            Component::CurDir => {
-                // Skip current directory component
-            }
-            Component::Normal(c) => {
-                result.push(c);
-            }
-            Component::RootDir | Component::Prefix(_) => {
-                result.push(component.as_os_str());
-            }
-        }
-    }
-
-    result
-}
+use oxc_diagnostics::{OxcCode, OxcDiagnostic};
+use tower_lsp_server::gen_lsp_types::Range;
 
 /// Returns `true` if LSP ranges `a` and `b` overlap or touch (share a boundary point).
 ///
@@ -57,76 +32,23 @@ pub fn get_full_rule_name(rule_code: &OxcCode) -> Option<Cow<'_, str>> {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use std::path::Path;
+/// Returns a full diagnostic message string, including the main message, help text, and note if present.
+pub fn get_oxc_diagnostic_full_message(diagnostic: &OxcDiagnostic) -> String {
+    let mut diagnostic_message = String::with_capacity(
+        diagnostic.message.len()
+            + diagnostic.help.as_ref().map_or(0, |h| h.len() + 7) // "help: " prefix
+            + diagnostic.note.as_ref().map_or(0, |n| n.len() + 7), // "note: " prefix
+    );
 
-    use tower_lsp_server::ls_types::{Position, Range};
-
-    use crate::lsp::utils::{normalize_path, range_overlaps};
-
-    fn range(sl: u32, sc: u32, el: u32, ec: u32) -> Range {
-        Range::new(Position::new(sl, sc), Position::new(el, ec))
+    diagnostic_message.push_str(&diagnostic.message);
+    if let Some(help) = &diagnostic.help {
+        diagnostic_message.push_str("\nhelp: ");
+        diagnostic_message.push_str(help);
     }
 
-    #[test]
-    fn test_normalize_path() {
-        assert_eq!(
-            normalize_path(Path::new("/root/directory/./.oxlintrc.json")),
-            Path::new("/root/directory/.oxlintrc.json")
-        );
+    if let Some(note) = &diagnostic.note {
+        diagnostic_message.push_str("\nnote: ");
+        diagnostic_message.push_str(note);
     }
-
-    #[test]
-    fn test_range_overlaps_with_equal_ranges() {
-        let range = range(1, 2, 3, 4);
-        // A range always overlaps itself.
-        assert!(range_overlaps(range, range));
-    }
-
-    #[test]
-    fn test_range_overlaps_when_touching_at_boundary() {
-        let a = range(1, 0, 1, 5);
-        let b = range(1, 5, 1, 10);
-        // End/start boundary is inclusive, so touching at one position counts as overlap.
-        assert!(range_overlaps(a, b));
-        assert!(range_overlaps(b, a));
-    }
-
-    #[test]
-    fn test_range_overlaps_when_one_contains_the_other() {
-        let outer = range(2, 0, 6, 0);
-        let inner = range(3, 4, 4, 8);
-        // Full containment is a strict overlap in either argument order.
-        assert!(range_overlaps(outer, inner));
-        assert!(range_overlaps(inner, outer));
-    }
-
-    #[test]
-    fn test_range_overlaps_when_partially_overlapping() {
-        let a = range(10, 0, 12, 0);
-        let b = range(11, 5, 14, 0);
-        // Shared interior span means they overlap.
-        assert!(range_overlaps(a, b));
-        assert!(range_overlaps(b, a));
-    }
-
-    #[test]
-    fn test_range_overlaps_when_disjoint() {
-        let a = range(1, 0, 1, 4);
-        let b = range(1, 5, 1, 10);
-        // There is a strict gap between a.end and b.start, so no overlap.
-        assert!(!range_overlaps(a, b));
-        assert!(!range_overlaps(b, a));
-    }
-
-    #[test]
-    fn test_range_overlaps_respects_line_before_character() {
-        let a = range(1, 50, 1, 200);
-        let b = range(2, 0, 2, 100);
-        // Even though character columns could look overlapping, line 2 is strictly after line 1.
-        // Position ordering is line-first, then character, so these ranges are disjoint.
-        assert!(!range_overlaps(a, b));
-        assert!(!range_overlaps(b, a));
-    }
+    diagnostic_message
 }
