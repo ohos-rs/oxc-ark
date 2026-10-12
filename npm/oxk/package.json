@@ -115,8 +115,8 @@
     }
   },
   "devDependencies": {
-    "@emnapi/core": "^1.5.0",
-    "@emnapi/runtime": "^1.5.0",
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
     "@napi-rs/cli": "^3.2.0",
     "@napi-rs/wasm-runtime": "^1.0.4",
     "@oxc-node/core": "^0.0.35",
