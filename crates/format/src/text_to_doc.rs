@@ -75,9 +75,16 @@ pub fn run(
         InputKind::VirtualDocument,
         services,
     );
-    let formatted = match tokio::task::block_in_place(|| {
+    #[cfg(not(target_family = "wasm"))]
+    let formatted = tokio::task::block_in_place(|| {
         oxc_formatter::format_with_session(&session, source_text, source_type, format_options)
-    }) {
+    });
+    // WASI has no Tokio runtime, so `block_in_place` is unavailable. The NAPI
+    // entry point is synchronous on wasm and can call the formatter directly.
+    #[cfg(target_family = "wasm")]
+    let formatted =
+        oxc_formatter::format_with_session(&session, source_text, source_type, format_options);
+    let formatted = match formatted {
         Ok(formatted) => formatted,
         Err(err) => {
             debug!("`oxc_formatter::format()` failed for {source_type:?}: {err:?}");
