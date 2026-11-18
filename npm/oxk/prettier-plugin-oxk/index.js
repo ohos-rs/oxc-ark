@@ -23,13 +23,6 @@ exports.options = {
     default: '{}',
     description: 'Bundled JSON string for oxfmt-plugin options',
   },
-  _oxfmtVueScriptLang: {
-    category: 'JavaScript',
-    type: 'string',
-    default: '',
-    description:
-      'Effective `lang` of Vue SFC `<script>` blocks when it needs disambiguation (currently only "tsx"), scanned by the host',
-  },
 }
 const oxfmtParser = {
   parse: text_to_doc_1.textToDoc,

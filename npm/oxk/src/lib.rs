@@ -572,13 +572,12 @@ pub async fn format(
 
 /// Format embedded JS/TS to a Prettier document using the upstream formatter.
 #[napi(
-  ts_args_type = "sourceExt: string, sourceText: string, optionsJson: string, parentContext: string, initCb: (numThreads: number) => Promise<string[]>, embeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, fileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+  ts_args_type = "sourceExt: string, sourceText: string, optionsJson: string, initCb: (numThreads: number) => Promise<string[]>, embeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, fileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
 )]
 pub async fn js_text_to_doc(
   source_ext: String,
   source_text: String,
   options_json: String,
-  parent_context: String,
   init_cb: JsInitExternalFormatterCb,
   embedded_cb: JsFormatEmbeddedCb,
   file_cb: JsFormatFileCb,
@@ -588,7 +587,6 @@ pub async fn js_text_to_doc(
     &source_ext,
     &source_text,
     &options_json,
-    &parent_context,
     external.to_services(),
   )
 }

@@ -151,7 +151,6 @@ export declare function jsTextToDoc(
   sourceExt: string,
   sourceText: string,
   optionsJson: string,
-  parentContext: string,
   initCb: (numThreads: number) => Promise<string[]>,
   embeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>,
   fileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>,
