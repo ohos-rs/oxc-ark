@@ -5,9 +5,9 @@ use std::{
 };
 
 use format::{
-    ConfigResolver, FormatFileStrategy, FormatTargets, SourceFormatter,
-    build_global_ignore_matchers, build_ignore_matcher, collect_matching_files, is_gitignore_match,
-    resolve_editorconfig_path, resolve_ignore_paths, resolve_oxfmtrc_path, should_ignore_file,
+    ConfigResolver, ConfigScopes, FormatFileStrategy, FormatTargets, SourceFormatter,
+    build_global_ignore_matchers, collect_matching_files_with, resolve_ignore_paths,
+    should_ignore_file,
 };
 use futures::future;
 use serde_json::Value;
@@ -54,43 +54,21 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
         ))) as Box<dyn std::error::Error>
     })?;
 
-    // Resolve config (aligned with oxfmt): prefer .oxfmtrc when present, else CLI as Oxfmtrc-like Value
-    let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, args.config.as_deref());
-    let editorconfig_path = resolve_editorconfig_path(&cwd);
-
-    let mut config_resolver = if oxfmtrc_path.is_some() {
-        ConfigResolver::from_config_paths(
-            &cwd,
-            oxfmtrc_path.as_deref(),
-            editorconfig_path.as_deref(),
-        )
-        .map_err(|e| {
-            Box::new(std::io::Error::other(format!(
-                "Failed to load configuration: {}",
-                e
-            ))) as Box<dyn std::error::Error>
-        })?
-    } else {
-        ConfigResolver::from_cli_options(
-            &cwd,
-            build_value_from_format_args(&args),
-            editorconfig_path.as_deref(),
-        )?
-    };
-
-    let ignore_patterns = config_resolver.build_and_validate().map_err(|e| {
+    // Resolve config scopes once: the root config plus on-demand nested configs.
+    // When no config file is found, CLI flags act as the root config.
+    let config_scopes = ConfigScopes::load_with_fallback_config(
+        &cwd,
+        args.config.as_deref(),
+        true,
+        Some(build_value_from_format_args(&args)),
+        None,
+    )
+    .map_err(|e| {
         Box::new(std::io::Error::other(format!(
-            "Failed to parse configuration: {}",
+            "Failed to load configuration: {}",
             e
         ))) as Box<dyn std::error::Error>
     })?;
-
-    let config_ignore_root = oxfmtrc_path
-        .as_deref()
-        .and_then(Path::parent)
-        .unwrap_or(&cwd);
-    let config_ignore_matcher = build_ignore_matcher(config_ignore_root, &ignore_patterns)
-        .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error>)?;
 
     let resolved_ignore_paths = resolve_ignore_paths(&cwd, &ignore_paths)
         .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error>)?;
@@ -99,19 +77,23 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
         build_global_ignore_matchers(&cwd, &targets.exclude_patterns, &resolved_ignore_paths)
             .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error>)?;
 
-    let mut files = collect_matching_files(
+    // Include files that a config's `associations` maps to a formatter, even when the
+    // extension is not one of the built-in formatter targets.
+    let is_supported = |path: &Path| match config_scopes.resolve(path) {
+        Ok(resolver) => resolver
+            .classify_with_explicit_language(path, language)
+            .is_some(),
+        // Let the per-file loop surface nested config load errors.
+        Err(_) => true,
+    };
+    let files = collect_matching_files_with(
         &cwd,
         &targets,
         &global_ignore_matchers,
         thread_count,
         with_node_modules,
+        is_supported,
     )?;
-
-    if let Some(matcher) = &config_ignore_matcher {
-        files.retain(|path| !is_gitignore_match(matcher, path, false, true));
-    }
-
-    let config_resolver = Arc::new(config_resolver);
 
     if files.is_empty() {
         return Err(Box::new(std::io::Error::other(
@@ -141,8 +123,13 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
 
         for path in files {
             let semaphore = semaphore.clone();
-            let path = path.clone();
-            let config_resolver = Arc::clone(&config_resolver);
+            // Nearest config wins (nested scopes), matching upstream oxfmt.
+            let config_resolver = config_scopes.resolve(&path).map_err(|e| {
+                Box::new(std::io::Error::other(format!(
+                    "Failed to load nested configuration for '{}': {e}",
+                    path.display()
+                ))) as Box<dyn std::error::Error>
+            })?;
 
             // Spawn format_file as a tokio task
             let handle = tokio::spawn(async move {
@@ -344,18 +331,21 @@ async fn format_file_async(
         return Ok(());
     }
 
+    // Skip files ignored by the nearest config's `ignorePatterns`.
+    if config_resolver.is_path_ignored(&actual_path, false) {
+        return Ok(());
+    }
+
     // Skip ignored files silently (e.g., lock files, ignored JSON files)
     if should_ignore_file(&actual_path) {
         return Ok(());
     }
 
-    // Determine format strategy from file path
-    let strategy = FormatFileStrategy::from_path_with_language(actual_path.clone(), language)
-        .ok_or_else(|| format!("Unsupported file type '{}'", actual_path.display()))?;
-
-    // Reject ExternalFormatter: oxk CLI has no napi/Prettier (aligned with oxfmt's Mode::Cli behavior)
-    if let FormatFileStrategy::ExternalFormatter { parser_name, .. }
-    | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. } = &strategy
+    // Reject ExternalFormatter: oxk CLI has no napi/Prettier (aligned with oxfmt's Mode::Cli behavior).
+    if let Some(
+        FormatFileStrategy::ExternalFormatter { parser_name, .. }
+        | FormatFileStrategy::ExternalFormatterPackageJson { parser_name, .. },
+    ) = FormatFileStrategy::from_path_with_language(actual_path.clone(), language)
     {
         return Err(format!(
             "File type '{}' (parser: {}) requires external formatter support (e.g., Prettier). \
@@ -367,31 +357,14 @@ async fn format_file_async(
         .into());
     }
 
-    // Resolve options from ConfigResolver (aligned with oxfmt: .oxfmtrc / overrides / editorconfig)
-    let resolved_options = config_resolver.resolve(&strategy)?;
+    // Resolve options via the core resolver, applying `associations`, overrides and EditorConfig.
+    let resolved_options = config_resolver.resolve_for_path(&actual_path, language)?;
 
-    // Run CPU-intensive parsing and formatting in a blocking task
+    // Run CPU-intensive parsing and formatting in a blocking task.
+    // `ResolvedOptions::Upstream` ignores the entry strategy; keep one for the common signature.
     let actual_path_clone = actual_path.clone();
-    let strategy_clone = match &strategy {
-        FormatFileStrategy::Native { path } => FormatFileStrategy::Native { path: path.clone() },
-        FormatFileStrategy::OxcFormatter { path, source_type } => {
-            FormatFileStrategy::OxcFormatter {
-                path: path.clone(),
-                source_type: *source_type,
-            }
-        }
-        FormatFileStrategy::OxfmtToml { path } => {
-            FormatFileStrategy::OxfmtToml { path: path.clone() }
-        }
-        FormatFileStrategy::OxfmtJson { path, json_type } => FormatFileStrategy::OxfmtJson {
-            path: path.clone(),
-            json_type: *json_type,
-        },
-        FormatFileStrategy::ExternalFormatter { .. }
-        | FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
-            // This should never happen as we check earlier in resolved_options match
-            unreachable!("ExternalFormatter should be rejected earlier")
-        }
+    let strategy_clone = FormatFileStrategy::Native {
+        path: actual_path.clone(),
     };
     let formatted_code = tokio::task::spawn_blocking(move || {
         // Create formatter
@@ -439,7 +412,7 @@ mod tests {
         sync::atomic::{AtomicU64, Ordering},
     };
 
-    use super::{
+    use format::{
         FormatTargets, build_global_ignore_matchers, collect_matching_files, resolve_ignore_paths,
     };
 

@@ -6,8 +6,9 @@ use std::{
 };
 
 use fast_glob::glob_match;
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use ignore::gitignore::Gitignore;
 
+use super::core::global_ignore::is_ignored;
 use super::{FormatFileStrategy, should_ignore_file};
 
 const NODE_MODULES_DIR: &str = "node_modules";
@@ -110,21 +111,23 @@ impl GlobMatcher {
     }
 }
 
-struct CollectedFiles {
+struct CollectedFiles<'a> {
     files: Vec<PathBuf>,
     seen: HashSet<PathBuf>,
+    is_supported: &'a dyn Fn(&Path) -> bool,
 }
 
-impl CollectedFiles {
-    fn new() -> Self {
+impl<'a> CollectedFiles<'a> {
+    fn new(is_supported: &'a dyn Fn(&Path) -> bool) -> Self {
         Self {
             files: Vec::new(),
             seen: HashSet::new(),
+            is_supported,
         }
     }
 
     fn push_unique(&mut self, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-        if should_ignore_file(path) || FormatFileStrategy::try_from(path.to_path_buf()).is_err() {
+        if should_ignore_file(path) || !(self.is_supported)(path) {
             return Ok(());
         }
 
@@ -141,84 +144,17 @@ impl CollectedFiles {
     }
 }
 
-pub fn resolve_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
-    if !ignore_paths.is_empty() {
-        let mut result = Vec::with_capacity(ignore_paths.len());
-        for path in ignore_paths {
-            let path = normalize_relative_path(cwd, path);
-            if !path.exists() {
-                return Err(format!("{}: File not found", path.display()));
-            }
-            result.push(path);
-        }
-        return Ok(result);
-    }
+/// Backwards-compatible name for [`core::global_ignore::resolve_ignore_paths`].
+pub use super::core::global_ignore::{build_global_ignore_matchers, resolve_ignore_paths};
 
-    let prettierignore = cwd.join(".prettierignore");
-    Ok(prettierignore
-        .exists()
-        .then_some(prettierignore)
-        .into_iter()
-        .collect())
-}
-
-pub fn build_global_ignore_matchers(
-    cwd: &Path,
-    exclude_patterns: &[String],
-    ignore_paths: &[PathBuf],
-) -> Result<Vec<Gitignore>, String> {
-    let mut matchers = Vec::new();
-
-    for ignore_path in ignore_paths {
-        let (gitignore, err) = Gitignore::new(ignore_path);
-        if let Some(err) = err {
-            return Err(format!(
-                "Failed to parse ignore file {}: {err}",
-                ignore_path.display()
-            ));
-        }
-        matchers.push(gitignore);
-    }
-
-    if !exclude_patterns.is_empty() {
-        let mut builder = GitignoreBuilder::new(cwd);
-        for pattern in exclude_patterns {
-            if builder.add_line(None, pattern).is_err() {
-                return Err(format!(
-                    "Failed to add ignore pattern `{pattern}` from CLI exclude"
-                ));
-            }
-        }
-        matchers.push(
-            builder
-                .build()
-                .map_err(|_| "Failed to build ignores".to_string())?,
-        );
-    }
-
-    Ok(matchers)
-}
-
+/// Backwards-compatible name for [`core::global_ignore::is_ignored`].
 pub fn is_global_ignored(
     matchers: &[Gitignore],
     path: &Path,
     is_dir: bool,
     check_ancestors: bool,
 ) -> bool {
-    for matcher in matchers {
-        let matched = if check_ancestors {
-            if !path.starts_with(matcher.path()) {
-                continue;
-            }
-            matcher.matched_path_or_any_parents(path, is_dir)
-        } else {
-            matcher.matched(path, is_dir)
-        };
-        if matched.is_ignore() && !matched.is_whitelist() {
-            return true;
-        }
-    }
-    false
+    is_ignored(matchers, path, is_dir, check_ancestors)
 }
 
 pub fn collect_matching_files(
@@ -228,7 +164,31 @@ pub fn collect_matching_files(
     thread_count: usize,
     with_node_modules: bool,
 ) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
-    let mut collected = CollectedFiles::new();
+    collect_matching_files_with(
+        cwd,
+        targets,
+        global_ignore_matchers,
+        thread_count,
+        with_node_modules,
+        |path| FormatFileStrategy::try_from(path.to_path_buf()).is_ok(),
+    )
+}
+
+/// Like [`collect_matching_files`], but uses `is_supported` to decide which
+/// paths are formatting targets. This lets callers include files resolved by
+/// config `associations` (e.g. a custom extension mapped to `html`).
+pub fn collect_matching_files_with<F>(
+    cwd: &Path,
+    targets: &FormatTargets,
+    global_ignore_matchers: &[Gitignore],
+    thread_count: usize,
+    with_node_modules: bool,
+    is_supported: F,
+) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>>
+where
+    F: Fn(&Path) -> bool,
+{
+    let mut collected = CollectedFiles::new(&is_supported as &dyn Fn(&Path) -> bool);
 
     let mut initial_targets: HashSet<PathBuf> = targets.paths.iter().cloned().collect();
     if !targets.glob_patterns.is_empty() {
@@ -278,7 +238,7 @@ fn collect_walked_files(
     glob_matcher: Option<&GlobMatcher>,
     thread_count: usize,
     with_node_modules: bool,
-    collected: &mut CollectedFiles,
+    collected: &mut CollectedFiles<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let Some(first_path) = walk_targets.first() else {
         return Ok(());
@@ -340,7 +300,7 @@ fn collect_package_module_files(
     walk_targets: &[PathBuf],
     global_ignore_matchers: &[Gitignore],
     glob_matcher: Option<&GlobMatcher>,
-    collected: &mut CollectedFiles,
+    collected: &mut CollectedFiles<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     for target in walk_targets {
         find_package_module_dirs(target, global_ignore_matchers, glob_matcher, collected)?;
@@ -352,7 +312,7 @@ fn find_package_module_dirs(
     dir: &Path,
     global_ignore_matchers: &[Gitignore],
     glob_matcher: Option<&GlobMatcher>,
-    collected: &mut CollectedFiles,
+    collected: &mut CollectedFiles<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if is_global_ignored(global_ignore_matchers, dir, true, true) {
         return Ok(());
@@ -380,7 +340,7 @@ fn collect_manual_dir(
     dir: &Path,
     global_ignore_matchers: &[Gitignore],
     glob_matcher: Option<&GlobMatcher>,
-    collected: &mut CollectedFiles,
+    collected: &mut CollectedFiles<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if is_global_ignored(global_ignore_matchers, dir, true, true) {
         return Ok(());
@@ -472,17 +432,6 @@ fn is_package_module_dir(dir_name: &OsStr) -> bool {
     dir_name == OsStr::new(NODE_MODULES_DIR) || dir_name == OsStr::new(OH_MODULES_DIR)
 }
 
-fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
-    if path.is_absolute() {
-        return path.to_path_buf();
-    }
-    if let Ok(stripped) = path.strip_prefix("./") {
-        cwd.join(stripped)
-    } else {
-        cwd.join(path)
-    }
-}
-
 fn normalize_path(path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
     Ok(path
         .canonicalize()
@@ -506,7 +455,8 @@ mod tests {
     };
 
     use super::{
-        FormatTargets, build_global_ignore_matchers, collect_matching_files, resolve_ignore_paths,
+        FormatTargets, build_global_ignore_matchers, collect_matching_files,
+        collect_matching_files_with, resolve_ignore_paths,
     };
 
     static NEXT_TEST_DIR_ID: AtomicU64 = AtomicU64::new(0);
@@ -628,6 +578,32 @@ mod tests {
                 "node_modules/pkg/index.ts",
                 "oh_modules/pkg/index.ts"
             ]
+        );
+    }
+
+    #[test]
+    fn collect_matching_files_with_can_include_association_targets() {
+        let dir = TestDir::new("associations");
+        fs::write(dir.join("page.wxml"), "<view />\n").expect("wxml should be written");
+        fs::write(dir.join("main.ts"), "const a=1\n").expect("ts should be written");
+
+        let targets = FormatTargets::new(dir.path(), &[".".to_string()], &[]);
+
+        // Built-in classification skips the custom extension.
+        let files = collect_matching_files(dir.path(), &targets, &[], 1, false)
+            .expect("files should collect");
+        assert_eq!(relative_files(files, dir.path()), vec!["main.ts"]);
+
+        // An association-aware predicate opts it in.
+        let files =
+            collect_matching_files_with(dir.path(), &targets, &[], 1, false, |path: &Path| {
+                path.extension().and_then(|ext| ext.to_str()) == Some("wxml")
+                    || crate::FormatFileStrategy::try_from(path.to_path_buf()).is_ok()
+            })
+            .expect("files should collect");
+        assert_eq!(
+            relative_files(files, dir.path()),
+            vec!["main.ts", "page.wxml"]
         );
     }
 }

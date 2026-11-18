@@ -18,10 +18,15 @@ mod external_formatter;
 pub use config::{
     ConfigResolver, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
 };
+pub use core::config::{ConfigScopes, NestedConfigCtx, ResolveOutcome, config_discovery};
+#[cfg(feature = "napi")]
+pub use core::config::{JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader};
+#[cfg(not(target_family = "wasm"))]
+pub use core::global_ignore::is_ignored;
 #[cfg(not(target_family = "wasm"))]
 pub use discovery::{
-    FormatTargets, build_global_ignore_matchers, collect_matching_files, is_global_ignored,
-    resolve_ignore_paths,
+    FormatTargets, build_global_ignore_matchers, collect_matching_files,
+    collect_matching_files_with, is_global_ignored, resolve_ignore_paths,
 };
 pub use format::{FormatResult, SourceFormatter};
 #[cfg(not(target_family = "wasm"))]
