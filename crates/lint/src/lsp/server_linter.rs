@@ -11,8 +11,8 @@ use tower_lsp_server::gen_lsp_types::{
 use tower_lsp_server::{
     gen_lsp_types::{
         Code, CodeActionKind, CodeActionOptions, CodeActionProvider, CodeActionResponse,
-        Diagnostic, DiagnosticSeverity, ExecuteCommandOptions, Pattern, Range, ServerCapabilities,
-        Uri, WorkDoneProgressOptions, WorkspaceEdit,
+        Diagnostic, DiagnosticSeverity, ExecuteCommandOptions, MessageType, Pattern, Range,
+        ServerCapabilities, Uri, WorkDoneProgressOptions, WorkspaceEdit,
     },
     jsonrpc::ErrorCode,
 };
@@ -25,8 +25,8 @@ use oxc_linter::{
 };
 
 use oxc_language_server::{
-    Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument, Tool,
-    ToolBuilder, ToolRestartChanges,
+    Capabilities, ClientMessage, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument,
+    Tool, ToolBuilder, ToolRestartChanges,
 };
 use oxc_span::{ExplicitLanguage, SourceType};
 
@@ -34,6 +34,7 @@ use crate::{
     ArktsLintConfig, arkts,
     config_loader::{
         ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
+        materialize_default_plugins,
     },
     lsp::{
         code_actions::{
@@ -50,7 +51,7 @@ use crate::{
         options::{
             LintOptions as LSPLintOptions, RulesCustomization, Run, UnusedDisableDirectives,
         },
-        utils::range_overlaps,
+        utils::{config_loader_error_to_message, oxc_diagnostic_to_client_message, range_overlaps},
     },
 };
 
@@ -59,6 +60,7 @@ pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
     default_config_path: Option<PathBuf>,
     language: Option<ExplicitLanguage>,
+    js_config_loader: Option<crate::config_loader::JsConfigLoaderCb>,
 }
 
 impl ServerLinterBuilder {
@@ -66,17 +68,23 @@ impl ServerLinterBuilder {
         external_linter: Option<ExternalLinter>,
         default_config_path: Option<PathBuf>,
         language: Option<ExplicitLanguage>,
+        js_config_loader: Option<crate::config_loader::JsConfigLoaderCb>,
     ) -> Self {
         Self {
             external_linter,
             default_config_path,
             language,
+            js_config_loader,
         }
     }
 
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerLinter {
+    pub fn build(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> (ServerLinter, Vec<ClientMessage>) {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -89,13 +97,19 @@ impl ServerLinterBuilder {
         let root_path = uri_to_file_path(root_uri).unwrap();
         let mut external_linter = self.external_linter.as_ref();
         let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
+        // Create a set for config errors, because if the main config fails to load,
+        // the same error might occur again.
+        let mut client_messages = FxHashSet::default();
 
         // Setup JS workspace. This must be done before loading any configs
         if let Some(external_linter) = external_linter {
             let res = (external_linter.create_workspace)(root_uri.as_str().to_string());
 
             if let Err(err) = res {
-                error!("Failed to setup JS workspace:\n{err}\n");
+                client_messages.insert(ClientMessage {
+                    message: format!("Failed to setup JS workspace:\n{err}\n"),
+                    r#type: MessageType::Error,
+                });
             }
         }
 
@@ -110,21 +124,24 @@ impl ServerLinterBuilder {
             &mut external_plugin_store,
             &[],
             Some(root_uri.as_str()),
-        );
+        )
+        .with_js_config_loader(self.js_config_loader.as_ref());
 
-        let (oxlintrc, arkts_config) = match loader
+        let (mut oxlintrc, arkts_config) = match loader
             .load_root_config_with_arkts_ancestor_search(&root_path, config_path.as_ref())
         {
             Ok(config) => config,
             Err(e) => {
                 warn!("Failed to load config: {e}");
+                client_messages.insert(oxc_diagnostic_to_client_message(&e));
                 (Oxlintrc::default(), ArktsLintConfig::default())
             }
         };
+        materialize_default_plugins(&mut oxlintrc);
 
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
-        let nested_configs = if options.use_nested_configs() {
+        let (nested_configs, nested_client_messages) = if options.use_nested_configs() {
             self.create_nested_configs(
                 &root_path,
                 &oxlintrc.path,
@@ -134,22 +151,29 @@ impl ServerLinterBuilder {
                 Some(root_uri.as_str()),
             )
         } else {
-            FxHashMap::default()
+            (FxHashMap::default(), Vec::new())
         };
+        client_messages.extend(nested_client_messages);
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
         let base_ignore_root = oxlintrc.dir().unwrap_or(&root_path).to_path_buf();
 
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
-            false,
-            oxlintrc,
+        let config_builder = match ConfigLoader::new(
             external_linter,
             &mut external_plugin_store,
+            &[],
             Some(root_uri.as_str()),
-        ) {
+        )
+        .with_js_config_loader(self.js_config_loader.as_ref())
+        .create_config_builder(oxlintrc)
+        {
             Ok(builder) => builder,
             Err(e) => {
                 warn!("Failed to build config from oxlintrc: {e}");
+                client_messages.insert(ClientMessage {
+                    message: format!("Failed to build config from oxlintrc:\n{e}"),
+                    r#type: MessageType::Error,
+                });
                 ConfigStoreBuilder::default()
             }
         };
@@ -256,7 +280,7 @@ impl ServerLinterBuilder {
             }
         };
 
-        ServerLinter::new(
+        let linter = ServerLinter::new(
             options.run,
             root_path.to_path_buf(),
             LintIgnoreMatcher::new(&base_patterns, &base_ignore_root, nested_ignore_patterns),
@@ -269,7 +293,8 @@ impl ServerLinterBuilder {
             arkts_config,
             config_path,
             source_type,
-        )
+        );
+        (linter, client_messages.into_iter().collect())
     }
 }
 
@@ -322,9 +347,10 @@ impl ToolBuilder for ServerLinterBuilder {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> oxc_language_server::ToolBuildResult {
+        let (tool, client_messages) = self.build(root_uri, options);
         oxc_language_server::ToolBuildResult {
-            tool: Box::new(self.build(root_uri, options)),
-            client_messages: vec![],
+            tool: Box::new(tool),
+            client_messages,
         }
     }
 
@@ -356,7 +382,7 @@ impl ServerLinterBuilder {
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
-    ) -> FxHashMap<PathBuf, Config> {
+    ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>) {
         let config_paths = discover_configs_in_tree(root_path, base_config_path);
 
         let mut loader = ConfigLoader::new(
@@ -364,19 +390,26 @@ impl ServerLinterBuilder {
             external_plugin_store,
             &[],
             workspace_uri,
-        );
+        )
+        .with_js_config_loader(self.js_config_loader.as_ref());
 
         let (configs, errors) = loader.load_discovered_with_root_dir(root_path, config_paths);
 
-        for error in errors {
-            if let Some(path) = error.path() {
-                warn!("Skipping config file {}: {:?}", path.display(), error);
-            } else {
-                warn!("Skipping config file: {:?}", error);
-            }
-        }
+        let client_messages = errors
+            .into_iter()
+            .map(|error| {
+                warn!("Skipping config file: {error:?}");
+                ClientMessage {
+                    message: config_loader_error_to_message(error),
+                    r#type: MessageType::Warning,
+                }
+            })
+            .collect();
 
-        build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths))
+        (
+            build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths)),
+            client_messages,
+        )
     }
 
     #[expect(clippy::filetype_is_file)]
@@ -580,7 +613,8 @@ impl Tool for ServerLinter {
             return Ok(None);
         }
 
-        let actions = self.get_code_actions_for_uri(&uri, Some(CodeActionTriggerKind::Invoked));
+        let actions =
+            self.get_code_actions_for_uri(&uri, Some(CodeActionTriggerKind::Invoked), None);
 
         let Some(actions) = actions else {
             return Ok(None);
@@ -610,7 +644,8 @@ impl Tool for ServerLinter {
         let uri = &params.uri;
         let range = &params.range;
         let context = &params.context;
-        let actions = self.get_code_actions_for_uri(uri, context.trigger_kind);
+        let actions =
+            self.get_code_actions_for_uri(uri, context.trigger_kind, params.document_version);
 
         let Some(actions) = actions else {
             return vec![];
@@ -771,6 +806,7 @@ impl ServerLinter {
         &self,
         uri: &Uri,
         trigger_kind: Option<CodeActionTriggerKind>,
+        document_version: Option<i32>,
     ) -> Option<Vec<LinterCodeAction>> {
         if let Some(cached_code_actions) = self.code_actions.pin().get(uri) {
             cached_code_actions.clone()
@@ -778,7 +814,9 @@ impl ServerLinter {
         // only run linting and generate code actions when the code action is explicitly invoked,
         // otherwise it will be too heavy to run linting on every file open or cursor move, which will cause performance issues and a bad user experience.
         // It is most likely that the client already sent a request, where we run the lint process and cache the code actions.
-        else if trigger_kind == Some(CodeActionTriggerKind::Invoked) {
+        // So we only run the lint process when the code action is explicitly invoked and the file is not open in the editor.
+        else if trigger_kind == Some(CodeActionTriggerKind::Invoked) && document_version.is_none()
+        {
             let _ = self.run_file(uri, None);
             self.code_actions
                 .pin()
@@ -1089,7 +1127,9 @@ mod tests {
 
         let root_uri = oxc_language_server::uri_utils::file_path_to_uri(&root).unwrap();
         let file_uri = oxc_language_server::uri_utils::file_path_to_uri(&file_path).unwrap();
-        let linter = ServerLinterBuilder::new(None, None, None).build(&root_uri, json!({}));
+        let linter = ServerLinterBuilder::new(None, None, None, None)
+            .build(&root_uri, json!({}))
+            .0;
         let document = TextDocument::new(
             &file_uri,
             LanguageId::new("typescript".to_string()),

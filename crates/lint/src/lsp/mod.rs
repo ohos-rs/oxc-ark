@@ -4,6 +4,8 @@ use oxc_language_server::{WorkerManager, run_server};
 use oxc_linter::ExternalLinter;
 use oxc_span::ExplicitLanguage;
 
+use crate::config_loader::JsConfigLoaderCb;
+
 mod code_actions;
 mod commands;
 mod error_with_position;
@@ -18,6 +20,7 @@ pub async fn run_lsp(
     external_linter: Option<ExternalLinter>,
     config_path: Option<PathBuf>,
     language: Option<ExplicitLanguage>,
+    js_config_loader: Option<JsConfigLoaderCb>,
 ) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
@@ -33,6 +36,7 @@ pub async fn run_lsp(
             external_linter,
             config_path,
             language,
+            js_config_loader,
         ))),
     )
     .await;

@@ -34,7 +34,7 @@ const BLOCK_ALIGN: usize = 4_294_967_296;
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 const BUFFER_SIZE: usize = 2_147_483_576;
 
-fn block_on_napi<F: Future>(future: F) -> F::Output {
+pub(crate) fn block_on_napi<F: Future>(future: F) -> F::Output {
     if let Ok(handle) = tokio::runtime::Handle::try_current() {
         return tokio::task::block_in_place(|| handle.block_on(future));
     }
@@ -102,7 +102,7 @@ pub async fn lint_args_with_plugins(
     lint_file: JsLintFileCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
-    _load_js_configs: JsLoadJsConfigsCb,
+    load_js_configs: JsLoadJsConfigsCb,
 ) -> bool {
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
     let command = match parse_lint_command(&args) {
@@ -119,10 +119,16 @@ pub async fn lint_args_with_plugins(
         create_workspace,
         destroy_workspace,
     );
+    let js_config_loader = crate::js_config::create_js_config_loader(load_js_configs);
 
     if command.lsp {
         let config_path = command.basic_options.config.clone().map(resolve_from_cwd);
-        return run_lsp_server(Some(external_linter), config_path, command.lang);
+        return run_lsp_server(
+            Some(external_linter),
+            config_path,
+            command.lang,
+            Some(js_config_loader),
+        );
     }
 
     let prepared = match prepare_arkts_config(args) {
@@ -140,7 +146,12 @@ pub async fn lint_args_with_plugins(
 
     handle_threads_once(&command);
 
-    run_lint_command(command, prepared.arkts, Some(external_linter))
+    run_lint_command(
+        command,
+        prepared.arkts,
+        Some(external_linter),
+        Some(js_config_loader),
+    )
 }
 
 fn create_external_linter(
@@ -338,10 +349,11 @@ fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWork
             ));
         }
 
-        match rx.recv() {
-            Ok(Ok(())) => Ok(()),
+        match rx.recv_timeout(std::time::Duration::from_secs(5)) {
+            // Destroying workspace succeeded, or JS side did not respond in time.
+            // Use a timeout to prevent blocking indefinitely during shutdown.
+            Ok(Ok(())) | Err(_) => Ok(()),
             Ok(Err(err)) => Err(format!("`destroyWorkspace` threw an error: {err}")),
-            Err(err) => Err(format!("`destroyWorkspace` did not respond: {err}")),
         }
     }))
 }

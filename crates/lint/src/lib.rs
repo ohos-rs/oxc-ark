@@ -14,6 +14,8 @@ use serde_json::Value;
 
 mod arkts;
 mod config_loader;
+#[cfg(feature = "napi")]
+mod js_config;
 mod lsp;
 mod mode;
 #[cfg(feature = "napi")]
@@ -45,7 +47,7 @@ pub fn lint_args(args: Vec<OsString>) -> bool {
 
     if command.lsp {
         let config_path = command.basic_options.config.clone().map(resolve_from_cwd);
-        return run_lsp_server(None, config_path, command.lang);
+        return run_lsp_server(None, config_path, command.lang, None);
     }
 
     let prepared = match prepare_arkts_config(args) {
@@ -63,7 +65,7 @@ pub fn lint_args(args: Vec<OsString>) -> bool {
 
     handle_threads_once(&command);
 
-    run_lint_command(command, prepared.arkts, None)
+    run_lint_command(command, prepared.arkts, None, None)
 }
 
 pub(crate) fn parse_lint_command(args: &[OsString]) -> Result<LintCommand, bool> {
@@ -441,15 +443,22 @@ fn run_lint_command(
     command: LintCommand,
     arkts_config: ArktsLintConfig,
     external_linter: Option<ExternalLinter>,
+    js_config_loader: Option<config_loader::JsConfigLoaderCb>,
 ) -> bool {
     let mut stdout = BufWriter::new(std::io::stdout());
-    is_success(runner::OxkLintRunner::new(command, arkts_config, external_linter).run(&mut stdout))
+    let mut stderr = BufWriter::new(std::io::stderr());
+    is_success(
+        runner::OxkLintRunner::new(command, arkts_config, external_linter)
+            .with_config_loader(js_config_loader)
+            .run(&mut stdout, &mut stderr),
+    )
 }
 
 pub(crate) fn run_lsp_server(
     external_linter: Option<ExternalLinter>,
     config_path: Option<PathBuf>,
     language: Option<oxc_span::ExplicitLanguage>,
+    js_config_loader: Option<config_loader::JsConfigLoaderCb>,
 ) -> bool {
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .worker_threads(1)
@@ -463,7 +472,12 @@ pub(crate) fn run_lsp_server(
         }
     };
 
-    runtime.block_on(lsp::run_lsp(external_linter, config_path, language));
+    runtime.block_on(lsp::run_lsp(
+        external_linter,
+        config_path,
+        language,
+        js_config_loader,
+    ));
     true
 }
 

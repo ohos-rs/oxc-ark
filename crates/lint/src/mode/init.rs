@@ -2,15 +2,50 @@
 // Copyright (c) Oxc project contributors.
 // Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
 
-use std::{fs, path::Path};
+use std::{
+    fs,
+    io::{self, ErrorKind, Write},
+    path::Path,
+};
 
+use oxc_config::ConfigDiscovery;
 use serde_json::json;
 
 use oxlint::cli::CliRunResult;
 
-use crate::{DEFAULT_OXLINTRC_NAME, runner::print_and_flush_stdout, schema};
+use crate::{
+    DEFAULT_OXLINTRC_NAME,
+    runner::{print_and_flush_stderr, print_and_flush_stdout},
+    schema,
+};
 
-pub fn run_init(cwd: &Path, stdout: &mut dyn std::io::Write) -> CliRunResult {
+pub fn run_init(cwd: &Path, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
+    match create_config(cwd) {
+        Ok(()) => {
+            print_and_flush_stdout(stdout, "Configuration file created\n");
+            CliRunResult::ConfigFileInitSucceeded
+        }
+        Err(error) => {
+            let message = if error.kind() == ErrorKind::AlreadyExists {
+                "Oxlint config file already exists.\nRemove it and re-run.\n"
+            } else {
+                "Failed to create configuration file\n"
+            };
+            print_and_flush_stderr(stderr, message);
+            CliRunResult::ConfigFileInitFailed
+        }
+    }
+}
+
+fn create_config(cwd: &Path) -> io::Result<()> {
+    for name in ConfigDiscovery::oxlint().config_file_names() {
+        match fs::symlink_metadata(cwd.join(name)) {
+            Ok(_) => return Err(ErrorKind::AlreadyExists.into()),
+            Err(error) if error.kind() == ErrorKind::NotFound => {}
+            Err(error) => return Err(error),
+        }
+    }
+
     let mut config = serde_json::Map::new();
 
     config.insert(
@@ -28,11 +63,5 @@ pub fn run_init(cwd: &Path, stdout: &mut dyn std::io::Write) -> CliRunResult {
 
     let configuration = serde_json::to_string_pretty(&serde_json::Value::Object(config)).unwrap();
 
-    if fs::write(cwd.join(DEFAULT_OXLINTRC_NAME), configuration).is_ok() {
-        print_and_flush_stdout(stdout, "Configuration file created\n");
-        return CliRunResult::ConfigFileInitSucceeded;
-    }
-
-    print_and_flush_stdout(stdout, "Failed to create configuration file\n");
-    CliRunResult::ConfigFileInitFailed
+    fs::File::create_new(cwd.join(DEFAULT_OXLINTRC_NAME))?.write_all(configuration.as_bytes())
 }

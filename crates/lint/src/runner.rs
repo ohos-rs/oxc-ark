@@ -3,9 +3,7 @@
 
 use crate::{ArktsLintConfig, arkts};
 use oxc_span::{SourceType, Span};
-use oxlint::cli::{
-    CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
-};
+use oxlint::cli::{CliRunResult, DebugOption, LintCommand, MiscOptions, WarningOptions};
 use std::fs;
 use std::{
     env,
@@ -25,15 +23,14 @@ use oxc_diagnostics::{
     DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
 };
 use oxc_linter::{
-    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
-    LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ExternalLinter, ExternalPluginStore,
+    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
 use crate::{
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
-        materialize_default_plugins,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, LoadedConfigs, config_discovery,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -45,6 +42,7 @@ pub struct OxkLintRunner {
     cwd: PathBuf,
     external_linter: Option<ExternalLinter>,
     arkts_config: crate::ArktsLintConfig,
+    js_config_loader: Option<crate::config_loader::JsConfigLoaderCb>,
 }
 
 impl Debug for OxkLintRunner {
@@ -76,11 +74,22 @@ impl OxkLintRunner {
             arkts_config,
             cwd: env::current_dir().expect("Failed to get current working directory"),
             external_linter,
+            js_config_loader: None,
         }
     }
 
+    /// Attach a loader for JavaScript/TypeScript config files (NAPI mode).
+    #[must_use]
+    pub fn with_config_loader(
+        mut self,
+        config_loader: Option<crate::config_loader::JsConfigLoaderCb>,
+    ) -> Self {
+        self.js_config_loader = config_loader;
+        self
+    }
+
     /// # Panics
-    pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub fn run(self, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let debug_files = self
             .options
@@ -93,6 +102,7 @@ impl OxkLintRunner {
             .debug
             .contains(DebugOption::Timings);
         let output_formatter = OutputFormatter::from_debug_name(&format!("{format_str:?}"));
+        let config_options = self.options.config_options();
 
         let LintCommand {
             paths,
@@ -104,14 +114,13 @@ impl OxkLintRunner {
             enable_plugins,
             misc_options,
             disable_nested_config,
-            inline_config_options,
             suppression_options,
             lang,
             ..
         } = self.options;
 
         if basic_options.init {
-            return crate::mode::run_init(&self.cwd, stdout);
+            return crate::mode::run_init(&self.cwd, stdout, stderr);
         }
 
         let external_linter = self.external_linter.as_ref();
@@ -269,20 +278,25 @@ impl OxkLintRunner {
             !self.options.list_rules &&
             config_discovery().nested_configs();
 
-        let config_result = {
-            let mut config_loader =
-                ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
+        let mut config_loader =
+            ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None)
+                .with_js_config_loader(self.js_config_loader.as_ref());
 
-            config_loader.load_root_and_nested(
-                &self.cwd,
-                basic_options.config.as_ref(),
-                &paths,
-                search_for_nested_configs,
-            )
-        };
+        let config_result = config_loader.load_root_and_nested(
+            &self.cwd,
+            basic_options.config.as_ref(),
+            &paths,
+            search_for_nested_configs,
+            &enable_plugins,
+        );
 
-        let (mut root_config, nested_configs, nested_ignore_patterns) = match config_result {
-            Ok(loaded) => (loaded.root, loaded.nested, loaded.nested_ignore_patterns),
+        let LoadedConfigs {
+            root: root_config,
+            root_builder: config_builder,
+            nested: nested_configs,
+            nested_ignore_patterns,
+        } = match config_result {
+            Ok(loaded) => loaded,
             Err(error) => {
                 match error {
                     CliConfigLoadError::RootConfig(error) => {
@@ -291,6 +305,15 @@ impl OxkLintRunner {
                             &format!(
                                 "Failed to parse oxlint configuration file.\n{}\n",
                                 render_report(&handler, &error)
+                            ),
+                        );
+                    }
+                    CliConfigLoadError::RootConfigBuild(error) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Failed to parse oxlint configuration file.\n{}\n",
+                                render_config_builder_error(&handler, error)
                             ),
                         );
                     }
@@ -333,33 +356,10 @@ impl OxkLintRunner {
             }
         };
 
-        materialize_default_plugins(&mut root_config);
-        let mut plugins = root_config.plugins.unwrap_or_default();
-        enable_plugins.apply_overrides(&mut plugins);
-        root_config.plugins = Some(plugins);
-
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
-            false,
-            root_config.clone(),
-            external_linter,
-            &mut external_plugin_store,
-            None,
-        ) {
-            Ok(builder) => builder,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse oxlint configuration file.\n{}\n",
-                        render_config_builder_error(&handler, e)
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        }
-        .with_filters(&filters);
-
-        let lint_config = match config_builder.build(&mut external_plugin_store) {
+        let lint_config = match config_builder
+            .with_options(&config_options)
+            .build(&mut external_plugin_store)
+        {
             Ok(config) => config,
             Err(e) => {
                 print_and_flush_stdout(
@@ -373,11 +373,7 @@ impl OxkLintRunner {
             }
         };
 
-        if misc_options.print_config {
-            return crate::mode::run_print_config(&lint_config, &external_plugin_store, stdout);
-        }
-
-        if self.options.list_rules {
+        if self.options.list_rules && !misc_options.print_config {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
@@ -394,18 +390,12 @@ impl OxkLintRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        if debug_files {
+        if debug_files && !misc_options.print_config {
             return crate::mode::run_debug_files(
                 files_to_lint.iter().map(|path| Path::new(path.as_ref())),
                 &self.cwd,
                 stdout,
             );
-        }
-
-        // If no external rules, discard `ExternalLinter`
-        let mut external_linter = self.external_linter;
-        if external_plugin_store.is_empty() {
-            external_linter = None;
         }
 
         // TODO(refactor): pull this into a shared function, so that the language server can use
@@ -414,25 +404,11 @@ impl OxkLintRunner {
             || nested_configs
                 .values()
                 .any(|config| config.plugins().has_import());
-        let mut options =
-            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
-        if let Some(language) = lang {
-            options = options.with_source_type(language.source_type());
-        }
-
-        let mut suppression_manager = SuppressionManager::load(
-            options.cwd(),
-            "oxlint-suppressions.json",
-            suppression_options.suppress_all,
-            suppression_options.prune_suppressions || fix_options.is_enabled(),
-        );
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_check_only = self.options.type_check_only;
-        let type_aware =
-            type_check_only || self.options.type_aware || config_store.type_aware_enabled();
-        let type_check =
-            type_check_only || self.options.type_check || config_store.type_check_enabled();
+        let type_aware = config_store.type_aware_enabled();
+        let type_check = config_store.type_check_enabled();
         if type_check && !type_aware {
             print_and_flush_stdout(
                 stdout,
@@ -456,25 +432,37 @@ impl OxkLintRunner {
             );
             return CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate;
         }
-        let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
-        let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
+
+        if misc_options.print_config {
+            return crate::mode::run_print_config(&config_store, stdout);
+        }
+
+        // If no external rules, discard `ExternalLinter`
+        let mut external_linter = self.external_linter;
+        if config_store.external_plugin_store().is_empty() {
+            external_linter = None;
+        }
+
+        let mut options =
+            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+        if let Some(language) = lang {
+            options = options.with_source_type(language.source_type());
+        }
+
+        let mut suppression_manager = SuppressionManager::load(
+            options.cwd(),
+            "oxlint-suppressions.json",
+            suppression_options.suppress_all,
+            suppression_options.prune_suppressions || fix_options.is_enabled(),
+        );
+
+        let deny_warnings = config_store.deny_warnings();
+        let max_warnings = config_store.max_warnings();
 
         // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
-        let report_unused_directives = if type_check_only {
-            None
-        } else {
-            match inline_config_options.report_unused_directives {
-                ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-                ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
-                    Some(severity)
-                }
-                ReportUnusedDirectives::WithSeverity(Some(_)) => None,
-                _ => match config_store.report_unused_disable_directives() {
-                    Some(severity) if severity.is_warn_deny() => Some(severity),
-                    _ => None,
-                },
-            }
-        };
+        let report_unused_directives = config_store
+            .report_unused_disable_directives()
+            .filter(|severity| severity.is_warn_deny());
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
             &warning_options,
@@ -567,49 +555,82 @@ impl OxkLintRunner {
         let diff_manager = suppression_manager.build_diff();
 
         let rule_timing_store = debug_timings.then(RuleTimingStore::new);
-        let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
-            lint_runner.lint_files::<true>(
-                &files_to_lint,
-                tx_error.clone(),
-                &diff_manager,
-                Some(rule_timing_store),
-            )
-        } else {
-            lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
-        };
+        let arkts_source_type = lang.map(|language| language.source_type());
 
-        match lint_result {
-            Ok(lint_runner) => {
-                lint_runner.report_unused_directives(report_unused_directives, &tx_error);
-            }
-            Err(err) => {
+        // Lint on a separate thread, and render the diagnostics on this thread while linting runs.
+        // When there are many diagnostics, rendering them after linting would take a large part
+        // of the run time, with all the lint threads idle.
+        // The diagnostics are rendered into a buffer, and the buffer is written to `stdout` only
+        // after linting finishes. So output that JS plugins or `tsgolint` print during linting
+        // does not appear between the diagnostics, and a `tsgolint` failure prints only its error.
+        let (lint_result, diagnostic_result, rendered) = std::thread::scope(|scope| {
+            let lint_thread =
+                scope.spawn(|| -> Result<Result<(), OxcDiagnostic>, LintThreadFailure> {
+                    let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
+                        lint_runner.lint_files::<true>(
+                            &files_to_lint,
+                            tx_error.clone(),
+                            &diff_manager,
+                            Some(rule_timing_store),
+                        )
+                    } else {
+                        lint_runner.lint_files::<false>(
+                            &files_to_lint,
+                            tx_error.clone(),
+                            &diff_manager,
+                            None,
+                        )
+                    };
+                    let lint_runner =
+                        lint_result.map_err(|err| LintThreadFailure::TsGoLint(err.to_string()))?;
+                    lint_runner.report_unused_directives(report_unused_directives, &tx_error);
+
+                    // A suppression file can contain regular lint rules that were not run in
+                    // type-check-only mode, so its runtime diff is incomplete and cannot be used to
+                    // validate the baseline.
+                    let result = if type_check_only {
+                        Ok(())
+                    } else {
+                        suppression_manager.finalize(diff_manager, &tx_error, &cwd)
+                    };
+
+                    if let Err(err) = Self::lint_arkts_files(
+                        &cwd,
+                        &self.arkts_config,
+                        &files_to_lint,
+                        &tx_error,
+                        arkts_source_type,
+                    ) {
+                        return Err(LintThreadFailure::ArkTs(err));
+                    }
+
+                    // Close the channel, so that `diagnostic_service.run` returns.
+                    drop(tx_error);
+                    Ok(result)
+                });
+
+            let mut rendered = Vec::new();
+            let diagnostic_result = diagnostic_service.run(&mut rendered);
+            let lint_result = lint_thread
+                .join()
+                .unwrap_or_else(|payload| std::panic::resume_unwind(payload));
+            (lint_result, diagnostic_result, rendered)
+        });
+
+        let result = match lint_result {
+            Ok(result) => result,
+            Err(LintThreadFailure::TsGoLint(err)) => {
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
                 return CliRunResult::TsGoLintError;
             }
-        }
-
-        // A suppression file can contain regular lint rules that were not run in type-check-only
-        // mode, so its runtime diff is incomplete and cannot be used to validate the baseline.
-        let result = if type_check_only {
-            Ok(())
-        } else {
-            suppression_manager.finalize(diff_manager, &tx_error, &cwd)
+            Err(LintThreadFailure::ArkTs(err)) => {
+                print_and_flush_stdout(stdout, &format!("{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
         };
+        write_and_flush(stdout, &rendered);
+
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
-
-        if let Err(err) = Self::lint_arkts_files(
-            &cwd,
-            &self.arkts_config,
-            &files_to_lint,
-            &tx_error,
-            lang.map(|language| language.source_type()),
-        ) {
-            print_and_flush_stdout(stdout, &format!("{err}\n"));
-            return CliRunResult::InvalidOptionConfig;
-        }
-        drop(tx_error);
-
-        let diagnostic_result = diagnostic_service.run(stdout);
 
         let oxlint_suppression_file_action = if let Err(report_suppression_error) = result {
             OxlintSuppressionFileAction::UnableToPerformFsOperation(report_suppression_error)
@@ -658,6 +679,14 @@ impl OxkLintRunner {
             CliRunResult::LintSucceeded
         }
     }
+}
+
+/// Failure that occurred on the linting thread while diagnostics were being rendered.
+enum LintThreadFailure {
+    /// The `oxlint` lint runner (or `tsgolint`) failed.
+    TsGoLint(String),
+    /// ArkTS linting failed.
+    ArkTs(String),
 }
 
 impl OxkLintRunner {
@@ -808,11 +837,18 @@ impl OxkLintRunner {
 }
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
-    stdout
-        .write_all(message.as_bytes())
+    write_and_flush(stdout, message.as_bytes());
+}
+
+pub fn print_and_flush_stderr(stderr: &mut dyn Write, message: &str) {
+    write_and_flush(stderr, message.as_bytes());
+}
+
+fn write_and_flush(out: &mut dyn Write, bytes: &[u8]) {
+    out.write_all(bytes)
         .or_else(check_for_writer_error)
         .unwrap();
-    stdout.flush().or_else(check_for_writer_error).unwrap();
+    out.flush().or_else(check_for_writer_error).unwrap();
 }
 
 fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {

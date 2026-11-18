@@ -139,8 +139,11 @@ fn format_gitlab(diagnostics: &mut Vec<Error>, repo_path_prefix: Option<&Path>) 
         let fingerprint = {
             let mut hasher = DefaultHasher::new();
             start.line.hash(&mut hasher);
+            start.column.hash(&mut hasher);
             end.line.hash(&mut hasher);
+            end.column.hash(&mut hasher);
             filename.hash(&mut hasher);
+            rule_id.hash(&mut hasher);
             message.hash(&mut hasher);
             severity.hash(&mut hasher);
 
@@ -182,4 +185,42 @@ fn format_gitlab(diagnostics: &mut Vec<Error>, repo_path_prefix: Option<&Path>) 
     });
 
     serde_json::to_string_pretty(&errors.collect::<Vec<_>>()).expect("Failed to serialize")
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
+    use oxc_span::Span;
+
+    use super::format_gitlab;
+
+    #[test]
+    fn format_gitlab_unique_fingerprints() {
+        let source = "foo(null, null);";
+        let diagnostic = |rule_name: &'static str, span: Span| -> Error {
+            OxcDiagnostic::warn("Do not use `null` literals")
+                .with_error_code("unicorn", rule_name)
+                .with_label(span)
+                .with_source_code(NamedSource::new("example.ts", source))
+        };
+
+        let mut diagnostics: Vec<Error> = vec![
+            diagnostic("no-null", Span::new(4, 8)),
+            diagnostic("no-null", Span::new(10, 14)),
+            diagnostic("other-rule", Span::new(10, 14)),
+        ];
+
+        let result = format_gitlab(&mut diagnostics, None);
+        let json: serde_json::Value = serde_json::from_str(&result).unwrap();
+        let fingerprints = json
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value["fingerprint"].as_str().unwrap())
+            .collect::<Vec<_>>();
+
+        assert_eq!(fingerprints.len(), 3);
+        assert_ne!(fingerprints[0], fingerprints[1]);
+        assert_ne!(fingerprints[1], fingerprints[2]);
+    }
 }
