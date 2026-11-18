@@ -54,7 +54,7 @@ fn format_github(diagnostic: &Error) -> String {
     } = Info::new(diagnostic);
     let severity = match severity {
         Severity::Error => "error",
-        Severity::Warning | miette::Severity::Advice => "warning",
+        Severity::Warning | Severity::Advice => "warning",
     };
     let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
     let filename = escape_property(&filename);
@@ -62,7 +62,7 @@ fn format_github(diagnostic: &Error) -> String {
     if filename.is_empty() {
         let severity = match diagnostic.severity() {
             Some(Severity::Error) | None => "error",
-            Some(Severity::Warning | miette::Severity::Advice) => "warning",
+            Some(Severity::Warning | Severity::Advice) => "warning",
         };
         let message = diagnostic.to_string();
         let message = escape_data(&message);

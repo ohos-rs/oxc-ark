@@ -1,8 +1,6 @@
 #[cfg(feature = "napi")]
 use std::future::Future;
 #[cfg(feature = "napi")]
-use std::path::Path;
-#[cfg(feature = "napi")]
 use std::sync::Arc;
 
 #[cfg(feature = "napi")]
@@ -10,6 +8,13 @@ use napi::{
     Status,
     bindgen_prelude::{FnArgs, Promise, block_on},
     threadsafe_function::ThreadsafeFunction,
+};
+#[cfg(feature = "napi")]
+use oxc_allocator::Vec as ArenaVec;
+#[cfg(feature = "napi")]
+use oxc_formatter_core::{
+    DispatchResponse, EmbeddedIr, FormatDispatcher, IndentWidth, SessionServices, StringEmbedder,
+    push_text_with_literal_lines,
 };
 #[cfg(feature = "napi")]
 use serde_json::Value;
@@ -142,25 +147,59 @@ impl ExternalFormatter {
         (self.init)(num_threads)
     }
 
-    /// Convert this external formatter to oxc_formatter::ExternalCallbacks.
-    /// Path, format_options and options are captured for embedded formatting.
-    pub fn to_external_callbacks(
+    /// Build the `SessionServices` installed on a root [`oxc_formatter_core::FormatSession`].
+    ///
+    /// Embedded formatting is a host-level switch upstream now (it is no longer a
+    /// `JsFormatOptions` field): when disabled, a service-less object is returned so the
+    /// formatter prints embedded languages verbatim. When enabled, the JS callbacks are
+    /// exposed through the IR dispatcher (template-literal embeds) and the string embedder
+    /// (JSDoc code fences).
+    pub fn to_session_services(
         &self,
-        _path: &Path,
-        _format_options: &oxc_formatter::JsFormatOptions,
+        embedded_language_formatting: bool,
         options: Value,
-    ) -> oxc_formatter::ExternalCallbacks {
+        indent_width: IndentWidth,
+    ) -> SessionServices {
+        if !embedded_language_formatting {
+            return SessionServices::default();
+        }
+
         let format_embedded = Arc::clone(&self.format_embedded);
-        let embedded_cb: oxc_formatter::EmbeddedFormatterCallback =
-            Arc::new(move |language: &str, code: &str| {
+        let dispatcher_options = options.clone();
+        let dispatcher: FormatDispatcher = Arc::new(move |session, request| {
+            let Some(parser_name) = language_to_prettier_parser(request.language) else {
+                return Ok(DispatchResponse::PreserveOriginal);
+            };
+            let formatted = match (format_embedded)(&dispatcher_options, parser_name, request.text)
+            {
+                Ok(formatted) => formatted,
+                // Recoverable formatter failures keep the original source, like upstream's
+                // `PreserveOriginal` answer for an unsupported/failed child.
+                Err(_) => return Ok(DispatchResponse::PreserveOriginal),
+            };
+            let formatted = formatted.trim_end_matches(['\n', '\r']);
+            let allocator = session.allocator();
+            let text = allocator.alloc_str(formatted);
+            let mut ir = ArenaVec::new_in(&allocator);
+            push_text_with_literal_lines(&mut ir, text, indent_width);
+            Ok(DispatchResponse::Formatted(EmbeddedIr { ir }))
+        });
+
+        let string_embedder: StringEmbedder = {
+            let format_embedded = Arc::clone(&self.format_embedded);
+            Arc::new(move |language: &str, code: &str, _width: usize| {
                 let Some(parser_name) = language_to_prettier_parser(language) else {
                     return Err(format!("Unsupported language: {language}"));
                 };
                 (format_embedded)(&options, parser_name, code)
-            });
-        oxc_formatter::ExternalCallbacks::new()
-            .with_embedded_formatter(Some(embedded_cb))
-            .with_tailwind(None)
+            })
+        };
+
+        SessionServices {
+            dispatcher: Some(dispatcher),
+            string_embedder: Some(string_embedder),
+            tailwind_sorter: None,
+        }
     }
 
     /// Format non-js file using the JS callback.
@@ -180,6 +219,13 @@ impl ExternalFormatter {
 /// Map oxc_formatter embedded language tags to Prettier parser names.
 fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
     match language {
+        // Current dispatcher vocabulary (oxc 0.159).
+        "css" => Some("css"),
+        "graphql" => Some("graphql"),
+        "html" => Some("html"),
+        "angular-html" | "angular" => Some("angular"),
+        "markdown" => Some("markdown"),
+        // Legacy tags kept for the JSDoc string channel.
         "tagged-css" | "styled-jsx" => Some("css"),
         "tagged-graphql" => Some("graphql"),
         "tagged-html" => Some("html"),

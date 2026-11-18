@@ -9,6 +9,8 @@ use std::{
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16Converter, walk};
+#[cfg(feature = "napi")]
+use oxc_linter::LintFileOutput;
 use oxc_linter::LintFileResult;
 #[cfg(feature = "napi")]
 use oxc_linter::{
@@ -1019,6 +1021,7 @@ fn lint_file_callback(
               options_ids,
               settings_json,
               globals_json,
+              collect_timings,
               workspace_uri,
               allocator| {
             let (delegate_rules, delegate_options, delegate_rule_indices) = {
@@ -1027,19 +1030,24 @@ fn lint_file_callback(
             };
 
             let mut diagnostics = Vec::new();
+            let mut timings = None;
             if !delegate_rules.is_empty() {
                 let Some(delegate) = &delegate else {
-                    return Err(
-                        "JavaScript plugins are not available in this lint runner.".to_string()
-                    );
+                    return Err("JavaScript plugins are not available in this lint runner."
+                        .to_string()
+                        .into());
                 };
 
-                let mut delegate_diagnostics = (delegate.lint_file)(
+                let LintFileOutput {
+                    diagnostics: mut delegate_diagnostics,
+                    timings: delegate_timings,
+                } = (delegate.lint_file)(
                     file_path,
                     delegate_rules,
                     delegate_options,
                     settings_json,
                     globals_json,
+                    collect_timings,
                     workspace_uri,
                     allocator,
                 )?;
@@ -1057,9 +1065,13 @@ fn lint_file_callback(
                     diagnostic.rule_index = mapped;
                 }
                 diagnostics.extend(delegate_diagnostics);
+                timings = delegate_timings;
             }
 
-            Ok(diagnostics)
+            Ok(LintFileOutput {
+                diagnostics,
+                timings,
+            })
         },
     ))
 }
@@ -1728,7 +1740,8 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
 
     fn visit_import_declaration(&mut self, it: &ImportDeclaration<'a>) {
         if let Some(active) = self.active.system_api_version
-            && let Some(module) = system_module_name(it.source.value.as_str())
+            && let Some(source) = it.source.value.as_str()
+            && let Some(module) = system_module_name(source)
         {
             self.report_system_api_version(active, module, it.source.span);
         }
@@ -1741,12 +1754,16 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
     }
 
     fn visit_export_named_declaration(&mut self, it: &ExportNamedDeclaration<'a>) {
+        walk::walk_export_named_declaration(self, it);
+    }
+
+    fn visit_export_from_declaration(&mut self, it: &ExportFromDeclaration<'a>) {
         if it.with_clause.is_some()
             && let Some(active) = self.active.no_import_assertions
         {
             self.report(active, it.span);
         }
-        walk::walk_export_named_declaration(self, it);
+        walk::walk_export_from_declaration(self, it);
     }
 
     fn visit_export_all_declaration(&mut self, it: &ExportAllDeclaration<'a>) {
@@ -1924,19 +1941,40 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
         walk::walk_ts_namespace_export_declaration(self, it);
     }
 
-    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
+    fn visit_ts_external_module_declaration(&mut self, it: &TSExternalModuleDeclaration<'a>) {
         if it.declare
             && let Some(active) = self.active.no_ambient_decls
         {
             self.report(active, it.span);
         }
-        if let TSModuleDeclarationName::StringLiteral(lit) = &it.id
-            && lit.value.contains('*')
+        if it
+            .id
+            .value
+            .as_str()
+            .is_some_and(|value| value.contains('*'))
             && let Some(active) = self.active.no_module_wildcards
         {
-            self.report(active, lit.span);
+            self.report(active, it.id.span);
         }
-        walk::walk_ts_module_declaration(self, it);
+        walk::walk_ts_external_module_declaration(self, it);
+    }
+
+    fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
+        if it.declare
+            && let Some(active) = self.active.no_ambient_decls
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_namespace_declaration(self, it);
+    }
+
+    fn visit_ts_global_declaration(&mut self, it: &TSGlobalDeclaration<'a>) {
+        if it.declare
+            && let Some(active) = self.active.no_ambient_decls
+        {
+            self.report(active, it.span);
+        }
+        walk::walk_ts_global_declaration(self, it);
     }
 
     fn visit_spread_element(&mut self, it: &SpreadElement<'a>) {
@@ -2001,24 +2039,28 @@ fn collect_system_api_imports<'a>(body: &[Statement<'a>]) -> HashMap<String, Sys
     for statement in body {
         match statement {
             Statement::ImportDeclaration(declaration) => {
-                collect_system_api_import_declaration(
-                    declaration.source.value.as_str(),
-                    declaration
-                        .specifiers
-                        .as_ref()
-                        .map(|specifiers| specifiers.as_slice()),
-                    &mut imports,
-                );
+                if let Some(source) = declaration.source.value.as_str() {
+                    collect_system_api_import_declaration(
+                        source,
+                        declaration
+                            .specifiers
+                            .as_ref()
+                            .map(|specifiers| specifiers.as_slice()),
+                        &mut imports,
+                    );
+                }
             }
             Statement::LazyImportDeclaration(declaration) => {
-                collect_system_api_import_declaration(
-                    declaration.source.value.as_str(),
-                    declaration
-                        .specifiers
-                        .as_ref()
-                        .map(|specifiers| specifiers.as_slice()),
-                    &mut imports,
-                );
+                if let Some(source) = declaration.source.value.as_str() {
+                    collect_system_api_import_declaration(
+                        source,
+                        declaration
+                            .specifiers
+                            .as_ref()
+                            .map(|specifiers| specifiers.as_slice()),
+                        &mut imports,
+                    );
+                }
             }
             _ => {}
         }
@@ -2078,7 +2120,7 @@ fn module_export_name<'a>(name: &'a ModuleExportName<'a>) -> Option<&'a str> {
     match name {
         ModuleExportName::IdentifierName(identifier) => Some(identifier.name.as_str()),
         ModuleExportName::IdentifierReference(identifier) => Some(identifier.name.as_str()),
-        ModuleExportName::StringLiteral(literal) => Some(literal.value.as_str()),
+        ModuleExportName::StringLiteral(literal) => literal.value.as_str(),
     }
 }
 

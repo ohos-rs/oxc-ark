@@ -114,7 +114,7 @@ impl OxkLintRunner {
         };
 
         let handler = if cfg!(any(test, feature = "testing")) {
-            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+            GraphicalReportHandler::new_themed(oxc_diagnostics::GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
         };
@@ -304,10 +304,6 @@ impl OxkLintRunner {
         }
         .with_filters(&filters);
 
-        if misc_options.print_config {
-            return crate::mode::run_print_config(&config_builder, root_config, stdout);
-        }
-
         let lint_config = match config_builder.build(&mut external_plugin_store) {
             Ok(config) => config,
             Err(e) => {
@@ -321,6 +317,10 @@ impl OxkLintRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+
+        if misc_options.print_config {
+            return crate::mode::run_print_config(&lint_config, &external_plugin_store, stdout);
+        }
 
         if self.options.list_rules {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);

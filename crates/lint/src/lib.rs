@@ -9,7 +9,7 @@ use std::{
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{ExternalLinter, Oxlintrc};
-use oxlint::cli::{CliRunResult, LintCommand, init_miette, init_tracing, lint_command};
+use oxlint::cli::{CliRunResult, LintCommand, init_tracing, lint_command};
 use serde_json::Value;
 
 mod arkts;
@@ -24,8 +24,6 @@ mod schema;
 mod walk;
 
 const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
-const DEFAULT_JSONC_OXLINTRC_NAME: &str = ".oxlintrc.jsonc";
-const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
 
 #[cfg(feature = "napi")]
 pub use napi_lint::{
@@ -62,8 +60,6 @@ pub fn lint_args(args: Vec<OsString>) -> bool {
         Ok(command) => command,
         Err(success) => return success,
     };
-
-    init_miette();
 
     handle_threads_once(&command);
 

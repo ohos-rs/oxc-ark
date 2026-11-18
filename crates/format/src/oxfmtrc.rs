@@ -10,8 +10,8 @@ use serde_json::Value;
 
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing as JsBracketSpacing,
-    EmbeddedLanguageFormatting, Expand as JsExpand, JsFormatOptions as FormatOptions,
-    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas as JsTrailingCommas,
+    Expand as JsExpand, JsFormatOptions as FormatOptions, QuoteProperties, QuoteStyle, Semicolons,
+    TrailingCommas as JsTrailingCommas,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_formatter_json::{
@@ -121,6 +121,9 @@ pub struct OxfmtOptions {
     #[allow(dead_code)]
     pub sort_package_json: bool,
     pub insert_final_newline: bool,
+    /// Whether embedded languages (CSS/HTML/GraphQL in template literals, JSDoc fences)
+    /// should be delegated to the external formatter.
+    pub embedded_language_formatting: bool,
 }
 
 impl FormatConfig {
@@ -220,12 +223,12 @@ impl FormatConfig {
                 AttributePosition::Auto
             };
         }
-        if let Some(embedded_language_formatting) = self.embedded_language_formatting {
-            format_options.embedded_language_formatting = match embedded_language_formatting {
-                EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
-                EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
-            };
-        }
+        // `embeddedLanguageFormatting` no longer lives on `JsFormatOptions` upstream; it is a
+        // host-level switch deciding whether a dispatcher/string embedder is installed.
+        let embedded_language_formatting = !matches!(
+            self.embedded_language_formatting,
+            Some(EmbeddedLanguageFormattingConfig::Off)
+        );
         // experimental_sort_imports, experimental_tailwindcss: parsed but not applied in this minimal impl
 
         let json_options = build_json_options(&self)?;
@@ -242,6 +245,7 @@ impl FormatConfig {
             toml_options,
             sort_package_json,
             insert_final_newline,
+            embedded_language_formatting,
         })
     }
 }

@@ -15,6 +15,28 @@ fn parse_bracket_spacing(value: String) -> Result<oxc_formatter::BracketSpacing,
         .map_err(|_| "Value must be 'true' or 'false'".to_string())
 }
 
+fn parse_indent_style(value: String) -> Result<oxc_formatter_core::IndentStyle, String> {
+    match value.as_str() {
+        "tab" => Ok(oxc_formatter_core::IndentStyle::Tab),
+        "space" => Ok(oxc_formatter_core::IndentStyle::Space),
+        _ => Err("Value must be 'tab' or 'space'".to_string()),
+    }
+}
+
+fn parse_indent_width(value: String) -> Result<oxc_formatter_core::IndentWidth, String> {
+    let value = value
+        .parse::<u8>()
+        .map_err(|_| "Indent width must be an integer between 0 and 24".to_string())?;
+    oxc_formatter_core::IndentWidth::try_from(value).map_err(|err| err.to_string())
+}
+
+fn parse_line_width(value: String) -> Result<oxc_formatter_core::LineWidth, String> {
+    let value = value
+        .parse::<u16>()
+        .map_err(|_| "Line width must be an integer between 1 and 320".to_string())?;
+    oxc_formatter_core::LineWidth::try_from(value).map_err(|err| err.to_string())
+}
+
 pub fn cli_format() -> impl Parser<crate::Options> {
     let lsp = long("lsp")
         .help("Start language server protocol (LSP) server")
@@ -56,13 +78,13 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let indent_style = long("indent-style")
         .argument::<String>("STYLE")
         .help("The indent style. Values: tab, space")
-        .parse(|s| oxc_formatter_core::IndentStyle::from_str(&s))
+        .parse(parse_indent_style)
         .optional();
 
     let indent_width = long("indent-width")
         .argument::<String>("WIDTH")
         .help("The indent width (0-24)")
-        .parse(|s| oxc_formatter_core::IndentWidth::from_str(&s))
+        .parse(parse_indent_width)
         .optional();
 
     let line_ending = long("line-ending")
@@ -74,7 +96,7 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let line_width = long("line-width")
         .argument::<String>("WIDTH")
         .help("The max width of a line (1-320)")
-        .parse(|s| oxc_formatter_core::LineWidth::from_str(&s))
+        .parse(parse_line_width)
         .optional();
 
     let quote_style = long("quote-style")
@@ -146,7 +168,7 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let embedded_language_formatting = long("embedded-language-formatting")
         .argument::<String>("VALUE")
         .help("Enable formatting for embedded languages. Values: auto, off")
-        .parse(|s| oxc_formatter::EmbeddedLanguageFormatting::from_str(&s))
+        .parse(|s| crate::EmbeddedLanguageFormatting::from_str(&s))
         .optional();
 
     let experimental_sort_imports = long("experimental-sort-imports")

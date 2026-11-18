@@ -4,7 +4,7 @@ use std::{
 };
 
 use oxc_diagnostics::OxcCode;
-use tower_lsp_server::ls_types::Range;
+use tower_lsp_server::gen_lsp_types::Range;
 
 /// Normalize a path by removing `.` and resolving `..` components,
 /// without touching the filesystem.
@@ -61,7 +61,7 @@ pub fn get_full_rule_name(rule_code: &OxcCode) -> Option<Cow<'_, str>> {
 mod test {
     use std::path::Path;
 
-    use tower_lsp_server::ls_types::{Position, Range};
+    use tower_lsp_server::gen_lsp_types::{Position, Range};
 
     use crate::lsp::utils::{normalize_path, range_overlaps};
 

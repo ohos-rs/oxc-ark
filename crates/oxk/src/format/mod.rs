@@ -480,6 +480,7 @@ mod tests {
         let resolved_options = ResolvedOptions::OxcFormatter {
             format_options: Box::new(format_options),
             external_options: Value::Object(serde_json::Map::new()),
+            embedded_language_formatting: true,
             insert_final_newline: true,
         };
 

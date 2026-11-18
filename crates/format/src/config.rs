@@ -51,6 +51,7 @@ pub enum ResolvedOptions {
         format_options: Box<FormatOptions>,
         /// For embedded language formatting (e.g., CSS in template literals)
         external_options: Value,
+        embedded_language_formatting: bool,
         insert_final_newline: bool,
     },
     /// For TOML files.
@@ -168,6 +169,7 @@ impl ConfigResolver {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
                 format_options: Box::new(oxfmt_options.format_options),
                 external_options,
+                embedded_language_formatting: oxfmt_options.embedded_language_formatting,
                 insert_final_newline,
             },
             FormatFileStrategy::OxfmtToml { .. } => ResolvedOptions::OxfmtToml {

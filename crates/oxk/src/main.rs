@@ -7,6 +7,28 @@ mod cli;
 mod format;
 mod lint_cmd;
 
+/// Prettier-compatible `embeddedLanguageFormatting` switch.
+///
+/// Upstream oxc no longer exposes this on `JsFormatOptions`; it is a host-level
+/// switch deciding whether embedded-language services are installed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum EmbeddedLanguageFormatting {
+    Auto,
+    Off,
+}
+
+impl std::str::FromStr for EmbeddedLanguageFormatting {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "auto" => Ok(Self::Auto),
+            "off" => Ok(Self::Off),
+            _ => Err("Value must be 'auto' or 'off'".to_string()),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct FormatArgs {
     pub lsp: bool,
@@ -35,7 +57,7 @@ pub(crate) struct FormatArgs {
     pub experimental_operator_position: Option<oxc_formatter::OperatorPosition>,
     #[allow(dead_code)]
     pub experimental_ternaries: Option<bool>,
-    pub embedded_language_formatting: Option<oxc_formatter::EmbeddedLanguageFormatting>,
+    pub embedded_language_formatting: Option<crate::EmbeddedLanguageFormatting>,
     #[allow(dead_code)]
     pub experimental_sort_imports: Option<String>, // JSON string for SortImportsOptions (not yet implemented)
 }

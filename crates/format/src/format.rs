@@ -8,8 +8,9 @@ use oxc_ast::ast::{
     PropertyKey, Statement, StringLiteral,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter::{JsFormatOptions as FormatOptions, format as format_js};
+use oxc_formatter::{JsFormatOptions as FormatOptions, format_with_session};
 use oxc_formatter_core::spec::normalize_string;
+use oxc_formatter_core::{FormatSession, InputKind};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps, format as format_json};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
@@ -60,6 +61,7 @@ impl SourceFormatter {
                 ResolvedOptions::OxcFormatter {
                     format_options,
                     external_options,
+                    embedded_language_formatting,
                     insert_final_newline,
                 },
             ) => (
@@ -69,6 +71,7 @@ impl SourceFormatter {
                     *source_type,
                     *format_options,
                     external_options,
+                    embedded_language_formatting,
                 ),
                 insert_final_newline,
             ),
@@ -83,7 +86,7 @@ impl SourceFormatter {
                 insert_final_newline,
             ),
             (
-                FormatFileStrategy::OxfmtJson { json_type: _, .. },
+                FormatFileStrategy::OxfmtJson { .. },
                 ResolvedOptions::OxfmtJson {
                     json_options,
                     insert_final_newline,
@@ -152,34 +155,35 @@ impl SourceFormatter {
         source_type: SourceType,
         format_options: FormatOptions,
         external_options: Value,
+        embedded_language_formatting: bool,
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
 
+        // Embedded-language handling moved from `ExternalCallbacks` to per-run
+        // `FormatSession` services in upstream oxc. The dispatcher handles template-literal
+        // embeds (CSS/HTML/GraphQL/Markdown) and the string embedder handles JSDoc fences.
         #[cfg(feature = "napi")]
-        let external_callbacks = {
-            let is_embed_off = format_options.embedded_language_formatting.is_off();
-            if is_embed_off {
-                None
-            } else {
-                self.external_formatter
-                    .as_ref()
-                    .map(|ext| ext.to_external_callbacks(path, &format_options, external_options))
-            }
+        let session = {
+            let services = self.external_formatter.as_ref().map_or_else(
+                oxc_formatter_core::SessionServices::default,
+                |ext| {
+                    ext.to_session_services(
+                        embedded_language_formatting,
+                        external_options,
+                        format_options.indent_width,
+                    )
+                },
+            );
+            FormatSession::with_services(&allocator, InputKind::PhysicalFile, services)
         };
 
         #[cfg(not(feature = "napi"))]
-        let external_callbacks = {
-            let _ = external_options;
-            None
+        let session = {
+            let _ = (external_options, embedded_language_formatting);
+            FormatSession::new(&allocator, InputKind::PhysicalFile)
         };
 
-        let formatted = format_js(
-            &allocator,
-            source_text,
-            source_type,
-            format_options,
-            external_callbacks,
-        )?;
+        let formatted = format_with_session(&session, source_text, source_type, format_options)?;
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
@@ -303,7 +307,7 @@ fn parse_json_expression<'a>(
     let ret = Parser::new(allocator, wrapped_source, SourceType::default())
         .with_options(options)
         .parse();
-    if ret.panicked || !ret.diagnostics.is_empty() {
+    if ret.fatal_error || !ret.diagnostics.is_empty() {
         return None;
     }
 
@@ -363,7 +367,7 @@ fn collect_source_key_quotes_from_object(
             && let Some(quote) = string_literal_quote(lit)
         {
             keys.push(Json5KeyQuote {
-                value: lit.value.to_string(),
+                value: lit.value.as_str().unwrap_or_default().to_string(),
                 quote,
             });
         }
@@ -418,7 +422,7 @@ fn collect_formatted_keys_from_object(
             && let Some((quote, raw_inner)) = string_literal_quote_and_inner(lit)
         {
             keys.push(FormattedJson5Key {
-                value: lit.value.to_string(),
+                value: lit.value.as_str().unwrap_or_default().to_string(),
                 start: lit.span.start.saturating_sub(1) as usize,
                 end: lit.span.end.saturating_sub(1) as usize,
                 raw_inner,
