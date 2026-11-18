@@ -2,11 +2,6 @@
 
 An ArkTS/ArkUI tool based on OXC.
 
-Current upstream: `ohos-rs/oxc@1526b2c932d211c25d85dd172018889d0aeda776`
-(`ohos` branch; OXC 0.159.0, oxlint 1.94.0, oxfmt 0.79.0).
-Builds use Rust 1.99.0. The system API version table is generated and fully
-verified against HarmonyOS API26 SDK 26.0.0.105.
-
 ## Goal
 
 Provide fast ArkTS/ArkUI parser, formatter, and lint tooling based on OXC and oxlint.
