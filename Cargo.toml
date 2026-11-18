@@ -18,35 +18,35 @@ format = { path = "crates/format" }
 lint = { path = "crates/lint" }
 
 # Oxc dependencies
-oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018", features = [
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776", features = [
   "serialize",
 ] }
-oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018", features = [
+oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776", features = [
   "serialize",
 ] }
-oxc_config = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_formatter_core = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_formatter_json = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018", default-features = false }
+oxc_config = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_formatter_core = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_formatter_json = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776", default-features = false }
 
-oxc_formatter_css = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_formatter_graphql = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_formatter_htmlish = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_formatter_markdown = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_formatter_toml = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
-oxc_formatter_yaml = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter_css = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_formatter_graphql = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_formatter_htmlish = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_formatter_markdown = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_formatter_toml = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
+oxc_formatter_yaml = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
 
 # Common dependencies
 serde_json = "1.0"
@@ -79,4 +79,4 @@ napi-build = "2"
 
 # Native format parsers use the registry allocator; unify it with the ohos fork.
 [patch.crates-io]
-oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "1526b2c932d211c25d85dd172018889d0aeda776" }
