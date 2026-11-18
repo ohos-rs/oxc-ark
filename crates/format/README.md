@@ -4,7 +4,7 @@ This code is forked from oxc.
 
 The formatter core, option mapping, native language dispatch, and Prettier
 document bridge are synchronized with `ohos-rs/oxc` commit
-`230deff13c3d0baddb9560ba895ee2b6a3fc4b7e` (oxfmt 0.72.0).
+`1526b2c932d211c25d85dd172018889d0aeda776` (oxfmt 0.79.0).
 CSS/SCSS/Less, GraphQL, YAML, Markdown, JSON, and TOML use native formatters,
 including supported embedded languages. `sortImports`, `jsdoc`, per-file
 `overrides`, and EditorConfig use the upstream options. The npm wrapper also
