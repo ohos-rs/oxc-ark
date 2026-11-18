@@ -358,6 +358,15 @@ mod tests {
         ))
     }
 
+    /// OXK historically quoted object properties by default. Upstream's
+    /// `QuoteProperties` default is `AsNeeded`, so the mapper must set this
+    /// explicitly to keep the existing formatting behavior across upgrades.
+    #[test]
+    fn default_quote_properties_are_preserve() {
+        let options = build(&FormatConfig::default()).unwrap();
+        assert_eq!(options.quote_properties, QuoteProperties::Preserve);
+    }
+
     /// The config enums mirror `oxc_formatter`'s (which deliberately carries no
     /// serde/schemars dependency). A config-side variant without a formatter
     /// counterpart cannot compile (the mapper match forces it), but a formatter-side

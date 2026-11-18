@@ -57,7 +57,7 @@ pub fn run(
 
     // Tailwind paths in the payload are already absolute (resolved by the host before serialization),
     // so no `cwd` is threaded through here.
-    let (config, validated, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
+    let (config, validated, parent_filepath) = parse_payload(oxfmt_plugin_options_json)?;
 
     // Per-language options (and the Prettier options JSON with the Tailwind payload)
     // are mapped lazily at dispatch time.
@@ -108,15 +108,18 @@ pub fn run(
 // ---
 
 /// Deserialize `_oxfmtPluginOptionsJson` into the validated config + parent filepath.
-fn parse_payload(oxfmt_plugin_options_json: &str) -> (FormatConfig, ValidatedOptions, PathBuf) {
+///
+/// Returns `None` for an unreadable payload, matching the old `textToDoc()`
+/// behavior: Prettier keeps the original text instead of aborting the process.
+fn parse_payload(
+    oxfmt_plugin_options_json: &str,
+) -> Option<(FormatConfig, ValidatedOptions, PathBuf)> {
     #[derive(Deserialize)]
     struct Payload {
         config: FormatConfig,
         filepath: String,
     }
-    let payload: Payload = serde_json::from_str(oxfmt_plugin_options_json)
-        .expect("`_oxfmtPluginOptionsJson` should deserialize");
-    let validated =
-        validate(&payload.config).expect("`_oxfmtPluginOptionsJson` should contain valid config");
-    (payload.config, validated, PathBuf::from(payload.filepath))
+    let payload: Payload = serde_json::from_str(oxfmt_plugin_options_json).ok()?;
+    let validated = validate(&payload.config).ok()?;
+    Some((payload.config, validated, PathBuf::from(payload.filepath)))
 }

@@ -129,7 +129,7 @@ pub struct FormatConfig {
     /// Change when properties in objects are quoted.
     ///
     /// - Languages: JS, JSX, TS, TSX
-    /// - Default: `"as-needed"`
+    /// - Default: `"preserve"` (OXK compatibility)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quote_props: Option<QuotePropsConfig>,
     /// Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
