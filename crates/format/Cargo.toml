@@ -32,7 +32,7 @@ ignore = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_language_server = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
-tower-lsp-server = { workspace = true, features = ["proposed"] }
+tower-lsp-server = { workspace = true }
 tracing = { workspace = true }
 
 [dependencies.sort-package-json]

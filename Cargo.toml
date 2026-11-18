@@ -18,28 +18,28 @@ format = { path = "crates/format" }
 lint = { path = "crates/lint" }
 
 # Oxc dependencies
-oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808", features = [
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_ast = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018", features = [
   "serialize",
 ] }
-oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808", features = [
+oxc_ast_visit = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018", features = [
   "serialize",
 ] }
-oxc_config = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_formatter_core = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_formatter_json = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808" }
-oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "39b0ce7aeda63ab83ccea796c5c321fbeee36808", default-features = false }
+oxc_config = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_data_structures = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_diagnostics = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter_core = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter_json = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_language_server = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_linter = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_napi = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_parser = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_semantic = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_span = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018", default-features = false }
 
 # Common dependencies
 serde_json = "1.0"
@@ -54,7 +54,7 @@ bpaf = "0.9"
 cow-utils = "0.1.3"
 owo-colors = "4"
 globset = "0.4"
-fast-glob = "1.0.1"
+fast-glob = "1.1"
 ignore = { version = "0.4.25", features = ["simd-accel"] }
 miette = { package = "oxc-miette", version = "3.0.0", features = [
   "fancy-no-syscall",
@@ -63,7 +63,7 @@ rayon = "1.11"
 walkdir = "2"
 futures = "0.3"
 rustc-hash = "2"
-tower-lsp-server = { version = "0.23.0", features = ["proposed"] }
+tower-lsp-server = { version = "0.24.0-rc.1", features = ["url-fluent-uri"] }
 tracing = "0.1"
 
 # NAPI dependencies
