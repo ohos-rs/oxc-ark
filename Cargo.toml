@@ -9,7 +9,7 @@ license = "MIT"
 description = "An ArkTS/ArkUI tool based on oxc"
 
 [workspace.lints.clippy]
-# Match OXC: `OxcDiagnostic` stays inline so diagnostic construction remains allocation-free.
+# Keep upstream-compatible diagnostic/configuration error types.
 result_large_err = "allow"
 
 [workspace.dependencies]
@@ -41,6 +41,13 @@ oxc_syntax = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c44
 oxc_str = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
 oxlint = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018", default-features = false }
 
+oxc_formatter_css = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter_graphql = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter_htmlish = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter_markdown = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter_toml = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+oxc_formatter_yaml = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }
+
 # Common dependencies
 serde_json = "1.0"
 serde = { version = "1", features = ["derive"] }
@@ -49,16 +56,13 @@ tokio = { version = "1", features = ["full"] }
 phf = { version = "0.11", features = ["macros"] }
 simdutf8 = "0.1"
 json-strip-comments = "3.0"
-oxc-toml = "0.14"
+oxc-toml = "0.15"
 bpaf = "0.9"
 cow-utils = "0.1.3"
 owo-colors = "4"
 globset = "0.4"
-fast-glob = "1.1"
+fast-glob = "1.1.1"
 ignore = { version = "0.4.25", features = ["simd-accel"] }
-miette = { package = "oxc-miette", version = "3.0.0", features = [
-  "fancy-no-syscall",
-] }
 rayon = "1.11"
 walkdir = "2"
 futures = "0.3"
@@ -72,3 +76,7 @@ napi-derive = "3.0"
 napi-build = "2"
 
 # Optional dependencies (defined in packages that need them)
+
+# Native format parsers use the registry allocator; unify it with the ohos fork.
+[patch.crates-io]
+oxc_allocator = { git = "https://github.com/ohos-rs/oxc", rev = "b4e750867f5a919c444d48f31b005725962be018" }

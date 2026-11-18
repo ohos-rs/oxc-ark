@@ -12,10 +12,10 @@
 export declare function format(
   fileName: string,
   sourceText: string,
-  options?: Record<string, any>,
+  options?: Record<string, any> & { lang?: 'ets-static' },
 ): Promise<{ code: string; errors: string[] }>
 
-export declare function formatLsp(): Promise<boolean>
+export declare function formatLsp(lang?: 'ets-static'): Promise<boolean>
 
 export interface FormatFilesOptions {
   patterns: string[]
@@ -24,6 +24,7 @@ export interface FormatFilesOptions {
   withNodeModules: boolean
   threadCount: number
   configPath?: string
+  lang?: 'ets-static'
   cliOptions?: Record<string, any>
 }
 

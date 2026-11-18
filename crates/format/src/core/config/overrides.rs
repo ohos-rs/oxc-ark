@@ -1,0 +1,62 @@
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
+// Copyright (c) Oxc project contributors.
+
+use std::path::{Path, PathBuf};
+
+use oxc_config::GlobSet;
+
+use crate::core::oxfmtrc::{FormatConfig, OxfmtOverrideConfig};
+
+/// Resolved overrides for file-specific matching.
+/// Similar to `EditorConfig`, this also handles `FormatConfig` override resolution.
+#[derive(Debug)]
+pub struct OxfmtrcOverrides {
+    base_dir: Option<PathBuf>,
+    entries: Vec<OverrideEntry>,
+}
+
+impl OxfmtrcOverrides {
+    pub fn new(overrides: Vec<OxfmtOverrideConfig>, base_dir: Option<PathBuf>) -> Self {
+        Self {
+            base_dir,
+            entries: overrides
+                .into_iter()
+                .map(|o| OverrideEntry {
+                    files: o.files,
+                    exclude_files: o.exclude_files,
+                    options: o.options,
+                })
+                .collect(),
+        }
+    }
+
+    /// Collect the options of every override matching `path`, in config order.
+    /// Empty when nothing matches, so callers can gate on `is_empty()` without a separate probe.
+    pub fn matching(&self, path: &Path) -> Vec<&FormatConfig> {
+        // NOTE: On Windows, `to_string_lossy()` produces `\`-separated paths.
+        // This is OK since `fast_glob::glob_match()` supports both `/` and `\` via `std::path::is_separator`.
+        let relative = self
+            .base_dir
+            .as_ref()
+            .and_then(|dir| path.strip_prefix(dir).ok())
+            .unwrap_or(path)
+            .to_string_lossy();
+
+        self.entries
+            .iter()
+            .filter(|e| e.files.is_match(&relative) && !e.exclude_files.is_match(&relative))
+            .map(|e| &e.options)
+            .collect()
+    }
+}
+
+// ---
+
+/// A single override entry with normalized glob patterns.
+/// NOTE: Written path patterns are glob patterns; use `/` as the path separator on all platforms.
+#[derive(Debug)]
+struct OverrideEntry {
+    files: GlobSet,
+    exclude_files: GlobSet,
+    options: FormatConfig,
+}

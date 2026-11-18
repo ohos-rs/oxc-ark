@@ -3,6 +3,7 @@
 mod parse;
 
 use napi_derive::napi;
+use oxc_span::ExplicitLanguage;
 use serde_json::Value;
 #[cfg(not(target_family = "wasm"))]
 use std::ffi::OsString;
@@ -43,6 +44,9 @@ pub struct FormatFilesArgs {
   pub with_node_modules: bool,
   pub thread_count: u32,
   pub config_path: Option<String>,
+  /// Explicit language for `.ets` files. Currently supported: `ets-static`.
+  #[napi(ts_type = "'ets-static'")]
+  pub lang: Option<String>,
   pub cli_options: Option<Value>,
 }
 
@@ -61,16 +65,17 @@ fn package_version() -> String {
 
 /// Run the oxfmt-compatible formatter language server.
 #[cfg(not(target_family = "wasm"))]
-#[napi]
-pub async fn format_lsp() -> bool {
-  format::run_lsp("oxfmt".to_string(), package_version()).await;
-  true
+#[napi(ts_args_type = "lang?: 'ets-static'")]
+pub async fn format_lsp(lang: Option<String>) -> napi::Result<bool> {
+  let language = parse_explicit_language(lang.as_deref()).map_err(napi::Error::from_reason)?;
+  format::run_lsp("oxfmt".to_string(), package_version(), language).await;
+  Ok(true)
 }
 
 /// Run the oxfmt-compatible formatter language server.
 #[cfg(target_family = "wasm")]
-#[napi]
-pub async fn format_lsp() -> napi::Result<bool> {
+#[napi(ts_args_type = "lang?: 'ets-static'")]
+pub async fn format_lsp(_lang: Option<String>) -> napi::Result<bool> {
   Err(napi::Error::from_reason(
     "oxk format --lsp is not supported in WASI builds. Use the native npm package or the cargo CLI.",
   ))
@@ -113,7 +118,7 @@ pub fn lint_sync(_args: Vec<String>) -> napi::Result<bool> {
 /// Run the oxlint-compatible linter with JavaScript plugin callbacks.
 #[cfg(not(target_family = "wasm"))]
 #[napi(
-  ts_args_type = "args: Array<string>, loadPlugin: (arg0: string, arg1: string | undefined | null, arg2: boolean, arg3?: string | undefined | null) => Promise<string>, setupRuleConfigs: (arg: string) => string | null, lintFile: (arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7?: string | undefined | null) => string | null, createWorkspace: (arg: string) => Promise<undefined>, destroyWorkspace: (arg: string) => void, loadJsConfigs: (arg: Array<string>) => Promise<string>"
+  ts_args_type = "args: Array<string>, loadPlugin: (arg0: string, arg1: string | undefined | null, arg2: boolean, arg3?: string | undefined | null) => Promise<string>, setupRuleConfigs: (arg: string) => string | null, lintFile: (arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, collectTimings: boolean, workspaceUri?: string | undefined | null) => string | null, createWorkspace: (arg: string) => Promise<undefined>, destroyWorkspace: (arg: string) => void, loadJsConfigs: (arg: Array<string>) => Promise<string>"
 )]
 pub async fn lint_with_plugins(
   args: Vec<String>,
@@ -191,6 +196,7 @@ async fn format_files_impl(
   }
 
   let cwd = env::current_dir().map_err(|err| format!("Failed to get current directory: {err}"))?;
+  let language = parse_explicit_language(args.lang.as_deref())?;
   let thread_count = usize::try_from(args.thread_count.max(1)).unwrap_or(1);
   let config_path = args.config_path.as_deref().map(PathBuf::from);
   let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_path.as_deref());
@@ -200,7 +206,11 @@ async fn format_files_impl(
     ConfigResolver::from_config_paths(&cwd, oxfmtrc_path.as_deref(), editorconfig_path.as_deref())
       .map_err(|err| format!("Failed to load configuration: {err}"))?
   } else {
-    ConfigResolver::from_value(args.cli_options.unwrap_or_else(empty_object))
+    ConfigResolver::from_cli_options(
+      &cwd,
+      args.cli_options.unwrap_or_else(empty_object),
+      editorconfig_path.as_deref(),
+    )?
   };
 
   let ignore_patterns = config_resolver
@@ -252,7 +262,15 @@ async fn format_files_impl(
     let external_formatter = external_formatter.clone();
     let semaphore = Arc::clone(&semaphore);
     handles.push(tokio::spawn(async move {
-      format_cli_file(path, cwd, config_resolver, external_formatter, semaphore).await
+      format_cli_file(
+        path,
+        cwd,
+        config_resolver,
+        external_formatter,
+        semaphore,
+        language,
+      )
+      .await
     }));
   }
 
@@ -287,6 +305,7 @@ async fn format_cli_file(
   config_resolver: Arc<ConfigResolver>,
   external_formatter: ExternalFormatter,
   semaphore: Arc<tokio::sync::Semaphore>,
+  language: Option<ExplicitLanguage>,
 ) -> Result<bool, String> {
   let _permit = semaphore
     .acquire()
@@ -294,7 +313,7 @@ async fn format_cli_file(
     .map_err(|err| format!("{}: semaphore error: {err}", path.display()))?;
 
   tokio::task::spawn_blocking(move || {
-    format_cli_file_blocking(path, &cwd, &config_resolver, external_formatter)
+    format_cli_file_blocking(path, &cwd, &config_resolver, external_formatter, language)
   })
   .await
   .map_err(|err| format!("task join error: {err}"))?
@@ -306,6 +325,7 @@ fn format_cli_file_blocking(
   cwd: &Path,
   config_resolver: &ConfigResolver,
   external_formatter: ExternalFormatter,
+  language: Option<ExplicitLanguage>,
 ) -> Result<bool, String> {
   let source_text = fs::read_to_string(&path)
     .map_err(|err| format!("{}: failed to read file: {err}", path.display()))?;
@@ -313,9 +333,9 @@ fn format_cli_file_blocking(
     return Ok(false);
   }
 
-  let strategy = FormatFileStrategy::try_from(path.clone())
-    .map_err(|_| format!("{}: unsupported file type", path.display()))?;
-  let resolved_options = config_resolver.resolve(&strategy);
+  let strategy = FormatFileStrategy::from_path_with_language(path.clone(), language)
+    .ok_or_else(|| format!("{}: unsupported file type", path.display()))?;
+  let resolved_options = config_resolver.resolve(&strategy)?;
   let formatter = SourceFormatter::new(1).with_external_formatter(Some(external_formatter));
 
   let formatted_code = match formatter.format(&strategy, &source_text, resolved_options) {
@@ -337,8 +357,16 @@ fn format_cli_file_blocking(
   Ok(true)
 }
 
+#[cfg(not(target_family = "wasm"))]
 fn empty_object() -> Value {
   Value::Object(serde_json::Map::new())
+}
+
+fn parse_explicit_language(lang: Option<&str>) -> Result<Option<ExplicitLanguage>, String> {
+  lang
+    .map(str::parse::<ExplicitLanguage>)
+    .transpose()
+    .map_err(|error| error.to_string())
 }
 
 fn format_impl(
@@ -350,6 +378,24 @@ fn format_impl(
   format_file_cb: Option<JsFormatFileCb>,
 ) -> FormatResult {
   let num_of_threads = 1;
+  let language = match options.as_ref().and_then(|value| value.get("lang")) {
+    None | Some(Value::Null) => None,
+    Some(Value::String(language)) => match parse_explicit_language(Some(language)) {
+      Ok(language) => language,
+      Err(error) => {
+        return FormatResult {
+          code: source_text,
+          errors: vec![error],
+        };
+      }
+    },
+    Some(_) => {
+      return FormatResult {
+        code: source_text,
+        errors: vec!["`lang` must be the string `ets-static`".to_string()],
+      };
+    }
+  };
 
   // Create external formatter if callbacks are provided
   let external_formatter = if let (Some(init_cb), Some(embedded_cb), Some(file_cb)) = (
@@ -402,7 +448,9 @@ fn format_impl(
   }
 
   // Determine format strategy from file path
-  let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
+  let Some(strategy) =
+    FormatFileStrategy::from_path_with_language(PathBuf::from(&filename), language)
+  else {
     return FormatResult {
       code: source_text,
       errors: vec![format!("Unsupported file type: {filename}")],
@@ -420,7 +468,15 @@ fn format_impl(
     };
   }
 
-  let resolved_options = config_resolver.resolve(&strategy);
+  let resolved_options = match config_resolver.resolve(&strategy) {
+    Ok(options) => options,
+    Err(error) => {
+      return FormatResult {
+        code: source_text,
+        errors: vec![error],
+      }
+    }
+  };
 
   // Create formatter
   let formatter = SourceFormatter::new(num_of_threads).with_external_formatter(external_formatter);
@@ -505,5 +561,28 @@ pub async fn format(
     init_external_formatter_cb,
     format_embedded_cb,
     format_file_cb,
+  )
+}
+
+/// Format embedded JS/TS to a Prettier document using the upstream formatter.
+#[napi(
+  ts_args_type = "sourceExt: string, sourceText: string, optionsJson: string, parentContext: string, initCb: (numThreads: number) => Promise<string[]>, embeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, fileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+)]
+pub async fn js_text_to_doc(
+  source_ext: String,
+  source_text: String,
+  options_json: String,
+  parent_context: String,
+  init_cb: JsInitExternalFormatterCb,
+  embedded_cb: JsFormatEmbeddedCb,
+  file_cb: JsFormatFileCb,
+) -> Option<String> {
+  let external = ExternalFormatter::new(init_cb, embedded_cb, file_cb);
+  format::text_to_doc::run(
+    &source_ext,
+    &source_text,
+    &options_json,
+    &parent_context,
+    external.to_services(),
   )
 }

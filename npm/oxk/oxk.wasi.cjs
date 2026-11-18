@@ -116,6 +116,7 @@ module.exports.format = __napiModule.exports.format
 module.exports.formatFiles = __napiModule.exports.formatFiles
 module.exports.formatLsp = __napiModule.exports.formatLsp
 module.exports.ImportNameKind = __napiModule.exports.ImportNameKind
+module.exports.jsTextToDoc = __napiModule.exports.jsTextToDoc
 module.exports.lint = __napiModule.exports.lint
 module.exports.lintSync = __napiModule.exports.lintSync
 module.exports.lintWithPlugins = __napiModule.exports.lintWithPlugins

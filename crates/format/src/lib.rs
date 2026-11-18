@@ -1,4 +1,5 @@
 mod config;
+pub mod core;
 #[cfg(not(target_family = "wasm"))]
 mod discovery;
 mod format;
@@ -6,7 +7,8 @@ mod format;
 mod ignore;
 #[cfg(not(target_family = "wasm"))]
 mod lsp;
-mod oxfmtrc;
+#[cfg(feature = "napi")]
+mod prettier_compat;
 mod support;
 mod utils;
 
@@ -33,3 +35,6 @@ pub use support::{FormatFileStrategy, JsonType, should_ignore_file};
 pub use external_formatter::{
     ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
 };
+
+#[cfg(feature = "napi")]
+pub mod text_to_doc;

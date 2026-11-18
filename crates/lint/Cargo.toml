@@ -14,7 +14,6 @@ oxlint = { workspace = true }
 cow-utils = { workspace = true }
 ignore = { workspace = true }
 json-strip-comments = { workspace = true }
-miette = { workspace = true }
 napi = { workspace = true, optional = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
@@ -34,7 +33,7 @@ schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
-tower-lsp-server = { workspace = true }
+tower-lsp-server = { workspace = true, features = ["url-fluent-uri"] }
 tracing = { workspace = true }
 
 [features]

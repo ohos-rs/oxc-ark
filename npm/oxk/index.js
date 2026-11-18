@@ -739,6 +739,7 @@ module.exports.format = nativeBinding.format
 module.exports.formatFiles = nativeBinding.formatFiles
 module.exports.formatLsp = nativeBinding.formatLsp
 module.exports.ImportNameKind = nativeBinding.ImportNameKind
+module.exports.jsTextToDoc = nativeBinding.jsTextToDoc
 module.exports.lint = nativeBinding.lint
 module.exports.lintSync = nativeBinding.lintSync
 module.exports.lintWithPlugins = nativeBinding.lintWithPlugins

@@ -492,3 +492,42 @@ fn cargo_cli_lint_arkts_system_api_version_reads_project_min_api_version() {
             .contains("configured minimum supported API version is 11")
     );
 }
+
+#[test]
+fn cargo_cli_lint_static_ets_requires_explicit_language() {
+    let temp = TempDir::new();
+    fs::write(
+        temp.path().join("input.ets"),
+        "package example.lint;\nlet character: char = c'a';\n",
+    )
+    .expect("failed to write fixture");
+
+    let legacy = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args(["lint", "input.ets", "--threads", "1"])
+        .output()
+        .expect("failed to run legacy ETS lint");
+    assert!(
+        !legacy.status.success(),
+        "static ETS should not be inferred from a .ets path"
+    );
+
+    let explicit = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args([
+            "lint",
+            "--lang",
+            "ets-static",
+            "input.ets",
+            "--threads",
+            "1",
+        ])
+        .output()
+        .expect("failed to run static ETS lint");
+    assert!(
+        explicit.status.success(),
+        "explicit static ETS lint should succeed: {}{}",
+        String::from_utf8_lossy(&explicit.stdout),
+        String::from_utf8_lossy(&explicit.stderr)
+    );
+}

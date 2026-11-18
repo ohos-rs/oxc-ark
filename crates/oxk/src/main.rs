@@ -7,31 +7,10 @@ mod cli;
 mod format;
 mod lint_cmd;
 
-/// Prettier-compatible `embeddedLanguageFormatting` switch.
-///
-/// Upstream oxc no longer exposes this on `JsFormatOptions`; it is a host-level
-/// switch deciding whether embedded-language services are installed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum EmbeddedLanguageFormatting {
-    Auto,
-    Off,
-}
-
-impl std::str::FromStr for EmbeddedLanguageFormatting {
-    type Err = String;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        match value {
-            "auto" => Ok(Self::Auto),
-            "off" => Ok(Self::Off),
-            _ => Err("Value must be 'auto' or 'off'".to_string()),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct FormatArgs {
     pub lsp: bool,
+    pub lang: Option<oxc_span::ExplicitLanguage>,
     pub config: Option<std::path::PathBuf>,
     file: Vec<String>,
     thread: usize,
@@ -52,14 +31,10 @@ pub(crate) struct FormatArgs {
     pub bracket_same_line: Option<oxc_formatter::BracketSameLine>,
     pub attribute_position: Option<oxc_formatter::AttributePosition>,
     pub expand: Option<oxc_formatter::Expand>,
-    #[allow(dead_code)]
-    // reserved for CLI/oxfmt compatibility; oxfmtrc rejects these in into_oxfmt_options
     pub experimental_operator_position: Option<oxc_formatter::OperatorPosition>,
-    #[allow(dead_code)]
     pub experimental_ternaries: Option<bool>,
-    pub embedded_language_formatting: Option<crate::EmbeddedLanguageFormatting>,
-    #[allow(dead_code)]
-    pub experimental_sort_imports: Option<String>, // JSON string for SortImportsOptions (not yet implemented)
+    pub embedded_language_formatting: Option<String>,
+    pub experimental_sort_imports: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -88,7 +63,7 @@ fn main() {
     let run_ret: Result<(), Box<dyn std::error::Error>> = match ret {
         Options::Format(args) => {
             if args.lsp {
-                format::run_lsp()
+                format::run_lsp(args.lang)
             } else {
                 format::format(args)
             }

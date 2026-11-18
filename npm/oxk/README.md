@@ -23,6 +23,7 @@ The npm package requires Node.js `^20.19.0 || >=22.18.0`.
 ```bash
 oxk format src/index.ets
 oxk format "src/**/*.{ts,ets}"
+oxk format --lang ets-static "src/**/*.ets"
 ```
 
 Formatter config is loaded from `.oxfmtrc.json` or `.oxfmtrc.jsonc`.
@@ -33,7 +34,12 @@ Formatter config is loaded from `.oxfmtrc.json` or `.oxfmtrc.jsonc`.
 oxk lint src --threads 1
 oxk lint src/index.ets --format json
 oxk lint --config .oxlintrc.jsonc "src/**/*.ets"
+oxk lint --lang ets-static "src/**/*.ets"
 ```
+
+Static ETS / ArkTS 1.2 must be selected explicitly because it shares the
+`.ets` extension with ArkTS 1.1. Without `--lang ets-static`, `.ets` keeps the
+ArkTS 1.1 parser behavior.
 
 `oxk lint` embeds `oxlint::CliRunner`; it does not shell out to an external
 `oxlint` binary. The npm CLI includes the oxlint JavaScript runtime for:
@@ -71,6 +77,8 @@ Use the formatter wrapper:
 
 ```js
 const { format } = require('@ohos-rs/oxk/format')
+
+const result = await format('index.ets', source, { lang: 'ets-static' })
 ```
 
 Use the lint wrapper with oxlint-compatible CLI arguments:
@@ -86,6 +94,8 @@ The native module is also available from the package root:
 
 ```js
 const oxk = require('@ohos-rs/oxk')
+
+const parsed = await oxk.parse('index.ets', source, { lang: 'ets-static' })
 ```
 
 For linting from JavaScript, prefer `@ohos-rs/oxk/lint`; it wires the oxlint JS

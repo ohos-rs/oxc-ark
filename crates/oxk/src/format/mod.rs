@@ -13,7 +13,9 @@ use futures::future;
 use serde_json::Value;
 use tokio::sync::Semaphore;
 
-pub fn run_lsp() -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_lsp(
+    language: Option<oxc_span::ExplicitLanguage>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(1)
         .enable_all()
@@ -28,6 +30,7 @@ pub fn run_lsp() -> Result<(), Box<dyn std::error::Error>> {
     runtime.block_on(format::run_lsp(
         "oxfmt".to_string(),
         env!("CARGO_PKG_VERSION").to_string(),
+        language,
     ));
     Ok(())
 }
@@ -38,6 +41,7 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
     let excludes = args.excludes.clone();
     let ignore_paths = args.ignore_path.clone();
     let with_node_modules = args.with_node_modules;
+    let language = args.lang;
 
     if patterns.is_empty() {
         return Err(Box::new(std::io::Error::other("Missing file pattern")));
@@ -67,7 +71,11 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
             ))) as Box<dyn std::error::Error>
         })?
     } else {
-        ConfigResolver::from_value(build_value_from_format_args(&args))
+        ConfigResolver::from_cli_options(
+            &cwd,
+            build_value_from_format_args(&args),
+            editorconfig_path.as_deref(),
+        )?
     };
 
     let ignore_patterns = config_resolver.build_and_validate().map_err(|e| {
@@ -137,10 +145,9 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
             let config_resolver = Arc::clone(&config_resolver);
 
             // Spawn format_file as a tokio task
-            let handle =
-                tokio::spawn(
-                    async move { format_file_task(path, semaphore, config_resolver).await },
-                );
+            let handle = tokio::spawn(async move {
+                format_file_task(path, semaphore, config_resolver, language).await
+            });
             handles.push(handle);
         }
 
@@ -170,7 +177,8 @@ pub fn format(args: crate::FormatArgs) -> Result<(), Box<dyn std::error::Error>>
                         break;
                     } else {
                         // Non-AST error: print warning and continue processing
-                        eprintln!("Warning: {}", err);
+                        eprintln!("Error: {}", err);
+                        ast_parse_error.get_or_insert(err);
                         remaining_handles = remaining;
                     }
                 }
@@ -271,8 +279,20 @@ fn build_value_from_format_args(args: &crate::FormatArgs) -> Value {
     if let Some(v) = &args.embedded_language_formatting {
         m.insert(
             "embeddedLanguageFormatting".into(),
-            Value::String(format!("{:?}", v).to_lowercase()),
+            Value::String(v.clone()),
         );
+    }
+    if let Some(v) = args.experimental_operator_position {
+        m.insert(
+            "experimentalOperatorPosition".into(),
+            Value::String(format!("{v:?}").to_lowercase()),
+        );
+    }
+    if let Some(v) = args.experimental_ternaries {
+        m.insert("experimentalTernaries".into(), Value::Bool(v));
+    }
+    if let Some(v) = &args.experimental_sort_imports {
+        m.insert("sortImports".into(), v.clone());
     }
     Value::Object(m)
 }
@@ -282,6 +302,7 @@ async fn format_file_task(
     path: PathBuf,
     semaphore: Arc<Semaphore>,
     config_resolver: Arc<ConfigResolver>,
+    language: Option<oxc_span::ExplicitLanguage>,
 ) -> Result<(), String> {
     // Acquire permit to limit concurrency
     let _permit = semaphore
@@ -290,7 +311,7 @@ async fn format_file_task(
         .map_err(|e| format!("Semaphore error: {}", e))?;
 
     // Use async file I/O for better performance in concurrent scenarios
-    format_file_async(&path, config_resolver)
+    format_file_async(&path, config_resolver, language)
         .await
         .map_err(|err| format!("{}: {err}", path.display()))
 }
@@ -299,6 +320,7 @@ async fn format_file_task(
 async fn format_file_async(
     path: &Path,
     config_resolver: Arc<ConfigResolver>,
+    language: Option<oxc_span::ExplicitLanguage>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Verify file exists
     let actual_path = if tokio::fs::metadata(path).await.is_ok() {
@@ -328,8 +350,8 @@ async fn format_file_async(
     }
 
     // Determine format strategy from file path
-    let strategy = FormatFileStrategy::try_from(actual_path.clone())
-        .map_err(|_| format!("Unsupported file type '{}'", actual_path.display()))?;
+    let strategy = FormatFileStrategy::from_path_with_language(actual_path.clone(), language)
+        .ok_or_else(|| format!("Unsupported file type '{}'", actual_path.display()))?;
 
     // Reject ExternalFormatter: oxk CLI has no napi/Prettier (aligned with oxfmt's Mode::Cli behavior)
     if let FormatFileStrategy::ExternalFormatter { parser_name, .. }
@@ -337,7 +359,7 @@ async fn format_file_async(
     {
         return Err(format!(
             "File type '{}' (parser: {}) requires external formatter support (e.g., Prettier). \
-            oxk CLI only supports JavaScript/TypeScript, TOML, and JSON/JSON5/JSONC files. \
+            oxk CLI supports JavaScript/TypeScript/ETS, JSON/JSON5/JSONC, TOML, CSS, GraphQL, YAML, and Markdown files. \
             For other file types, please use npm/oxk with external formatter callbacks or use a different formatter.",
             actual_path.display(),
             parser_name
@@ -346,11 +368,12 @@ async fn format_file_async(
     }
 
     // Resolve options from ConfigResolver (aligned with oxfmt: .oxfmtrc / overrides / editorconfig)
-    let resolved_options = config_resolver.resolve(&strategy);
+    let resolved_options = config_resolver.resolve(&strategy)?;
 
     // Run CPU-intensive parsing and formatting in a blocking task
     let actual_path_clone = actual_path.clone();
     let strategy_clone = match &strategy {
+        FormatFileStrategy::Native { path } => FormatFileStrategy::Native { path: path.clone() },
         FormatFileStrategy::OxcFormatter { path, source_type } => {
             FormatFileStrategy::OxcFormatter {
                 path: path.clone(),
@@ -480,7 +503,6 @@ mod tests {
         let resolved_options = ResolvedOptions::OxcFormatter {
             format_options: Box::new(format_options),
             external_options: Value::Object(serde_json::Map::new()),
-            embedded_language_formatting: true,
             insert_final_newline: true,
         };
 

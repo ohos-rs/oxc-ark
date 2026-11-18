@@ -3,10 +3,11 @@ const {
   format: napiFormat,
   formatFiles: napiFormatFiles,
   formatLsp,
-} = require("./index.js");
+  jsTextToDoc: napiJsTextToDoc,
+} = require('./index.js')
 
 // Lazy load Prettier
-let prettierCache;
+let prettierCache
 
 /**
  * TODO: Plugins support
@@ -17,24 +18,24 @@ let prettierCache;
  * @returns {Promise<string[]>} Array of loaded plugin's `languages` info
  */
 async function resolvePlugins() {
-  return [];
+  return []
 }
 
 // ---
 
 const TAG_TO_PARSER = {
   // CSS
-  css: "css",
-  styled: "css",
+  css: 'css',
+  styled: 'css',
   // GraphQL
-  gql: "graphql",
-  graphql: "graphql",
+  gql: 'graphql',
+  graphql: 'graphql',
   // HTML
-  html: "html",
+  html: 'html',
   // Markdown
-  md: "markdown",
-  markdown: "markdown",
-};
+  md: 'markdown',
+  markdown: 'markdown',
+}
 
 /**
  * Format xxx-in-js code snippets
@@ -46,22 +47,56 @@ const TAG_TO_PARSER = {
  * @returns {Promise<string>} Formatted code snippet
  */
 async function formatEmbeddedCode({ code, tagName, options }) {
+  if (tagName === '__oxkTailwind') {
+    const { createSorter } = await import('prettier-plugin-tailwindcss/sorter')
+    const sorter = await createSorter({
+      filepath: options.filepath,
+      stylesheetPath: options.tailwindStylesheet,
+      configPath: options.tailwindConfig,
+      preserveWhitespace: options.tailwindPreserveWhitespace,
+      preserveDuplicates: options.tailwindPreserveDuplicates,
+    })
+    return JSON.stringify(sorter.sortClassAttributes(JSON.parse(code)))
+  }
+  await setupPlugins(options)
+
   // TODO: This should be resolved in Rust side
-  const parserName = TAG_TO_PARSER[tagName];
+  const parserName = TAG_TO_PARSER[tagName] ?? tagName
 
   // Unknown tag, return original code
-  if (!parserName) return code;
+  if (!parserName) return code
 
   if (!prettierCache) {
-    prettierCache = await import("prettier");
+    prettierCache = await import('prettier')
   }
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.parser = parserName;
+  options.parser = parserName
+  if (options.__oxkDoc) {
+    delete options.__oxkDoc
+    const metadata = {}
+    prettierCache.__internal.formatOptionsHiddenDefaults.parentParser = null
+    prettierCache.__internal.formatOptionsHiddenDefaults.__onHtmlRoot = null
+    options.parentParser = 'OXFMT'
+    if (parserName === 'html' || parserName === 'angular') {
+      options.__onHtmlRoot = (root) => {
+        metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1
+      }
+    }
+    const doc = await prettierCache.__debug.printToDoc(code, options)
+    const symbols = new Map()
+    return JSON.stringify([doc, metadata], (_key, value) => {
+      if (typeof value === 'symbol') {
+        if (!symbols.has(value)) symbols.set(value, symbols.size + 1)
+        return symbols.get(value)
+      }
+      return value === -Infinity ? '__NEGATIVE_INFINITY__' : value
+    })
+  }
   return prettierCache
     .format(code, options)
     .then((formatted) => formatted.trimEnd())
-    .catch(() => code);
+    .catch(() => code)
 }
 
 /**
@@ -74,17 +109,32 @@ async function formatEmbeddedCode({ code, tagName, options }) {
  * @param {any} param.options
  * @returns {Promise<string>} Formatted code
  */
+async function setupPlugins(options) {
+  options.plugins ??= []
+  if (options._useSveltePlugin) options.plugins.push(await import('prettier-plugin-svelte'))
+  if (options._useAstroPlugin) options.plugins.push(await import('prettier-plugin-astro'))
+  if (options._useTailwindPlugin) options.plugins.push(await import('prettier-plugin-tailwindcss'))
+  if (options._oxfmtPluginOptionsJson) options.plugins.push(require('./prettier-plugin-oxk/index.js'))
+}
+
 async function formatFile({ code, parserName, fileName, options }) {
+  await setupPlugins(options)
   if (!prettierCache) {
-    prettierCache = await import("prettier");
+    prettierCache = await import('prettier')
   }
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   // We specify `parser` to skip parser inference for performance
-  options.parser = parserName;
+  options.parser = parserName
+  if (parserName === 'vue') {
+    const tags = code.matchAll(/<script(?=[\s>])((?:"[^"]*"|'[^']*'|[^"'>])*)>/g)
+    if ([...tags].some((tag) => /(?:^|\s)lang\s*=\s*(?:"tsx"|'tsx'|tsx(?=[\s/]|$))/.test(tag[1]))) {
+      options._oxfmtVueScriptLang = 'tsx'
+    }
+  }
   // But some plugins rely on `filepath`, so we set it too
-  options.filepath = fileName;
-  return prettierCache.format(code, options);
+  options.filepath = fileName
+  return prettierCache.format(code, options)
 }
 
 /**
@@ -99,10 +149,8 @@ async function formatFile({ code, parserName, fileName, options }) {
  * @returns {Promise<{code: string, errors: string[]}>} A promise that resolves to the formatted code and any errors
  */
 async function format(fileName, sourceText, options) {
-  if (typeof fileName !== "string")
-    throw new TypeError("`fileName` must be a string");
-  if (typeof sourceText !== "string")
-    throw new TypeError("`sourceText` must be a string");
+  if (typeof fileName !== 'string') throw new TypeError('`fileName` must be a string')
+  if (typeof sourceText !== 'string') throw new TypeError('`sourceText` must be a string')
 
   return napiFormat(
     fileName,
@@ -110,9 +158,8 @@ async function format(fileName, sourceText, options) {
     options ?? {},
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
-    (options, parserName, fileName, code) =>
-      formatFile({ options, parserName, fileName, code }),
-  );
+    (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
+  )
 }
 
 async function formatFiles(args) {
@@ -124,33 +171,32 @@ async function formatFiles(args) {
       withNodeModules: args.withNodeModules,
       threadCount: args.threadCount,
       configPath: args.configPath,
+      lang: args.lang,
       cliOptions: args.cliOptions,
     },
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
-    (options, parserName, fileName, code) =>
-      formatFile({ options, parserName, fileName, code }),
-  );
+    (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
+  )
 }
 
 // Re-export the raw format function for advanced usage
-function formatRaw(
-  fileName,
-  sourceText,
-  options,
-  initExternalFormatterCb,
-  formatEmbeddedCb,
-  formatFileCb,
-) {
-  const { format } = require("./index.js");
-  return format(
-    fileName,
-    sourceText,
-    options,
-    initExternalFormatterCb,
-    formatEmbeddedCb,
-    formatFileCb,
-  );
+function formatRaw(fileName, sourceText, options, initExternalFormatterCb, formatEmbeddedCb, formatFileCb) {
+  const { format } = require('./index.js')
+  return format(fileName, sourceText, options, initExternalFormatterCb, formatEmbeddedCb, formatFileCb)
 }
 
-module.exports = { format, formatFiles, formatRaw, formatLsp };
+// Internal Prettier plugin entry point. Keep the same callback transport as format().
+function __jsTextToDoc(sourceExt, sourceText, optionsJson, parentContext) {
+  return napiJsTextToDoc(
+    sourceExt,
+    sourceText,
+    optionsJson,
+    parentContext,
+    resolvePlugins,
+    (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
+    (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
+  )
+}
+
+module.exports = { format, formatFiles, formatRaw, formatLsp, __jsTextToDoc }

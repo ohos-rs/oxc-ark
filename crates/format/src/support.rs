@@ -2,18 +2,26 @@ use std::path::{Path, PathBuf};
 
 use phf::phf_set;
 
-use oxc_span::SourceType;
+use oxc_span::{ExplicitLanguage, SourceType};
 
 #[derive(Debug)]
 pub enum FormatFileStrategy {
+    Native {
+        path: PathBuf,
+    },
     OxcFormatter {
         path: PathBuf,
         source_type: SourceType,
     },
     /// TOML files formatted by oxc_toml (Pure Rust).
-    OxfmtToml { path: PathBuf },
+    OxfmtToml {
+        path: PathBuf,
+    },
     /// JSON/JSON5/JSONC files formatted by Rust formatter (Pure Rust).
-    OxfmtJson { path: PathBuf, json_type: JsonType },
+    OxfmtJson {
+        path: PathBuf,
+        json_type: JsonType,
+    },
     ExternalFormatter {
         path: PathBuf,
         parser_name: &'static str,
@@ -40,50 +48,78 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
     type Error = ();
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        Self::from_path_with_language(path, None).ok_or(())
+    }
+}
+
+impl FormatFileStrategy {
+    /// Classify a file while applying an explicitly selected language mode.
+    ///
+    /// Static ETS only overrides `.ets` inputs, so this is safe to use for a
+    /// mixed JavaScript, TypeScript and ETS file set.
+    pub fn from_path_with_language(
+        path: PathBuf,
+        language: Option<ExplicitLanguage>,
+    ) -> Option<Self> {
         // Check JS/TS files first
-        if let Some(source_type) = get_oxc_formatter_source_type(&path) {
-            return Ok(Self::OxcFormatter { path, source_type });
+        if let Some(mut source_type) = get_oxc_formatter_source_type(&path) {
+            if source_type.is_arkui()
+                && let Some(language) = language
+            {
+                source_type = language.source_type();
+            }
+            return Some(Self::OxcFormatter { path, source_type });
         }
 
         // Extract file_name and extension once for all subsequent checks
-        let Some(file_name) = path.file_name().and_then(|f| f.to_str()) else {
-            return Err(());
-        };
+        let file_name = path.file_name().and_then(|f| f.to_str())?;
 
         // Excluded files like lock files
         if EXCLUDE_FILENAMES.contains(file_name) {
-            return Err(());
+            return None;
         }
 
         // Then TOML files
         if is_toml_file(file_name) {
-            return Ok(Self::OxfmtToml { path });
+            return Some(Self::OxfmtToml { path });
         }
 
         // Then JSON/JSON5/JSONC files (before external formatter)
         let extension = path.extension().and_then(|ext| ext.to_str());
         // Check if JSON/JSON5/JSONC file should be ignored
         if should_ignore_json_file(file_name, extension) {
-            return Err(());
+            return None;
         }
         if let Some(json_type) = get_json_type(file_name, extension) {
-            return Ok(Self::OxfmtJson { path, json_type });
+            return Some(Self::OxfmtJson { path, json_type });
         }
 
+        if let Some(native) = crate::core::support::classify_file_with_language(&path, language) {
+            #[cfg(feature = "napi")]
+            if let crate::core::support::FormatStrategy::Prettier(language) = native {
+                return Some(Self::ExternalFormatter {
+                    path,
+                    parser_name: language.parser(),
+                });
+            }
+            #[cfg(not(feature = "napi"))]
+            let _ = native;
+            return Some(Self::Native { path });
+        }
         // Then external formatter files
         // `package.json` is special: sorted then formatted
         if file_name == "package.json" {
-            return Ok(Self::ExternalFormatterPackageJson {
+            return Some(Self::ExternalFormatterPackageJson {
                 path,
                 parser_name: "json-stringify",
             });
         }
 
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
-            return Ok(Self::ExternalFormatter { path, parser_name });
+            return Some(Self::ExternalFormatter { path, parser_name });
         }
 
-        Err(())
+        None
     }
 }
 
@@ -91,13 +127,17 @@ impl FormatFileStrategy {
     pub fn can_format_without_external(&self) -> bool {
         matches!(
             self,
-            Self::OxcFormatter { .. } | Self::OxfmtToml { .. } | Self::OxfmtJson { .. }
+            Self::Native { .. }
+                | Self::OxcFormatter { .. }
+                | Self::OxfmtToml { .. }
+                | Self::OxfmtJson { .. }
         )
     }
 
     pub fn path(&self) -> &Path {
         match self {
-            Self::OxcFormatter { path, .. }
+            Self::Native { path }
+            | Self::OxcFormatter { path, .. }
             | Self::OxfmtToml { path }
             | Self::OxfmtJson { path, .. }
             | Self::ExternalFormatter { path, .. }
@@ -550,6 +590,39 @@ mod tests {
     }
 
     #[test]
+    fn static_ets_requires_an_explicit_language() {
+        let FormatFileStrategy::OxcFormatter { source_type, .. } = strategy_for("component.ets")
+        else {
+            panic!(".ets must use the Oxc formatter");
+        };
+        assert!(source_type.is_arkui());
+        assert!(!source_type.is_ets_static());
+
+        let FormatFileStrategy::OxcFormatter { source_type, .. } =
+            FormatFileStrategy::from_path_with_language(
+                PathBuf::from("component.ets"),
+                Some(ExplicitLanguage::EtsStatic),
+            )
+            .unwrap()
+        else {
+            panic!(".ets must use the Oxc formatter");
+        };
+        assert!(source_type.is_ets_static());
+
+        let FormatFileStrategy::OxcFormatter { source_type, .. } =
+            FormatFileStrategy::from_path_with_language(
+                PathBuf::from("component.ts"),
+                Some(ExplicitLanguage::EtsStatic),
+            )
+            .unwrap()
+        else {
+            panic!(".ts must use the Oxc formatter");
+        };
+        assert!(source_type.is_typescript());
+        assert!(!source_type.is_ets_static());
+    }
+
+    #[test]
     fn pure_rust_json_and_toml_strategies_are_preserved() {
         assert!(matches!(
             strategy_for("config.toml"),
@@ -579,34 +652,26 @@ mod tests {
     }
 
     #[test]
-    fn external_formatter_strategies_are_preserved() {
-        assert!(matches!(
-            strategy_for("package.json"),
-            FormatFileStrategy::ExternalFormatterPackageJson {
-                parser_name: "json-stringify",
-                ..
-            }
-        ));
-        assert!(matches!(
-            strategy_for("README.md"),
-            FormatFileStrategy::ExternalFormatter {
-                parser_name: "markdown",
-                ..
-            }
-        ));
+    fn native_and_external_formatter_strategies_match_upstream() {
+        for path in [
+            "package.json",
+            "README.md",
+            "style.css",
+            "query.graphql",
+            "data.yaml",
+        ] {
+            assert!(matches!(
+                strategy_for(path),
+                FormatFileStrategy::Native { .. }
+            ));
+        }
         assert!(matches!(
             strategy_for("component.vue"),
-            FormatFileStrategy::ExternalFormatter {
-                parser_name: "vue",
-                ..
-            }
+            FormatFileStrategy::Native { .. }
         ));
         assert!(matches!(
             strategy_for("schema.graphql"),
-            FormatFileStrategy::ExternalFormatter {
-                parser_name: "graphql",
-                ..
-            }
+            FormatFileStrategy::Native { .. }
         ));
     }
 

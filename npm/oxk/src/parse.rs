@@ -19,8 +19,9 @@ enum AstType {
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
-  /// Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts` or `ets`.
-  #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets'")]
+  /// Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts`, `ets` or explicitly selected static ETS.
+  /// A `.ets` filename without `ets-static` keeps using the ArkUI/ArkTS 1.1 grammar.
+  #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets' | 'ets-static'")]
   pub lang: Option<String>,
 
   /// Treat the source text as `script`, `module`, `commonjs` or `unambiguous` code.
@@ -203,6 +204,7 @@ fn get_source_type(filename: &str, lang: Option<&str>, source_type: Option<&str>
       .with_jsx(true),
     Some("dts") => SourceType::d_ts(),
     Some("ets") => SourceType::ets(),
+    Some("ets-static") => SourceType::ets_static(),
     _ => SourceType::from_path(filename).unwrap_or_default(),
   };
 

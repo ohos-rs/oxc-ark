@@ -4,7 +4,7 @@ env:
   APP_NAME: 'oxk'
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   CARGO_INCREMENTAL: '1'
-  RUST_TOOLCHAIN: '1.96.0'
+  RUST_TOOLCHAIN: '1.99.0'
 permissions:
   contents: write
   id-token: write
@@ -46,6 +46,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: Test API version generator
+        run: pnpm run test:api-versions
 
       - name: Build npm binding
         run: pnpm --filter @ohos-rs/oxk run build:debug:binding
@@ -106,7 +109,7 @@ jobs:
           - host: ubuntu-latest
             target: wasm32-wasip1-threads
             build: cd npm/oxk && pnpm build --target wasm32-wasip1-threads
-    name: rust 1.96.0 - ${{ matrix.settings.target }} - node@20
+    name: rust 1.99.0 - ${{ matrix.settings.target }} - node@20
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v6

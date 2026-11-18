@@ -29,8 +29,14 @@ pub struct JsConfigResult {
     pub config: Option<Oxlintrc>,
 }
 
-fn config_discovery() -> ConfigDiscovery {
+pub(crate) fn config_discovery() -> ConfigDiscovery {
     ConfigDiscovery::oxlint()
+}
+
+pub(crate) fn materialize_default_plugins(config: &mut Oxlintrc) {
+    if config.plugins.is_none() {
+        config.plugins = Some(Default::default());
+    }
 }
 
 pub fn config_file_names() -> Vec<&'static str> {

@@ -1,6 +1,5 @@
-// Portions of this file are derived from Oxc's oxlint implementation.
+// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
 // Copyright (c) Oxc project contributors.
-// Licensed under the MIT License. See https://github.com/oxc-project/oxc/blob/main/LICENSE.
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::{Path, PathBuf};

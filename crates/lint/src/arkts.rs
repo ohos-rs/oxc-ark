@@ -9,8 +9,6 @@ use std::{
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16Converter, walk};
-#[cfg(feature = "napi")]
-use oxc_linter::LintFileOutput;
 use oxc_linter::LintFileResult;
 #[cfg(feature = "napi")]
 use oxc_linter::{
@@ -1029,8 +1027,7 @@ fn lint_file_callback(
                 split_rules(&state, &rule_ids, &options_ids)?
             };
 
-            let mut diagnostics = Vec::new();
-            let mut timings = None;
+            let mut output = oxc_linter::LintFileOutput::default();
             if !delegate_rules.is_empty() {
                 let Some(delegate) = &delegate else {
                     return Err("JavaScript plugins are not available in this lint runner."
@@ -1038,10 +1035,7 @@ fn lint_file_callback(
                         .into());
                 };
 
-                let LintFileOutput {
-                    diagnostics: mut delegate_diagnostics,
-                    timings: delegate_timings,
-                } = (delegate.lint_file)(
+                let mut delegate_diagnostics = (delegate.lint_file)(
                     file_path,
                     delegate_rules,
                     delegate_options,
@@ -1052,7 +1046,7 @@ fn lint_file_callback(
                     allocator,
                 )?;
 
-                for diagnostic in &mut delegate_diagnostics {
+                for diagnostic in &mut delegate_diagnostics.diagnostics {
                     let mapped = delegate_rule_indices
                         .get(diagnostic.rule_index as usize)
                         .copied()
@@ -1064,14 +1058,22 @@ fn lint_file_callback(
                         })?;
                     diagnostic.rule_index = mapped;
                 }
-                diagnostics.extend(delegate_diagnostics);
-                timings = delegate_timings;
+                if let Some(timings) = &mut delegate_diagnostics.timings {
+                    for timing in &mut timings.rules {
+                        timing.rule_index = *delegate_rule_indices
+                            .get(timing.rule_index as usize)
+                            .ok_or_else(|| {
+                                format!(
+                                    "JS plugin returned invalid timing rule index {}.",
+                                    timing.rule_index
+                                )
+                            })?;
+                    }
+                }
+                output = delegate_diagnostics;
             }
 
-            Ok(LintFileOutput {
-                diagnostics,
-                timings,
-            })
+            Ok(output)
         },
     ))
 }
@@ -1123,8 +1125,9 @@ fn run_arkts_rules(
     allocator: &Allocator,
     active_rules: &[ActiveArktsRule],
     options: ArktsOptionStore,
+    source_type: Option<SourceType>,
 ) -> Result<Vec<LintFileResult>, String> {
-    let source_type = source_type_for_arkts_path(file_path);
+    let source_type = source_type.unwrap_or_else(|| source_type_for_arkts_path(file_path));
     let parser_return = Parser::new(allocator, source_text, source_type).parse();
 
     let mut visitor = ArktsVisitor {
@@ -1753,10 +1756,6 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
         walk::walk_import_declaration(self, it);
     }
 
-    fn visit_export_named_declaration(&mut self, it: &ExportNamedDeclaration<'a>) {
-        walk::walk_export_named_declaration(self, it);
-    }
-
     fn visit_export_from_declaration(&mut self, it: &ExportFromDeclaration<'a>) {
         if it.with_clause.is_some()
             && let Some(active) = self.active.no_import_assertions
@@ -2144,8 +2143,9 @@ fn system_api_version(options: &ArktsRuleOptions, api: &str) -> Option<SystemApi
         .find_map(|(name, version)| (name == api).then_some(*version))
         .or_else(|| {
             SYSTEM_API_VERSIONS
-                .iter()
-                .find_map(|(name, version)| (*name == api).then_some(*version))
+                .binary_search_by_key(&api, |(name, _)| *name)
+                .ok()
+                .map(|index| SYSTEM_API_VERSIONS[index].1)
         })
 }
 
@@ -2284,7 +2284,7 @@ pub fn lint_standalone_file(
             file_path.display()
         )
     })?;
-    lint_standalone_source(file_path, &source_text, rules, cwd)
+    lint_standalone_source(file_path, &source_text, rules, cwd, None)
 }
 
 pub fn lint_standalone_source(
@@ -2292,6 +2292,7 @@ pub fn lint_standalone_source(
     source_text: &str,
     rules: &[StandaloneRuleConfig],
     cwd: &Path,
+    source_type: Option<SourceType>,
 ) -> Result<Vec<StandaloneDiagnostic>, String> {
     if rules.is_empty() || !is_arkts_file(file_path) {
         return Ok(Vec::new());
@@ -2329,6 +2330,7 @@ pub fn lint_standalone_source(
         &allocator,
         &active_rules,
         option_store,
+        source_type,
     )
     .map(|diagnostics| {
         diagnostics
@@ -2349,4 +2351,50 @@ pub fn lint_standalone_source(
 
 fn find_rule(name: &str) -> Option<&'static ArktsRule> {
     ARKTS_RULES.iter().find(|rule| rule.name == name)
+}
+
+#[cfg(test)]
+mod api26_tests {
+    use super::*;
+
+    #[test]
+    fn every_generated_api_is_ordered_and_resolvable() {
+        let options = ArktsRuleOptions::default();
+        assert!(SYSTEM_API_VERSIONS.len() > 80_000);
+        for pair in SYSTEM_API_VERSIONS.windows(2) {
+            assert!(pair[0].0 < pair[1].0);
+        }
+        for &(name, expected) in SYSTEM_API_VERSIONS {
+            assert!((1..=26).contains(&expected.since), "{name}");
+            assert!(
+                expected
+                    .removed
+                    .is_none_or(|removed| removed >= expected.since),
+                "{name}"
+            );
+            let actual = system_api_version(&options, name).expect(name);
+            assert_eq!(
+                (actual.since, actual.removed),
+                (expected.since, expected.removed),
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn api26_enum_and_hms_release_versions_are_available_through_kits() {
+        let options = ArktsRuleOptions::default();
+        for api in [
+            "@ohos.annotation.SuppressWarningsType.PERMISSION",
+            "@kit.BasicServicesKit.SuppressWarningsType.PERMISSION",
+        ] {
+            assert_eq!(system_api_version(&options, api).expect(api).since, 26);
+        }
+        assert_eq!(
+            system_api_version(&options, "@hms.core.push.VoIPExtensionAbility")
+                .unwrap()
+                .since,
+            11
+        );
+    }
 }

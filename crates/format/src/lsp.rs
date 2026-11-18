@@ -10,13 +10,15 @@ use std::{
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use oxc_data_structures::rope::{Rope, get_line_column};
+use oxc_language_server::uri_utils::uri_to_file_path;
 use oxc_language_server::{
-    Capabilities, LanguageId, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
-    WorkerManager, run_server, uri_utils::uri_to_file_path,
+    Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges, WorkerManager,
+    run_server,
 };
+use oxc_span::ExplicitLanguage;
 use serde_json::Value;
 use tower_lsp_server::gen_lsp_types::{
-    DocumentFormattingProvider, Pattern, Position, Range, ServerCapabilities, TextEdit, Uri,
+    Pattern, Position, Range, ServerCapabilities, TextEdit, Uri,
 };
 use tracing::{debug, warn};
 
@@ -28,6 +30,7 @@ use crate::{
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 struct LspFormatOptions {
     config_path: Option<String>,
+    language: Option<ExplicitLanguage>,
 }
 
 impl TryFrom<Value> for LspFormatOptions {
@@ -42,20 +45,32 @@ impl TryFrom<Value> for LspFormatOptions {
             return Err("no object passed".to_string());
         };
 
+        let language = object
+            .get("fmt.language")
+            .and_then(Value::as_str)
+            .map(str::parse::<ExplicitLanguage>)
+            .transpose()
+            .map_err(|error| error.to_string())?;
+
         Ok(Self {
             config_path: object
                 .get("fmt.configPath")
                 .and_then(Value::as_str)
                 .map(str::to_owned),
+            language,
         })
     }
 }
 
-pub async fn run_lsp(server_name: String, server_version: String) {
+pub async fn run_lsp(
+    server_name: String,
+    server_version: String,
+    language: Option<ExplicitLanguage>,
+) {
     run_server(
         server_name,
         server_version_with_vp(server_version),
-        WorkerManager::new_dynamic(Arc::new(ServerFormatterBuilder)),
+        WorkerManager::new_dynamic(Arc::new(ServerFormatterBuilder { language })),
     )
     .await;
 }
@@ -67,10 +82,12 @@ fn server_version_with_vp(mut version: String) -> String {
     version
 }
 
-struct ServerFormatterBuilder;
+struct ServerFormatterBuilder {
+    language: Option<ExplicitLanguage>,
+}
 
 impl ServerFormatterBuilder {
-    fn create(&self, root_uri: &Uri, options: Value) -> ServerFormatter {
+    fn build(&self, root_uri: &Uri, options: Value) -> ServerFormatter {
         let options = deserialize_lsp_options(options);
         let root_path = uri_to_file_path(root_uri)
             .map(std::borrow::Cow::into_owned)
@@ -92,6 +109,7 @@ impl ServerFormatterBuilder {
                 .config_path
                 .filter(|path| !path.is_empty())
                 .map(PathBuf::from),
+            language: options.language.or(self.language),
         }
     }
 }
@@ -102,13 +120,13 @@ impl ToolBuilder for ServerFormatterBuilder {
         capabilities: &mut ServerCapabilities,
         _backend_capabilities: &mut Capabilities,
     ) {
-        capabilities.document_formatting_provider = Some(DocumentFormattingProvider::Bool(true));
+        capabilities.document_formatting_provider = Some(true.into());
     }
 
-    fn build(&self, root_uri: &Uri, options: Value) -> ToolBuildResult {
-        ToolBuildResult {
-            tool: Box::new(self.create(root_uri, options)),
-            client_messages: Vec::new(),
+    fn build(&self, root_uri: &Uri, options: Value) -> oxc_language_server::ToolBuildResult {
+        oxc_language_server::ToolBuildResult {
+            tool: Box::new(self.build(root_uri, options)),
+            client_messages: vec![],
         }
     }
 }
@@ -118,6 +136,7 @@ struct ServerFormatter {
     source_formatter: SourceFormatter,
     prettierignore_glob: Option<Gitignore>,
     explicit_config_path: Option<PathBuf>,
+    language: Option<ExplicitLanguage>,
 }
 
 impl Tool for ServerFormatter {
@@ -132,21 +151,18 @@ impl Tool for ServerFormatter {
         let new_options = deserialize_lsp_options(new_options_json.clone());
         if old_options == new_options {
             return ToolRestartChanges {
+                client_messages: vec![],
                 tool: None,
                 watch_patterns: None,
-                client_messages: Vec::new(),
             };
         }
 
-        let ToolBuildResult {
-            tool,
-            client_messages,
-        } = builder.build(root_uri, new_options_json.clone());
-        let watch_patterns = tool.get_watcher_patterns(new_options_json);
+        let new_formatter = builder.build(root_uri, new_options_json.clone()).tool;
+        let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
-            tool: Some(tool),
+            client_messages: vec![],
+            tool: Some(new_formatter),
             watch_patterns: Some(watch_patterns),
-            client_messages,
         }
     }
 
@@ -174,9 +190,9 @@ impl Tool for ServerFormatter {
         _options: Value,
     ) -> ToolRestartChanges {
         ToolRestartChanges {
+            client_messages: vec![],
             tool: None,
             watch_patterns: None,
-            client_messages: Vec::new(),
         }
     }
 
@@ -209,7 +225,8 @@ impl Tool for ServerFormatter {
             (path, source_text)
         };
 
-        let Some(result) = self.format_path(&path, source_text)? else {
+        let document_language = get_explicit_language_from_language_id(&document.language_id);
+        let Some(result) = self.format_path(&path, source_text, document_language)? else {
             return Ok(Vec::new());
         };
 
@@ -238,7 +255,12 @@ impl Tool for ServerFormatter {
 }
 
 impl ServerFormatter {
-    fn format_path(&self, path: &Path, source_text: &str) -> Result<Option<FormatResult>, String> {
+    fn format_path(
+        &self,
+        path: &Path,
+        source_text: &str,
+        document_language: Option<ExplicitLanguage>,
+    ) -> Result<Option<FormatResult>, String> {
         if should_ignore_file(path) || self.is_prettierignored(path) {
             return Ok(None);
         }
@@ -258,7 +280,10 @@ impl ServerFormatter {
             return Ok(None);
         }
 
-        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
+        let language = document_language.or(self.language);
+        let Some(strategy) =
+            FormatFileStrategy::from_path_with_language(path.to_path_buf(), language)
+        else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return Ok(None);
         };
@@ -271,7 +296,7 @@ impl ServerFormatter {
             return Ok(None);
         }
 
-        let resolved_options = resolver.resolve(&strategy);
+        let resolved_options = resolver.resolve(&strategy)?;
         Ok(Some(self.source_formatter.format(
             &strategy,
             source_text,
@@ -357,7 +382,7 @@ fn create_fake_file_path_from_language_id(
         "typescript" => "ts",
         "javascriptreact" => "jsx",
         "typescriptreact" => "tsx",
-        "arkts" | "ets" => "ets",
+        "arkts" | "ets" | "ets-static" => "ets",
         "toml" => "toml",
         "json" => "json",
         "jsonc" => "jsonc",
@@ -378,6 +403,10 @@ fn create_fake_file_path_from_language_id(
     }
 
     Some(root.join(format!("{name}.{extension}")))
+}
+
+fn get_explicit_language_from_language_id(language_id: &LanguageId) -> Option<ExplicitLanguage> {
+    (language_id.as_str() == "ets-static").then_some(ExplicitLanguage::EtsStatic)
 }
 
 /// Returns the minimal text edit `(start, end, replacement)` in byte offsets.
@@ -436,7 +465,7 @@ mod tests {
         time::{SystemTime, UNIX_EPOCH},
     };
 
-    use oxc_language_server::{LanguageId, TextDocument, Tool, uri_utils::file_path_to_uri};
+    use oxc_language_server::{LanguageId, TextDocument, Tool};
     use serde_json::json;
 
     use super::ServerFormatterBuilder;
@@ -480,9 +509,11 @@ mod tests {
             .expect("config should be written");
 
         let file_path = dir.path().join("input.ts");
-        let uri = file_path_to_uri(&file_path).expect("file URI should be created");
-        let root_uri = file_path_to_uri(dir.path()).expect("root URI should be created");
-        let formatter = ServerFormatterBuilder.create(
+        let uri = oxc_language_server::uri_utils::file_path_to_uri(&file_path)
+            .expect("file URI should be created");
+        let root_uri = oxc_language_server::uri_utils::file_path_to_uri(dir.path())
+            .expect("root URI should be created");
+        let formatter = ServerFormatterBuilder { language: None }.build(
             &root_uri,
             json!({
                 "fmt.configPath": ".oxfmtrc.json"
@@ -501,5 +532,29 @@ mod tests {
 
         assert_eq!(edits.len(), 1);
         assert!(edits[0].new_text.contains("'hello'"));
+    }
+
+    #[test]
+    fn formats_static_ets_document_language() {
+        let dir = TestDir::new("static-ets");
+        let file_path = dir.path().join("input.ets");
+        let uri = oxc_language_server::uri_utils::file_path_to_uri(&file_path)
+            .expect("file URI should be created");
+        let root_uri = oxc_language_server::uri_utils::file_path_to_uri(dir.path())
+            .expect("root URI should be created");
+        let formatter = ServerFormatterBuilder { language: None }.build(&root_uri, json!({}));
+        let source: Arc<str> = Arc::from("package example.lsp;\nfinal class Box{value:int=1}\n");
+        let document = TextDocument::new(
+            &uri,
+            LanguageId::new("ets-static".to_string()),
+            Some(Arc::clone(&source)),
+        );
+
+        let edits = formatter
+            .run_format(document)
+            .expect("static ETS formatting should succeed");
+
+        assert_eq!(edits.len(), 1);
+        assert!(!edits[0].new_text.is_empty());
     }
 }

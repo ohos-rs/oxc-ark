@@ -17,7 +17,7 @@ use oxc_allocator::free_fixed_size_allocator;
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
     ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileFailure, LintFileOutput, LintFileResult, LintFileTimings, LoadPluginResult,
+    LintFileFailure, LintFileOutput, LoadPluginResult,
 };
 use serde::Deserialize;
 
@@ -122,7 +122,7 @@ pub async fn lint_args_with_plugins(
 
     if command.lsp {
         let config_path = command.basic_options.config.clone().map(resolve_from_cwd);
-        return run_lsp_server(Some(external_linter), config_path);
+        return run_lsp_server(Some(external_linter), config_path, command.lang);
     }
 
     let prepared = match prepare_arkts_config(args) {
@@ -224,16 +224,8 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
 
 #[derive(Clone, Debug, Deserialize)]
 enum LintFileReturnValue {
-    Success {
-        diagnostics: Vec<LintFileResult>,
-        #[serde(default)]
-        timings: Option<LintFileTimings>,
-    },
-    Failure {
-        message: String,
-        #[serde(default)]
-        timings: Option<LintFileTimings>,
-    },
+    Success(LintFileOutput),
+    Failure(LintFileFailure),
 }
 
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
@@ -269,16 +261,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             match res {
                 Ok(None) => Ok(LintFileOutput::default()),
                 Ok(Some(json)) => match serde_json::from_str(&json) {
-                    Ok(LintFileReturnValue::Success {
-                        diagnostics,
-                        timings,
-                    }) => Ok(LintFileOutput {
-                        diagnostics,
-                        timings,
-                    }),
-                    Ok(LintFileReturnValue::Failure { message, timings }) => {
-                        Err(LintFileFailure { message, timings })
-                    }
+                    Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
+                    Ok(LintFileReturnValue::Failure(err)) => Err(err),
                     Err(err) => Err(format!(
                         "Failed to deserialize JSON returned by `lintFile`: {err}"
                     )

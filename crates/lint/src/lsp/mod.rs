@@ -2,6 +2,7 @@ use std::{fmt::Write, path::PathBuf, sync::Arc};
 
 use oxc_language_server::{WorkerManager, run_server};
 use oxc_linter::ExternalLinter;
+use oxc_span::ExplicitLanguage;
 
 mod code_actions;
 mod commands;
@@ -13,7 +14,11 @@ mod utils;
 pub mod options;
 
 /// Run the language server
-pub async fn run_lsp(external_linter: Option<ExternalLinter>, config_path: Option<PathBuf>) {
+pub async fn run_lsp(
+    external_linter: Option<ExternalLinter>,
+    config_path: Option<PathBuf>,
+    language: Option<ExplicitLanguage>,
+) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
         if let Some(vp_version) = std::env::var_os("VP_VERSION") {
@@ -27,6 +32,7 @@ pub async fn run_lsp(external_linter: Option<ExternalLinter>, config_path: Optio
         WorkerManager::new(Arc::new(server_linter::ServerLinterBuilder::new(
             external_linter,
             config_path,
+            language,
         ))),
     )
     .await;

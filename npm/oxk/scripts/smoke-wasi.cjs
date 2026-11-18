@@ -54,6 +54,17 @@ async function main() {
     throw new Error('WASI format output did not contain the expected source text')
   }
 
+  for (const [filename, source, expected] of [
+    ['style.css', 'a{color:red}', 'color: red;'],
+    ['README.md', '# Demo\n\n```ts\nconst value={a:1}\n```', 'const value = { a: 1 };'],
+    ['package.json', '{"version":"1.0.0","name":"example"}', '"name": "example",\n  "version"'],
+  ]) {
+    const result = await oxk.format(filename, source, {})
+    if (result.errors.length || !result.code.includes(expected)) {
+      throw new Error(`WASI native formatting failed for ${filename}: ${JSON.stringify(result)}`)
+    }
+  }
+
   await expectUnsupported('root lint', () => oxk.lint([]))
   await expectUnsupported('lint wrapper', () => lint([]))
 

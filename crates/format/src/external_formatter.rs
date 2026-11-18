@@ -10,13 +10,6 @@ use napi::{
     threadsafe_function::ThreadsafeFunction,
 };
 #[cfg(feature = "napi")]
-use oxc_allocator::Vec as ArenaVec;
-#[cfg(feature = "napi")]
-use oxc_formatter_core::{
-    DispatchResponse, EmbeddedIr, FormatDispatcher, IndentWidth, SessionServices, StringEmbedder,
-    push_text_with_literal_lines,
-};
-#[cfg(feature = "napi")]
 use serde_json::Value;
 
 /// Type alias for the init external formatter callback function signature.
@@ -147,58 +140,34 @@ impl ExternalFormatter {
         (self.init)(num_threads)
     }
 
-    /// Build the `SessionServices` installed on a root [`oxc_formatter_core::FormatSession`].
-    ///
-    /// Embedded formatting is a host-level switch upstream now (it is no longer a
-    /// `JsFormatOptions` field): when disabled, a service-less object is returned so the
-    /// formatter prints embedded languages verbatim. When enabled, the JS callbacks are
-    /// exposed through the IR dispatcher (template-literal embeds) and the string embedder
-    /// (JSDoc code fences).
-    pub fn to_session_services(
-        &self,
-        embedded_language_formatting: bool,
-        options: Value,
-        indent_width: IndentWidth,
-    ) -> SessionServices {
-        if !embedded_language_formatting {
-            return SessionServices::default();
-        }
-
-        let format_embedded = Arc::clone(&self.format_embedded);
-        let dispatcher_options = options.clone();
-        let dispatcher: FormatDispatcher = Arc::new(move |session, request| {
-            let Some(parser_name) = language_to_prettier_parser(request.language) else {
-                return Ok(DispatchResponse::PreserveOriginal);
-            };
-            let formatted = match (format_embedded)(&dispatcher_options, parser_name, request.text)
-            {
-                Ok(formatted) => formatted,
-                // Recoverable formatter failures keep the original source, like upstream's
-                // `PreserveOriginal` answer for an unsupported/failed child.
-                Err(_) => return Ok(DispatchResponse::PreserveOriginal),
-            };
-            let formatted = formatted.trim_end_matches(['\n', '\r']);
-            let allocator = session.allocator();
-            let text = allocator.alloc_str(formatted);
-            let mut ir = ArenaVec::new_in(&allocator);
-            push_text_with_literal_lines(&mut ir, text, indent_width);
-            Ok(DispatchResponse::Formatted(EmbeddedIr { ir }))
-        });
-
-        let string_embedder: StringEmbedder = {
-            let format_embedded = Arc::clone(&self.format_embedded);
-            Arc::new(move |language: &str, code: &str, _width: usize| {
-                let Some(parser_name) = language_to_prettier_parser(language) else {
-                    return Err(format!("Unsupported language: {language}"));
-                };
-                (format_embedded)(&options, parser_name, code)
-            })
-        };
-
-        SessionServices {
-            dispatcher: Some(dispatcher),
-            string_embedder: Some(string_embedder),
-            tailwind_sorter: None,
+    pub fn to_services(&self) -> ExternalServices {
+        let embedded = Arc::clone(&self.format_embedded);
+        let doc = Arc::clone(&self.format_embedded);
+        let file = Arc::clone(&self.format_file);
+        let tailwind = Arc::clone(&self.format_embedded);
+        ExternalServices {
+            format_file: Arc::new(move |options, code| {
+                file(
+                    &options,
+                    options["parser"].as_str().unwrap_or(""),
+                    options["filepath"].as_str().unwrap_or(""),
+                    code,
+                )
+            }),
+            format_embedded: Arc::new(move |options, code| {
+                embedded(&options, options["parser"].as_str().unwrap_or(""), code)
+            }),
+            format_embedded_doc: Arc::new(move |mut options, code| {
+                options["__oxkDoc"] = Value::Bool(true);
+                doc(&options, options["parser"].as_str().unwrap_or(""), code)
+            }),
+            sort_tailwindcss_classes: Arc::new(move |options, classes| {
+                let source = serde_json::to_string(&classes).unwrap();
+                tailwind(options, "__oxkTailwind", &source)
+                    .ok()
+                    .and_then(|json| serde_json::from_str(&json).ok())
+                    .unwrap_or(classes)
+            }),
         }
     }
 
@@ -215,26 +184,6 @@ impl ExternalFormatter {
 }
 
 // ---
-
-/// Map oxc_formatter embedded language tags to Prettier parser names.
-fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
-    match language {
-        // Current dispatcher vocabulary (oxc 0.159).
-        "css" => Some("css"),
-        "graphql" => Some("graphql"),
-        "html" => Some("html"),
-        "angular-html" | "angular" => Some("angular"),
-        "markdown" => Some("markdown"),
-        // Legacy tags kept for the JSDoc string channel.
-        "tagged-css" | "styled-jsx" => Some("css"),
-        "tagged-graphql" => Some("graphql"),
-        "tagged-html" => Some("html"),
-        "tagged-markdown" => Some("markdown"),
-        "angular-template" => Some("angular"),
-        "angular-styles" => Some("scss"),
-        _ => None,
-    }
-}
 
 // These wrappers expose async JS callbacks to the synchronous formatter core.
 // WASI exports run inside the napi runtime, so the blocking wait happens on a
@@ -324,4 +273,19 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
             })
         },
     )
+}
+
+pub type FormatFileCallback = Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
+
+#[derive(Clone)]
+pub struct ExternalServices {
+    pub format_file: FormatFileCallback,
+    pub format_embedded: crate::core::embed::FormatEmbeddedWithConfigCallback,
+    pub format_embedded_doc: crate::core::embed::FormatEmbeddedDocWithConfigCallback,
+    pub sort_tailwindcss_classes: crate::core::embed::TailwindWithConfigCallback,
+}
+impl ExternalServices {
+    pub fn format_file(&self, options: Value, code: &str) -> Result<String, String> {
+        (self.format_file)(options, code)
+    }
 }

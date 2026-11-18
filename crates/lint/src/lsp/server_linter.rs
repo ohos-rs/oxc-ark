@@ -1,3 +1,4 @@
+use oxc_language_server::uri_utils::uri_to_file_path;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 
@@ -10,8 +11,8 @@ use tower_lsp_server::gen_lsp_types::{
 use tower_lsp_server::{
     gen_lsp_types::{
         Code, CodeActionKind, CodeActionOptions, CodeActionProvider, CodeActionResponse,
-        Diagnostic, DiagnosticSeverity, ExecuteCommandOptions, Message as LspMessage, Pattern,
-        Range, ServerCapabilities, Uri, WorkDoneProgressOptions, WorkspaceEdit,
+        Diagnostic, DiagnosticSeverity, ExecuteCommandOptions, Pattern, Range, ServerCapabilities,
+        Uri, WorkDoneProgressOptions, WorkspaceEdit,
     },
     jsonrpc::ErrorCode,
 };
@@ -24,10 +25,10 @@ use oxc_linter::{
 };
 
 use oxc_language_server::{
-    Capabilities, CodeActionParams, ConcurrentHashMap, DiagnosticMode, DiagnosticResult,
-    TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
-    uri_utils::uri_to_file_path,
+    Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument, Tool,
+    ToolBuilder, ToolRestartChanges,
 };
+use oxc_span::{ExplicitLanguage, SourceType};
 
 use crate::{
     ArktsLintConfig, arkts,
@@ -43,13 +44,13 @@ use crate::{
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         error_with_position::{
             DiagnosticReport, LinterCodeAction, create_unused_directives_report,
-            generate_inverted_diagnostics, message_to_lsp_diagnostic, offset_to_position,
+            generate_inverted_diagnostics, message_to_lsp_diagnostic,
         },
         lsp_file_system::LspFileSystem,
         options::{
             LintOptions as LSPLintOptions, RulesCustomization, Run, UnusedDisableDirectives,
         },
-        utils::{normalize_path, range_overlaps},
+        utils::range_overlaps,
     },
 };
 
@@ -57,16 +58,19 @@ use crate::{
 pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
     default_config_path: Option<PathBuf>,
+    language: Option<ExplicitLanguage>,
 }
 
 impl ServerLinterBuilder {
     pub fn new(
         external_linter: Option<ExternalLinter>,
         default_config_path: Option<PathBuf>,
+        language: Option<ExplicitLanguage>,
     ) -> Self {
         Self {
             external_linter,
             default_config_path,
+            language,
         }
     }
 
@@ -134,6 +138,7 @@ impl ServerLinterBuilder {
         };
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
+        let base_ignore_root = oxlintrc.dir().unwrap_or(&root_path).to_path_buf();
 
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
@@ -176,8 +181,9 @@ impl ServerLinterBuilder {
 
         let lint_options = LintOptions {
             fix: fix_kind,
+            with_ignore_fixes: true,
             report_unused_directive: match options.unused_disable_directives {
-                Some(UnusedDisableDirectives::Allow) => Some(AllowWarnDeny::Allow),
+                Some(UnusedDisableDirectives::Allow) => None,
                 Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
                 Some(UnusedDisableDirectives::Deny) => Some(AllowWarnDeny::Deny),
                 None => match config_store.report_unused_disable_directives() {
@@ -209,6 +215,13 @@ impl ServerLinterBuilder {
             .with_workspace_uri(Some(root_uri.as_str()));
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
+        let source_type = options
+            .language
+            .map(super::options::Language::source_type)
+            .or_else(|| self.language.map(ExplicitLanguage::source_type));
+        if let Some(source_type) = source_type {
+            lint_service_options = lint_service_options.with_source_type(source_type);
+        }
 
         if let Some(ts_path) = options.ts_config_path.as_ref() {
             let ts_path = Path::new(ts_path).to_path_buf();
@@ -225,6 +238,7 @@ impl ServerLinterBuilder {
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
             .with_type_aware(type_aware)
             .with_fix_kind(fix_kind)
+            .with_ignore_fixes(true)
             .build()
         {
             Ok(runner) => runner,
@@ -236,6 +250,7 @@ impl ServerLinterBuilder {
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
                     .with_fix_kind(fix_kind)
+                    .with_ignore_fixes(true)
                     .build()
                     .expect("Failed to build LintRunner without type-aware linting")
             }
@@ -244,7 +259,7 @@ impl ServerLinterBuilder {
         ServerLinter::new(
             options.run,
             root_path.to_path_buf(),
-            LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
+            LintIgnoreMatcher::new(&base_patterns, &base_ignore_root, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
             extended_paths,
             runner,
@@ -253,6 +268,7 @@ impl ServerLinterBuilder {
             options.rules_customization,
             arkts_config,
             config_path,
+            source_type,
         )
     }
 }
@@ -272,8 +288,8 @@ impl ToolBuilder for ServerLinterBuilder {
                     CodeActionKind::SourceFixAll,
                 ]),
                 work_done_progress_options: WorkDoneProgressOptions::default(),
-                documentation: None,
                 resolve_provider: None,
+                documentation: None,
             }));
 
         capabilities.execute_command_provider = Some(ExecuteCommandOptions {
@@ -301,10 +317,14 @@ impl ToolBuilder for ServerLinterBuilder {
             };
     }
 
-    fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
-        ToolBuildResult {
+    fn build(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> oxc_language_server::ToolBuildResult {
+        oxc_language_server::ToolBuildResult {
             tool: Box::new(self.build(root_uri, options)),
-            client_messages: Vec::new(),
+            client_messages: vec![],
         }
     }
 
@@ -316,7 +336,7 @@ impl ToolBuilder for ServerLinterBuilder {
 
         // Destroy JS workspace
         if let Some(external_linter) = &self.external_linter {
-            let res = (external_linter.destroy_workspace)(root_uri.to_string());
+            let res = (external_linter.destroy_workspace)(root_uri.as_str().to_string());
 
             if let Err(err) = res {
                 error!("Failed to destroy JS workspace:\n{err}\n");
@@ -413,6 +433,7 @@ pub struct ServerLinter {
     rules_customization: Option<RulesCustomization>,
     arkts_config: ArktsLintConfig,
     config_path: Option<PathBuf>,
+    source_type: Option<SourceType>,
 }
 
 impl Tool for ServerLinter {
@@ -447,18 +468,15 @@ impl Tool for ServerLinter {
 
         if !Self::needs_restart(&old_option, &new_options) {
             return ToolRestartChanges {
+                client_messages: vec![],
                 tool: None,
                 watch_patterns: None,
-                client_messages: Vec::new(),
             };
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
         builder.shutdown(root_uri);
-        let ToolBuildResult {
-            tool: new_linter,
-            client_messages,
-        } = builder.build(root_uri, new_options_json.clone());
+        let new_linter = builder.build(root_uri, new_options_json.clone()).tool;
 
         let patterns = {
             if old_option.config_path == new_options.config_path
@@ -472,9 +490,9 @@ impl Tool for ServerLinter {
         };
 
         ToolRestartChanges {
+            client_messages: vec![],
             tool: Some(new_linter),
             watch_patterns: patterns,
-            client_messages,
         }
     }
 
@@ -528,16 +546,13 @@ impl Tool for ServerLinter {
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
         builder.shutdown(root_uri);
-        let ToolBuildResult {
-            tool: new_linter,
-            client_messages,
-        } = builder.build(root_uri, options);
+        let new_linter = builder.build(root_uri, options).tool;
 
         ToolRestartChanges {
+            client_messages: vec![],
             tool: Some(new_linter),
             // TODO: update watch patterns if config_path changed, or the extended paths changed
             watch_patterns: None,
-            client_messages,
         }
     }
 
@@ -576,6 +591,9 @@ impl Tool for ServerLinter {
         }
 
         let text_edits = fix_all_text_edit(actions.into_iter());
+        if text_edits.is_empty() {
+            return Ok(None);
+        }
 
         Ok(Some(WorkspaceEdit {
             #[allow(clippy::disallowed_types)]
@@ -585,9 +603,12 @@ impl Tool for ServerLinter {
         }))
     }
 
-    fn get_code_actions_or_commands(&self, params: CodeActionParams) -> Vec<CodeActionResponse> {
+    fn get_code_actions_or_commands(
+        &self,
+        params: oxc_language_server::CodeActionParams,
+    ) -> Vec<CodeActionResponse> {
         let uri = &params.uri;
-        let range = params.range;
+        let range = &params.range;
         let context = &params.context;
         let actions = self.get_code_actions_for_uri(uri, context.trigger_kind);
 
@@ -601,7 +622,7 @@ impl Tool for ServerLinter {
 
         let actions = actions
             .into_iter()
-            .filter(|r| range_overlaps(range, r.range));
+            .filter(|r| range_overlaps(*range, r.range));
 
         // `context.only` is a special case here. ESLint behavior is if `source.fixAll` is the first element in `context.only`,
         // then only return fix all code action, and ignore other code actions, even if they are requested.
@@ -727,6 +748,7 @@ impl ServerLinter {
         rules_customization: Option<RulesCustomization>,
         arkts_config: ArktsLintConfig,
         config_path: Option<PathBuf>,
+        source_type: Option<SourceType>,
     ) -> Self {
         Self {
             run,
@@ -741,6 +763,7 @@ impl ServerLinter {
             rules_customization,
             arkts_config,
             config_path,
+            source_type,
         }
     }
 
@@ -863,7 +886,6 @@ impl ServerLinter {
                             message,
                             uri,
                             source_text,
-                            rope,
                             self.rules_customization.as_ref(),
                         )
                     })
@@ -886,7 +908,6 @@ impl ServerLinter {
                 &directives,
                 severity,
                 source_text,
-                rope,
             ));
         }
 
@@ -909,8 +930,13 @@ impl ServerLinter {
             return Ok(Vec::new());
         }
 
-        let diagnostics =
-            arkts::lint_standalone_source(path, source_text, &self.arkts_config.rules, &self.cwd)?;
+        let diagnostics = arkts::lint_standalone_source(
+            path,
+            source_text,
+            &self.arkts_config.rules,
+            &self.cwd,
+            self.source_type,
+        )?;
 
         Ok(diagnostics
             .into_iter()
@@ -924,6 +950,7 @@ impl ServerLinter {
             || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind != new_options.fix_kind
             || old_options.unused_disable_directives != new_options.unused_disable_directives
+            || old_options.language != new_options.language
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
     }
@@ -943,11 +970,11 @@ impl ServerLinter {
 fn arkts_diagnostic_to_lsp(
     diagnostic: arkts::StandaloneDiagnostic,
     source_text: &str,
-    rope: &Rope,
+    _rope: &Rope,
 ) -> DiagnosticReport {
     let range = Range::new(
-        offset_to_position(rope, diagnostic.start, source_text),
-        offset_to_position(rope, diagnostic.end, source_text),
+        oxc_language_server::offset_to_position(source_text, diagnostic.start),
+        oxc_language_server::offset_to_position(source_text, diagnostic.end),
     );
     let severity = match diagnostic.severity {
         arkts::StandaloneSeverity::Warn => DiagnosticSeverity::Warning,
@@ -959,7 +986,7 @@ fn arkts_diagnostic_to_lsp(
             range,
             severity: Some(severity),
             code: Some(Code::String(diagnostic.rule_name)),
-            message: LspMessage::String(diagnostic.message),
+            message: diagnostic.message.into(),
             source: Some("arkts".to_string()),
             code_description: None,
             related_information: None,
@@ -970,14 +997,25 @@ fn arkts_diagnostic_to_lsp(
     }
 }
 
+fn normalize_path(path: impl AsRef<Path>) -> PathBuf {
+    let mut out = PathBuf::new();
+    for component in path.as_ref().components() {
+        match component {
+            std::path::Component::ParentDir => {
+                out.pop();
+            }
+            std::path::Component::CurDir => {}
+            value => out.push(value.as_os_str()),
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use std::{fs, sync::Arc};
 
-    use oxc_language_server::{
-        Capabilities, CodeActionParams, LanguageId, TextDocument, Tool, ToolBuilder,
-        uri_utils::file_path_to_uri,
-    };
+    use oxc_language_server::{Capabilities, LanguageId, TextDocument, Tool, ToolBuilder};
     use serde_json::json;
     use tower_lsp_server::gen_lsp_types::{
         CodeActionContext, CodeActionKind, CodeActionProvider, CodeActionResponse,
@@ -1049,9 +1087,9 @@ mod tests {
         let file_path = root.join("input.ets");
         fs::write(&file_path, source).unwrap();
 
-        let root_uri = file_path_to_uri(&root).unwrap();
-        let file_uri = file_path_to_uri(&file_path).unwrap();
-        let linter = ServerLinterBuilder::new(None, None).build(&root_uri, json!({}));
+        let root_uri = oxc_language_server::uri_utils::file_path_to_uri(&root).unwrap();
+        let file_uri = oxc_language_server::uri_utils::file_path_to_uri(&file_path).unwrap();
+        let linter = ServerLinterBuilder::new(None, None, None).build(&root_uri, json!({}));
         let document = TextDocument::new(
             &file_uri,
             LanguageId::new("typescript".to_string()),
@@ -1090,11 +1128,11 @@ mod tests {
             only: None,
             trigger_kind: Some(CodeActionTriggerKind::Invoked),
         };
-        let actions = linter.get_code_actions_or_commands(CodeActionParams {
-            uri: file_uri,
+        let actions = linter.get_code_actions_or_commands(oxc_language_server::CodeActionParams {
+            uri: file_uri.clone(),
             range: Range::new(Position::new(0, 0), Position::new(0, 26)),
             context,
-            document_version: None,
+            document_version: Some(0),
         });
 
         assert!(

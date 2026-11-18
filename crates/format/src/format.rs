@@ -8,9 +8,8 @@ use oxc_ast::ast::{
     PropertyKey, Statement, StringLiteral,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter::{JsFormatOptions as FormatOptions, format_with_session};
+use oxc_formatter::{JsFormatOptions as FormatOptions, format as format_js};
 use oxc_formatter_core::spec::normalize_string;
-use oxc_formatter_core::{FormatSession, InputKind};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps, format as format_json};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
@@ -25,6 +24,7 @@ pub enum FormatResult {
 
 pub struct SourceFormatter {
     allocator_pool: AllocatorPool,
+    upstream: crate::core::format::SourceFormatter,
     #[cfg(feature = "napi")]
     external_formatter: Option<super::ExternalFormatter>,
 }
@@ -33,6 +33,7 @@ impl SourceFormatter {
     pub fn new(num_of_threads: usize) -> Self {
         Self {
             allocator_pool: AllocatorPool::new(num_of_threads),
+            upstream: crate::core::format::SourceFormatter::new(num_of_threads),
             #[cfg(feature = "napi")]
             external_formatter: None,
         }
@@ -44,6 +45,11 @@ impl SourceFormatter {
         mut self,
         external_formatter: Option<super::ExternalFormatter>,
     ) -> Self {
+        self.upstream = self.upstream.with_external_services(
+            external_formatter
+                .as_ref()
+                .map(super::ExternalFormatter::to_services),
+        );
         self.external_formatter = external_formatter;
         self
     }
@@ -55,13 +61,20 @@ impl SourceFormatter {
         source_text: &str,
         resolved_options: ResolvedOptions,
     ) -> FormatResult {
+        if let ResolvedOptions::Upstream(plan) = resolved_options {
+            return match self.upstream.format(source_text, plan) {
+                crate::core::format::FormatResult::Success { is_changed, code } => {
+                    FormatResult::Success { is_changed, code }
+                }
+                crate::core::format::FormatResult::Error(errors) => FormatResult::Error(errors),
+            };
+        }
         let (result, insert_final_newline) = match (entry, resolved_options) {
             (
                 FormatFileStrategy::OxcFormatter { path, source_type },
                 ResolvedOptions::OxcFormatter {
                     format_options,
                     external_options,
-                    embedded_language_formatting,
                     insert_final_newline,
                 },
             ) => (
@@ -71,7 +84,6 @@ impl SourceFormatter {
                     *source_type,
                     *format_options,
                     external_options,
-                    embedded_language_formatting,
                 ),
                 insert_final_newline,
             ),
@@ -155,35 +167,11 @@ impl SourceFormatter {
         source_type: SourceType,
         format_options: FormatOptions,
         external_options: Value,
-        embedded_language_formatting: bool,
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
 
-        // Embedded-language handling moved from `ExternalCallbacks` to per-run
-        // `FormatSession` services in upstream oxc. The dispatcher handles template-literal
-        // embeds (CSS/HTML/GraphQL/Markdown) and the string embedder handles JSDoc fences.
-        #[cfg(feature = "napi")]
-        let session = {
-            let services = self.external_formatter.as_ref().map_or_else(
-                oxc_formatter_core::SessionServices::default,
-                |ext| {
-                    ext.to_session_services(
-                        embedded_language_formatting,
-                        external_options,
-                        format_options.indent_width,
-                    )
-                },
-            );
-            FormatSession::with_services(&allocator, InputKind::PhysicalFile, services)
-        };
-
-        #[cfg(not(feature = "napi"))]
-        let session = {
-            let _ = (external_options, embedded_language_formatting);
-            FormatSession::new(&allocator, InputKind::PhysicalFile)
-        };
-
-        let formatted = format_with_session(&session, source_text, source_type, format_options)?;
+        let _ = external_options;
+        let formatted = format_js(&allocator, source_text, source_type, format_options)?;
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
@@ -197,7 +185,7 @@ impl SourceFormatter {
 
     /// Format TOML file using `oxc-toml`.
     fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
-        oxc_toml::format(source_text, options)
+        oxc_toml::format(&oxc_toml::parse(source_text), options)
     }
 
     /// Format JSON/JSON5/JSONC using `oxc_formatter_json`.
@@ -237,13 +225,13 @@ struct FormattedJson5Key {
     quote: u8,
 }
 
-fn should_preserve_json5_key_quote_style(options: JsonFormatOptions) -> bool {
+pub(crate) fn should_preserve_json5_key_quote_style(options: JsonFormatOptions) -> bool {
     options.variant == JsonVariant::Json5
         && matches!(options.quote_props, QuoteProps::Preserve)
         && options.single_quote.value()
 }
 
-fn restore_json5_double_quoted_keys(source_text: &str, code: &mut String) {
+pub(crate) fn restore_json5_double_quoted_keys(source_text: &str, code: &mut String) {
     let Some(source_keys) = collect_source_json5_key_quotes(source_text) else {
         return;
     };
@@ -307,7 +295,7 @@ fn parse_json_expression<'a>(
     let ret = Parser::new(allocator, wrapped_source, SourceType::default())
         .with_options(options)
         .parse();
-    if ret.fatal_error || !ret.diagnostics.is_empty() {
+    if !ret.diagnostics.is_empty() {
         return None;
     }
 
@@ -529,6 +517,38 @@ mod tests {
         SourceFormatter::new(1)
             .format_by_json(source, options)
             .expect("JSON formatting should succeed")
+    }
+
+    #[test]
+    fn formats_static_ets_idempotently() {
+        let source =
+            "package example.formatter;\nfinal class Box{value:int=1}\nlet character:char=c'a';\n";
+        let formatter = SourceFormatter::new(1);
+        let options = FormatOptions::default();
+        let formatted = formatter
+            .format_by_oxc_formatter(
+                source,
+                Path::new("test.ets"),
+                SourceType::ets_static(),
+                options.clone(),
+                Value::Null,
+            )
+            .expect("static ETS formatting should succeed");
+
+        assert!(formatted.contains("final class Box {"));
+        assert!(formatted.contains("value: int = 1;"));
+        assert!(formatted.contains("let character: char = c'a';"));
+
+        let second = formatter
+            .format_by_oxc_formatter(
+                &formatted,
+                Path::new("test.ets"),
+                SourceType::ets_static(),
+                options,
+                Value::Null,
+            )
+            .expect("formatted static ETS should remain valid");
+        assert_eq!(second, formatted);
     }
 
     #[test]

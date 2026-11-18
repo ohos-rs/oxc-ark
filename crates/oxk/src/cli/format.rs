@@ -15,28 +15,6 @@ fn parse_bracket_spacing(value: String) -> Result<oxc_formatter::BracketSpacing,
         .map_err(|_| "Value must be 'true' or 'false'".to_string())
 }
 
-fn parse_indent_style(value: String) -> Result<oxc_formatter_core::IndentStyle, String> {
-    match value.as_str() {
-        "tab" => Ok(oxc_formatter_core::IndentStyle::Tab),
-        "space" => Ok(oxc_formatter_core::IndentStyle::Space),
-        _ => Err("Value must be 'tab' or 'space'".to_string()),
-    }
-}
-
-fn parse_indent_width(value: String) -> Result<oxc_formatter_core::IndentWidth, String> {
-    let value = value
-        .parse::<u8>()
-        .map_err(|_| "Indent width must be an integer between 0 and 24".to_string())?;
-    oxc_formatter_core::IndentWidth::try_from(value).map_err(|err| err.to_string())
-}
-
-fn parse_line_width(value: String) -> Result<oxc_formatter_core::LineWidth, String> {
-    let value = value
-        .parse::<u16>()
-        .map_err(|_| "Line width must be an integer between 1 and 320".to_string())?;
-    oxc_formatter_core::LineWidth::try_from(value).map_err(|err| err.to_string())
-}
-
 pub fn cli_format() -> impl Parser<crate::Options> {
     let lsp = long("lsp")
         .help("Start language server protocol (LSP) server")
@@ -46,6 +24,12 @@ pub fn cli_format() -> impl Parser<crate::Options> {
         .argument::<String>("PATH")
         .help("Path to .oxfmtrc config file (default: search upward for .oxfmtrc.json / .oxfmtrc.jsonc)")
         .parse(|s| Ok::<PathBuf, String>(PathBuf::from(s)))
+        .optional();
+
+    let lang = long("lang")
+        .argument::<String>("LANG")
+        .help("Explicit language for .ets files. Supported: ets-static")
+        .parse(|value| oxc_span::ExplicitLanguage::from_str(&value))
         .optional();
 
     let file = positional("input")
@@ -78,13 +62,23 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let indent_style = long("indent-style")
         .argument::<String>("STYLE")
         .help("The indent style. Values: tab, space")
-        .parse(parse_indent_style)
+        .parse(|s| match s.as_str() {
+            "tab" => Ok(oxc_formatter_core::IndentStyle::Tab),
+            "space" => Ok(oxc_formatter_core::IndentStyle::Space),
+            _ => Err("Expected tab or space"),
+        })
         .optional();
 
     let indent_width = long("indent-width")
         .argument::<String>("WIDTH")
         .help("The indent width (0-24)")
-        .parse(parse_indent_width)
+        .parse(|s| {
+            s.parse::<u8>()
+                .map_err(|err| err.to_string())
+                .and_then(|n| {
+                    oxc_formatter_core::IndentWidth::try_from(n).map_err(|err| err.to_string())
+                })
+        })
         .optional();
 
     let line_ending = long("line-ending")
@@ -96,7 +90,13 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let line_width = long("line-width")
         .argument::<String>("WIDTH")
         .help("The max width of a line (1-320)")
-        .parse(parse_line_width)
+        .parse(|s| {
+            s.parse::<u16>()
+                .map_err(|err| err.to_string())
+                .and_then(|n| {
+                    oxc_formatter_core::LineWidth::try_from(n).map_err(|err| err.to_string())
+                })
+        })
         .optional();
 
     let quote_style = long("quote-style")
@@ -168,16 +168,26 @@ pub fn cli_format() -> impl Parser<crate::Options> {
     let embedded_language_formatting = long("embedded-language-formatting")
         .argument::<String>("VALUE")
         .help("Enable formatting for embedded languages. Values: auto, off")
-        .parse(|s| crate::EmbeddedLanguageFormatting::from_str(&s))
+        .parse(|s| {
+            if s == "auto" || s == "off" {
+                Ok(s)
+            } else {
+                Err("Expected auto or off")
+            }
+        })
         .optional();
 
     let experimental_sort_imports = long("experimental-sort-imports")
         .argument("JSON")
         .help("Sort import statements. Provide JSON configuration string")
+        .parse(|value: String| {
+            serde_json::from_str::<serde_json::Value>(&value).map_err(|err| err.to_string())
+        })
         .optional();
 
     let format_parser = construct!(crate::FormatArgs {
         lsp,
+        lang,
         config,
         thread,
         excludes,
