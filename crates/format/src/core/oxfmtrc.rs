@@ -1,6 +1,3 @@
-// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
-// Copyright (c) Oxc project contributors.
-
 use std::path::Path;
 
 use schemars::JsonSchema;
@@ -9,7 +6,7 @@ use serde_json::Value;
 
 use oxc_config::GlobSet;
 
-use crate::core::utils;
+use crate::core::{Language, utils};
 
 /// Configuration options for Oxfmt.
 ///
@@ -26,6 +23,13 @@ pub struct Oxfmtrc {
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overrides: Option<Vec<OxfmtOverrideConfig>>,
+    /// Format matched files as the given language, instead of detecting it from the file name.
+    /// e.g. Angular templates named `*.html`, or `*.wxml` files formatted as HTML.
+    /// When a file matches multiple associations, the later one takes precedence (array order matters).
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub associations: Option<Vec<OxfmtAssociationConfig>>,
     /// Ignore files matching these glob patterns.
     /// Patterns use gitignore-style matching, rooted at the directory containing the configuration file.
     /// Files outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.
@@ -49,6 +53,20 @@ pub struct OxfmtOverrideConfig {
     /// Accepts the same options as the top-level format options.
     #[serde(default)]
     pub options: FormatConfig,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OxfmtAssociationConfig {
+    /// Glob patterns to match files for this association.
+    pub files: GlobSet,
+    /// Glob patterns to exclude from this association.
+    #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
+    pub exclude_files: GlobSet,
+    /// The language to format matched files as, named by its Shiki id (as in Markdown code fences).
+    pub language: Language,
 }
 
 // ---
@@ -97,7 +115,7 @@ pub struct FormatConfig {
     ///
     /// For JSX, you can set the `jsxSingleQuote` option.
     ///
-    /// - Languages: JS, JSX, TS, TSX, JSON5, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro
+    /// - Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte, Astro
     /// - Default: `false`
     /// - Overrides `.editorconfig.quote_type`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -211,9 +229,6 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prose_wrap: Option<ProseWrapConfig>,
 
-    // ============================================================================================
-    // Prettier compatible options and only used by Prettier
-    // ============================================================================================
     /// Specify the global whitespace sensitivity.
     ///
     /// - Languages: HTML, Angular, Vue, Handlebars, Svelte
@@ -345,6 +360,13 @@ impl FormatConfig {
             self.astro,
             Some(AstroUserConfig::Bool(true) | AstroUserConfig::Object(_))
         )
+    }
+
+    /// The `sortTailwindcss` settings, `None` when sorting is off.
+    pub fn tailwind_config(&self) -> Option<SortTailwindcssConfig> {
+        self.sort_tailwindcss
+            .clone()
+            .and_then(SortTailwindcssUserConfig::into_config)
     }
 
     /// Whether Tailwind class sorting is enabled by this config.

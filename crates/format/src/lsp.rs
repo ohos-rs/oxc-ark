@@ -22,9 +22,12 @@ use tower_lsp_server::gen_lsp_types::{
 };
 use tracing::{debug, warn};
 
+#[cfg(feature = "napi")]
+use crate::core::support::FormatStrategy;
 use crate::{
-    ConfigResolver, FormatFileStrategy, FormatResult, SourceFormatter, build_ignore_matcher,
-    is_gitignore_match, resolve_editorconfig_path, resolve_oxfmtrc_path, should_ignore_file,
+    ConfigResolver, FormatFileStrategy, FormatResult, ResolveOutcome, ResolvedOptions,
+    SourceFormatter, build_ignore_matcher, is_gitignore_match, resolve_editorconfig_path,
+    resolve_oxfmtrc_path, should_ignore_file,
 };
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -281,14 +284,15 @@ impl ServerFormatter {
         }
 
         let language = document_language.or(self.language);
-        let Some(strategy) =
-            FormatFileStrategy::from_path_with_language(path.to_path_buf(), language)
-        else {
+        // Associations take precedence over the file-name classification, except for
+        // an explicitly selected `ets-static` document language.
+        let Some(strategy) = resolver.classify_with_explicit_language(path, language) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return Ok(None);
         };
 
-        if !strategy.can_format_without_external() {
+        #[cfg(feature = "napi")]
+        if matches!(strategy, FormatStrategy::Prettier(_)) {
             debug!(
                 "Skipping file that requires external formatter support: {}",
                 path.display()
@@ -296,9 +300,17 @@ impl ServerFormatter {
             return Ok(None);
         }
 
-        let resolved_options = resolver.resolve(&strategy)?;
+        let resolved_options = match resolver.resolve_outcome(path, strategy) {
+            Ok(ResolveOutcome::Format(plan)) => ResolvedOptions::Upstream(plan),
+            Ok(ResolveOutcome::MissingPlugin(_)) => return Ok(None),
+            Err(err) => return Err(err),
+        };
+        // `ResolvedOptions::Upstream` ignores the entry strategy.
+        let entry = FormatFileStrategy::Native {
+            path: path.to_path_buf(),
+        };
         Ok(Some(self.source_formatter.format(
-            &strategy,
+            &entry,
             source_text,
             resolved_options,
         )))

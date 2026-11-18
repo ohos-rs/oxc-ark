@@ -1743,7 +1743,8 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
 
     fn visit_import_declaration(&mut self, it: &ImportDeclaration<'a>) {
         if let Some(active) = self.active.system_api_version
-            && let Some(module) = system_module_name(it.source.value.as_str())
+            && let Some(source) = it.source.value.as_str()
+            && let Some(module) = system_module_name(source)
         {
             self.report_system_api_version(active, module, it.source.span);
         }
@@ -1945,7 +1946,11 @@ impl<'a> Visit<'a> for ArktsVisitor<'_> {
         {
             self.report(active, it.span);
         }
-        if it.id.value.contains('*')
+        if it
+            .id
+            .value
+            .as_str()
+            .is_some_and(|value| value.contains('*'))
             && let Some(active) = self.active.no_module_wildcards
         {
             self.report(active, it.id.span);
@@ -2033,24 +2038,28 @@ fn collect_system_api_imports<'a>(body: &[Statement<'a>]) -> HashMap<String, Sys
     for statement in body {
         match statement {
             Statement::ImportDeclaration(declaration) => {
-                collect_system_api_import_declaration(
-                    declaration.source.value.as_str(),
-                    declaration
-                        .specifiers
-                        .as_ref()
-                        .map(|specifiers| specifiers.as_slice()),
-                    &mut imports,
-                );
+                if let Some(source) = declaration.source.value.as_str() {
+                    collect_system_api_import_declaration(
+                        source,
+                        declaration
+                            .specifiers
+                            .as_ref()
+                            .map(|specifiers| specifiers.as_slice()),
+                        &mut imports,
+                    );
+                }
             }
             Statement::LazyImportDeclaration(declaration) => {
-                collect_system_api_import_declaration(
-                    declaration.source.value.as_str(),
-                    declaration
-                        .specifiers
-                        .as_ref()
-                        .map(|specifiers| specifiers.as_slice()),
-                    &mut imports,
-                );
+                if let Some(source) = declaration.source.value.as_str() {
+                    collect_system_api_import_declaration(
+                        source,
+                        declaration
+                            .specifiers
+                            .as_ref()
+                            .map(|specifiers| specifiers.as_slice()),
+                        &mut imports,
+                    );
+                }
             }
             _ => {}
         }
@@ -2110,7 +2119,7 @@ fn module_export_name<'a>(name: &'a ModuleExportName<'a>) -> Option<&'a str> {
     match name {
         ModuleExportName::IdentifierName(identifier) => Some(identifier.name.as_str()),
         ModuleExportName::IdentifierReference(identifier) => Some(identifier.name.as_str()),
-        ModuleExportName::StringLiteral(literal) => Some(literal.value.as_str()),
+        ModuleExportName::StringLiteral(literal) => literal.value.as_str(),
     }
 }
 

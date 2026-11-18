@@ -17,6 +17,7 @@ schemars = { workspace = true }
 tracing = { workspace = true }
 oxc_formatter_css = { workspace = true }
 oxc_formatter_graphql = { workspace = true }
+oxc_formatter_htmlish = { workspace = true }
 oxc_formatter_markdown = { workspace = true }
 oxc_formatter_toml = { workspace = true }
 oxc_formatter_yaml = { workspace = true }

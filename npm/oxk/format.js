@@ -126,12 +126,6 @@ async function formatFile({ code, parserName, fileName, options }) {
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   // We specify `parser` to skip parser inference for performance
   options.parser = parserName
-  if (parserName === 'vue') {
-    const tags = code.matchAll(/<script(?=[\s>])((?:"[^"]*"|'[^']*'|[^"'>])*)>/g)
-    if ([...tags].some((tag) => /(?:^|\s)lang\s*=\s*(?:"tsx"|'tsx'|tsx(?=[\s/]|$))/.test(tag[1]))) {
-      options._oxfmtVueScriptLang = 'tsx'
-    }
-  }
   // But some plugins rely on `filepath`, so we set it too
   options.filepath = fileName
   return prettierCache.format(code, options)
@@ -187,12 +181,11 @@ function formatRaw(fileName, sourceText, options, initExternalFormatterCb, forma
 }
 
 // Internal Prettier plugin entry point. Keep the same callback transport as format().
-function __jsTextToDoc(sourceExt, sourceText, optionsJson, parentContext) {
+function __jsTextToDoc(sourceExt, sourceText, optionsJson) {
   return napiJsTextToDoc(
     sourceExt,
     sourceText,
     optionsJson,
-    parentContext,
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
     (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),

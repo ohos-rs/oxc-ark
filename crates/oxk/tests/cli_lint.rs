@@ -120,6 +120,67 @@ fn cargo_cli_lint_init_uses_oxk_schema() {
 }
 
 #[test]
+fn cargo_cli_lint_init_refuses_to_overwrite_existing_config() {
+    let temp = TempDir::new();
+    let config_path = temp.path().join(".oxlintrc.json");
+    fs::write(&config_path, r#"{"rules":{}}"#).expect("failed to write fixture");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args(["lint", "--init"])
+        .output()
+        .expect("failed to run oxk lint --init");
+
+    assert!(
+        !output.status.success(),
+        "init should fail when a config already exists"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("already exists"),
+        "unexpected stderr: {stderr}"
+    );
+    assert_eq!(
+        fs::read_to_string(&config_path).expect("config should still exist"),
+        r#"{"rules":{}}"#,
+        "existing config must not be overwritten"
+    );
+}
+
+#[test]
+fn cargo_cli_lint_print_config_reflects_cli_options() {
+    let temp = TempDir::new();
+    fs::write(
+        temp.path().join(".oxlintrc.json"),
+        r#"{"rules":{"no-debugger":"warn"}}"#,
+    )
+    .expect("failed to write fixture");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_oxk"))
+        .current_dir(temp.path())
+        .args(["lint", "--deny-warnings", "--type-aware", "--print-config"])
+        .output()
+        .expect("failed to run oxk lint --print-config");
+
+    assert!(
+        output.status.success(),
+        "--print-config should succeed: {}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let config: Value =
+        serde_json::from_slice(&output.stdout).expect("print-config should emit JSON");
+    assert_eq!(
+        config.pointer("/options/denyWarnings"),
+        Some(&Value::Bool(true))
+    );
+    assert_eq!(
+        config.pointer("/options/typeAware"),
+        Some(&Value::Bool(true))
+    );
+}
+
+#[test]
 fn cargo_cli_lint_reports_json_diagnostic() {
     let temp = TempDir::new();
     let file_path = temp.path().join("input.ts");

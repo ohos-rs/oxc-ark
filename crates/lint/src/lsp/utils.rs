@@ -3,8 +3,12 @@
 
 use std::borrow::Cow;
 
-use oxc_diagnostics::{OxcCode, OxcDiagnostic};
-use tower_lsp_server::gen_lsp_types::Range;
+use cow_utils::CowUtils;
+use oxc_diagnostics::{OxcCode, OxcDiagnostic, Severity};
+use oxc_language_server::ClientMessage;
+use tower_lsp_server::gen_lsp_types::{MessageType, Range};
+
+use crate::config_loader::ConfigLoadError;
 
 /// Returns `true` if LSP ranges `a` and `b` overlap or touch (share a boundary point).
 ///
@@ -51,4 +55,44 @@ pub fn get_oxc_diagnostic_full_message(diagnostic: &OxcDiagnostic) -> String {
         diagnostic_message.push_str(note);
     }
     diagnostic_message
+}
+
+/// Converts an `OxcDiagnostic` to a `ClientMessage` for LSP communication.
+pub fn oxc_diagnostic_to_client_message(diagnostic: &OxcDiagnostic) -> ClientMessage {
+    let message = get_oxc_diagnostic_full_message(diagnostic);
+    let r#type = match diagnostic.severity {
+        Severity::Error => MessageType::Error,
+        Severity::Warning => MessageType::Warning,
+        Severity::Advice => MessageType::Info,
+    };
+    ClientMessage { message, r#type }
+}
+
+/// Converts a `ConfigLoadError` to a human-readable message string.
+pub fn config_loader_error_to_message(error: ConfigLoadError) -> String {
+    match error {
+        ConfigLoadError::Parse { path, error } => {
+            format!(
+                "Failed to parse config file {}: {}",
+                path.to_string_lossy().cow_replace("\\", "/"),
+                get_oxc_diagnostic_full_message(&error)
+            )
+        }
+        ConfigLoadError::Build { path, error } => {
+            format!(
+                "Failed to build config from file {}: {}",
+                path.to_string_lossy().cow_replace("\\", "/"),
+                error
+            )
+        }
+        ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
+            "JavaScript/TypeScript config file found but JS runtime not available.".to_string()
+        }
+        ConfigLoadError::Diagnostic(diag) => {
+            format!(
+                "Failed to load config: {}",
+                get_oxc_diagnostic_full_message(&diag)
+            )
+        }
+    }
 }

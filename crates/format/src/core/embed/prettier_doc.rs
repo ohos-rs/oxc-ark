@@ -1,12 +1,9 @@
-// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
-// Copyright (c) Oxc project contributors.
-
 //! The Prettier Doc→IR channel: the one path for `Route::Prettier` languages (napi only).
 //!
 //! Sends the text to JS `printToDoc()`, then converts the returned Doc JSON into formatter IR
 //! that integrates into the parent's arena / `GroupId` space.
 //! Fills the dispatcher's optional [`PrettierDocFallback`] slot;
-//! the string twin is [`super::prettier_string`].
+//! the JSDoc fences' string channel is native only ([`super::jsdoc_fence`]).
 
 use std::sync::Arc;
 
@@ -14,8 +11,11 @@ use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, debug_span};
 
-use oxc_formatter::HtmlEmbedMeta;
-use oxc_formatter_core::{DispatchPayload, DispatchResponse, FormatSession};
+use oxc_allocator::ArenaVec;
+use oxc_formatter::HtmlInJsTemplate;
+use oxc_formatter_core::{
+    DispatchRequest, DispatchResponse, EmbeddedIr, FormatElement, FormatSession, Tag,
+};
 
 use crate::{
     core::{
@@ -35,7 +35,10 @@ pub fn build_prettier_fallback(
     format_embedded_doc: FormatEmbeddedDocWithConfigCallback,
 ) -> PrettierDocFallback {
     Arc::new(
-        move |session: &FormatSession<'_>, language: PrettierLanguage, text: &str| {
+        move |session: &FormatSession<'_>,
+              language: PrettierLanguage,
+              request: &DispatchRequest<'_>| {
+            let text = request.text;
             let parser_name = language.parser();
             let Some(options) = dispatch_config.prettier_options_for(language) else {
                 debug!("The plugin for parser '{parser_name}' is not enabled, part stays as-is");
@@ -65,18 +68,22 @@ pub fn build_prettier_fallback(
                         session.group_id_builder(),
                     )?;
                     from_prettier_doc::postprocess(&mut ir, allocator);
-                    // HTML/Angular additionally surface `HtmlEmbedMeta` to the embed site.
-                    let child_context = language.wants_html_meta().then(|| {
-                        Box::new(HtmlEmbedMeta {
-                            has_multiple_root_elements: metadata
-                                .get("htmlHasMultipleRootElements")
-                                .and_then(Value::as_bool),
-                        }) as Box<dyn std::any::Any>
-                    });
-                    Ok(DispatchResponse::Formatted(DispatchPayload {
-                        doc: ir,
-                        child_context,
-                    }))
+                    // angular-in-js: what the native HTML formatter does on the same request
+                    let indent = request
+                        .parent_context_as::<HtmlInJsTemplate>()
+                        .is_some_and(|c| c.indent_multiple_roots)
+                        && metadata
+                            .get("htmlHasMultipleRootElements")
+                            .and_then(Value::as_bool)
+                            .unwrap_or(true);
+                    if indent {
+                        let mut indented = ArenaVec::with_capacity_in(ir.len() + 2, &allocator);
+                        indented.push(FormatElement::Tag(Tag::StartIndent));
+                        indented.extend(ir);
+                        indented.push(FormatElement::Tag(Tag::EndIndent));
+                        ir = indented;
+                    }
+                    Ok(DispatchResponse::Formatted(EmbeddedIr { ir }))
                 })
                 .inspect_err(|err| {
                     debug!("Failed to format embedded doc for parser '{parser_name}': {err}");

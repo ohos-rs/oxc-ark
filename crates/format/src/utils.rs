@@ -4,21 +4,45 @@
 
 use std::{
     fs, io,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
 };
 
-/// Normalize a relative path by stripping `./` prefix and joining with `cwd`.
-/// This ensures consistent path format and avoids issues with relative paths.
-/// Aligned with oxfmt's `utils::normalize_relative_path`.
+/// Normalize a relative path by:
+/// - stripping `./` prefix,
+/// - joining with `cwd`,
+/// - and resolving `.` and `..` components logically (without fs access)
+///
+/// This ensures consistent absolute path format,
+/// which is required for gitignore-based pattern matching
+/// (e.g., `ignorePatterns` resolution).
+///
+/// Unlike `fs::canonicalize()`,
+/// this does not resolve symlinks and does not produce `\\?\` prefixed paths on Windows.
 pub fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
     if path.is_absolute() {
         return path.to_path_buf();
     }
-    if let Ok(stripped) = path.strip_prefix("./") {
+
+    let joined = if let Ok(stripped) = path.strip_prefix("./") {
         cwd.join(stripped)
     } else {
         cwd.join(path)
+    };
+
+    let mut result = PathBuf::new();
+    for component in joined.components() {
+        match component {
+            Component::ParentDir => {
+                result.pop();
+            }
+            Component::CurDir => {}
+            _ => {
+                result.push(component.as_os_str());
+            }
+        }
     }
+
+    result
 }
 
 pub fn read_to_string(path: &Path) -> io::Result<String> {

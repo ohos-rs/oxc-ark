@@ -1,8 +1,5 @@
-// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
-// Copyright (c) Oxc project contributors.
-
 //! Root `SessionServices` assembly: [`for_root`] builds the build's default service set,
-//! installed by every session-taking root (JS / CSS / Markdown / Vue-Svelte script).
+//! installed by every session-taking root (JS / CSS / Markdown / HTML / Svelte-Astro script).
 //! One name, one definition per build; the napi one additionally takes the `ExternalServices` transport.
 //!
 //! "Which languages may dispatch at all from this host" is the host crate's own gate
@@ -12,7 +9,6 @@
 use std::sync::Arc;
 
 use oxc_formatter_core::SessionServices;
-use oxc_formatter_core::StringEmbedder;
 #[cfg(feature = "napi")]
 use oxc_formatter_core::TailwindSorter;
 #[cfg(feature = "napi")]
@@ -23,28 +19,19 @@ use crate::core::ExternalServices;
 
 use super::dispatcher::ResolvedDispatchConfig;
 
-/// The pure build's default `SessionServices` for a root formatter run:
-/// the fallback-less registry dispatcher plus the native-fence string embedder.
-/// A non-native fence dispatches to the registry's `PreserveOriginal`,
-/// which the adapter answers as `Err` (the string channel's "keep verbatim");
-/// no Prettier exists in this build, and no Tailwind sorter either.
+/// The pure Rust session services: the fallback-less registry dispatcher plus the native-fence
+/// string embedder. Also used as the fallback for napi sessions that have no JS transport
+/// (e.g. the formatter LSP, which has no Prettier callbacks).
 pub fn native(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices {
     // A fence dispatcher and this root's dispatcher are the same fallback-less registry,
     // so the root's doubles as the fence adapter's.
     let dispatcher = dispatch_config.root_dispatcher(None);
     let string_embedder = dispatcher.as_ref().map(|dispatcher| {
-        let fence_dispatcher = Arc::clone(dispatcher);
-        let dispatch_config = Arc::clone(dispatch_config);
-        Arc::new(move |language: &str, code: &str, print_width: usize| {
-            super::jsdoc_fence::format_native_fence(
-                language,
-                code,
-                print_width,
-                &fence_dispatcher,
-                &dispatch_config,
-                None,
-            )
-        }) as StringEmbedder
+        super::jsdoc_fence::build_string_embedder(
+            Arc::clone(dispatcher),
+            Arc::clone(dispatch_config),
+            None,
+        )
     });
     SessionServices {
         dispatcher,
@@ -53,13 +40,19 @@ pub fn native(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices 
     }
 }
 
+/// The pure build's default `SessionServices` for a root formatter run.
+#[cfg(not(feature = "napi"))]
+pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices {
+    native(dispatch_config)
+}
+
 /// The napi build's default `SessionServices` for a root formatter run:
 /// the registry dispatcher with the Prettier Doc→IR fallback,
 /// the string embedder, and the Tailwind sorter.
 /// The options (including `filepath`) are captured in the closures and passed to JS on each call;
 /// per-language options are mapped lazily at dispatch time (see [`ResolvedDispatchConfig`]).
 ///
-/// This is the assembly point only: closure factories live in `embed::{prettier_string, dispatcher, prettier_doc}`,
+/// This is the assembly point only: closure factories live in `embed::{jsdoc_fence, dispatcher, prettier_doc}`,
 /// and the napi callback `Arc`s come from the transport ([`ExternalServices`]).
 ///
 /// NOTE: Tailwind data paths
@@ -69,18 +62,19 @@ pub fn native(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices 
 /// 1. Standalone JS/TS (`className` / functions / custom attributes):
 ///    `oxc_formatter` collects classes into `FormatElement::TailwindClass`.
 ///    When the entry document is finalized, the printer sorts them in one host batch via the session's `tailwind_sorter`.
-/// 2. Standalone CSS / SCSS / LESS (`@apply` at top level), and Markdown:
-///    the CSS / Markdown root's session carries the same sorter (`CssFormatOptions::sort_tailwindcss` only switches collection);
+/// 2. Standalone CSS / SCSS / LESS (`@apply` at top level), Markdown, and HTML / Vue (`class` and the listed attributes):
+///    the root's session carries the same sorter (`CssFormatOptions::sort_tailwindcss` / `HtmlishFormatOptions::sort_tailwindcss` only switch collection);
 ///    classes sort once at finalize, no embedded boundary involved.
-/// 3. Embedded CSS (css-in-js + Angular `@Component({ styles })`, Markdown css code blocks):
-///    `oxc_formatter_css::format_to_ir()` adds pre-sort `@apply` classes into the session's class scope, shared with the JS / Markdown parent,
+/// 3. Embedded parts (css-in-js + Angular `@Component({ styles })`, Markdown code blocks,
+///    HTML / Vue `<script>` / `<style>` bodies and attribute values, Vue's `{{ }}` and directive values):
+///    each child's `format_to_ir()` adds pre-sort classes into the session's class scope, shared with the parent,
 ///    so they ride the SAME parent batch as its root.
-///    The standalone CSS sort closure is NOT invoked here.
-/// 4. JSDoc fenced CSS (Markdown code fence in JSDoc descriptions):
+///    No sort closure is invoked for the child itself.
+/// 4. JSDoc fenced blocks (Markdown code fence in JSDoc descriptions):
 ///    Goes through the string embedder's fence adapter, which returns a formatted string (not parent-integrated IR),
 ///    so there is no parent index space to join:
 ///    `FormatSession::dispatch_to_string` collects the child's classes in a fresh scope and sorts it before printing.
-///    The `prettier_string::build_string_embedder` factory receives the sorter for this case.
+///    The `jsdoc_fence::build_string_embedder` factory receives the sorter for this case.
 ///
 /// All four paths use the SAME `sort_tailwindcss_classes` napi callback; only the wiring differs.
 /// Moving sorting to the wrong layer (e.g. sorting inside embedded CSS instead of at the root) would double-sort or drop classes.
@@ -113,6 +107,8 @@ pub fn for_root(
         }) as TailwindSorter
     });
 
+    // Fences route native languages to the registry and Prettier-served languages through
+    // the JS string callback (never through the Doc fallback).
     let string_embedder = needs_embedded.then(|| {
         super::prettier_string::build_string_embedder(
             Arc::clone(&external_services.format_embedded),

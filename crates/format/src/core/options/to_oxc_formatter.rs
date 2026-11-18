@@ -1,6 +1,3 @@
-// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
-// Copyright (c) Oxc project contributors.
-
 #[cfg(feature = "napi")]
 use oxc_formatter::SortTailwindcssOptions;
 use oxc_formatter::{
@@ -11,8 +8,6 @@ use oxc_formatter::{
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
-#[cfg(feature = "napi")]
-use super::super::oxfmtrc::SortTailwindcssUserConfig;
 use super::super::oxfmtrc::{
     ArrowParensConfig, CommentLineStrategyConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
     ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, LineWrappingStyleConfig,
@@ -141,19 +136,15 @@ pub fn to_oxc_formatter(
     // so enabling it without the JS-side sorter would apply half the feature
     // (normalized but unsorted classes).
     #[cfg(feature = "napi")]
-    if let Some(tw_config) = config
-        .sort_tailwindcss
-        .clone()
-        .and_then(SortTailwindcssUserConfig::into_config)
-    {
+    if let Some(tw_config) = config.tailwind_config() {
         // `config` / `stylesheet` / `preserve_duplicates` are JS-sorter-only
         // and travel through `to_prettier::inject_tailwind_plugin_payload`,
         // not the Rust formatter options.
-        format_options.sort_tailwindcss = Some(SortTailwindcssOptions {
+        format_options.sort_tailwindcss = Some(std::sync::Arc::new(SortTailwindcssOptions {
             functions: tw_config.functions.unwrap_or_default(),
             attributes: tw_config.attributes.unwrap_or_default(),
             preserve_whitespace: tw_config.preserve_whitespace.unwrap_or(false),
-        });
+        }));
     }
 
     format_options
@@ -365,6 +356,15 @@ mod tests {
             validated.core,
             validated.sort_imports,
         ))
+    }
+
+    /// OXK historically quoted object properties by default. Upstream's
+    /// `QuoteProperties` default is `AsNeeded`, so the mapper must set this
+    /// explicitly to keep the existing formatting behavior across upgrades.
+    #[test]
+    fn default_quote_properties_are_preserve() {
+        let options = build(&FormatConfig::default()).unwrap();
+        assert_eq!(options.quote_properties, QuoteProperties::Preserve);
     }
 
     /// The config enums mirror `oxc_formatter`'s (which deliberately carries no

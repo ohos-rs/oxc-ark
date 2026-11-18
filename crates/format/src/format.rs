@@ -355,7 +355,7 @@ fn collect_source_key_quotes_from_object(
             && let Some(quote) = string_literal_quote(lit)
         {
             keys.push(Json5KeyQuote {
-                value: lit.value.to_string(),
+                value: lit.value.as_str().unwrap_or_default().to_string(),
                 quote,
             });
         }
@@ -410,7 +410,7 @@ fn collect_formatted_keys_from_object(
             && let Some((quote, raw_inner)) = string_literal_quote_and_inner(lit)
         {
             keys.push(FormattedJson5Key {
-                value: lit.value.to_string(),
+                value: lit.value.as_str().unwrap_or_default().to_string(),
                 start: lit.span.start.saturating_sub(1) as usize,
                 end: lit.span.end.saturating_sub(1) as usize,
                 raw_inner,

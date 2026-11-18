@@ -13,8 +13,8 @@ use std::{env, fs, path::Path, sync::Arc};
 
 #[cfg(not(target_family = "wasm"))]
 use format::{
-  build_global_ignore_matchers, build_ignore_matcher, collect_matching_files, is_gitignore_match,
-  resolve_editorconfig_path, resolve_ignore_paths, resolve_oxfmtrc_path, FormatTargets,
+  build_global_ignore_matchers, collect_matching_files_with, resolve_ignore_paths, ConfigScopes,
+  FormatTargets,
 };
 use format::{
   should_ignore_file, ConfigResolver, ExternalFormatter, FormatFileStrategy,
@@ -199,29 +199,16 @@ async fn format_files_impl(
   let language = parse_explicit_language(args.lang.as_deref())?;
   let thread_count = usize::try_from(args.thread_count.max(1)).unwrap_or(1);
   let config_path = args.config_path.as_deref().map(PathBuf::from);
-  let oxfmtrc_path = resolve_oxfmtrc_path(&cwd, config_path.as_deref());
-  let editorconfig_path = resolve_editorconfig_path(&cwd);
 
-  let mut config_resolver = if oxfmtrc_path.is_some() {
-    ConfigResolver::from_config_paths(&cwd, oxfmtrc_path.as_deref(), editorconfig_path.as_deref())
-      .map_err(|err| format!("Failed to load configuration: {err}"))?
-  } else {
-    ConfigResolver::from_cli_options(
-      &cwd,
-      args.cli_options.unwrap_or_else(empty_object),
-      editorconfig_path.as_deref(),
-    )?
-  };
-
-  let ignore_patterns = config_resolver
-    .build_and_validate()
-    .map_err(|err| format!("Failed to parse configuration: {err}"))?;
-
-  let config_ignore_root = oxfmtrc_path
-    .as_deref()
-    .and_then(Path::parent)
-    .unwrap_or(&cwd);
-  let config_ignore_matcher = build_ignore_matcher(config_ignore_root, &ignore_patterns)?;
+  // Root config plus on-demand nested configs. CLI options apply only when no config file is found.
+  let config_scopes = ConfigScopes::load_with_fallback_config(
+    &cwd,
+    config_path.as_deref(),
+    true,
+    Some(args.cli_options.unwrap_or_else(empty_object)),
+    None,
+  )
+  .map_err(|err| format!("Failed to load configuration: {err}"))?;
 
   let ignore_paths = args
     .ignore_paths
@@ -233,18 +220,23 @@ async fn format_files_impl(
   let global_ignore_matchers =
     build_global_ignore_matchers(&cwd, &targets.exclude_patterns, &resolved_ignore_paths)?;
 
-  let mut files = collect_matching_files(
+  // Include files that a config's `associations` maps to a formatter.
+  let is_supported = |path: &Path| match config_scopes.resolve(path) {
+    Ok(resolver) => resolver
+      .classify_with_explicit_language(path, language)
+      .is_some(),
+    // Let the per-file loop surface nested config load errors.
+    Err(_) => true,
+  };
+  let files = collect_matching_files_with(
     &cwd,
     &targets,
     &global_ignore_matchers,
     thread_count,
     args.with_node_modules,
+    is_supported,
   )
   .map_err(|err| err.to_string())?;
-
-  if let Some(matcher) = &config_ignore_matcher {
-    files.retain(|path| !is_gitignore_match(matcher, path, false, true));
-  }
 
   if files.is_empty() {
     return Err("No files matched the provided patterns (after ignore rules)".to_string());
@@ -252,13 +244,23 @@ async fn format_files_impl(
 
   tokio::task::block_in_place(|| external_formatter.init(thread_count))?;
 
-  let config_resolver = Arc::new(config_resolver);
-  let semaphore = Arc::new(tokio::sync::Semaphore::new(thread_count));
-  let mut handles = Vec::with_capacity(files.len());
-
+  // Nearest config wins; each task receives its file's resolved scope.
+  let mut scoped_files = Vec::with_capacity(files.len());
   for path in files {
+    let resolver = config_scopes.resolve(&path).map_err(|err| {
+      format!(
+        "Failed to load nested configuration for '{}': {err}",
+        path.display()
+      )
+    })?;
+    scoped_files.push((path, resolver));
+  }
+
+  let semaphore = Arc::new(tokio::sync::Semaphore::new(thread_count));
+  let mut handles = Vec::with_capacity(scoped_files.len());
+
+  for (path, config_resolver) in scoped_files {
     let cwd = cwd.clone();
-    let config_resolver = Arc::clone(&config_resolver);
     let external_formatter = external_formatter.clone();
     let semaphore = Arc::clone(&semaphore);
     handles.push(tokio::spawn(async move {
@@ -333,11 +335,15 @@ fn format_cli_file_blocking(
     return Ok(false);
   }
 
-  let strategy = FormatFileStrategy::from_path_with_language(path.clone(), language)
-    .ok_or_else(|| format!("{}: unsupported file type", path.display()))?;
-  let resolved_options = config_resolver.resolve(&strategy)?;
+  if config_resolver.is_path_ignored(&path, false) {
+    return Ok(false);
+  }
+
+  let resolved_options = config_resolver.resolve_for_path(&path, language)?;
   let formatter = SourceFormatter::new(1).with_external_formatter(Some(external_formatter));
 
+  // `ResolvedOptions::Upstream` ignores the entry strategy; keep one for the shared signature.
+  let strategy = FormatFileStrategy::Native { path: path.clone() };
   let formatted_code = match formatter.format(&strategy, &source_text, resolved_options) {
     CoreFormatResult::Success { code, .. } => code,
     CoreFormatResult::Error(diagnostics) => {
@@ -566,13 +572,12 @@ pub async fn format(
 
 /// Format embedded JS/TS to a Prettier document using the upstream formatter.
 #[napi(
-  ts_args_type = "sourceExt: string, sourceText: string, optionsJson: string, parentContext: string, initCb: (numThreads: number) => Promise<string[]>, embeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, fileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
+  ts_args_type = "sourceExt: string, sourceText: string, optionsJson: string, initCb: (numThreads: number) => Promise<string[]>, embeddedCb: (options: Record<string, any>, tagName: string, code: string) => Promise<string>, fileCb: (options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
 )]
 pub async fn js_text_to_doc(
   source_ext: String,
   source_text: String,
   options_json: String,
-  parent_context: String,
   init_cb: JsInitExternalFormatterCb,
   embedded_cb: JsFormatEmbeddedCb,
   file_cb: JsFormatFileCb,
@@ -582,7 +587,6 @@ pub async fn js_text_to_doc(
     &source_ext,
     &source_text,
     &options_json,
-    &parent_context,
     external.to_services(),
   )
 }

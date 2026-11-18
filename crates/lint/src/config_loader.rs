@@ -12,12 +12,17 @@ use std::{
 
 use ignore::DirEntry;
 
-use oxc_config::{ConfigConflict, ConfigDiscovery, DiscoveredConfigFile, is_js_config_path};
+use oxc_config::{
+    ConfigConflict, ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
-    Config, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore, LintFilter, Oxlintrc,
+    Config, ConfigBuilderError, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    LintFilter, Oxlintrc,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+
+use oxlint::cli::EnablePlugins;
 
 use crate::{ArktsLintConfig, load_oxlintrc_and_arkts_from_file};
 
@@ -25,18 +30,28 @@ const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
 const OH_MODULES_DIR: &str = "oh_modules";
 
+#[derive(Debug)]
 pub struct JsConfigResult {
+    pub path: PathBuf,
     pub config: Option<Oxlintrc>,
 }
 
+/// Callback type for loading JavaScript/TypeScript config files.
+pub type JsConfigLoaderCb =
+    Box<dyn Fn(Vec<String>) -> Result<Vec<JsConfigResult>, Vec<OxcDiagnostic>> + Send + Sync>;
+
 pub(crate) fn config_discovery() -> ConfigDiscovery {
-    ConfigDiscovery::oxlint()
+    // Vite+ sets `VP_VERSION` when launching oxlint. In that mode only `vite.config.*`
+    // is discovered, and nested configs are disabled.
+    if cfg!(feature = "napi") && vp_version().is_some() {
+        ConfigDiscovery::vite_plus()
+    } else {
+        ConfigDiscovery::oxlint()
+    }
 }
 
 pub(crate) fn materialize_default_plugins(config: &mut Oxlintrc) {
-    if config.plugins.is_none() {
-        config.plugins = Some(Default::default());
-    }
+    config.plugins.get_or_insert_with(Default::default);
 }
 
 pub fn config_file_names() -> Vec<&'static str> {
@@ -237,19 +252,24 @@ impl ConfigLoadError {
 ///
 /// This groups together failures related to the root configuration file
 /// and to any nested configuration files discovered during loading.
+#[derive(Debug)]
 pub enum CliConfigLoadError {
     /// An error that occurred while loading or parsing the root configuration.
     RootConfig(Box<OxcDiagnostic>),
+    /// An error that occurred while preparing the root configuration.
+    RootConfigBuild(ConfigBuilderError),
     /// One or more errors that occurred while loading nested configuration files.
     NestedConfigs(Vec<ConfigLoadError>),
 }
 
-/// Collection of the root configuration and all successfully loaded nested configs.
+/// Collection of the prepared root configuration and all successfully loaded nested configs.
 ///
 /// Returned by [`ConfigLoader::load_root_and_nested`].
 pub struct LoadedConfigs {
     /// The root `oxlintrc` configuration used as the base for all linting.
     pub root: Oxlintrc,
+    /// The root configuration builder with CLI plugin overrides and rule filters applied.
+    pub root_builder: ConfigStoreBuilder,
     /// Mapping from directory paths to the effective [`Config`] for that directory.
     pub nested: FxHashMap<PathBuf, Config>,
     /// Ignore patterns from nested configs, paired with the directory they apply to.
@@ -261,6 +281,8 @@ pub struct ConfigLoader<'a> {
     external_plugin_store: &'a mut ExternalPluginStore,
     filters: &'a [LintFilter],
     workspace_uri: Option<&'a str>,
+    #[expect(clippy::struct_field_names)]
+    js_config_loader: Option<&'a JsConfigLoaderCb>,
 }
 
 impl<'a> ConfigLoader<'a> {
@@ -282,7 +304,17 @@ impl<'a> ConfigLoader<'a> {
             external_plugin_store,
             filters,
             workspace_uri,
+            js_config_loader: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_js_config_loader(mut self, js_config_loader: Option<&'a JsConfigLoaderCb>) -> Self {
+        if let Some(js_loader) = js_config_loader {
+            self.js_config_loader = Some(js_loader);
+        }
+
+        self
     }
 
     /// Load a single config from a file path
@@ -295,6 +327,22 @@ impl<'a> ConfigLoader<'a> {
             })
     }
 
+    /// Create a [`ConfigStoreBuilder`] from an [`Oxlintrc`] with the loader's
+    /// external linter, plugin store, workspace URI and CLI rule filters applied.
+    pub(crate) fn create_config_builder(
+        &mut self,
+        config: Oxlintrc,
+    ) -> Result<ConfigStoreBuilder, ConfigBuilderError> {
+        ConfigStoreBuilder::from_oxlintrc(
+            false,
+            config,
+            self.external_linter,
+            self.external_plugin_store,
+            self.workspace_uri,
+        )
+        .map(|builder| builder.with_filters(self.filters))
+    }
+
     pub fn load_js_configs(
         &self,
         paths: &[PathBuf],
@@ -303,9 +351,24 @@ impl<'a> ConfigLoader<'a> {
             return Ok(Vec::new());
         }
 
-        Err(vec![
-            ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable,
-        ])
+        let Some(js_config_loader) = self.js_config_loader else {
+            return Err(vec![
+                ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable,
+            ]);
+        };
+
+        let paths_as_strings: Vec<String> = paths
+            .iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect();
+
+        match js_config_loader(paths_as_strings) {
+            Ok(results) => Ok(results),
+            Err(diagnostics) => Err(diagnostics
+                .into_iter()
+                .map(ConfigLoadError::Diagnostic)
+                .collect()),
+        }
     }
 
     /// Load multiple configs, returning successes and errors separately
@@ -418,13 +481,7 @@ impl<'a> ConfigLoader<'a> {
                 }
             }
 
-            let builder = match ConfigStoreBuilder::from_oxlintrc(
-                false,
-                config,
-                self.external_linter,
-                self.external_plugin_store,
-                self.workspace_uri,
-            ) {
+            let builder = match self.create_config_builder(config) {
                 Ok(builder) => builder,
                 Err(e) => {
                     errors.push(ConfigLoadError::Build {
@@ -438,7 +495,6 @@ impl<'a> ConfigLoader<'a> {
             let extended_paths = builder.extended_paths.clone();
 
             match builder
-                .with_filters(self.filters)
                 .build(self.external_plugin_store)
                 .map_err(|e| ConfigLoadError::Build {
                     path: path.clone(),
@@ -655,66 +711,78 @@ impl<'a> ConfigLoader<'a> {
         }
     }
 
-    /// Load the root configuration and optionally discover and load nested configs.
+    /// Load root and nested configs, then prepare the root configuration builder.
     ///
     /// This is the main entry point for CLI config loading. It first loads the root
     /// `oxlintrc` configuration, then optionally discovers and loads nested configs
-    /// by walking up from each file path's directory.
+    /// by walking up from each file path's directory. Finally, it applies CLI plugin
+    /// overrides and prepares the root configuration builder.
     ///
     /// # Arguments
     /// * `cwd` - Current working directory for resolving relative paths
     /// * `config_path` - Optional explicit path to the root config file
     /// * `paths` - File paths to lint (used for discovering nested configs)
     /// * `search_for_nested_configs` - Whether to discover nested configs in ancestor directories
+    /// * `enable_plugins` - CLI plugin overrides to apply to the root config
     ///
     /// # Errors
     /// Returns [`CliConfigLoadError::RootConfig`] if the root config fails to load,
-    /// or [`CliConfigLoadError::NestedConfigs`] if any nested config fails to load.
+    /// [`CliConfigLoadError::NestedConfigs`] if any nested config fails to load,
+    /// or [`CliConfigLoadError::RootConfigBuild`] if the root builder cannot be prepared.
     pub fn load_root_and_nested(
         &mut self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
         paths: &[Arc<OsStr>],
         search_for_nested_configs: bool,
+        enable_plugins: &EnablePlugins,
     ) -> Result<LoadedConfigs, CliConfigLoadError> {
-        let oxlintrc = match self.load_root_config(cwd, config_path) {
+        let mut oxlintrc = match self.load_root_config(cwd, config_path) {
             Ok(config) => config,
             Err(err) => return Err(CliConfigLoadError::RootConfig(Box::new(err))),
         };
 
-        if !search_for_nested_configs {
-            return Ok(LoadedConfigs {
-                root: oxlintrc,
-                nested: FxHashMap::default(),
-                nested_ignore_patterns: vec![],
-            });
-        }
+        let configs = if search_for_nested_configs {
+            // Discover config files by walking up from each file's directory
+            let config_paths: Vec<_> = paths
+                .iter()
+                .map(|p| Path::new(p.as_ref()).to_path_buf())
+                .collect();
+            let (discovered_configs, conflicts) =
+                discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
 
-        // Discover config files by walking up from each file's directory
-        let config_paths: Vec<_> = paths
-            .iter()
-            .map(|p| Path::new(p.as_ref()).to_path_buf())
-            .collect();
-        let (discovered_configs, conflicts) =
-            discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
+            let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
 
-        let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
+            for conflict in conflicts {
+                errors.push(ConfigLoadError::Diagnostic(conflict.into()));
+            }
 
-        for conflict in conflicts {
-            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
-        }
+            // Fail if any config failed (CLI requires all configs to be valid)
+            if !errors.is_empty() {
+                return Err(CliConfigLoadError::NestedConfigs(errors));
+            }
 
-        // Fail if any config failed (CLI requires all configs to be valid)
-        if !errors.is_empty() {
-            return Err(CliConfigLoadError::NestedConfigs(errors));
-        }
+            configs
+        } else {
+            Vec::new()
+        };
 
         // Convert loaded configs to nested config format
         let mut nested_ignore_patterns = Vec::with_capacity(configs.len());
         let nested_configs = build_nested_configs(configs, &mut nested_ignore_patterns, None);
 
+        materialize_default_plugins(&mut oxlintrc);
+        let mut plugins = oxlintrc.plugins.unwrap_or_default();
+        enable_plugins.apply_overrides(&mut plugins);
+        oxlintrc.plugins = Some(plugins);
+
+        let root_builder = self
+            .create_config_builder(oxlintrc.clone())
+            .map_err(CliConfigLoadError::RootConfigBuild)?;
+
         Ok(LoadedConfigs {
             root: oxlintrc,
+            root_builder,
             nested: nested_configs,
             nested_ignore_patterns,
         })
@@ -815,7 +883,11 @@ mod tests {
         sync::atomic::{AtomicU64, Ordering},
     };
 
-    use super::discover_configs_in_tree;
+    use oxc_linter::{ExternalPluginStore, Oxlintrc};
+
+    use super::{
+        ConfigLoadError, ConfigLoader, JsConfigLoaderCb, JsConfigResult, discover_configs_in_tree,
+    };
 
     static NEXT_TEST_DIR_ID: AtomicU64 = AtomicU64::new(0);
 
@@ -850,6 +922,91 @@ mod tests {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.path);
         }
+    }
+
+    #[test]
+    fn cli_plugin_overrides_are_applied_to_root_builder() {
+        let dir = TestDir::new("plugin-overrides");
+        fs::write(
+            dir.join(".oxlintrc.json"),
+            r#"{"plugins":["typescript"],"rules":{}}"#,
+        )
+        .expect("config should be written");
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let enable_plugins = oxlint::cli::lint_command()
+            .run_inner(&["--import-plugin"])
+            .expect("CLI options should parse")
+            .enable_plugins;
+
+        let loaded = loader
+            .load_root_and_nested(dir.path(), None, &[], false, &enable_plugins)
+            .expect("config should load");
+
+        assert!(
+            loaded
+                .root
+                .plugins
+                .is_some_and(|plugins| plugins.has_import()),
+            "CLI plugin overrides should be reflected in the returned root config"
+        );
+        assert!(
+            loaded.root_builder.plugins().has_import(),
+            "CLI plugin overrides should be applied to the prepared root builder"
+        );
+    }
+
+    #[test]
+    fn js_config_loader_results_are_used() {
+        let dir = TestDir::new("js-config-loader");
+        let config_path = dir.join("oxlint.config.ts");
+        fs::write(&config_path, "export default {}").expect("placeholder config should be written");
+
+        let config_path_for_loader = config_path.clone();
+        let js_config_loader: JsConfigLoaderCb = Box::new(move |paths| {
+            assert_eq!(
+                paths,
+                vec![config_path_for_loader.to_string_lossy().to_string()]
+            );
+            Ok(vec![JsConfigResult {
+                path: config_path_for_loader.clone(),
+                config: Some(
+                    Oxlintrc::from_json_value(&serde_json::json!({
+                        "rules": { "no-debugger": "error" }
+                    }))
+                    .expect("JS config should parse"),
+                ),
+            }])
+        });
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None)
+            .with_js_config_loader(Some(&js_config_loader));
+
+        let configs = loader
+            .load_js_configs(std::slice::from_ref(&config_path))
+            .expect("JS config loader should succeed");
+        assert_eq!(configs.len(), 1);
+        assert_eq!(configs[0].path, config_path);
+        assert!(configs[0].config.is_some());
+    }
+
+    #[test]
+    fn js_configs_report_missing_runtime_without_loader() {
+        let dir = TestDir::new("js-config-no-loader");
+        let config_path = dir.join("oxlint.config.ts");
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let errors = loader
+            .load_js_configs(std::slice::from_ref(&config_path))
+            .expect_err("JS configs should not load without a loader");
+        assert!(matches!(
+            errors.as_slice(),
+            [ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable]
+        ));
     }
 
     #[test]

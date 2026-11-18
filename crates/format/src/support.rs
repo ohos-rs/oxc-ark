@@ -667,10 +667,7 @@ mod tests {
         }
         assert!(matches!(
             strategy_for("component.vue"),
-            FormatFileStrategy::ExternalFormatter {
-                parser_name: "vue",
-                ..
-            }
+            FormatFileStrategy::Native { .. }
         ));
         assert!(matches!(
             strategy_for("schema.graphql"),

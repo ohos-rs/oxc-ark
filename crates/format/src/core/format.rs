@@ -1,6 +1,3 @@
-// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
-// Copyright (c) Oxc project contributors.
-
 use std::{path::Path, sync::Arc};
 
 use tracing::instrument;
@@ -30,7 +27,7 @@ use super::{
 
 /// A file's path and [`FormatStrategy`] with its resolved config, ready to format once given the source text.
 ///
-/// Built by [`crate::ConfigResolver::resolve`] or `resolve_for_api`,
+/// Built by [`super::ConfigResolver::resolve`] or `resolve_for_api`,
 /// where every fallible conversion already ran (`options::validate`).
 /// So the per-formatter options are mapped from `config` + `validated` at the format step.
 #[derive(Debug)]
@@ -159,6 +156,15 @@ impl SourceFormatter {
                 oxc_formatter_markdown::format_with_session(&session, source_text, options)
                     .and_then(|formatted| print(formatted, &path))
             }
+            FormatStrategy::Native(NativeLanguage::Html(variant)) => {
+                let allocator = self.allocator_pool.get();
+                let dispatch_config =
+                    ResolvedDispatchConfig::for_root(Arc::clone(&config), validated, &path);
+                let session = self.root_session(&allocator, &dispatch_config);
+                let options = dispatch_config.htmlish_options(variant);
+                oxc_formatter_htmlish::format_with_session(&session, source_text, options)
+                    .and_then(|formatted| print(formatted, &path))
+            }
             FormatStrategy::Native(NativeLanguage::Toml) => {
                 oxc_formatter_toml::format(source_text, to_oxc_formatter_toml(&config, core))
             }
@@ -198,7 +204,7 @@ impl SourceFormatter {
             |external| super::embed::services::for_root(external, dispatch_config),
         );
         #[cfg(not(feature = "napi"))]
-        let services = super::embed::services::native(dispatch_config);
+        let services = super::embed::services::for_root(dispatch_config);
         FormatSession::with_services(allocator, InputKind::PhysicalFile, services)
     }
 
@@ -273,19 +279,19 @@ impl SourceFormatter {
         language: PrettierLanguage,
         config: &FormatConfig,
     ) -> Result<String, OxcDiagnostic> {
-        use PrettierLanguage::{Angular, Astro, Glimmer, Html, Svelte, Vue};
+        use PrettierLanguage::{Angular, Astro, Glimmer, Svelte};
 
         let mut prettier_options = to_prettier(config);
         inject_parser(&mut prettier_options, language.parser());
         inject_filepath(&mut prettier_options, path);
 
         // CSS/SCSS/Less also benefit, but they are formatted by `oxc_formatter_css`
-        if matches!(language, Html | Vue | Angular | Glimmer | Svelte | Astro) {
+        if matches!(language, Angular | Glimmer | Svelte | Astro) {
             inject_tailwind_plugin_payload(&mut prettier_options, config);
         }
         // Languages that embed JS/TS code.
-        // Expressions like `__vue_expression` and `__ng_directive` are not supported yet.
-        if matches!(language, Vue | Svelte | Astro) {
+        // Expressions like `__ng_directive` are not supported yet.
+        if matches!(language, Svelte | Astro) {
             inject_oxfmt_plugin_payload(&mut prettier_options, config, path);
         }
         inject_opt_in_plugin_payloads(&mut prettier_options, language, config);

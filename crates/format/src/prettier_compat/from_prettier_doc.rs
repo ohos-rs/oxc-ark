@@ -1,6 +1,3 @@
-// Derived from ohos-rs/oxc 230deff13c3d0baddb9560ba895ee2b6a3fc4b7e (MIT).
-// Copyright (c) Oxc project contributors.
-
 //! Prettier Doc JSON → FormatElement IR conversion primitives.
 //!
 //! [`convert_envelope`] is the public entry point:
@@ -17,7 +14,7 @@ use serde_json::Value;
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_formatter_core::{
     Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
-    Prefix, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder, format_element::BestFittingElement,
+    Prefix, PrintMode, Tag, UniqueGroupIdBuilder, format_element::BestFittingElement,
 };
 
 /// Marker string used to represent `-Infinity` in JSON.
@@ -96,8 +93,7 @@ impl<'a, 'b> FmtCtx<'a, 'b> {
 /// the width could be miscalculated when `options.indent_width` != 2.
 /// However, the default value is sufficient in practice.
 pub fn text_element(text: &str) -> FormatElement<'_> {
-    let width = TextWidth::from_text(text, IndentWidth::default());
-    FormatElement::Text { text, width }
+    FormatElement::text(text, IndentWidth::default())
 }
 
 fn convert_doc<'a>(
@@ -572,7 +568,7 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
                 let FormatElement::Text { text, .. } = ir[run_start] else {
                     unreachable!()
                 };
-                text
+                text.as_str()
             } else {
                 let mut sb = ArenaStringBuilder::new_in(allocator);
                 for element in &ir[run_start..read] {
